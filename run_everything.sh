@@ -40,7 +40,6 @@ FLUX="dk2nu"
 fi
 
 if [ "${FLUX}" = "dk2nu" ]; then
-echo "Flux not specified, using dk2nu"
 FLUXOPT="--dk2nu"
 FLUXDIR="/pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT"
 fi
@@ -142,7 +141,7 @@ fi
 
 # Modify GNuMIFlux.xml to the specified off-axis position
 # Positive OFFAXIS will move the beam center positive, so that detector position is effectively negative
-sed -i "s/<beampos> ( 0.0, 0.0, 15.55 )/<beampos> (${OFFAXIS}, 0.0, 15.55)/g" GNuMIFlux.xml
+sed -i "s/<beampos> ( 0.0, 0.0, 15.55 )/<beampos> ( ${OFFAXIS}, 0.0, 15.55 )/g" GNuMIFlux.xml
 
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
