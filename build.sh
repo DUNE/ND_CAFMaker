@@ -11,6 +11,8 @@ setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
 setup geant4 v4_10_3_p01b -q e15:prof
 setup jobsub_client
+setup eigen v3_3_5
+setup python v2_7_3
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
@@ -36,11 +38,23 @@ make install
 
 cd ${TOPDIR}
 
+# Get Geometric efficiency library and build
+git clone --recurse-submodules https://github.com/cvilelasbu/DUNE_ND_GeoEff.git
+cd DUNE_ND_GeoEff
+cmake .
+make
+
+cd ${TOPDIR}
+
 # Add nusystematics to the paths
 export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/Linux/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/nusystematics/artless:$LD_LIBRARY_PATH
 export FHICL_FILE_PATH=${TOPDIR}/nusystematics/nusystematics/fcl:$FHICL_FILE_PATH
 
+# Add pyGeoEff to pythonpath
+export PYTHONPATH=${PYTHONPATH}:${TOPDIR}/DUNE_ND_GeoEff/lib/
+
 # make tarballs of edep-sim and nusystematics for grid jobs
 tar -zcf edep-sim.tar.gz edep-sim
 tar -zcf nusystematics.tar.gz nusystematics
+tar -zcf DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff
