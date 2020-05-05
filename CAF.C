@@ -81,6 +81,8 @@ CAF::CAF( std::string filename, bool isGas )
   cafMVA->Branch( "muon_ecal", &muon_ecal, "muon_ecal/I" );
   cafMVA->Branch( "muon_exit", &muon_exit, "muon_exit/I" );
   cafMVA->Branch( "reco_lepton_pdg", &reco_lepton_pdg, "reco_lepton_pdg/I" );
+  cafMVA->Branch( "muon_endpoint", &muon_endpoint, "muon_endpoint[3]/F");
+  cafMVA->Branch( "muon_endVolName", &muon_endVolName);
   cafMVA->Branch( "Ehad_veto", &Ehad_veto, "Ehad_veto/D" );
   cafMVA->Branch( "pileup_energy", &pileup_energy, "pileup_energy/D" );
 
