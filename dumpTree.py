@@ -91,7 +91,7 @@ def loop( events, tgeo, tout ):
                 continue
             
 
-            geoEff.setVertex(vertex.Position[0] / 10., vertex.Position[1] / 10.,vertex.Position[2] / 10.)
+            geoEff.setVertex(vertex.GetPosition()[0] / 10., vertex.GetPosition()[1] / 10.,vertex.GetPosition()[2] / 10.)
             
             # Renew throws every 100th event written to the output file.
             if (iwritten % 100) == 0 :
@@ -99,7 +99,7 @@ def loop( events, tgeo, tout ):
                 t_geoEffThrowsX = geoEff.getCurrentThrowTranslationsX() # Redundant for fixed X
                 t_geoEffThrowsY = geoEff.getCurrentThrowTranslationsY()
                 t_geoEffThrowsZ = geoEff.getCurrentThrowTranslationsZ()
-                t_geoEffThrowsPhi = geoEff.getCurrentThrowTranslationsPhi()
+                t_geoEffThrowsPhi = geoEff.getCurrentThrowRotations()
                 tGeoEfficiencyThrowsOut.Fill()
                 
             ileptraj = -1
@@ -271,7 +271,7 @@ def loop( events, tgeo, tout ):
                     # Set up arrays for geometric efficiency
                     for dim in range(3) :
                         geoEff_EDepPosition.append((hit.GetStart()[dim] + hit.GetStop()[0])/2./10.)
-                        geoEff_EDepEnergy.append(hit.GetEnergyDeposit())
+                    geoEff_EDepEnergy.append(hit.GetEnergyDeposit())
 
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
@@ -286,8 +286,8 @@ def loop( events, tgeo, tout ):
             t_hadTot[0] = total_energy
             t_hadCollar[0] = collar_energy
 
-            geoEff.setHigSegEDeps(geoEff_EDepPosition)
-            geoEff.setHitSegPoss(geoEff_EDepEnergy)
+            geoEff.setHitSegEdeps(geoEff_EDepEnergy)
+            geoEff.setHitSegPoss(geoEff_EDepPosition)
 
             t_geoEffThrowResults = geoEff.getHadronContainmentThrows()
 
