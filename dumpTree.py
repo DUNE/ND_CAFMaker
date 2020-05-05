@@ -289,7 +289,7 @@ def loop( events, tgeo, tout )
             geoEff.setHigSegEDeps(geoEff_EDepPosition)
             geoEff.setHitSegPoss(geoEff_EDepEnergy)
 
-            t_geoEffThrowsResult = geoEff.getHadronContainmentThrows()
+            t_geoEffThrowResults = geoEff.getHadronContainmentThrows()
 
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
@@ -414,8 +414,8 @@ if __name__ == "__main__":
     tout.Branch('fsTrkCalo',t_fsTrkCalo,'fsTrkCalo[nFS]/F')
 
     # Geometric efficiency stuff
-    t_geoEffThrowsResult = ROOT.std.vector('std::vector< std::vector < uint64_t > >')()
-    tout.Branch('geoEffThrowsResult', t_geoEffThrowsResult)
+    t_geoEffThrowResults = ROOT.std.vector('std::vector< std::vector < uint64_t > >')()
+    tout.Branch('geoEffThrowResults', t_geoEffThrowResults)
 
     # Separate TTree to store translations and rotations of throws
     tGeoEfficiencyThrowsOut = ROOT.TTree( "geoEffThrows","geoEffThrows")
