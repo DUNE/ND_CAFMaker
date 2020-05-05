@@ -9,7 +9,7 @@ from array import array
 
 import pyGeoEff
 
-def loop( events, tgeo, tout ) 
+def loop( events, tgeo, tout ):
 
     offset = [ 0., 5.5, 411. ]
     collarLo = [ -320., -120., 30. ]
