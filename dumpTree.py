@@ -7,11 +7,39 @@ import ROOT
 from optparse import OptionParser
 from array import array
 
-def loop( events, tgeo, tout ):
+import pyGeoEff
+
+def loop( events, tgeo, tout ) 
 
     offset = [ 0., 5.5, 411. ]
     collarLo = [ -320., -120., 30. ]
     collarHi = [ 320., 120., 470. ]
+
+    # Initialize geometric efficiency module. Use process ID as random seed...
+    geoEff = pyGeoEff.geoEff(os.getpid())
+    # Multiple of 64 doesn't waste bits
+    geoEff.setNThrows(4992)
+    # Use neutrino decay position, rather than fixed neutrino direction as symmetry axis
+    geoEff.useFixedBeamDir(False)
+    # Rough estimate from neutrino direction in mcc11v4 -- might want to update. In cm.
+    geoEff.setDecayPos([0., -5460, -5540])
+    # 30 cm veto
+    geoEff.setVetoSizes([30])
+    # 20, 30 and 40 MeV threshold
+    geoEff.setVetoEnergyThresholds([20, 30, 40])
+    # Active detector dimensions
+    geoEff.setActiveX(collarLo[0]-30, collarHi[0]+30)
+    geoEff.setActiveY(collarLo[1]-30, collarHi[1]+30)
+    geoEff.setActiveZ(collarLo[2]-30, collarHi[2]+30)
+    # Range for translation throws. Use full active volume but fix X.
+    eff.setRangeX(-1, -1)
+    eff.setRandomizeX(False)
+    eff.setRangeY(collarLo[1]-30, collarHi[1]+30)
+    eff.setRangeZ(collarLo[2]-30, collarHi[2]+30)
+    # Set offset between MC coordinate system and volumes defined above.
+    eff.setOffsetX(offset[0])
+    eff.setOffsetY(offset[1])
+    eff.setOffsetZ(offset[2])
 
     event = ROOT.TG4Event()
     events.SetBranchAddress("Event",ROOT.AddressOf(event))
@@ -19,7 +47,8 @@ def loop( events, tgeo, tout ):
     N = events.GetEntries()
 
     print "Starting loop over %d entries" % N
-    ient = 0
+    ient = 0 # This is unnecessary
+    iwritten = 0
     for ient in range(N):
 
         if ient % 100 == 0:
@@ -60,7 +89,19 @@ def loop( events, tgeo, tout ):
             # fiducial vertex pre-cut
             if abs(t_vtx[0]) > 310. or abs(t_vtx[1]) > 110. or t_vtx[2] < 40. or t_vtx[2] > 360.:
                 continue
+            
 
+            geoEff.setVertex(vertex.Position[0] / 10., vertex.Position[1] / 10.,vertex.Position[2] / 10.)
+            
+            # Renew throws every 100th event written to the output file.
+            if (iwritten % 100) == 0 :
+                geoEff.throwTransforms()
+                t_geoEffThrowsX = geoEff.getCurrentThrowTranslationsX() # Redundant for fixed X
+                t_geoEffThrowsY = geoEff.getCurrentThrowTranslationsY()
+                t_geoEffThrowsZ = geoEff.getCurrentThrowTranslationsZ()
+                t_geoEffThrowsPhi = geoEff.getCurrentThrowTranslationsPhi()
+                tGeoEfficiencyThrowsOut.Fill()
+                
             ileptraj = -1
             nfsp = 0
             nHadrons = 0
@@ -178,6 +219,10 @@ def loop( events, tgeo, tout ):
 
             collar_energy = 0.
             total_energy = 0.
+            
+            geoEff_EDepPosition = []
+            geoEff_EDepEnergy = []
+
             track_length = [0. for i in range(nfsp)]
             dEdX = [[] for i in range(nfsp)]
             this_step = [[0.,0.] for i in range(nfsp)]
@@ -222,6 +267,11 @@ def loop( events, tgeo, tout ):
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
                         collar_energy += hit.EnergyDeposit
+                    
+                    # Set up arrays for geometric efficiency
+                    for dim in range(3) :
+                        geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[0])/2./10.)
+                        geoEff_EDepEnergy.append(hit.EnergyDeposit)
 
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
@@ -235,6 +285,12 @@ def loop( events, tgeo, tout ):
 
             t_hadTot[0] = total_energy
             t_hadCollar[0] = collar_energy
+
+            geoEff.setHigSegEDeps(geoEff_EDepPosition)
+            geoEff.setHitSegPoss(geoEff_EDepEnergy)
+
+            t_geoEffThrowsResult = geoEff.getHadronContainmentThrows()
+
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
                 # Average of anything in the last 3cm of track
@@ -271,7 +327,9 @@ def loop( events, tgeo, tout ):
 
 
             tout.Fill()
-        ient += 1
+            iwritten += 1
+        ient += 1 # This is unnecessary
+        
 
 if __name__ == "__main__":
 
@@ -352,6 +410,21 @@ if __name__ == "__main__":
     tout.Branch('fsGamma2',t_fsGamma2,'fsGamma2[nFS]/F')
     t_fsTrkCalo = array('f',100*[0.])
     tout.Branch('fsTrkCalo',t_fsTrkCalo,'fsTrkCalo[nFS]/F')
+
+    # Geometric efficiency stuff
+    t_geoEffThrowsResult = ROOT.std.vector('std::vector< std::vector < uint64_t > >')()
+    tout.Branch('geoEffThrowsResult', t_geoEffThrowsResult)
+
+    # Separate TTree to store translations and rotations of throws
+    tGeoEfficiencyThrowsOut = ROOT.TTree( "geoEffThrows","geoEffThrows")
+    t_geoEffThrowsX = ROOT.std.vector('float')()
+    tGeoEfficiencyThrowsOut.Branch("geoEffThrowsX", t_geoEffThrowsX)
+    t_geoEffThrowsY = ROOT.std.vector('float')()
+    tGeoEfficiencyThrowsOut.Branch("geoEffThrowsY", t_geoEffThrowsY)
+    t_geoEffThrowsZ = ROOT.std.vector('float')()
+    tGeoEfficiencyThrowsOut.Branch("geoEffThrowsZ", t_geoEffThrowsZ)
+    t_geoEffThrowsPhi = ROOT.std.vector('float')()
+    tGeoEfficiencyThrowsOut.Branch("geoEffThrowsPhi", t_geoEffThrowsPhi)
 
     events = ROOT.TChain( "EDepSimEvents", "main event tree" )
     #dspt = ROOT.TChain( "DetSimPassThru/gRooTracker", "other thing" )
