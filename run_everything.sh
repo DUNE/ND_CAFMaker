@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+1;5201;0c#! /usr/bin/env bash
 
 HORN=$1
 FIRST=$2
@@ -210,7 +210,7 @@ export LD_LIBRARY_PATH=${PWD}/nusystematics/build/nusystematics/artless:${LD_LIB
 export FHICL_FILE_PATH=${PWD}/nusystematics/nusystematics/fcl:${FHICL_FILE_PATH}
 
 # Run dumpTree to make a root file, you can start reading again if you averted your eyes before
-python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root
+python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root --offaxis ${OFFAXIS} --seed ${RNDSEED}
 
 # Run CAFMaker
 ./makeCAF --infile ${HORN}.${RNDSEED}.root --gfile ${MODE}.${RNDSEED}.ghep.root --outfile ${HORN}.${RNDSEED}.CAF.root --fhicl ./fhicl.fcl --seed ${RNDSEED} ${RHC} --oa ${OFFAXIS}

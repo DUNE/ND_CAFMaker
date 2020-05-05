@@ -15,14 +15,14 @@ def loop( events, tgeo, tout )
     collarLo = [ -320., -120., 30. ]
     collarHi = [ 320., 120., 470. ]
 
-    # Initialize geometric efficiency module. Use process ID as random seed...
-    geoEff = pyGeoEff.geoEff(os.getpid())
+    # Initialize geometric efficiency module.
+    geoEff = pyGeoEff.geoEff(pars.seed)
     # Multiple of 64 doesn't waste bits
     geoEff.setNThrows(4992)
     # Use neutrino decay position, rather than fixed neutrino direction as symmetry axis
     geoEff.useFixedBeamDir(False)
-    # Rough estimate from neutrino direction in mcc11v4 -- might want to update. In cm.
-    geoEff.setDecayPos([0., -5460, -5540])
+    # Decay position in detector coordinates. Rough estimate from neutrino direction in mcc11v4 -- might want to update. In cm.
+    geoEff.setDecayPos([-pars.offaxis*100, -5155, -55400])
     # 30 cm veto
     geoEff.setVetoSizes([30])
     # 20, 30 and 40 MeV threshold
@@ -338,6 +338,8 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option('--infile', help='Input file name', default="edep.root")
     parser.add_option('--outfile', help='Output file name', default="out.root")
+    parser.add_option('--offaxis', help='Off-axis position in metres', default=0.)
+    parser.add_option('--seed', help='Seed for geometric efficiency throws', default=0)
 
     (args, dummy) = parser.parse_args()
 
