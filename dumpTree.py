@@ -357,7 +357,7 @@ if __name__ == "__main__":
     #dspt = ROOT.TChain( "DetSimPassThru/gRooTracker", "other thing" )
 
     tf = ROOT.TFile( args.infile )
-#    tf.MakeProject("EDepSimEvents","*","RECREATE++")
+    tf.MakeProject("EDepSimEvents","*","RECREATE++")
 
     events = tf.Get( "EDepSimEvents" )
     tgeo = tf.Get("EDepSimGeometry")
