@@ -27,8 +27,7 @@ cd ${TOPDIR}
 
 # Get nusystematics and built it "artless"
 # The ART-dependent version can be ups setup but for ND we need this special build
-#git clone ssh://p-nusystematics@cdcvs.fnal.gov/cvs/projects/nusystematics
-git clone https://github.com/luketpickering/nusystematics.git
+git clone ssh://p-nusystematics@cdcvs.fnal.gov/cvs/projects/nusystematics
 mkdir nusystematics/build
 cd nusystematics/build
 cmake ../ -DUSEART=0 -DLIBXML2_LIB=/cvmfs/larsoft.opensciencegrid.org/products/libxml2/v2_9_5/Linux64bit+2.6-2.12-prof/lib/ -DLIBXML2_INC=/cvmfs/larsoft.opensciencegrid.org/products/libxml2/v2_9_5/Linux64bit+2.6-2.12-prof/include/libxml2 -DPYTHIA6=/cvmfs/larsoft.opensciencegrid.org/products/pythia/v6_4_28i/Linux64bit+2.6-2.12-gcc640-prof/lib
