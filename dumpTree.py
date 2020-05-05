@@ -16,13 +16,13 @@ def loop( events, tgeo, tout ):
     collarHi = [ 320., 120., 470. ]
 
     # Initialize geometric efficiency module.
-    geoEff = pyGeoEff.geoEff(pars.seed)
+    geoEff = pyGeoEff.geoEff(args.seed)
     # Multiple of 64 doesn't waste bits
-    geoEff.setNThrows(4992)
+    geoEff.setNthrows(4992)
     # Use neutrino decay position, rather than fixed neutrino direction as symmetry axis
-    geoEff.useFixedBeamDir(False)
+    geoEff.setUseFixedBeamDir(False)
     # Decay position in detector coordinates. Rough estimate from neutrino direction in mcc11v4 -- might want to update. In cm.
-    geoEff.setDecayPos([-pars.offaxis*100, -5155, -55400])
+    geoEff.setDecayPos(-args.offaxis*100, -5155, -55400)
     # 30 cm veto
     geoEff.setVetoSizes([30])
     # 20, 30 and 40 MeV threshold
@@ -32,14 +32,14 @@ def loop( events, tgeo, tout ):
     geoEff.setActiveY(collarLo[1]-30, collarHi[1]+30)
     geoEff.setActiveZ(collarLo[2]-30, collarHi[2]+30)
     # Range for translation throws. Use full active volume but fix X.
-    eff.setRangeX(-1, -1)
-    eff.setRandomizeX(False)
-    eff.setRangeY(collarLo[1]-30, collarHi[1]+30)
-    eff.setRangeZ(collarLo[2]-30, collarHi[2]+30)
+    geoEff.setRangeX(-1, -1)
+    geoEff.setRandomizeX(False)
+    geoEff.setRangeY(collarLo[1]-30, collarHi[1]+30)
+    geoEff.setRangeZ(collarLo[2]-30, collarHi[2]+30)
     # Set offset between MC coordinate system and volumes defined above.
-    eff.setOffsetX(offset[0])
-    eff.setOffsetY(offset[1])
-    eff.setOffsetZ(offset[2])
+    geoEff.setOffsetX(offset[0])
+    geoEff.setOffsetY(offset[1])
+    geoEff.setOffsetZ(offset[2])
 
     event = ROOT.TG4Event()
     events.SetBranchAddress("Event",ROOT.AddressOf(event))
@@ -338,8 +338,8 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option('--infile', help='Input file name', default="edep.root")
     parser.add_option('--outfile', help='Output file name', default="out.root")
-    parser.add_option('--offaxis', help='Off-axis position in metres', default=0.)
-    parser.add_option('--seed', help='Seed for geometric efficiency throws', default=0)
+    parser.add_option('--offaxis', help='Off-axis position in metres', default=0., type = "float")
+    parser.add_option('--seed', help='Seed for geometric efficiency throws', default=0, type = "int")
 
     (args, dummy) = parser.parse_args()
 
