@@ -42,7 +42,7 @@ cd ${TOPDIR}
 git clone --recurse-submodules https://github.com/cvilelasbu/DUNE_ND_GeoEff.git
 cd DUNE_ND_GeoEff
 cmake -DPYTHON_EXECUTABLE:FILEPATH=$PYTHON_DIR/bin/python .
-make
+make pyGeoEff
 
 cd ${TOPDIR}
 
