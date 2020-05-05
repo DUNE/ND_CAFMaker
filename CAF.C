@@ -95,6 +95,8 @@ CAF::CAF( std::string filename, bool isGas )
     cafMVA->Branch( "partEvReco", partEvReco, "partEvReco[nFSP]/D" );    
   }
 
+  cafMVA->Branch("geoEffThrowResults", &geoEffThrowResults);
+
   genie->Branch( "genie_record", &mcrec );
 
   cafPOT->Branch( "pot", &pot, "pot/D" );

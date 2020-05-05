@@ -209,6 +209,8 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "fsTrkLen", fsTrkLen );
   tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
 
+  tree->SetBranchAddress( "geoEffThrowResults", &caf.geoEffThrowResults );
+
   // DUNE reweight getter
   nusyst::response_helper rh( fhicl_filename );
   // Get list of variations, and make CAF branch for each one
@@ -608,6 +610,11 @@ int main( int argc, char const *argv[] )
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
   caf.write();
+
+  // Copy geometric efficiency throws TTree to CAF file
+  TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
+  caf.cafFile->cd();
+  tGeoEfficiencyThrowsOut->CloneTree()->Write();
 
   caf.cafFile->Close();
 
