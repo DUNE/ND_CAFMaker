@@ -80,11 +80,11 @@ def loop( events, tgeo, tout ):
             ## done
 
             # now ID numucc
-            reaction=vertex.Reaction        
+            reaction=vertex.GetReaction()
 
             # set the vertex location for output
             for i in range(3): 
-                t_vtx[i] = vertex.Position[i] / 10. - offset[i] # cm
+                t_vtx[i] = vertex.GetPosition()[i] / 10. - offset[i] # cm
 
             # fiducial vertex pre-cut
             if abs(t_vtx[0]) > 310. or abs(t_vtx[1]) > 110. or t_vtx[2] < 40. or t_vtx[2] > 360.:
@@ -108,22 +108,22 @@ def loop( events, tgeo, tout ):
             # get the lepton kinematics from the edepsim file
             fsParticleIdx = {}
             for ipart,particle in enumerate(vertex.Particles):
-                e = particle.Momentum[3]
-                p = (particle.Momentum[0]**2 + particle.Momentum[1]**2 + particle.Momentum[2]**2)**0.5
+                e = particle.GetMomentum()[3]
+                p = (particle.GetMomentum()[0]**2 + particle.GetMomentum()[1]**2 + particle.GetMomentum()[2]**2)**0.5
                 m = (e**2 - p**2)**0.5
-                t_fsPdg[nfsp] = particle.PDGCode
-                t_fsPx[nfsp] = particle.Momentum[0]
-                t_fsPy[nfsp] = particle.Momentum[1]
-                t_fsPz[nfsp] = particle.Momentum[2]
+                t_fsPdg[nfsp] = particle.GetPDGCode()
+                t_fsPx[nfsp] = particle.GetMomentum()[0]
+                t_fsPy[nfsp] = particle.GetMomentum()[1]
+                t_fsPz[nfsp] = particle.GetMomentum()[2]
                 t_fsE[nfsp] = e
-                fsParticleIdx[particle.TrackId] = nfsp
+                fsParticleIdx[particle.GetTrackId()] = nfsp
                 nfsp += 1
-                pdg = particle.PDGCode
+                pdg = particle.GetPDGCode()
                 if abs(pdg) in [11,12,13,14]:
-                    ileptraj = particle.TrackId
+                    ileptraj = particle.GetTrackId()
                     t_lepPdg[0] = pdg
                     # set the muon momentum for output
-                    for i in range(3): t_p3lep[i] = particle.Momentum[i]
+                    for i in range(3): t_p3lep[i] = particle.GetMomentum()[i]
                     t_lepKE[0] = e - m
 
             assert ileptraj != -1, "There isn't a lepton??"
@@ -133,7 +133,7 @@ def loop( events, tgeo, tout ):
             if abs(t_lepPdg[0]) == 13:
                 leptraj = event.Trajectories[ileptraj]
                 for p in leptraj.Points:
-                    pt = p.Position
+                    pt = p.GetPosition()
                     node = tgeo.FindNode( pt.X(), pt.Y(), pt.Z() )
                     volName = node.GetName()
                     active = False
@@ -141,16 +141,16 @@ def loop( events, tgeo, tout ):
                         t_muonExitPt[0] = pt.X() / 10. - offset[0]
                         t_muonExitPt[1] = pt.Y() / 10. - offset[1]
                         t_muonExitPt[2] = pt.Z() / 10. - offset[2]
-                        t_muonExitMom[0] = p.Momentum.x()
-                        t_muonExitMom[1] = p.Momentum.y()
-                        t_muonExitMom[2] = p.Momentum.z()
+                        t_muonExitMom[0] = p.GetMomentum().x()
+                        t_muonExitMom[1] = p.GetMomentum().y()
+                        t_muonExitMom[2] = p.GetMomentum().z()
                     else:
                         t_muonExitPt[0] = pt.X() / 10. - offset[0]
                         t_muonExitPt[1] = pt.Y() / 10. - offset[1]
                         t_muonExitPt[2] = pt.Z() / 10. - offset[2]
                         break
 
-                endpt = leptraj.Points[-1].Position
+                endpt = leptraj.Points[-1].GetPosition()
 
                 node = tgeo.FindNode( endpt.X(), endpt.Y(), endpt.Z() )
 
@@ -171,10 +171,10 @@ def loop( events, tgeo, tout ):
 
                 tot_length = 0.0
                 for hit in hits:
-                    if hit.PrimaryId == ileptraj: # hit is due to the muon
+                    if hit.GetPrimaryId() == ileptraj: # hit is due to the muon
                         # TG4HitSegment::TrackLength includes all delta-rays, which spiral in gas TPC and give ridiculously long tracks
-                        hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                        hStop = ROOT.TVector3( hit.Stop[0]/10.-offset[0], hit.Stop[1]/10.-offset[1], hit.Stop[2]/10.-offset[2] )
+                        hStart = ROOT.TVector3( hit.GetStart()[0]/10.-offset[0], hit.GetStart()[1]/10.-offset[1], hit.GetStart()[2]/10.-offset[2] )
+                        hStop = ROOT.TVector3( hit.GetStop()[0]/10.-offset[0], hit.GetStop()[1]/10.-offset[1], hit.GetStop()[2]/10.-offset[2] )
                         tot_length += (hStop-hStart).Mag()
 
                 # look for muon hits in the ECAL
@@ -185,10 +185,10 @@ def loop( events, tgeo, tout ):
 
                 etot_length = 0.0
                 for hit in ehits:
-                    if hit.PrimaryId == ileptraj: # hit is due to the muon
+                    if hit.GetPrimaryId() == ileptraj: # hit is due to the muon
                         # TG4HitSegment::TrackLength includes all delta-rays, which spiral in gas TPC and give ridiculously long tracks
-                        hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                        hStop = ROOT.TVector3( hit.Stop[0]/10.-offset[0], hit.Stop[1]/10.-offset[1], hit.Stop[2]/10.-offset[2] )
+                        hStart = ROOT.TVector3( hit.GetStart()[0]/10.-offset[0], hit.GetStart()[1]/10.-offset[1], hit.GetStart()[2]/10.-offset[2] )
+                        hStop = ROOT.TVector3( hit.GetStop()[0]/10.-offset[0], hit.GetStop()[1]/10.-offset[1], hit.GetStop()[2]/10.-offset[2] )
                         etot_length += (hStop-hStart).Mag()
                 
                 t_muGArLen[0] = tot_length
@@ -206,16 +206,16 @@ def loop( events, tgeo, tout ):
             tid_to_gamma = {}
             gamma_tids = []
             for traj in event.Trajectories:
-                mom = traj.ParentId
-                tid = traj.TrackId
-                if event.Trajectories[mom].PDGCode == 111 and event.Trajectories[tid].PDGCode == 22 and event.Trajectories[mom].ParentId == -1:
+                mom = traj.GetParentId()
+                tid = traj.GetTrackId()
+                if event.Trajectories[mom].GetPDGCode() == 111 and event.Trajectories[tid].GetPDGCode() == 22 and event.Trajectories[mom].GetParentId() == -1:
                     gamma_tids.append(tid)
                 while mom != -1:
                     tid = mom
-                    mom = event.Trajectories[mom].ParentId
+                    mom = event.Trajectories[mom].GetParentId()
                     if mom in gamma_tids:
                         tid_to_gamma[tid] = mom
-                traj_to_pdg[traj] = event.Trajectories[tid].PDGCode
+                traj_to_pdg[traj] = event.Trajectories[tid].GetPDGCode()
 
             collar_energy = 0.
             total_energy = 0.
@@ -233,22 +233,22 @@ def loop( events, tgeo, tout ):
             for g in gamma_tids:
                 gamma_energy[g] = 0.
             for hit in hits:
-                hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                hStop = ROOT.TVector3( hit.Stop[0]/10.-offset[0], hit.Stop[1]/10.-offset[1], hit.Stop[2]/10.-offset[2] )
+                hStart = ROOT.TVector3( hit.GetStart()[0]/10.-offset[0], hit.GetStart()[1]/10.-offset[1], hit.GetStart()[2]/10.-offset[2] )
+                hStop = ROOT.TVector3( hit.GetStop()[0]/10.-offset[0], hit.GetStop()[1]/10.-offset[1], hit.GetStop()[2]/10.-offset[2] )
 
                 # Don't use edep-sim's PrimaryId, which thinks you want to associate absoltely everything with the primary
                 # Instead, get the actual contributors (usually only one) and take the biggest
                 tid = hit.Contrib[0]
 
                 traj = event.Trajectories[tid]
-                if traj.ParentId == -1: # primary particle
-                    idx = fsParticleIdx[hit.PrimaryId]
-                    trk_calo[idx] += hit.EnergyDeposit
+                if traj.GetParentId() == -1: # primary particle
+                    idx = fsParticleIdx[hit.GetPrimaryId()]
+                    trk_calo[idx] += hit.GetEnergyDeposit()
                     end_point[idx] = hStop
                     dx = (hStop-hStart).Mag()
                     track_length[idx] += dx
                     this_step[idx][1] += dx
-                    this_step[idx][0] += hit.EnergyDeposit
+                    this_step[idx][0] += hit.GetEnergyDeposit()
                     if this_step[idx][1] > 0.5:
                         dEdX[idx].append( (this_step[idx][0], this_step[idx][1], hStart) ) # MeV/cm
                         this_step[idx] = [0., 0.]
@@ -256,32 +256,32 @@ def loop( events, tgeo, tout ):
                     for k,ep in enumerate(end_point):
                         if ep is None: continue
                         if (hStart-ep).Mag() < 10.:
-                            int_energy[k] += hit.EnergyDeposit
+                            int_energy[k] += hit.GetEnergyDeposit()
 
                 if tid in tid_to_gamma:
-                    gamma_energy[tid_to_gamma[tid]] += hit.EnergyDeposit
+                    gamma_energy[tid_to_gamma[tid]] += hit.GetEnergyDeposit()
 
-                if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
-                    hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                    total_energy += hit.EnergyDeposit
+                if hit.GetPrimaryId() != ileptraj: # here we do want to associate stuff to the lepton
+                    hStart = ROOT.TVector3( hit.GetStart()[0]/10.-offset[0], hit.GetStart()[1]/10.-offset[1], hit.GetStart()[2]/10.-offset[2] )
+                    total_energy += hit.GetEnergyDeposit()
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
-                        collar_energy += hit.EnergyDeposit
+                        collar_energy += hit.GetEnergyDeposit()
                     
                     # Set up arrays for geometric efficiency
                     for dim in range(3) :
-                        geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[0])/2./10.)
-                        geoEff_EDepEnergy.append(hit.EnergyDeposit)
+                        geoEff_EDepPosition.append((hit.GetStart()[dim] + hit.GetStop()[0])/2./10.)
+                        geoEff_EDepEnergy.append(hit.GetEnergyDeposit())
 
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
                     if pdg in [11, -11, 13, -13]: continue # lepton
-                    elif pdg == 2212: t_hadP[0] += hit.EnergyDeposit
-                    elif pdg == 2112: t_hadN[0] += hit.EnergyDeposit
-                    elif pdg == 211: t_hadPip[0] += hit.EnergyDeposit
-                    elif pdg == -211: t_hadPim[0] += hit.EnergyDeposit
-                    elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
-                    else: t_hadOther[0] += hit.EnergyDeposit
+                    elif pdg == 2212: t_hadP[0] += hit.GetEnergyDeposit()
+                    elif pdg == 2112: t_hadN[0] += hit.GetEnergyDeposit()
+                    elif pdg == 211: t_hadPip[0] += hit.GetEnergyDeposit()
+                    elif pdg == -211: t_hadPim[0] += hit.GetEnergyDeposit()
+                    elif pdg == 111: t_hadPi0[0] += hit.GetEnergyDeposit()
+                    else: t_hadOther[0] += hit.GetEnergyDeposit()
 
             t_hadTot[0] = total_energy
             t_hadCollar[0] = collar_energy
@@ -319,7 +319,7 @@ def loop( events, tgeo, tout ):
 
             # Photons
             for t in gamma_tids:
-                mom = event.Trajectories[t].ParentId
+                mom = event.Trajectories[t].GetParentId()
                 if t_fsGamma1[mom] == 0.: t_fsGamma1[mom] = gamma_energy[t]
                 elif t_fsGamma2[mom] == 0.: t_fsGamma2[mom] = gamma_energy[t]
                 else:
