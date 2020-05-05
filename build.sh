@@ -41,7 +41,7 @@ cd ${TOPDIR}
 # Get Geometric efficiency library and build
 git clone --recurse-submodules https://github.com/cvilelasbu/DUNE_ND_GeoEff.git
 cd DUNE_ND_GeoEff
-cmake .
+cmake -DPYTHON_EXECUTABLE:FILEPATH=$PYTHONHOME/bin/python .
 make
 
 cd ${TOPDIR}
