@@ -61,7 +61,7 @@ public:
   genie::NtpMCEventRecord * mcrec;
 
   // Event-by-event geometric efficiency throw results
-  std::vector< std::vector < std::vector < uint64_t > > > geoEffThrowResults;
+  std::vector< std::vector < std::vector < uint64_t > > > * geoEffThrowResults;
 
   // meta
   double pot;

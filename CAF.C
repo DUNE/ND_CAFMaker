@@ -13,6 +13,9 @@ CAF::CAF( std::string filename, bool isGas )
   // initialize the GENIE record
   mcrec = NULL;
 
+  // initialize geometric efficiency throw results
+  geoEffThrowResults = new std::vector< std::vector < std::vector < uint64_t > > >();
+
   cafMVA->Branch( "run", &run, "run/I" );
   cafMVA->Branch( "subrun", &subrun, "subrun/I" );
   cafMVA->Branch( "event", &event, "event/I" );

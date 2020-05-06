@@ -16,13 +16,13 @@ def loop( events, tgeo, tout ):
     collarHi = [ 320., 120., 470. ]
 
     # Initialize geometric efficiency module.
-    geoEff = pyGeoEff.geoEff(pars.seed)
+    geoEff = pyGeoEff.geoEff(args.seed)
     # Multiple of 64 doesn't waste bits
-    geoEff.setNThrows(4992)
+    geoEff.setNthrows(4992)
     # Use neutrino decay position, rather than fixed neutrino direction as symmetry axis
-    geoEff.useFixedBeamDir(False)
+    geoEff.setUseFixedBeamDir(False)
     # Decay position in detector coordinates. Rough estimate from neutrino direction in mcc11v4 -- might want to update. In cm.
-    geoEff.setDecayPos([-pars.offaxis*100, -5155, -55400])
+    geoEff.setDecayPos(-args.offaxis*100, -5155, -55400)
     # 30 cm veto
     geoEff.setVetoSizes([30])
     # 20, 30 and 40 MeV threshold
@@ -32,14 +32,14 @@ def loop( events, tgeo, tout ):
     geoEff.setActiveY(collarLo[1]-30, collarHi[1]+30)
     geoEff.setActiveZ(collarLo[2]-30, collarHi[2]+30)
     # Range for translation throws. Use full active volume but fix X.
-    eff.setRangeX(-1, -1)
-    eff.setRandomizeX(False)
-    eff.setRangeY(collarLo[1]-30, collarHi[1]+30)
-    eff.setRangeZ(collarLo[2]-30, collarHi[2]+30)
+    geoEff.setRangeX(-1, -1)
+    geoEff.setRandomizeX(False)
+    geoEff.setRangeY(collarLo[1]-30, collarHi[1]+30)
+    geoEff.setRangeZ(collarLo[2]-30, collarHi[2]+30)
     # Set offset between MC coordinate system and volumes defined above.
-    eff.setOffsetX(offset[0])
-    eff.setOffsetY(offset[1])
-    eff.setOffsetZ(offset[2])
+    geoEff.setOffsetX(offset[0])
+    geoEff.setOffsetY(offset[1])
+    geoEff.setOffsetZ(offset[2])
 
     event = ROOT.TG4Event()
     events.SetBranchAddress("Event",ROOT.AddressOf(event))
@@ -81,7 +81,7 @@ def loop( events, tgeo, tout ):
             ## done
 
             # now ID numucc
-            reaction=vertex.Reaction        
+            reaction=vertex.Reaction
 
             # set the vertex location for output
             for i in range(3): 
@@ -97,10 +97,15 @@ def loop( events, tgeo, tout ):
             # Renew throws every 100th event written to the output file.
             if (iwritten % 100) == 0 :
                 geoEff.throwTransforms()
-                t_geoEffThrowsX = geoEff.getCurrentThrowTranslationsX() # Redundant for fixed X
-                t_geoEffThrowsY = geoEff.getCurrentThrowTranslationsY()
-                t_geoEffThrowsZ = geoEff.getCurrentThrowTranslationsZ()
-                t_geoEffThrowsPhi = geoEff.getCurrentThrowTranslationsPhi()
+                t_geoEffThrowsY.clear()
+                for i in geoEff.getCurrentThrowTranslationsY() :
+                    t_geoEffThrowsY.push_back(i)
+                t_geoEffThrowsZ.clear()
+                for i in geoEff.getCurrentThrowTranslationsZ() :
+                    t_geoEffThrowsZ.push_back(i)
+                t_geoEffThrowsPhi.clear()
+                for i in geoEff.getCurrentThrowRotations() :
+                    t_geoEffThrowsPhi.push_back(i)
                 tGeoEfficiencyThrowsOut.Fill()
                 
             ileptraj = -1
@@ -272,8 +277,8 @@ def loop( events, tgeo, tout ):
                     
                     # Set up arrays for geometric efficiency
                     for dim in range(3) :
-                        geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[0])/2./10.)
-                        geoEff_EDepEnergy.append(hit.EnergyDeposit)
+                        geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[dim])/2./10.)
+                    geoEff_EDepEnergy.append(hit.EnergyDeposit)
 
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
@@ -288,11 +293,21 @@ def loop( events, tgeo, tout ):
             t_hadTot[0] = total_energy
             t_hadCollar[0] = collar_energy
 
-            geoEff.setHigSegEDeps(geoEff_EDepPosition)
-            geoEff.setHitSegPoss(geoEff_EDepEnergy)
+            geoEff.setHitSegEdeps(geoEff_EDepEnergy)
+            geoEff.setHitSegPoss(geoEff_EDepPosition)
 
-            t_geoEffThrowResults = geoEff.getHadronContainmentThrows()
-
+            geoEffThrowResultsList = geoEff.getHadronContainmentThrows()
+            
+            t_geoEffThrowResults.clear()
+            for i in range(len(geoEffThrowResultsList)) :
+                iVec = ROOT.std.vector('vector< uint64_t >')()
+                for j in range (len(geoEffThrowResultsList[i])) :
+                    jVec = ROOT.std.vector('uint64_t')()
+                    for k in range(len(geoEffThrowResultsList[i][j])) :
+                        jVec.push_back(geoEffThrowResultsList[i][j][k])
+                    iVec.push_back(jVec)
+                t_geoEffThrowResults.push_back(iVec)
+                                       
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
                 # Average of anything in the last 3cm of track
@@ -340,8 +355,8 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option('--infile', help='Input file name', default="edep.root")
     parser.add_option('--outfile', help='Output file name', default="out.root")
-    parser.add_option('--offaxis', help='Off-axis position in metres', default=0.)
-    parser.add_option('--seed', help='Seed for geometric efficiency throws', default=0)
+    parser.add_option('--offaxis', help='Off-axis position in metres', default=0., type = "float")
+    parser.add_option('--seed', help='Seed for geometric efficiency throws', default=0, type = "int")
 
     (args, dummy) = parser.parse_args()
 
@@ -423,8 +438,6 @@ if __name__ == "__main__":
 
     # Separate TTree to store translations and rotations of throws
     tGeoEfficiencyThrowsOut = ROOT.TTree( "geoEffThrows","geoEffThrows")
-    t_geoEffThrowsX = ROOT.std.vector('float')()
-    tGeoEfficiencyThrowsOut.Branch("geoEffThrowsX", t_geoEffThrowsX)
     t_geoEffThrowsY = ROOT.std.vector('float')()
     tGeoEfficiencyThrowsOut.Branch("geoEffThrowsY", t_geoEffThrowsY)
     t_geoEffThrowsZ = ROOT.std.vector('float')()
@@ -444,7 +457,9 @@ if __name__ == "__main__":
 
     fout.cd()
     tout.Write()
-
+    tGeoEfficiencyThrowsOut.Write()
+    
+    
 
 
 
