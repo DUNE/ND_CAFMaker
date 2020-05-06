@@ -1,4 +1,4 @@
-1;5201;0c#! /usr/bin/env bash
+#! /usr/bin/env bash
 
 HORN=$1
 FIRST=$2
