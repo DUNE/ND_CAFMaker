@@ -1,4 +1,4 @@
-1;5201;0c#! /usr/bin/env bash
+#! /usr/bin/env bash
 
 HORN=$1
 FIRST=$2
@@ -114,11 +114,14 @@ ${CP} ${TARDIR}/sim.tar.gz sim.tar.gz
 ${CP} ${TARDIR}/edep-sim.tar.gz edep-sim.tar.gz
 ${CP} ${TARDIR}/nusystematics.tar.gz nusystematics.tar.gz
 ${CP} ${TARDIR}/nusyst_inputs.tar.gz nusyst_inputs.tar.gz
+${CP} ${TARDIR}/DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff.tar.gz
+
 
 tar -xzf sim.tar.gz
 tar -xzf edep-sim.tar.gz
 tar -xzf nusystematics.tar.gz
 tar -xzf nusyst_inputs.tar.gz
+tar -xzf DUNE_ND_GeoEff.tar.gz
 mv sim/* ${PWD}
 
 # Get flux files to local node
