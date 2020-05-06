@@ -20,6 +20,7 @@ export Geant4_DIR=`dirname $G4_cmake_file`
 # Get edep-sim and build it
 git clone https://github.com/ClarkMcGrew/edep-sim.git
 cd edep-sim
+sed -i 's/add_definitions(-DEDEPSIM_FORCE_PRIVATE_FIELDS)//g' */CMakeLists.txt
 source setup.sh
 source build/edep-build.sh
 
