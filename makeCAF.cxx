@@ -532,6 +532,9 @@ int main( int argc, char const *argv[] )
     return 0;
   }
 
+  // Need this to store event-by-event geometric efficiency
+  gInterpreter->GenerateDictionary("vector<vector<vector<uint64_t> > >", "vector");
+
   // get command line options
   std::string gfile;
   std::string infile;
@@ -609,13 +612,14 @@ int main( int argc, char const *argv[] )
   caf.version = 4;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
-  caf.write();
 
   // Copy geometric efficiency throws TTree to CAF file
+  std::cout << "Copying geometric efficiency throws TTree to output file" << std::endl;
   TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
   caf.cafFile->cd();
   tGeoEfficiencyThrowsOut->CloneTree()->Write();
 
-  caf.cafFile->Close();
-
+  std::cout << "Writing CAF" << std::endl;
+  caf.write();
+    
 }
