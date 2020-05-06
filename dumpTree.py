@@ -67,7 +67,7 @@ def loop( events, tgeo, tout ):
             t_muonExitPt[0] = 0.0; t_muonExitPt[1] = 0.0; t_muonExitPt[2] = 0.0; 
             t_muonExitMom[0] = 0.0; t_muonExitMom[1] = 0.0; t_muonExitMom[2] = 0.0; 
             t_muonReco[0] = -1;
-            t_muon_endVolName = ""
+            t_muon_endVolName.replace(0, ROOT.std.string.npos, "")
             t_muGArLen[0]=0.0;
             t_hadTot[0] = 0.
             t_hadP[0] = 0.
@@ -165,7 +165,7 @@ def loop( events, tgeo, tout ):
                 t_lepDeath[2] = endpt.Z()/10. - offset[2]
 
                 endVolName = node.GetName()
-                t_muon_endVolName = endVolName
+                t_muon_endVolName.replace(0, ROOT.std.string.npos, endVolName)
                 if "LArActive" in endVolName: t_muonReco[0] = 1 # contained
                 elif "ECal" in endVolName: t_muonReco[0] = 2 # ECAL stopper
                 else: t_muonReco[0] = 0 # endpoint not in active material, but might still be reconstructed by curvature if GAr length > 0
@@ -383,7 +383,7 @@ if __name__ == "__main__":
     tout.Branch('muonExitMom',t_muonExitMom,'muonExitMom[3]/F')
     t_muonReco = array('i',[0])
     tout.Branch('muonReco',t_muonReco,'muonReco/I')
-    t_muon_endVolName = ROOT.std.string
+    t_muon_endVolName = ROOT.std.string()
     tout.Branch('muon_endVolName', t_muon_endVolName)
     t_muGArLen = array('f',[0])
     tout.Branch('muGArLen',t_muGArLen,'muGArLen/F')

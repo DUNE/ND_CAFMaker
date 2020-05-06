@@ -40,7 +40,7 @@ public:
   int reco_numu, reco_nue, reco_nc, reco_q;
   int muon_contained, muon_tracker, muon_ecal, muon_exit, reco_lepton_pdg;
   float muon_endpoint[3];
-  std::string muon_endVolName;
+  std::string * muon_endVolName;
   double Ehad_veto;
   double pileup_energy;
 

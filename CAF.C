@@ -16,6 +16,9 @@ CAF::CAF( std::string filename, bool isGas )
   // initialize geometric efficiency throw results
   geoEffThrowResults = new std::vector< std::vector < std::vector < uint64_t > > >();
 
+  // initialize muon end volume sting
+  muon_endVolName = new std::string();
+
   cafMVA->Branch( "run", &run, "run/I" );
   cafMVA->Branch( "subrun", &subrun, "subrun/I" );
   cafMVA->Branch( "event", &event, "event/I" );
