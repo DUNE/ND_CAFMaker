@@ -91,15 +91,20 @@ def loop( events, tgeo, tout ):
                 continue
             
 
-            geoEff.setVertex(vertex.GetPosition()[0] / 10., vertex.GetPosition()[1] / 10.,vertex.GetPosition()[2] / 10.)
+            geoEff.setVertex(vertex.Position[0] / 10., vertex.Position[1] / 10.,vertex.Position[2] / 10.)
             
             # Renew throws every 100th event written to the output file.
             if (iwritten % 100) == 0 :
                 geoEff.throwTransforms()
-                t_geoEffThrowsX = geoEff.getCurrentThrowTranslationsX() # Redundant for fixed X
-                t_geoEffThrowsY = geoEff.getCurrentThrowTranslationsY()
-                t_geoEffThrowsZ = geoEff.getCurrentThrowTranslationsZ()
-                t_geoEffThrowsPhi = geoEff.getCurrentThrowRotations()
+                t_geoEffThrowsY.clear()
+                for i in geoEff.getCurrentThrowTranslationsY() :
+                    t_geoEffThrowsY.push_back(i)
+                t_geoEffThrowsZ.clear()
+                for i in geoEff.getCurrentThrowTranslationsZ() :
+                    t_geoEffThrowsZ.push_back(i)
+                t_geoEffThrowsPhi.clear()
+                for i in geoEff.getCurrentThrowRotations() :
+                    t_geoEffThrowsPhi.push_back(i)
                 tGeoEfficiencyThrowsOut.Fill()
                 
             ileptraj = -1
@@ -270,7 +275,7 @@ def loop( events, tgeo, tout ):
                     
                     # Set up arrays for geometric efficiency
                     for dim in range(3) :
-                        geoEff_EDepPosition.append((hit.GetStart()[dim] + hit.GetStop()[0])/2./10.)
+                        geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[dim])/2./10.)
                     geoEff_EDepEnergy.append(hit.EnergyDeposit)
 
                     # Determine primary particle
@@ -289,8 +294,18 @@ def loop( events, tgeo, tout ):
             geoEff.setHitSegEdeps(geoEff_EDepEnergy)
             geoEff.setHitSegPoss(geoEff_EDepPosition)
 
-            t_geoEffThrowResults = geoEff.getHadronContainmentThrows()
-
+            geoEffThrowResultsList = geoEff.getHadronContainmentThrows()
+            
+            t_geoEffThrowResults.clear()
+            for i in range(len(geoEffThrowResultsList)) :
+                iVec = ROOT.std.vector('vector< uint64_t >')()
+                for j in range (len(geoEffThrowResultsList[i])) :
+                    jVec = ROOT.std.vector('uint64_t')()
+                    for k in range(len(geoEffThrowResultsList[i][j])) :
+                        jVec.push_back(geoEffThrowResultsList[i][j][k])
+                    iVec.push_back(jVec)
+                t_geoEffThrowResults.push_back(iVec)
+                                       
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
                 # Average of anything in the last 3cm of track
@@ -419,8 +434,6 @@ if __name__ == "__main__":
 
     # Separate TTree to store translations and rotations of throws
     tGeoEfficiencyThrowsOut = ROOT.TTree( "geoEffThrows","geoEffThrows")
-    t_geoEffThrowsX = ROOT.std.vector('float')()
-    tGeoEfficiencyThrowsOut.Branch("geoEffThrowsX", t_geoEffThrowsX)
     t_geoEffThrowsY = ROOT.std.vector('float')()
     tGeoEfficiencyThrowsOut.Branch("geoEffThrowsY", t_geoEffThrowsY)
     t_geoEffThrowsZ = ROOT.std.vector('float')()
@@ -440,7 +453,9 @@ if __name__ == "__main__":
 
     fout.cd()
     tout.Write()
-
+    tGeoEfficiencyThrowsOut.Write()
+    
+    
 
 
 
