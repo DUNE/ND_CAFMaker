@@ -223,13 +223,14 @@ ls
 ifdh_mkdir_p ${OUTDIR}/genie/${RDIR}
 ifdh_mkdir_p ${OUTDIR}/dump/${RDIR}
 ifdh_mkdir_p ${OUTDIR}/CAF/${RDIR}
+ifdh_mkdir_p ${OUTDIR}/edep/${RDIR}
 
 # GENIE, this is usually small and good idea to save
 echo "${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${RDIR}/${HORN}.${RNDSEED}.ghep.root"
 ${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${RDIR}/${HORN}.${RNDSEED}.ghep.root
 
 # G4/edep-sim file is HUGE and probably we can't save it
-#${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${RDIR}/${HORN}.${RNDSEED}.edep.root
+${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${RDIR}/${HORN}.${RNDSEED}.edep.root
 
 # "dump" file is useful for various analyses
 echo "${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${RDIR}/${HORN}.${RNDSEED}.dump.root"
