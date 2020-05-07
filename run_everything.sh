@@ -212,8 +212,9 @@ export LD_LIBRARY_PATH=${PWD}/nusystematics/build/Linux/lib:${LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH=${PWD}/nusystematics/build/nusystematics/artless:${LD_LIBRARY_PATH}
 export FHICL_FILE_PATH=${PWD}/nusystematics/nusystematics/fcl:${FHICL_FILE_PATH}
 
-# add pyGeoEff to pythonpath
-export PYTHONPATH=${PYTHONPATH}:${PWD}/DUNE_ND_GeoEff/lib/
+# add pyGeoEff to pythonpath, and libgeoEff to LD_LIBRARY_PATH
+export PYTHONPATH=${PWD}/DUNE_ND_GeoEff/lib/:${PYTHONPATH}
+export LD_LIBRARY_PATH=${PWD}/DUNE_ND_GeoEff/lib:${LD_LIBRARY_PATH}
 
 # Run dumpTree to make a root file, you can start reading again if you averted your eyes before
 python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root --offaxis ${OFFAXIS} --seed ${RNDSEED}
