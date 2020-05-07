@@ -200,6 +200,8 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "vtx", vtx );
   tree->SetBranchAddress( "muonExitPt", muonExitPt );
   tree->SetBranchAddress( "muonExitMom", muonExitMom );
+  tree->SetBranchAddress( "lepDeath", &caf.muon_endpoint );
+  tree->SetBranchAddress( "muon_endVolName", &caf.muon_endVolName );
   tree->SetBranchAddress( "nFS", &nFS );
   tree->SetBranchAddress( "fsPdg", fsPdg );
   tree->SetBranchAddress( "fsPx", fsPx );
