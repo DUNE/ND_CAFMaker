@@ -65,3 +65,4 @@ all : $(patsubst %.cxx, %.o, $(wildcard *.cxx))
 
 clean:
 	rm -f $(wildcard *.o) $(patsubst %.cxx, %, $(wildcard *.cxx))
+	rm -f $(wildcard AutoDict_*)
