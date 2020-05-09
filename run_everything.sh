@@ -217,7 +217,7 @@ export PYTHONPATH=${PWD}/DUNE_ND_GeoEff/lib/:${PYTHONPATH}
 export LD_LIBRARY_PATH=${PWD}/DUNE_ND_GeoEff/lib:${LD_LIBRARY_PATH}
 
 # Run dumpTree to make a root file, you can start reading again if you averted your eyes before
-python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root --offaxis ${OFFAXIS} --seed ${RNDSEED}
+python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root --seed ${RNDSEED}
 
 # Run CAFMaker
 ./makeCAF --infile ${HORN}.${RNDSEED}.root --gfile ${MODE}.${RNDSEED}.ghep.root --outfile ${HORN}.${RNDSEED}.CAF.root --fhicl ./fhicl.fcl --seed ${RNDSEED} ${RHC} --oa ${OFFAXIS}

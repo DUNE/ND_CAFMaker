@@ -7,6 +7,7 @@ import ROOT
 from optparse import OptionParser
 import xml.etree.ElementTree as ET
 from array import array
+from math import cos, sin
 
 import pyGeoEff
 
@@ -25,23 +26,24 @@ def loop( events, tgeo, tout ):
     # Decay position in detector coordinates. In cm.
     
     # Average neutrino decay position in beam coordinates as a function of vertex x (from Luke): Will be used to set the decay position event-by-event.
-    OffAxisPoints = [-2, 0.5, 3,    5.5, 8, 10.5, 13, 15.5, 18,  20.5, 23,  25.5, 28,   30.5]
-    meanPDPZ = [ 93.6072, 93.362,  90.346, 85.6266, 81.1443, 76.6664, 73.0865, 69.8348, 67.5822, 65.005, 62.4821, 60.8336, 59.1433, 57.7352]
+    OffAxisPoints = array('f', [-2, 0.5, 3,    5.5, 8, 10.5, 13, 15.5, 18,  20.5, 23,  25.5, 28,   30.5])
+    meanPDPZ = array('f', [ 93.6072, 93.362,  90.346, 85.6266, 81.1443, 76.6664, 73.0865, 69.8348, 67.5822, 65.005, 62.4821, 60.8336, 59.1433, 57.7352])
     gDecayZ = ROOT.TGraph(14, OffAxisPoints, meanPDPZ)
     
     # Get beam parameters
     try :
         GNuMIFluxTree = ET.parse(os.environ["GNUMIXML"])
         beamLineRotation = float(GNuMIFluxTree.getroot()[0].findall('beamdir')[0].findall('rotation')[0].text)
-        posText = tree.getroot()[0].findall('beampos')[0].text
+        posText = GNuMIFluxTree.getroot()[0].findall('beampos')[0].text
         posText = posText.replace("(", "")
         posText = posText.replace(")", "")
         posText = posText.replace("=", ",")
         posText = posText.split(",")
         beamRefDetCoord = [ float(posText[i]) for i in range(3)]
         detRefBeamCoord = [ float(posText[i]) for i in range(3,6)]
-    else :
-        print("dumpTree.py WARNING!!! GNUMIXML file not found. Set GNUMIXML enviornment variable to point at GNuMI flux configuration xml file. Exitting!")
+    except Exception, e:
+        print(str(e))
+        print("dumpTree.py WARNING!!! Error reading GNUMIXML file. Set GNUMIXML enviornment variable to point at GNuMI flux configuration xml file. Exitting!")
         exit(-1)
     
     # 30 cm veto
@@ -114,13 +116,11 @@ def loop( events, tgeo, tout ):
             
             # Use vertex to determine mean decay point
             decayZbeamCoord = gDecayZ.Eval(vertex.Position[0] / 1000 - detRefBeamCoord[0])*100 # in cm
-            print(decayZbeamCoord)
-            decayZdetCoord = (-1*detRefBeamCoord[2]+decayZbeamCoord)*cos(beamLineRotation) + beamRefDetCoord[2]
-            decayYdetCoord = -1*detRefBeamCoord[1]*sin(beamLineRotation) + beamRefDetCoord[1]
-            decayXdetCoord = -1*detRefBeamCoord[0] + beamRefDetCoord[0]
+            decayZdetCoord = (-1*detRefBeamCoord[2]*100+decayZbeamCoord)*cos(beamLineRotation) - (-1*detRefBeamCoord[1]*100*sin(beamLineRotation)) + beamRefDetCoord[2]*100
+            decayYdetCoord = (-1*detRefBeamCoord[1]*100*cos(beamLineRotation)) + (-1*detRefBeamCoord[2]*100+decayZbeamCoord)*sin(beamLineRotation) + beamRefDetCoord[1]*100
+            decayXdetCoord = -1*detRefBeamCoord[0]*100 + beamRefDetCoord[0]*100
+
             geoEff.setDecayPos(decayXdetCoord, decayYdetCoord, decayZdetCoord)
-            print(vertex.Position[0], vertex.Position[1], vertex.Position[2])
-            print(decayXdetCoord, decayYdetCoord, decayZdetCoord)
             geoEff.setVertex(vertex.Position[0] / 10., vertex.Position[1] / 10.,vertex.Position[2] / 10.)
             
             # Renew throws every 100th event written to the output file.
