@@ -88,8 +88,8 @@ def loop( events, tgeo, tout ):
                 t_vtx[i] = vertex.Position[i] / 10. - offset[i] # cm
 
             # fiducial vertex pre-cut
-            if abs(t_vtx[0]) > 310. or abs(t_vtx[1]) > 110. or t_vtx[2] < 40. or t_vtx[2] > 360.:
-                continue
+            #if abs(t_vtx[0]) > 310. or abs(t_vtx[1]) > 110. or t_vtx[2] < 40. or t_vtx[2] > 360.:
+            #    continue
             
 
             geoEff.setVertex(vertex.Position[0] / 10., vertex.Position[1] / 10.,vertex.Position[2] / 10.)

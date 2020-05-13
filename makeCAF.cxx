@@ -250,7 +250,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     caf.vtx_x = vtx[0];
     caf.vtx_y = vtx[1];
     caf.vtx_z = vtx[2]; 
-    caf.det_x = par.OA_xcoord;
+    caf.det_x = -100.*par.OA_xcoord;
 
     // configuration variables in CAF file; we don't use mvaresult so just set it to zero
     caf.run = par.run;

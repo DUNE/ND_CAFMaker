@@ -144,7 +144,7 @@ fi
 
 # Modify GNuMIFlux.xml to the specified off-axis position
 # Positive OFFAXIS will move the beam center positive, so that detector position is effectively negative
-sed -i "s/<beampos> ( 0.0, 0.0, 15.55 )/<beampos> ( ${OFFAXIS}, 0.0, 15.55 )/g" GNuMIFlux.xml
+sed -i "s/<beampos> ( 0.0/<beampos> ( ${OFFAXIS}/g" GNuMIFlux.xml
 
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
@@ -237,7 +237,7 @@ echo "${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${RDIR}/${HORN}.${RNDSE
 ${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${RDIR}/${HORN}.${RNDSEED}.ghep.root
 
 # G4/edep-sim file is HUGE and probably we can't save it
-${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${RDIR}/${HORN}.${RNDSEED}.edep.root
+#${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${RDIR}/${HORN}.${RNDSEED}.edep.root
 
 # "dump" file is useful for various analyses
 echo "${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${RDIR}/${HORN}.${RNDSEED}.dump.root"
