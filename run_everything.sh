@@ -4,8 +4,12 @@ HORN=$1
 FIRST=$2
 NPOT=$3
 OFFAXIS=$4
-FLUX=$5
-TEST=$6
+YOFFAXIS=$5
+FLUX=$6
+TEST=$7
+
+TIME_START=`date +%s`
+
 if [ "${HORN}" != "FHC" ] && [ "${HORN}" != "RHC" ]; then
 echo "Invalid beam mode ${HORN}"
 echo "Must be FHC or RHC"
@@ -32,6 +36,11 @@ fi
 if [ "${OFFAXIS}" = "" ]; then
 echo "Off axis position not specified, assuming on-axis"
 OFFAXIS=0
+fi
+
+if [ "${YOFFAXIS}" = "" ]; then
+echo "y Off axis position not specified, assuming on-axis"
+YOFFAXIS=0
 fi
 
 if [ "${FLUX}" = "" ]; then
@@ -110,19 +119,19 @@ export PATH=$PATH:$GEANT4_FQ_DIR/bin
 
 ##################################################
 # Get the binaries & other files that are needed
-${CP} ${TARDIR}/sim.tar.gz sim.tar.gz
+${CP} ${TARDIR}/sim_inputs.tar.gz sim_inputs.tar.gz
 ${CP} ${TARDIR}/edep-sim.tar.gz edep-sim.tar.gz
 ${CP} ${TARDIR}/nusystematics.tar.gz nusystematics.tar.gz
 ${CP} ${TARDIR}/nusyst_inputs.tar.gz nusyst_inputs.tar.gz
 ${CP} ${TARDIR}/DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff.tar.gz
 
 
-tar -xzf sim.tar.gz
+tar -xzf sim_inputs.tar.gz
 tar -xzf edep-sim.tar.gz
 tar -xzf nusystematics.tar.gz
 tar -xzf nusyst_inputs.tar.gz
 tar -xzf DUNE_ND_GeoEff.tar.gz
-mv sim/* ${PWD}
+mv sim_inputs/* ${PWD}
 
 # Get flux files to local node
 # dk2nu files: /pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT/OptimizedEngineeredNov2017/neutrino/flux/dk2nu
@@ -144,13 +153,14 @@ fi
 
 # Modify GNuMIFlux.xml to the specified off-axis position
 # Positive OFFAXIS will move the beam center positive, so that detector position is effectively negative
-sed -i "s/<beampos> ( 0.0/<beampos> ( ${OFFAXIS}/g" GNuMIFlux.xml
+sed -i "s/<beampos> ( 0.0, 0.05387, 6.66 )/<beampos> ( ${OFFAXIS}, ${YOFFAXIS}, 6.66 )/g" GNuMIFlux.xml
 
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
 
 # Run GENIE
 echo "Running gevgen"
+TIME_GENIE=`date +%s`
 gevgen_fnal \
     -f local_flux_files/${FLUX}*,DUNEND \
     -g ${GEOMETRY}.gdml \
@@ -174,6 +184,7 @@ export LD_LIBRARY_PATH=${PWD}/edep-sim/edep-gcc-6.4.0-x86_64-pc-linux-gnu/lib:${
 export PATH=${PWD}/edep-sim/edep-gcc-6.4.0-x86_64-pc-linux-gnu/bin:${PATH}
 
 echo "Running gntpc"
+TIME_ROOTRACKER=`date +%s`
 ${CP} ${MODE}.${RNDSEED}.ghep.root input_file.ghep.root
 gntpc -i input_file.ghep.root -f rootracker \
       --event-record-print-level 0 \
@@ -186,8 +197,8 @@ NPER=$(echo "std::cout << gtree->GetEntries() << std::endl;" | genie -l -b input
 ##################################################
 
 # Run edep-sim
-echo "Running edep-sim with ${NPER} events. ls:"
-ls
+echo "Running edep-sim with ${NPER} events."
+TIME_EDEPSIM=`date +%s`
 edep-sim \
     -C \
     -g ${GEOMETRY}.gdml \
@@ -217,15 +228,17 @@ export PYTHONPATH=${PWD}/DUNE_ND_GeoEff/lib/:${PYTHONPATH}
 export LD_LIBRARY_PATH=${PWD}/DUNE_ND_GeoEff/lib:${LD_LIBRARY_PATH}
 
 # Run dumpTree to make a root file, you can start reading again if you averted your eyes before
+TIME_DUMPTREE=`date +%s`
 python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root --seed ${RNDSEED}
 
 # Run CAFMaker
+TIME_CAFMAKER=`date +%s`
 ./makeCAF --infile ${HORN}.${RNDSEED}.root --gfile ${MODE}.${RNDSEED}.ghep.root --outfile ${HORN}.${RNDSEED}.CAF.root --fhicl ./fhicl.fcl --seed ${RNDSEED} ${RHC} --oa ${OFFAXIS}
 
 ##################################################
 # Copy the output files
 echo "It's copy time, here are the files that I have:"
-ls
+TIME_COPY=`date +%s`
 
 ifdh_mkdir_p ${OUTDIR}/genie/${RDIR}
 ifdh_mkdir_p ${OUTDIR}/dump/${RDIR}
@@ -246,3 +259,19 @@ ${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${RDIR}/${HORN}.${RNDSEED}.dump.roo
 echo "${CP} ${HORN}.${RNDSEED}.CAF.root ${OUTDIR}/CAF/${RDIR}/${HORN}.${RNDSEED}.CAF.root"
 ${CP} ${HORN}.${RNDSEED}.CAF.root ${OUTDIR}/CAF/${RDIR}/${HORN}.${RNDSEED}.CAF.root
 
+TIME_END=`date +%s`
+# Print out a single thing that says the time of each step
+TIME_S=$((${TIME_GENIE}-${TIME_START}))
+TIME_G=$((${TIME_ROOTRACKER}-${TIME_GENIE}))
+TIME_R=$((${TIME_EDEPSIM}-${TIME_ROOTRACKER}))
+TIME_E=$((${TIME_DUMPTREE}-${TIME_EDEPSIM}))
+TIME_D=$((${TIME_CAFMAKER}-${TIME_DUMPTREE}))
+TIME_M=$((${TIME_COPY}-${TIME_CAFMAKER}))
+TIME_C=$((${TIME_END}-${TIME_COPY}))
+echo "Start-up time: ${TIME_S}"
+echo "gevgen time: ${TIME_G}"
+echo "gntpc time: ${TIME_R}"
+echo "edep-sim time: ${TIME_E}"
+echo "dumpTree time: ${TIME_D}"
+echo "makeCAF time: ${TIME_M}"
+echo "Copy time: ${TIME_C}"
