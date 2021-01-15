@@ -4,9 +4,8 @@ HORN=$1
 FIRST=$2
 NPOT=$3
 OFFAXIS=$4
-YOFFAXIS=$5
-FLUX=$6
-TEST=$7
+FLUX=$5
+TEST=$6
 
 TIME_START=`date +%s`
 
@@ -24,8 +23,8 @@ RHC=" --rhc"
 fi
 
 if [ "${NPOT}" = "" ]; then
-echo "POT not specified, using 5E16"
-NPOT=5E16
+echo "POT not specified, using 1E16"
+NPOT=1E16
 fi
 
 if [ "${FIRST}" = "" ]; then
@@ -36,11 +35,6 @@ fi
 if [ "${OFFAXIS}" = "" ]; then
 echo "Off axis position not specified, assuming on-axis"
 OFFAXIS=0
-fi
-
-if [ "${YOFFAXIS}" = "" ]; then
-echo "y Off axis position not specified, assuming on-axis"
-YOFFAXIS=0
 fi
 
 if [ "${FLUX}" = "" ]; then
@@ -79,20 +73,27 @@ ifdh_mkdir_p() {
     fi
 }
 
-RNDSEED=$((${PROCESS}+${FIRST}))
+OADIR="${OFFAXIS}m"
+if [ "${HORN}" = "RHC" ]; then
+OADIR="${OFFAXIS}mRHC"
+fi
+
+RUNNO=$((${PROCESS}+${FIRST}))
+RNDSEED=$((1000000*${OFFAXIS}+${RUNNO}+1000000))
+
 # 5E16 is about 15000 events on-axis which runs in ~6 hours
 NEVENTS="-e ${NPOT}"      # -n XXXX number of events, -e XE16 for POT
 
-RDIR=$((${RNDSEED} / 1000))
-if [ ${RNDSEED} -lt 10000 ]; then
-RDIR=0$((${RNDSEED} / 1000))
+RDIR=$((${RUNNO} / 1000))
+if [ ${RUNNO} -lt 10000 ]; then
+RDIR=0$((${RUNNO} / 1000))
 fi
 
 GEOMETRY="MPD_SPY_LAr"
 TOPVOL="volArgonCubeActive"
 
 TARDIR="/pnfs/dune/persistent/users/LBL_TDR/sw_tarballs"
-OUTDIR="/pnfs/dune/persistent/users/marshalc/nd_offaxis"
+OUTDIR="/pnfs/dune/persistent/users/marshalc/nd_offaxis/v7"
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
@@ -152,8 +153,7 @@ fi
 ##################################################
 
 # Modify GNuMIFlux.xml to the specified off-axis position
-# Positive OFFAXIS will move the beam center positive, so that detector position is effectively negative
-sed -i "s/<beampos> ( 0.0, 0.05387, 6.66 )/<beampos> ( ${OFFAXIS}, ${YOFFAXIS}, 6.66 )/g" GNuMIFlux.xml
+sed -i "s/<beampos> ( 0.0, 0.05387, 6.66 )/<beampos> ( ${OFFAXIS}, 0.05387, 6.66 )/g" GNuMIFlux.xml
 
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
@@ -229,7 +229,7 @@ export LD_LIBRARY_PATH=${PWD}/DUNE_ND_GeoEff/lib:${LD_LIBRARY_PATH}
 
 # Run dumpTree to make a root file, you can start reading again if you averted your eyes before
 TIME_DUMPTREE=`date +%s`
-python dumpTree.py --infile edep.${RNDSEED}.root ${RHC} --outfile ${HORN}.${RNDSEED}.root --seed ${RNDSEED}
+python dumpTree.py --infile edep.${RNDSEED}.root --outfile ${HORN}.${RNDSEED}.root --seed ${RNDSEED}
 
 # Run CAFMaker
 TIME_CAFMAKER=`date +%s`
@@ -240,24 +240,21 @@ TIME_CAFMAKER=`date +%s`
 echo "It's copy time, here are the files that I have:"
 TIME_COPY=`date +%s`
 
-ifdh_mkdir_p ${OUTDIR}/genie/${RDIR}
-ifdh_mkdir_p ${OUTDIR}/dump/${RDIR}
-ifdh_mkdir_p ${OUTDIR}/CAF/${RDIR}
-ifdh_mkdir_p ${OUTDIR}/edep/${RDIR}
+ifdh_mkdir_p ${OUTDIR}/genie/${OADIR}/${RDIR}
+ifdh_mkdir_p ${OUTDIR}/dump/${OADIR}/${RDIR}
+ifdh_mkdir_p ${OUTDIR}/CAF/${OADIR}/${RDIR}
+ifdh_mkdir_p ${OUTDIR}/edep/${OADIR}/${RDIR}
 
 # GENIE, this is usually small and good idea to save
-echo "${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${RDIR}/${HORN}.${RNDSEED}.ghep.root"
-${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${RDIR}/${HORN}.${RNDSEED}.ghep.root
+${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.ghep.root
 
 # G4/edep-sim file is HUGE and probably we can't save it
-#${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${RDIR}/${HORN}.${RNDSEED}.edep.root
+#${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.edep.root
 
 # "dump" file is useful for various analyses
-echo "${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${RDIR}/${HORN}.${RNDSEED}.dump.root"
-${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${RDIR}/${HORN}.${RNDSEED}.dump.root
+${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.dump.root
 
-echo "${CP} ${HORN}.${RNDSEED}.CAF.root ${OUTDIR}/CAF/${RDIR}/${HORN}.${RNDSEED}.CAF.root"
-${CP} ${HORN}.${RNDSEED}.CAF.root ${OUTDIR}/CAF/${RDIR}/${HORN}.${RNDSEED}.CAF.root
+${CP} ${HORN}.${RNDSEED}.CAF.root ${OUTDIR}/CAF/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.CAF.root
 
 TIME_END=`date +%s`
 # Print out a single thing that says the time of each step
