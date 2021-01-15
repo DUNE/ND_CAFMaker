@@ -11,7 +11,7 @@ from math import cos, sin
 
 import pyGeoEff
 
-def loop( events, tgeo, tout ):
+def loop( evt, tgeo, tout ):
 
     offset = [ 0., 5.5, 411. ]
     collarLo = [ -320., -120., 30. ]
@@ -195,7 +195,7 @@ def loop( events, tgeo, tout ):
                 endVolName = node.GetName()
                 t_muon_endVolName.replace(0, ROOT.std.string.npos, endVolName)
                 if "LArActive" in endVolName: t_muonReco[0] = 1 # contained
-                elif "ECal" in endVolName: t_muonReco[0] = 2 # ECAL stopper
+                elif "ECal" in endVolName: t_muonReco[0] = 3 # ECAL stopper
                 else: t_muonReco[0] = 0 # endpoint not in active material, but might still be reconstructed by curvature if GAr length > 0
 
                 # look for muon hits in the gas TPC
@@ -228,6 +228,8 @@ def loop( events, tgeo, tout ):
                 
                 t_muGArLen[0] = tot_length
                 t_muECalLen[0] = etot_length
+
+                if tot_length > 50.: t_muonReco[0] = 2 # tracker
 
             # hadronic containment -- find hits in ArgonCube
             hits = []
@@ -299,6 +301,7 @@ def loop( events, tgeo, tout ):
                 if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
                     total_energy += hit.EnergyDeposit
+
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
                         collar_energy += hit.EnergyDeposit
@@ -485,7 +488,6 @@ if __name__ == "__main__":
     fout.cd()
     tout.Write()
     tGeoEfficiencyThrowsOut.Write()
-    
     
 
 

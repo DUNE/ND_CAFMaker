@@ -11,7 +11,7 @@ export DOCOPY=true
 export FLUXDIR="local_flux_files"
 export FCLFILE=""
 export FULLPATTERNS=""
-export DK2NU=false
+export USEDK2NU=false
 export FLAVOR="neutrino"
 export BASE="ref_01"
 export CFG="near/nominal"
@@ -78,7 +78,7 @@ echo "   FLUXDIR:      ${FLUXDIR}"
 echo "   ${FLXFILE_SEARCH_PATH}"
 echo "   BASE:         ${BASE}"
 echo "   FLAVOR:       ${FLAVOR}"
-if [ "$DK2NU" == "false" ]; then
+if [ "$USEDK2NU" == "false" ]; then
   echo "   gsimple CFG:  ${CFG}"
 else
   echo "   dk2nu"
@@ -127,7 +127,7 @@ process_args() {
       -F | --fcl       ) FCLFILE=$2;            shift  ;;
       -m | --maxmb     ) MAXSIZEMB="$2";        shift  ;;
       -p | --pattern   ) FULLPATTERNS=$2;       shift  ;;
-           --dk2nu     ) DK2NU=true                    ;;
+           --dk2nu     ) USEDK2NU=true                 ;;
       -f | --flavor    ) FLAVOR="$2";           shift  ;;
       -b | --base      ) BASE="$2";             shift  ;;
       -c | --cfg       ) CFG="$2";              shift  ;;
@@ -148,7 +148,7 @@ process_args() {
 
   regularize_trueorfalse USEEGREP      true
   regularize_trueorfalse DOCOPY        true
-  regularize_trueorfalse DK2NU         false
+  regularize_trueorfalse USEDK2NU      false
 
 }
 
@@ -181,7 +181,7 @@ fi
 
 # construct basic path
 export REMOTEFLUXPATH=${FLXFILE_SEARCH_PATH}/${BASE}/${FLAVOR}
-if [ "$DK2NU" == "false" ]; then
+if [ "$USEDK2NU" == "false" ]; then
   #REMOTEFLUXPATH=${REMOTEFLUXPATH}/gsimple/${CFG}
   if [ -z "$FULLPATTERNS" ]; then 
     export FULLPATTERNS="*gsimple*.root"

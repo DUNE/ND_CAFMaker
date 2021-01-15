@@ -178,7 +178,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
 {
   // read in dumpTree output file
   int ievt, lepPdg, muonReco, nFS;
-  float lepKE, muGArLen, hadTot, hadCollar;
+  float lepKE, muGArLen, muECalLen, hadTot, hadCollar;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
@@ -188,6 +188,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "muonReco", &muonReco );
   tree->SetBranchAddress( "lepKE", &lepKE );
   tree->SetBranchAddress( "muGArLen", &muGArLen );
+  tree->SetBranchAddress( "muECalLen", &muECalLen );
   tree->SetBranchAddress( "hadTot", &hadTot );
   tree->SetBranchAddress( "hadCollar", &hadCollar );
   tree->SetBranchAddress( "hadP", &hadP );
@@ -395,9 +396,9 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         electrons++;
         reco_electron_pdg = lepPdg;
       } else if( abs(lepPdg) == 13 ) { // true nu_mu
-        if     ( muonReco == 2 ) recoMuonTracker( caf, par ); // gas TPC match
+        if     ( muGArLen > 50. ) recoMuonTracker( caf, par ); // gas TPC match
         else if( muonReco == 1 ) recoMuonLAr( caf, par ); // LAr-contained muon, this might get updated to NC...
-        else if( muonReco == 3 ) recoMuonECAL( caf, par ); // ECAL-stopper
+        else if( muonReco == 3 && muECalLen > 5. ) recoMuonECAL( caf, par ); // ECAL-stopper
         else { // exiting but poorly-reconstructed muon
           caf.Elep_reco = longest_mip * 0.0022;
           caf.reco_q = 0;
