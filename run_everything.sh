@@ -203,7 +203,6 @@ edep-sim \
     -C \
     -g ${GEOMETRY}.gdml \
     -o edep.${RNDSEED}.root \
-    -u \
     -e ${NPER} \
     dune-nd.mac
 
