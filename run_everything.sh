@@ -125,6 +125,7 @@ ${CP} ${TARDIR}/edep-sim.tar.gz edep-sim.tar.gz
 ${CP} ${TARDIR}/nusystematics.tar.gz nusystematics.tar.gz
 ${CP} ${TARDIR}/nusyst_inputs.tar.gz nusyst_inputs.tar.gz
 ${CP} ${TARDIR}/DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff.tar.gz
+${CP} ${TARDIR}/larcv2.tar.gz larcv2.tar.gz
 
 
 tar -xzf sim_inputs.tar.gz
@@ -132,6 +133,7 @@ tar -xzf edep-sim.tar.gz
 tar -xzf nusystematics.tar.gz
 tar -xzf nusyst_inputs.tar.gz
 tar -xzf DUNE_ND_GeoEff.tar.gz
+tar -xzf larcv2.tar.gz
 mv sim_inputs/* ${PWD}
 
 # Get flux files to local node
@@ -208,6 +210,14 @@ edep-sim \
 
 ##################################################
 
+# run LArCV2
+TIME_LARCV=`date +%s`
+. larcv2/configure.sh
+supera_dir=${LARCV_BASEDIR}/larcv/app/Supera
+python ${supera_dir}/run_supera.py larcv.cfg edep.${RNDSEED}.root
+
+##################################################
+
 # The MakeProject in dumpTree.py won't work if edep-sim is in the library path for reasons unknown
 # This is a hack, please avert your eyes if you don't want to see my garbage
 unset LD_LIBRARY_PATH
@@ -243,12 +253,16 @@ ifdh_mkdir_p ${OUTDIR}/genie/${OADIR}/${RDIR}
 ifdh_mkdir_p ${OUTDIR}/dump/${OADIR}/${RDIR}
 ifdh_mkdir_p ${OUTDIR}/CAF/${OADIR}/${RDIR}
 ifdh_mkdir_p ${OUTDIR}/edep/${OADIR}/${RDIR}
+ifdh_mkdir_p ${OUTDIR}/larcv/${OADIR}/${RDIR}
 
 # GENIE, this is usually small and good idea to save
 ${CP} ${MODE}.${RNDSEED}.ghep.root ${OUTDIR}/genie/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.ghep.root
 
 # G4/edep-sim file is HUGE and probably we can't save it
 #${CP} edep.${RNDSEED}.root ${OUTDIR}/edep/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.edep.root
+
+# LArCV is needed for ML reco
+${CP} larcv.root ${OUTDIR}/larcv/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.larcv.root
 
 # "dump" file is useful for various analyses
 ${CP} ${HORN}.${RNDSEED}.root ${OUTDIR}/dump/${OADIR}/${RDIR}/${HORN}.${RNDSEED}.dump.root
@@ -260,7 +274,8 @@ TIME_END=`date +%s`
 TIME_S=$((${TIME_GENIE}-${TIME_START}))
 TIME_G=$((${TIME_ROOTRACKER}-${TIME_GENIE}))
 TIME_R=$((${TIME_EDEPSIM}-${TIME_ROOTRACKER}))
-TIME_E=$((${TIME_DUMPTREE}-${TIME_EDEPSIM}))
+TIME_L=$((${TIME_LARCV}-${TIME_EDEPSIM}))
+TIME_E=$((${TIME_DUMPTREE}-${TIME_LARCV}))
 TIME_D=$((${TIME_CAFMAKER}-${TIME_DUMPTREE}))
 TIME_M=$((${TIME_COPY}-${TIME_CAFMAKER}))
 TIME_C=$((${TIME_END}-${TIME_COPY}))
@@ -268,6 +283,7 @@ echo "Start-up time: ${TIME_S}"
 echo "gevgen time: ${TIME_G}"
 echo "gntpc time: ${TIME_R}"
 echo "edep-sim time: ${TIME_E}"
+echo "LArCV time: ${TIME_L}"
 echo "dumpTree time: ${TIME_D}"
 echo "makeCAF time: ${TIME_M}"
 echo "Copy time: ${TIME_C}"
