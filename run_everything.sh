@@ -110,6 +110,7 @@ setup dk2nugenie   v01_06_01f -q debug:e15
 setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
 setup geant4 v4_10_3_p01b -q e15:prof
+setup python_future_six_request  v1_3 -q python2.7-ucs2
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
