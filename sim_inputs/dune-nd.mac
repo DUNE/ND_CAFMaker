@@ -1,7 +1,0 @@
-/generator/kinematics/set rooTracker
-/generator/kinematics/rooTracker/input input_file.gtrac.root
-/generator/position/set free
-/generator/time/set free
-/generator/count/fixed/number 1
-/generator/count/set fixed
-/generator/add

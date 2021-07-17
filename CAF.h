@@ -42,6 +42,12 @@ public:
   float muon_endpoint[3];
   std::string * muon_endVolName;
   double Ehad_veto;
+  double lepKE;
+  //DEAD_MODULE_UPDATE
+  double dead_Ehad_veto;
+  //INNER_UPDATE
+  double inner_dead_Ehad_veto;
+  bool flagr;
   double pileup_energy;
 
   // Gas TPC variables

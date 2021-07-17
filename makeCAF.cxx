@@ -178,7 +178,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
 {
   // read in dumpTree output file
   int ievt, lepPdg, muonReco, nFS;
-  float lepKE, muGArLen, hadTot, hadCollar;
+  float lepKE, muGArLen, muECalLen, hadTot, hadCollar, dead_hadCollar, inner_dead_hadCollar;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
@@ -188,8 +188,14 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "muonReco", &muonReco );
   tree->SetBranchAddress( "lepKE", &lepKE );
   tree->SetBranchAddress( "muGArLen", &muGArLen );
+  tree->SetBranchAddress( "muECalLen", &muECalLen );
   tree->SetBranchAddress( "hadTot", &hadTot );
   tree->SetBranchAddress( "hadCollar", &hadCollar );
+  //DEAD_MODULE_UPDATE
+  tree->SetBranchAddress( "dead_hadCollar", &dead_hadCollar );
+  //INNER_UPDATE
+  tree->SetBranchAddress( "inner_dead_hadCollar", &inner_dead_hadCollar );
+  
   tree->SetBranchAddress( "hadP", &hadP );
   tree->SetBranchAddress( "hadN", &hadN );
   tree->SetBranchAddress( "hadPip", &hadPip );
@@ -395,9 +401,9 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         electrons++;
         reco_electron_pdg = lepPdg;
       } else if( abs(lepPdg) == 13 ) { // true nu_mu
-        if     ( muonReco == 2 ) recoMuonTracker( caf, par ); // gas TPC match
-        else if( muonReco == 1 ) recoMuonLAr( caf, par ); // LAr-contained muon, this might get updated to NC...
-        else if( muonReco == 3 ) recoMuonECAL( caf, par ); // ECAL-stopper
+        if     ( muGArLen > 50. ) recoMuonTracker( caf, par ); // gas TPC match
+        else if( muonReco == 1 || muonReco == 4 ) recoMuonLAr( caf, par ); // LAr-contained muon, this might get updated to NC...
+        else if( muonReco == 3 && muECalLen > 5. ) recoMuonECAL( caf, par ); // ECAL-stopper
         else { // exiting but poorly-reconstructed muon
           caf.Elep_reco = longest_mip * 0.0022;
           caf.reco_q = 0;
@@ -412,6 +418,13 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
           double reco_ty = true_ty + rando->Gaus(0., evalTsmear/sqrt(2.));
           caf.theta_reco = 0.001*sqrt( reco_tx*reco_tx + reco_ty*reco_ty );
         }
+       if (muonReco == 4) {
+              caf.flagr = true;
+       }
+       else {
+       caf.flagr = false;
+       }        
+ 
       } else { // NC -- set PID variables, will get updated later if fake CC
         caf.Elep_reco = 0.;
         caf.reco_q = 0;
@@ -449,6 +462,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
       // Hadronic energy calorimetrically
       caf.Ev_reco = caf.Elep_reco + hadTot*0.001;
       caf.Ehad_veto = hadCollar;
+      //DEAD_MODULE_UPDATE
+      caf.dead_Ehad_veto = dead_hadCollar;
+      //INNER_UPDATE
+      caf.inner_dead_Ehad_veto = inner_dead_hadCollar;
+      
       caf.eRecoP = hadP*0.001;
       caf.eRecoN = hadN*0.001;
       caf.eRecoPip = hadPip*0.001;

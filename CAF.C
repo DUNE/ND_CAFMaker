@@ -90,6 +90,12 @@ CAF::CAF( std::string filename, bool isGas )
   cafMVA->Branch( "muon_endpoint", &muon_endpoint, "muon_endpoint[3]/F");
   cafMVA->Branch( "muon_endVolName", &muon_endVolName);
   cafMVA->Branch( "Ehad_veto", &Ehad_veto, "Ehad_veto/D" );
+  cafMVA->Branch( "lepKE", &lepKE, "lepKE/F" );
+  //DEAD_MODULE_UPDATE
+  cafMVA->Branch( "dead_Ehad_veto", &dead_Ehad_veto, "dead_Ehad_veto/D" );
+  //INNER_UPDATE
+  cafMVA->Branch( "inner_dead_Ehad_veto", &inner_dead_Ehad_veto, "inner_dead_Ehad_veto/D" );
+  cafMVA->Branch( "flagr", &flagr, "flagr/O" );
   cafMVA->Branch( "pileup_energy", &pileup_energy, "pileup_energy/D" );
 
   if( isGas ) {

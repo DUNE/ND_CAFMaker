@@ -11,11 +11,26 @@ from math import cos, sin
 
 import pyGeoEff
 
-def loop( events, tgeo, tout ):
+def loop( evt, tgeo, tout ):
 
     offset = [ 0., 5.5, 411. ]
     collarLo = [ -320., -120., 30. ]
     collarHi = [ 320., 120., 470. ]
+    #DEAD_MODULE_UPDATE
+    #dead_collarLo = [-80., -120. , 170. ]
+    #dead_collarHi = [ 80., 120. , 330. ]  
+    
+    #DEAD_MODULE_UPDATE_To_the_left
+    dead_collarLo = [-350., -120. , 170. ]
+    dead_collarHi = [ -220., 120. , 330. ]
+
+    #INNER_UPDATE
+    #inner_dead_collarLo = [-50., -150. , 200. ] 
+    #inner_dead_collarHi = [ 50., 150. , 300. ]
+
+    #INNER_UPDATE_To_the_left
+    inner_dead_collarLo = [-350., -150. , 200. ]
+    inner_dead_collarHi = [-250., 150. , 300. ]
 
     # Initialize geometric efficiency module.
     geoEff = pyGeoEff.geoEff(args.seed)
@@ -99,6 +114,10 @@ def loop( events, tgeo, tout ):
             t_hadPi0[0] = 0.
             t_hadOther[0] = 0.
             t_hadCollar[0] = 0.
+            #DEAD_MODULE_UPDATE
+            dead_t_hadCollar[0] = 0.
+            #INNER_UPDATE
+            inner_dead_t_hadCollar[0] = 0. 
             t_nFS[0] = 0
             ## done
 
@@ -194,8 +213,9 @@ def loop( events, tgeo, tout ):
 
                 endVolName = node.GetName()
                 t_muon_endVolName.replace(0, ROOT.std.string.npos, endVolName)
-                if "LArActive" in endVolName: t_muonReco[0] = 1 # contained
-                elif "ECal" in endVolName: t_muonReco[0] = 2 # ECAL stopper
+                if t_lepDeath[0]> inner_dead_collarLo[0] and t_lepDeath[0] < inner_dead_collarHi[0] and  t_lepDeath[1] > inner_dead_collarLo[1] and  t_lepDeath[1] < inner_dead_collarHi[1] and  t_lepDeath[2] > inner_dead_collarLo[2] and  t_lepDeath[2] < inner_dead_collarHi[2]: t_muonReco[0] = 4 #Dead Region.
+                elif "LArActive" in endVolName: t_muonReco[0] = 1 # contained
+                elif "ECal" in endVolName: t_muonReco[0] = 3 # ECAL stopper
                 else: t_muonReco[0] = 0 # endpoint not in active material, but might still be reconstructed by curvature if GAr length > 0
 
                 # look for muon hits in the gas TPC
@@ -229,6 +249,8 @@ def loop( events, tgeo, tout ):
                 t_muGArLen[0] = tot_length
                 t_muECalLen[0] = etot_length
 
+                if tot_length > 50.: t_muonReco[0] = 2 # tracker
+
             # hadronic containment -- find hits in ArgonCube
             hits = []
             for key in event.SegmentDetectors:
@@ -253,6 +275,10 @@ def loop( events, tgeo, tout ):
                 traj_to_pdg[traj] = event.Trajectories[tid].PDGCode
 
             collar_energy = 0.
+            #DEAD_MODULE_UPDATE
+            dead_collar_energy=0.
+            #INNER_UPDATE            
+            inner_dead_collar_energy=0.
             total_energy = 0.
             
             geoEff_EDepPosition = []
@@ -299,10 +325,18 @@ def loop( events, tgeo, tout ):
                 if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
                     total_energy += hit.EnergyDeposit
-                    # check if hit is in collar region
-                    if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
-                        collar_energy += hit.EnergyDeposit
-                    
+
+                    # INNER_UPDATE
+                    if hStart.x() > inner_dead_collarLo[0] and hStart.x() < inner_dead_collarHi[0] and hStart.y() > inner_dead_collarLo[1] and hStart.y() < inner_dead_collarHi[1] and hStart.z() > inner_dead_collarLo[2] and hStart.z() < inner_dead_collarHi[2]:
+                        inner_dead_collar_energy += hit.EnergyDeposit
+                    else:
+                        # check if hit is in collar region
+                        if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
+                            collar_energy += hit.EnergyDeposit
+                        # DEAD_MODULE_UPDATE
+                        if hStart.x() > dead_collarLo[0] and hStart.x() < dead_collarHi[0] and hStart.y() > dead_collarLo[1] and hStart.y() < dead_collarHi[1] and hStart.z() > dead_collarLo[2] and hStart.z() < dead_collarHi[2]:
+                            dead_collar_energy += hit.EnergyDeposit
+
                     # Set up arrays for geometric efficiency
                     for dim in range(3) :
                         geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[dim])/2./10.)
@@ -320,6 +354,10 @@ def loop( events, tgeo, tout ):
 
             t_hadTot[0] = total_energy
             t_hadCollar[0] = collar_energy
+            #DEAD_MODULE_UPDATE
+            dead_t_hadCollar[0] = dead_collar_energy
+            #INNER_UPDATE
+            inner_dead_t_hadCollar[0] = inner_dead_collar_energy
 
             geoEff.setHitSegEdeps(geoEff_EDepEnergy)
             geoEff.setHitSegPoss(geoEff_EDepPosition)
@@ -432,6 +470,15 @@ if __name__ == "__main__":
     tout.Branch('hadOther', t_hadOther, 'hadOther/F' )
     t_hadCollar = array('f', [0.] )
     tout.Branch('hadCollar', t_hadCollar, 'hadCollar/F' )
+    
+   #DEAD_MODULE_UPDATE
+    dead_t_hadCollar = array('f', [0.] )
+    tout.Branch('dead_hadCollar', dead_t_hadCollar, 'dead_hadCollar/F' )
+    
+    #INNER_UPDATE
+    inner_dead_t_hadCollar = array('f', [0.] )
+    tout.Branch('inner_dead_hadCollar', inner_dead_t_hadCollar, 'inner_dead_hadCollar/F' )
+
     t_nFS = array('i',[0])
     tout.Branch('nFS',t_nFS,'nFS/I')
     t_fsPdg = array('i',100*[0])
@@ -485,7 +532,6 @@ if __name__ == "__main__":
     fout.cd()
     tout.Write()
     tGeoEfficiencyThrowsOut.Write()
-    
     
 
 
