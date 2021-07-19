@@ -12,9 +12,8 @@ and then, in a new terminal and inside a new empty directory (without source-ing
 
 /PATH/TO/run everything.sh FHC 1000
 
-For the creation of the plots, the program efficiency pe.cpp was used. It can be called as follows:
+For the creation of the plots, the program efficiency_pe.cpp was used. It can be called as follows:
 
 /PATH/TO/efficiency_pe filelist.txt
 
-While, in this study, it was chosen to examine the cases where the inactive module is set at the center of the detector and at the far left side of its central row, the reader can easily
-study any other case. To be more specific, the user can change the coordinates of the inactive module, which results in changing its location.
+While, in this study, it was chosen to examine the cases where the inactive module is set at the center of the detector and at the far left side of its central row, the user can easily change the coordinates of the inactive module, which results in changing its location.
