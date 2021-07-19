@@ -96,8 +96,8 @@ fi
 GEOMETRY="MPD_SPY_LAr"
 TOPVOL="volArgonCubeActive"
 
-TARDIR="/pnfs/dune/persistent/users/englezos/cafmaker/tarballs"
-OUTDIR="/pnfs/dune/persistent/users/englezos/nd_offaxis/"
+TARDIR="/pnfs/dune/persistent/users/$USER/cafmaker/tarballs"
+OUTDIR="/pnfs/dune/persistent/users/$USER/nd_offaxis/"
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
