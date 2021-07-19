@@ -2,25 +2,24 @@
  * Example: Selection efficiency from CAFs.
  *
  * Author: A. Mastbaum <mastbaum@physics.rutgers.edu>, 2020/10/21
+ * Contributor: P. Englezos <p.englezos@physics.rutgers.edu> 
  *
  * This example loops through events in a CAF file, with the added field for
- * hadronic energy deposited in an inner veto region around a "dead" central
- * detector module ("dead_Ehad_veto").
+ * hadronic energy deposited in the inner collar region around an inactive central
+ * detector module (defined by the central module in the 5x7 array plus 30 cm around it in x and z).
  *
- * It creates two sets of plots of the efficiency, for selecting ND-LAr events
- * imposing two sets of cuts:
+ * It creates two sets of plots of the acceptance, for selecting ND-LAr events
+ * imposing the following sets of cuts:
  * 
- * (1) Vertex and all hadronic activity are contained in a fiducial region,
- *     inside from the outer walls of the 5x7 module array by 30 cm.
+ * 1) Muon neutrino charged-current interaction (numuCC) occured and 
+ *     its vertex was inside the fiducial volume of the detector (when all modules are active).  
  *
- * (2) Vertex and all hadronic activity are *outside* an inner veto region,
- *     defined by the central module in the 5x7 array plus 30 cm around it
- *     in x and z (the 30 cm at the top and bottom are already considered
- *     part of the veto region in (1)).
+ * 2) (1), muon was reconstructed and the hadronic activity was contained in the region inside from the outer walls of the 5x7 module array by 30 cm (outer collar region).
  *
- * We then compute effiencies for (1) versus all events in the LAr active
- * volume, and for (2)/(1), the loss in efficiency when additionally
- * fiducializing around the center module.
+ * 3) (1), numuCC's vertex was *outside* the anti-fiducial volume, the hadronic activity was contained between the two collar regions (inner and outer) and muon's track did not end inside the  *    inactive module. 
+ *
+ *
+ * We then compute acceptances for (2)/(1), and for (3)/(2), the loss in acceptance when additionally fiducializing around the center module.
  *
  * Usage:
  *
