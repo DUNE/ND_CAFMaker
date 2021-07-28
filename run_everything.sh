@@ -78,6 +78,10 @@ if [ "${HORN}" = "RHC" ]; then
 OADIR="${OFFAXIS}mRHC"
 fi
 
+if [ "${FLUX}" = "gsimple" ] && [ "${HORN}" = "FHC" ]; then
+OADIR="${OFFAXIS}mgsimple"
+fi
+
 RUNNO=$((${PROCESS}+${FIRST}))
 RNDSEED=$((1000000*${OFFAXIS}+${RUNNO}+1000000))
 
