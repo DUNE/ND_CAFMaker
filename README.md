@@ -1,6 +1,6 @@
 The aim of this study is to examine the acceptance for reconstructing the muon and containing the hadronic system in two cases in Near-Detector Liquid Argon (ND-LAr). In the first
-case, where all the modules of the the detector are active, the resulting plot is very similar to the corresponding one in the ND Conceptual Design Report (ND-CDR). In the second case,
-where the module in the center of the detector is inactive, the resulting plot shows that the change in relative acceptance is uniform as a function of event kinematics.
+case, where all the modules of the detector are active, the resulting plot is very similar to the corresponding one in the ND Conceptual Design Report (ND-CDR). In the second case,
+where the module in the center of the detector is inactive, the resulting plot shows that the change in relative acceptance is uniform to within ± 10% as a function of event kinematics.
 
 How to execute the files:
 
