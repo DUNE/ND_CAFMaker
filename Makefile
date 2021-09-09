@@ -1,11 +1,12 @@
-CXX = g++
-CXXFLAGS = -g -Wall -fPIC -DNO_ART
-ROOTFLAGS = `root-config --cflags --glibs`
-INCLUDE = -I$(GENIE_INC)/GENIE
+export CXX = g++
+export CXXFLAGS = -g -Wall -fPIC -DNO_ART
+export ROOTFLAGS = `root-config --cflags --glibs`
+export INCLUDE = -I$(GENIE_INC)/GENIE
 INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
 INCLUDE += -I$(NUSYST)/build/Linux/include/
+INCLUDE += -I$(DUNEANAOBJ_INC)
 
-LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
+export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L/usr/lib64 -lxml2
 LDLIBS += -L$(PYTHIA6) -lPythia6
 LDLIBS += -L$(ROOTSYS)/lib -lGeom -lEGPythia6
@@ -54,15 +55,19 @@ LDLIBS += -L$(GENIE)/lib \
 
 LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders
 LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
+LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
 
-# make a binary for every .cxx file
-all : $(patsubst %.cxx, %.o, $(wildcard *.cxx))
+export LIBDIR = $(PWD)/lib
+export BINDIR = $(PWD)/bin
 
-# rule for each target
-%.o : %.cxx
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -o $*.o $(LDLIBS) -c $*.cxx #compile
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) $(LDLIBS) -o $* $*.o        #link
+SUBDIRS = src
+
+all:
+	test -d $(LIBDIR) || mkdir $(LIBDIR)
+	test -d $(BINDIR) || mkdir $(BINDIR)
+	+make -C src $(MAKECMDGOALS)
 
 clean:
-	rm -f $(wildcard *.o) $(patsubst %.cxx, %, $(wildcard *.cxx))
-	rm -f $(wildcard AutoDict_*)
+	rm -f $(LIBDIR)/*
+	rm -f $(BINDIR)/*
+	+make -C src clean
