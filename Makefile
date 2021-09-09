@@ -70,4 +70,5 @@ all:
 clean:
 	rm -f $(LIBDIR)/*
 	rm -f $(BINDIR)/*
+	rm -f $(wildcard AutoDict_*)
 	+make -C src clean
