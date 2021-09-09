@@ -9,6 +9,7 @@ setup genie_phyopt v2_12_10   -q dkcharmtau
 setup geant4 v4_10_3_p01b -q e15:prof
 setup jobsub_client
 setup eigen v3_3_5
+setup duneanaobj v01_01_00 -q e15:gv1:debug
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
@@ -28,3 +29,6 @@ export FHICL_FILE_PATH=${NUSYST}/nusystematics/fcl:$FHICL_FILE_PATH
 
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${PWD}/DUNE_ND_GeoEff/lib/
+
+# duneananobj needs to be in the libs too
+export LD_LIBRARY_PATH=${DUNEANAOBJ_LIB}:$LD_LIBRARY_PATH
