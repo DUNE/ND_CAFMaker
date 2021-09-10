@@ -54,8 +54,8 @@ namespace cafmaker
       float fsTrkLen[100] = {};
       float fsTrkLenPerp[100] = {};
 
-      std::vector <std::vector<std::vector < uint64_t>> > * geoEffThrowResults;
-      std::string muon_endVolName;
+      std::vector <std::vector<std::vector < uint64_t>> > * geoEffThrowResults = nullptr;
+      std::string * muon_endVolName = nullptr;
   };
 }
 
