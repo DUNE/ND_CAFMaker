@@ -31,7 +31,7 @@ void cafmaker::dumpTree::BindToTree(TTree *tree)
   tree->SetBranchAddress( "fsPz", fsPz );
   tree->SetBranchAddress( "fsE", fsE );
   tree->SetBranchAddress( "fsTrkLen", fsTrkLen );
-  tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
+//  tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
 
   tree->SetBranchAddress( "geoEffThrowResults", &geoEffThrowResults );
 }
