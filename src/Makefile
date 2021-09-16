@@ -12,6 +12,9 @@ BINS = $(BINDIR)/makeCAF
 # build the library and the binaries
 all: $(BINS)
 
+# testing...
+test: $(BINDIR)/testHDF
+
 # make an object for any .cxx requested
 %.o : %.cxx %.h
 	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -fPIC -o $@ -c $< #compile
@@ -22,8 +25,10 @@ $(LIBDIR)/lib$(LIBNAME).so: $(OBJS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -shared -o $@ $(OBJS)
 
 $(BINDIR)/makeCAF: $(LIBS) makeCAF.C
-	@echo "making makeCAF"
 	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) $(LDLIBS) -L$(LIBDIR) -l$(LIBNAME) -o $@ makeCAF.C
+
+$(BINDIR)/testHDF: $(LIBS) testHDF.C
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) $(LDLIBS) -L$(LIBDIR) -l$(LIBNAME) -o $@ testHDF.C
 
 
 clean:

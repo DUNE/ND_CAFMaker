@@ -1,13 +1,15 @@
 export CXX = g++
 export CXXFLAGS = -g -Wall -fPIC -DNO_ART
 export ROOTFLAGS = `root-config --cflags --glibs`
-export INCLUDE = -I$(GENIE_INC)/GENIE
+export INCLUDE = -I$(HDF5_INC)
+INCLUDE += -I$(GENIE_INC)/GENIE
 INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
 INCLUDE += -I$(NUSYST)/build/Linux/include/
 INCLUDE += -I$(DUNEANAOBJ_INC)
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L/usr/lib64 -lxml2
+LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp
 LDLIBS += -L$(PYTHIA6) -lPythia6
 LDLIBS += -L$(ROOTSYS)/lib -lGeom -lEGPythia6
 LDLIBS += -L$(GENIE)/lib \
@@ -72,3 +74,6 @@ clean:
 	rm -f $(BINDIR)/*
 	rm -f $(wildcard AutoDict_*)
 	+make -C src clean
+
+test:
+	+make -C src $(MAKECMDGOALS)
