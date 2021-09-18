@@ -15,15 +15,10 @@
 #include "H5Cpp.h"
 #include "TVector3.h"
 
+#include "duneanaobj/StandardRecord/SRTrack.h"
+
 namespace cafmaker
 {
-  struct Track
-  {
-    TVector3 start;
-    TVector3 end;
-    TVector3 end_dir;   ///< unit vector giving estimate of track direction from endpoint
-  };
-
   class NDLArSummaryH5
   {
     public:
@@ -35,7 +30,7 @@ namespace cafmaker
       std::set<std::size_t> Events() const;
 
       /// Get the tracks from a particular event within the file.
-      std::vector<Track> EventTracks(std::size_t event) const;
+      std::vector<caf::SRTrack> EventTracks(std::size_t event) const;
 
       const std::string & GetEventColumnName() const   { return fEventColumnName; };
       void SetEventColumnName(const std::string & ecn) { fEventColumnName = ecn; };
@@ -64,9 +59,5 @@ namespace cafmaker
       mutable std::vector<std::size_t> fRowEvents;    ///<  which event each row corresponds to
   };
 }
-
-// make writing these out easier
-std::ostream & operator<<(std::ostream & stream, const TVector3 & vec);
-std::ostream & operator<<(std::ostream & stream, const cafmaker::Track & tr);
 
 #endif //ND_CAFMAKER_NDLARSUMMARYH5_H

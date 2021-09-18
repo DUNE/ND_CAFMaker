@@ -26,16 +26,9 @@ namespace cafmaker
 
     for (std::size_t evtIdx = 0; evtIdx < par.n; evtIdx++)
     {
-      std::vector<cafmaker::Track> recoTracks = fH5file.EventTracks(evtIdx);
+      std::vector<caf::SRTrack> recoTracks = fH5file.EventTracks(evtIdx);
       sr.ndlar.ntracks = recoTracks.size();
-      for (const auto & track : recoTracks)
-      {
-        caf::SRTrack srTrack;
-        srTrack.start = track.start;
-        srTrack.end = track.end;
-        srTrack.end_dir = track.end_dir;
-        sr.ndlar.tracks.emplace_back(std::move(srTrack));
-      } // for (track)
+      sr.ndlar.tracks = std::move(recoTracks);
     } // for (evtIdx)
 
   } // MLNDLArRecoBranchFiller::_FillRecoBranches()

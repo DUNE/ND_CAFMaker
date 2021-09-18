@@ -238,7 +238,7 @@ namespace cafmaker
 
   // -----------------------------------------------------------
 
-  std::vector<Track> NDLArSummaryH5::EventTracks(std::size_t event) const
+  std::vector<caf::SRTrack> NDLArSummaryH5::EventTracks(std::size_t event) const
   {
     // determine the range of rows corresponding to this event.
     // we could do something smarter and keep track of it across calls
@@ -305,7 +305,7 @@ namespace cafmaker
     // read the whole group of numbers together for efficiency
     std::size_t nRows = lastRow - firstRow + 1;
     std::size_t nCols = fColumnNames.size() - evtColumnIdx - 1;
-    std::vector<Track> tracksOut;
+    std::vector<caf::SRTrack> tracksOut;
     tracksOut.reserve(nRows);
 
     float vals[nRows * nCols];
@@ -321,7 +321,7 @@ namespace cafmaker
     std::cout << nRows << " tracks for event " << event << ":" << std::endl;
    for (std::size_t rowIdx = 0; rowIdx < nRows; rowIdx++)
    {
-      Track tr;
+      caf::SRTrack tr;
       std::size_t rowOffset = rowIdx * nCols;
       std::cout << "row = " << rowIdx << "; rowoffset = " << rowOffset << std::endl;
       tr.start = {vals[rowOffset + 0], vals[rowOffset + 1], vals[rowOffset + 2]};
@@ -367,16 +367,3 @@ namespace cafmaker
   }
 
 } // namespace cafmaker
-
-
-std::ostream &operator<<(std::ostream &stream, const TVector3 &vec)
-{
-  stream << "(" << vec.x() << "," << vec.y() << "," << vec.z() << ")";
-  return stream;
-}
-
-std::ostream &operator<<(std::ostream &stream, const cafmaker::Track &tr)
-{
-  stream << "cafmaker::Track with start=" << tr.start << "  end=" << tr.end << "  end_dir=" << tr.end_dir << std::endl;
-  return stream;
-}
