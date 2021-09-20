@@ -2,14 +2,19 @@
 ///
 /// Fill ND-LAr reco branches using DeepLearnPhysics machine learning based reconstruction.
 ///
+/// \author  J. Wolcott <jwolcott@fnal.gov>
+/// \date    Sept. 2021
 
 
 #ifndef ND_CAFMAKER_MLNDLARRECOBRANCHFILLER_H
 #define ND_CAFMAKER_MLNDLARRECOBRANCHFILLER_H
 
+#include <unordered_map>
+#include <typeindex>
+
 #include "IRecoBranchFiller.h"
 
-#include "NDLArSummaryH5.h"
+#include "NDLArProductFiller.h"
 
 namespace cafmaker
 {
@@ -18,14 +23,14 @@ namespace cafmaker
   class MLNDLArRecoBranchFiller : public IRecoBranchFiller
   {
     public:
-      MLNDLArRecoBranchFiller(const std::string &h5filename,
-                              const std::string &h5dataset);
+      MLNDLArRecoBranchFiller(const std::string &h5filename);
 
     protected:
       void _FillRecoBranches(caf::StandardRecord& sr, const cafmaker::dumpTree & dt, const cafmaker::params &par) const override;
 
     private:
-      NDLArSummaryH5 fH5file;
+      NDLArProductFiller<caf::SRTrack>  fTrackFiller;
+      NDLArProductFiller<caf::SRShower> fShowerFiller;
   };  // class MLNDLArRecoBranchFiller
 
 } // namespace cafmaker

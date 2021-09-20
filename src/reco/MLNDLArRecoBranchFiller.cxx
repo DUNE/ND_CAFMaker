@@ -1,7 +1,3 @@
-//
-// Created by jeremy on 9/10/21.
-//
-
 #include "MLNDLArRecoBranchFiller.h"
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
@@ -12,9 +8,9 @@ namespace cafmaker
 {
 
   // ------------------------------------------------------------------------------
-  MLNDLArRecoBranchFiller::MLNDLArRecoBranchFiller(const std::string &h5filename,
-                                                   const std::string &h5dataset)
-    : fH5file(h5filename, h5dataset)
+  // todo: possibly build some mechanism for customizing the dataset names in the file here
+  MLNDLArRecoBranchFiller::MLNDLArRecoBranchFiller(const std::string &h5filename)
+    : fTrackFiller(h5filename, "tracks"), fShowerFiller(h5filename, "showers")
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
@@ -23,13 +19,12 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::_FillRecoBranches(caf::StandardRecord &sr, const cafmaker::dumpTree &dt, const cafmaker::params &par) const
   {
-
-    for (std::size_t evtIdx = 0; evtIdx < par.n; evtIdx++)
+    assert(par.n >= 0);
+    for (std::size_t evtIdx = 0; evtIdx < static_cast<std::size_t>(par.n); evtIdx++)
     {
-      std::vector<caf::SRTrack> recoTracks = fH5file.EventTracks(evtIdx);
-      sr.ndlar.ntracks = recoTracks.size();
-      sr.ndlar.tracks = std::move(recoTracks);
-    } // for (evtIdx)
+      fTrackFiller.FillSR(sr, evtIdx);
+      fShowerFiller.FillSR(sr, evtIdx);
+     } // for (evtIdx)
 
   } // MLNDLArRecoBranchFiller::_FillRecoBranches()
 
