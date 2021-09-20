@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "reco/NDLArSummaryH5.h"
+#include "reco/NDLArSummaryH5DatasetReader.h"
 
 
 int main( int argc, char const *argv[] )
@@ -11,7 +11,7 @@ int main( int argc, char const *argv[] )
   //   * the name of the HDF dataset inside it
   assert(argc == 3);
 
-  cafmaker::NDLArSummaryH5 h5reader(argv[1], argv[2]);
+  cafmaker::NDLArSummaryH5DatasetReader h5reader(argv[1], argv[2], "Event");
 
   std::set<std::size_t> evs = h5reader.Events();
   std::cout << "Dataset '" << argv[2] << "' within HDF5 file '" << argv[1] << "' contains " << evs.size() << " events"
