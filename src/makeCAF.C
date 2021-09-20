@@ -14,8 +14,8 @@
 
 #include "dumpTree.h"
 #include "Params.h"
+#include "reco/MLNDLArRecoBranchFiller.h"
 #include "reco/ParameterizedRecoBranchFiller.h"
-#include "reco/IRecoBranchFiller.h"
 
 
 // Fill truth info
@@ -186,6 +186,8 @@ int main( int argc, char const *argv[] )
   std::string outfile;
   std::string fhicl_filename;
 
+  std::string mlreco_filename;
+
   // Make parameter object and set defaults
   cafmaker::params par;
   par.IsGasTPC = false;
@@ -237,6 +239,9 @@ int main( int argc, char const *argv[] )
     } else if( argv[i] == std::string("--gastpc") ) {
       par.IsGasTPC = true;
       i += 1;
+    } else if( argv[i] == std::string("--ndlar-reco") ) {
+      mlreco_filename = argv[i+1];
+      i += 2;
     } else i += 1; // look for next thing
   }
 
@@ -251,8 +256,12 @@ int main( int argc, char const *argv[] )
   // for the moment this is the only reco filler we have,
   // but there are others waiting in the wings...
   TRandom3 rando;
-  cafmaker::ParameterizedRecoBranchFiller recoFiller(&rando);
-  loop( caf, par, tree, gtree, recoFiller );
+  std::unique_ptr<cafmaker::IRecoBranchFiller> recoFiller(nullptr);
+  if (mlreco_filename.empty())
+    recoFiller = std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(&rando);
+  else
+    recoFiller = std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(mlreco_filename);
+  loop( caf, par, tree, gtree, *recoFiller );
 
   caf.version = 4;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
