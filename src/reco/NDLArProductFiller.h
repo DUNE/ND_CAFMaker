@@ -98,18 +98,38 @@ namespace cafmaker
       /// Compare the columns read back from the dataset to those in an expectation list
       void ValidateColumns(const std::vector<std::string> & expectedColumns) const
       {
-        if (this->fDSReader.ColumnNames() != expectedColumns)
+        bool match = true;
+        std::size_t startCol = this->fDSReader.ProductFirstColumn();
+        if (expectedColumns.size() != this->fDSReader.ColumnNames().size() - this->fDSReader.ProductFirstColumn())
+          match = false;
+        else
+        {
+          for (std::size_t col = startCol; col < this->fDSReader.ColumnNames().size(); col++)
+          {
+            std::cout << "fDSReader.ColumnNames()[" << col << "] = " << this->fDSReader.ColumnNames()[col]
+                      << "; expectedColumns[" << col - startCol << "] = " << expectedColumns[col - startCol]
+                      << std::endl;
+            if (this->fDSReader.ColumnNames()[col] != expectedColumns[col - startCol])
+            {
+              match = false;
+              break;
+            }
+          } // for (col)
+        } // else (column sizes do match)
+
+        if (!match)
         {
           std::cerr << "Column names read from dataset '" << this->fDSReader.InputDatasetName()
                     << "' in file '" << this->fDSReader.InputFileName() << "'"
                     << " don't match expected names!" << std::endl;
-          std::cerr << "Expected columns:";
+          std::cerr << "Expected " << expectedColumns.size() << " columns:";
           for (const auto & c : expectedColumns)
             std::cerr << "  " << c;
           std::cerr << std::endl;
-          std::cerr << "Columns read from dataset:" << std::endl;
-          for (const auto & c : this->fDSReader.ColumnNames())
-            std::cerr << "  " << c;
+          std::cerr << this->fDSReader.ColumnNames().size() - this->fDSReader.ProductFirstColumn()
+                    << " columns read from dataset:" << std::endl;
+          for (std::size_t col = startCol; col < this->fDSReader.ColumnNames().size(); col++)
+            std::cerr << "  " << this->fDSReader.ColumnNames()[col];
           std::cerr << std::endl;
 
           abort();
