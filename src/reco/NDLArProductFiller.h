@@ -68,6 +68,9 @@ namespace cafmaker
         this->ValidateColumns(EXPECTED_COLUMN_NAMES<T>);
       }
 
+      /// Get the internal dataset reader.  For diagnostics only; prefer the FillSR() interface where possible
+      const NDLArSummaryH5DatasetReader & DatasetReader() const  { return fDSReader; }
+
       /// This will be specialized for each product type that can be handled.
       /// See the implementations in the .cxx.
       void FillSR(caf::StandardRecord &sr, std::size_t evtIdx) const;

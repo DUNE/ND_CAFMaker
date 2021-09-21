@@ -13,7 +13,7 @@ int main( int argc, char const *argv[] )
 
   cafmaker::NDLArSummaryH5DatasetReader h5reader(argv[1], argv[2], "Event");
 
-  std::set<std::size_t> evs = h5reader.Events();
+  std::set<std::size_t> evs = trackFiller.DatasetReader().Events();
   std::cout << "Dataset '" << argv[2] << "' within HDF5 file '" << argv[1] << "' contains " << evs.size() << " events"
             << " ranging from " << *evs.begin() << " to " << *evs.rbegin() << std::endl;
   //for (const auto & ev : h5reader.Events())
