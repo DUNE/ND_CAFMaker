@@ -329,7 +329,9 @@ namespace cafmaker
                                               fColumnNames.end(),
                                               fEventColumnName));
 
-    return fEvtColumnIdx;
+    assert(fEvtColumnIdx >= 0);
+
+    return fEvtColumnIdx + 1;
   }
 
 
