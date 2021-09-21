@@ -78,7 +78,7 @@ namespace cafmaker
     private:
       std::vector<T> EventProducts(std::size_t evt) const
       {
-        std::size_t firstRow, lastRow;
+        int firstRow, lastRow;
         std::tie(firstRow, lastRow) = fDSReader.EventRowEdges(evt);
         if (firstRow < 0)
           return {};

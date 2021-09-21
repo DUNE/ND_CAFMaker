@@ -218,7 +218,7 @@ namespace cafmaker
 
   // -----------------------------------------------------------
 
-  std::pair<std::size_t, std::size_t> NDLArSummaryH5DatasetReader::EventRowEdges(std::size_t event) const
+  std::pair<int, int> NDLArSummaryH5DatasetReader::EventRowEdges(std::size_t event) const
   {
     // determine the range of rows corresponding to this event.
     // we could do something smarter and keep track of it across calls
@@ -246,7 +246,7 @@ namespace cafmaker
         lastRow = EventRowMap().size() - counter - 1;
         break;
       }
-    }
+    }  // for (counter)
 
     // we didn't find this event in the collection
     if (firstRow == -1 && lastRow == -1)

@@ -37,7 +37,7 @@ namespace cafmaker
       std::set<std::size_t> Events() const;
 
       /// What row numbers in the dataset are the upper & lower bounds for the given event?
-      std::pair<std::size_t, std::size_t> EventRowEdges(std::size_t event) const;
+      std::pair<int, int> EventRowEdges(std::size_t event) const;
 
       /// Read a rectangular grid of numbers from the h5 file.
       /// ColumnValues() is a shortcut if you want all the values in a column
