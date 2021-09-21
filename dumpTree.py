@@ -327,7 +327,7 @@ def loop( evt, tgeo, tout ):
             geoEff.setHitSegEdeps(geoEff_EDepEnergy)
             geoEff.setHitSegPoss(geoEff_EDepPosition)
 
-            geoEffThrowResultsList = geoEff.getHadronContainmentThrows()
+            geoEffThrowResultsList = geoEff.getHadronContainmentThrows(True)
             
             t_geoEffThrowResults.clear()
             for i in range(len(geoEffThrowResultsList)) :
