@@ -6,33 +6,6 @@
 
 namespace cafmaker
 {
-  template <>
-  const std::vector<std::string> EXPECTED_COLUMN_NAMES<caf::SRTrack>
-  {
-      "trk_start_x",
-      "trk_start_y",
-      "trk_start_z",
-      "trk_end_x",
-      "trk_end_y",
-      "trk_end_z",
-      "trk_end_dir_x",
-      "trk_end_dir_y",
-      "trk_end_dir_z",
-      "trk_visE"
-  };
-
-  // -------------------------------------------------------------
-  template <>
-  const std::vector<std::string> EXPECTED_COLUMN_NAMES<caf::SRShower>
-  {
-      "shw_start_x",
-      "shw_start_y",
-      "shw_start_z",
-      "shw_dir_x",
-      "shw_dir_y",
-      "shw_dir_z",
-      "shw_visE"
-  };
 
   // -------------------------------------------------------------
 
