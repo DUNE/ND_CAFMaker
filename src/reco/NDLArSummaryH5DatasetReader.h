@@ -69,7 +69,7 @@ namespace cafmaker
       std::vector<std::string> fColumnNames;
       mutable std::vector<std::size_t> fRowEvents;    ///<  which event each row corresponds to
 
-      mutable std::size_t fEvtColumnIdx = -1;
+      mutable int fEvtColumnIdx = -1;
       mutable std::vector<float> fReadBuffer;
   };
 }
