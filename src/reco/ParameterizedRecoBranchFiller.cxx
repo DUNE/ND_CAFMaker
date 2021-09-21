@@ -25,7 +25,10 @@ namespace cafmaker
   const TF1 tsmear( "tsmear", "0.162 + 3.407*pow(x,-1.) + 3.129*pow(x,-0.5)", 0., 999.9 );
 
 
-  void ParameterizedRecoBranchFiller::_FillRecoBranches(caf::StandardRecord & sr, const cafmaker::dumpTree & dt, const params & par) const
+  void ParameterizedRecoBranchFiller::_FillRecoBranches(std::size_t ,  // this parameter isn't used in this particular reco branch filler
+                                                        caf::StandardRecord &sr,
+                                                        const cafmaker::dumpTree &dt,
+                                                        const cafmaker::params &par) const
   {
     //--------------------------------------------------------------------------
     // Parameterized reconstruction

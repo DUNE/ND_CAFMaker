@@ -156,7 +156,7 @@ void loop(CAF& caf, cafmaker::params &par,
     caf.sr.isFHC = par.fhc;
 
     fillTruth(caf.sr, dt, gtree, caf.mcrec, par, caf.rh);
-    recoFiller.FillRecoBranches(caf.sr, dt, par);
+    recoFiller.FillRecoBranches(ii, caf.sr, dt, par);
 
     caf.fill();
   }

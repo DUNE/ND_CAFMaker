@@ -17,15 +17,14 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::_FillRecoBranches(caf::StandardRecord &sr, const cafmaker::dumpTree &dt, const cafmaker::params &par) const
+  void
+  MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
+                                             caf::StandardRecord &sr,
+                                             const cafmaker::dumpTree &dt,
+                                             const cafmaker::params &par) const
   {
-    assert(par.n >= 0);
-    for (std::size_t evtIdx = 0; evtIdx < static_cast<std::size_t>(par.n); evtIdx++)
-    {
-      fTrackFiller.FillSR(sr, evtIdx);
-      fShowerFiller.FillSR(sr, evtIdx);
-     } // for (evtIdx)
-
+    fTrackFiller.FillSR(sr, evtIdx);
+    fShowerFiller.FillSR(sr, evtIdx);
   } // MLNDLArRecoBranchFiller::_FillRecoBranches()
 
 } // namespace cafmaker

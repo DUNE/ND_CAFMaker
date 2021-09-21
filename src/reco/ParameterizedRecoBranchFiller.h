@@ -27,7 +27,8 @@ namespace cafmaker
       }
 
     protected:
-      void _FillRecoBranches(caf::StandardRecord& sr, const cafmaker::dumpTree & dt, const cafmaker::params &par) const override;
+      void _FillRecoBranches(std::size_t evtIdx, caf::StandardRecord &sr, const cafmaker::dumpTree &dt,
+                             const cafmaker::params &par) const override;
 
     private:
       void decayPi0( const TLorentzVector & pi0, TVector3 &gamma1, TVector3 &gamma2 ) const;
