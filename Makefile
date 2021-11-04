@@ -1,5 +1,5 @@
 export CXX = g++
-export CXXFLAGS = -g -Wall -fPIC -DNO_ART
+export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2
 export ROOTFLAGS = `root-config --cflags --glibs`
 export INCLUDE = -I$(HDF5_INC)
 INCLUDE += -I$(GENIE_INC)/GENIE
