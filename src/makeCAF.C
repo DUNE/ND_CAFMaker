@@ -111,6 +111,10 @@ void fillTruth(caf::StandardRecord& sr,
   sr.LepE = lepP4.E();
   sr.LepNuAngle = nuP4.Angle( lepP4.Vect() );
 
+  // todo: come back and make this work for electrons too. what about NC?
+  if (std::abs(sr.LepPDG) == 13)
+    sr.LepEndpoint = {dt.muon_endpoint[0], dt.muon_endpoint[1], dt.muon_endpoint[2]};
+
   // Add DUNErw weights to the CAF
   sr.total_xsSyst_cv_wgt = 1;
   systtools::event_unit_response_w_cv_t resp = rh.GetEventVariationAndCVResponse(*event);
@@ -253,8 +257,7 @@ int main( int argc, char const *argv[] )
   TFile * gf = new TFile( gfile.c_str() );
   TTree * gtree = (TTree*) gf->Get( "gtree" );
 
-  // for the moment this is the only reco filler we have,
-  // but there are others waiting in the wings...
+  // hand off to the correct reco filler
   TRandom3 rando;
   std::unique_ptr<cafmaker::IRecoBranchFiller> recoFiller(nullptr);
   if (mlreco_filename.empty())
