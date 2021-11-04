@@ -16,7 +16,7 @@ CAF::CAF( const std::string& filename, const std::string& rw_fhicl_filename )
   genie = new TTree( "genieEvt", "genieEvt" );
 
   // initialize standard record bits
-  cafSR->Branch("rec", &sr);
+  cafSR->Branch("rec", "caf::StandardRecord", &sr);
 
   // initialize geometric efficiency throw results
   geoEffThrowResults = new std::vector< std::vector < std::vector < uint64_t > > >();
