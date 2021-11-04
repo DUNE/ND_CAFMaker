@@ -12,6 +12,7 @@ namespace cafmaker
   template <>
   void NDLArProductFiller<caf::SRTrack>::FillSR(caf::StandardRecord &sr, std::size_t evtIdx) const
   {
+    std::cout << "Filling tracks for event " << evtIdx << std::endl;
     std::vector<caf::SRTrack> recoTracks = EventProducts(evtIdx);
     sr.ndlar.ntracks = recoTracks.size();
     sr.ndlar.tracks = std::move(recoTracks);
@@ -38,6 +39,8 @@ namespace cafmaker
       tr.end_dir = {buffer[rowOffset + 6], buffer[rowOffset + 7], buffer[rowOffset + 8]};
       tr.Evis = buffer[rowOffset+9];
 
+      std::cout << "  filling track: " << tr << std::endl;
+
       tracksOut.emplace_back(std::move(tr));
     }
 
@@ -50,6 +53,7 @@ namespace cafmaker
   template <>
   void NDLArProductFiller<caf::SRShower>::FillSR(caf::StandardRecord &sr, std::size_t evtIdx) const
   {
+    std::cout << "Filling showers for event " << evtIdx << std::endl;
     std::vector<caf::SRShower> recoShw = EventProducts(evtIdx);
     sr.ndlar.nshowers = recoShw.size();
     sr.ndlar.showers = std::move(recoShw);
