@@ -90,7 +90,7 @@ namespace cafmaker
                                                     fDSReader.ColumnNames().size() - 1);
 
         std::size_t nRows = lastRow - firstRow + 1;
-        std::size_t nCols = fDSReader.ColumnNames().size() - fDSReader.ProductFirstColumn() + 1;
+        std::size_t nCols = fDSReader.ColumnNames().size() - fDSReader.ProductFirstColumn();
 
         return ParseVals(buffer, nRows, nCols);
       }
