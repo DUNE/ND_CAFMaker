@@ -12,7 +12,7 @@
 
 namespace cafmaker
 {
-  class TMSRecoBranchFiller : IRecoBranchFiller
+  class TMSRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
       TMSRecoBranchFiller(const std::string & tmsRecoFilename);
