@@ -19,10 +19,11 @@ namespace cafmaker
                                                   const cafmaker::params &par) const
   {
 
-    fNDLArRecoFiller->FillRecoBranches();
+    // first copy the info out of the individual reco branch fillers
+    fNDLArRecoFiller->FillRecoBranches(evtIdx, sr, dt, par);
+    fTMSRecoFiller->FillRecoBranches(evtIdx, sr, dt, par);
 
-    fTMSRecoFiller->FillRecoBranches();
-
+    // now we can match tracks using that info
     MatchTracks(sr);
 
   }
