@@ -28,15 +28,15 @@ int main( int argc, char const *argv[] )
     caf::StandardRecord sr;
 
     trackFiller.FillSR(sr, evtIdx);
-    if (sr.ndlar.ntracks < 1)
+    if (sr.nd.lar.ntracks < 1)
       continue;
 
     std::cout << "Tracks for event " << evtIdx << ":" << std::endl;
-    for (const auto & trk : sr.ndlar.tracks)
+    for (const auto & trk : sr.nd.lar.tracks)
     {
       std::cout << "  start = " << trk.start
                 << ",  end = " << trk.end
-                << ",  end dir = " << trk.end_dir
+                << ",  end dir = " << trk.enddir
                 << std::endl;
     }
   }

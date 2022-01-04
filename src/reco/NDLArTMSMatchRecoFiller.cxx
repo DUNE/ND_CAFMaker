@@ -1,7 +1,7 @@
 #include "NDLArTMSMatchRecoFiller.h"
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
-#include "duneanaobj/StandardRecord/SRNDTrackMatch.h"
+#include "duneanaobj/StandardRecord/SRNDTrackAssn.h"
 #include "MLNDLArRecoBranchFiller.h"
 #include "TMSRecoBranchFiller.h"
 
@@ -41,13 +41,14 @@ namespace cafmaker
 
     // then, fill in the ndmatch object with the matches.
     // for example (obviously you'd use calculated vaoues, not hard-coded ones...):
-    caf::SRNDTrackMatch match;
-    match.larTrkIdx = 4;
-    match.tmsTrkIdx = 3;
-    match.xverseDispl = 1.865; // whatever
-    match.angularDsipl = 8.4;  // whatever
+    caf::SRNDTrackAssn match;
+    match.larid = 4;
+    match.tmsid = 3;
+    match.transdispl = 1.865; // whatever
+    match.angdispl = 8.4;  // whatever
 
-    sr.ndtrkmatches.emplace_back(match);
+    sr.nd.trkmatch.emplace_back(match);
+    sr.nd.ntrkmatch++;
   }
 
 }

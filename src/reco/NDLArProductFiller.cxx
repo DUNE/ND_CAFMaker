@@ -14,8 +14,8 @@ namespace cafmaker
   {
     std::cout << "Filling tracks for event " << evtIdx << std::endl;
     std::vector<caf::SRTrack> recoTracks = EventProducts(evtIdx);
-    sr.ndlar.ntracks = recoTracks.size();
-    sr.ndlar.tracks = std::move(recoTracks);
+    sr.nd.lar.ntracks = recoTracks.size();
+    sr.nd.lar.tracks = std::move(recoTracks);
   }
 
   // -------------------------------------------------------------
@@ -36,7 +36,7 @@ namespace cafmaker
       //       make SURE the column assumptions matchs the checks in ValidateColumns()
       tr.start = {buffer[rowOffset + 0], buffer[rowOffset + 1], buffer[rowOffset + 2]};
       tr.end = {buffer[rowOffset + 3], buffer[rowOffset + 4], buffer[rowOffset + 5]};
-      tr.end_dir = {buffer[rowOffset + 6], buffer[rowOffset + 7], buffer[rowOffset + 8]};
+      tr.enddir = {buffer[rowOffset + 6], buffer[rowOffset + 7], buffer[rowOffset + 8]};
       tr.Evis = buffer[rowOffset+9];
 
       std::cout << "  filling track: " << tr << std::endl;
@@ -55,8 +55,8 @@ namespace cafmaker
   {
     std::cout << "Filling showers for event " << evtIdx << std::endl;
     std::vector<caf::SRShower> recoShw = EventProducts(evtIdx);
-    sr.ndlar.nshowers = recoShw.size();
-    sr.ndlar.showers = std::move(recoShw);
+    sr.nd.lar.nshowers = recoShw.size();
+    sr.nd.lar.showers = std::move(recoShw);
   }
 
   // -------------------------------------------------------------

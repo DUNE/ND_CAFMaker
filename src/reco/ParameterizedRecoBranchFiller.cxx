@@ -142,14 +142,14 @@ namespace cafmaker
     } else {
       // gas TPC: FS particle loop look for long enough tracks and smear momenta
       sr.Ev_reco = 0.;
-      sr.nFSP = dt.nFS;
+      sr.nd.gar.nFSP = dt.nFS;
       for( int i = 0; i < dt.nFS; ++i ) {
         double ptrue = 0.001*sqrt(dt.fsPx[i]*dt.fsPx[i] + dt.fsPy[i]*dt.fsPy[i] + dt.fsPz[i]*dt.fsPz[i]);
         double mass = 0.001*sqrt(dt.fsE[i]*dt.fsE[i] - dt.fsPx[i]*dt.fsPx[i] - dt.fsPy[i]*dt.fsPy[i] - dt.fsPz[i]*dt.fsPz[i]);
-        sr.pdg[i] = dt.fsPdg[i];
-        sr.ptrue[i] = ptrue;
-        sr.trkLen[i] = dt.fsTrkLen[i];
-        sr.trkLenPerp[i] = dt.fsTrkLenPerp[i];
+        sr.nd.gar.pdg[i] = dt.fsPdg[i];
+        sr.nd.gar.ptrue[i] = ptrue;
+        sr.nd.gar.trkLen[i] = dt.fsTrkLen[i];
+        sr.nd.gar.trkLenPerp[i] = dt.fsTrkLenPerp[i];
         // track length cut 6cm according to T Junk
         if( dt.fsTrkLen[i] > 0. && dt.fsPdg[i] != 2112 ) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
           double pT = 0.001*sqrt(dt.fsPy[i]*dt.fsPy[i] + dt.fsPz[i]*dt.fsPz[i]); // transverse to B field, in GeV
@@ -164,17 +164,17 @@ namespace cafmaker
           double ereco = sqrt( preco*preco + mass*mass ) - mass; // kinetic energy
           if( abs(dt.fsPdg[i]) == 211 ) ereco += mass; // add pion mass
           else if( dt.fsPdg[i] == 2212 && preco > 1.5 ) ereco += 0.1395; // mistake pion mass for high-energy proton
-          sr.partEvReco[i] = ereco;
+          sr.nd.gar.partEvReco[i] = ereco;
 
           // threshold cut
           if( dt.fsTrkLen[i] > par.gastpc_len ) {
             sr.Ev_reco += ereco;
-            if( dt.fsPdg[i] == 211 || (dt.fsPdg[i] == 2212 && preco > 1.5) ) sr.gastpc_pi_pl_mult++;
-            else if( dt.fsPdg[i] == -211 ) sr.gastpc_pi_min_mult++;
+            if( dt.fsPdg[i] == 211 || (dt.fsPdg[i] == 2212 && preco > 1.5) ) sr.nd.gar.gastpc_pi_pl_mult++;
+            else if( dt.fsPdg[i] == -211 ) sr.nd.gar.gastpc_pi_min_mult++;
           }
 
           if( (dt.fsPdg[i] == 13 || dt.fsPdg[i] == -13) && dt.fsTrkLen[i] > 100. ) { // muon, don't really care about nu_e CC for now
-            sr.partEvReco[i] += mass;
+            sr.nd.gar.partEvReco[i] += mass;
             sr.Elep_reco = sqrt(preco*preco + mass*mass);
             // angle reconstruction
             double true_tx = 1000.*atan(sr.LepMomX / sr.LepMomZ);
@@ -191,7 +191,7 @@ namespace cafmaker
           }
         } else if( dt.fsPdg[i] == 111 || dt.fsPdg[i] == 22 ) {
           double ereco = 0.001 * fRando->Gaus( dt.fsE[i], 0.1*dt.fsE[i] );
-          sr.partEvReco[i] = ereco;
+          sr.nd.gar.partEvReco[i] = ereco;
           sr.Ev_reco += ereco;
         }
       }
