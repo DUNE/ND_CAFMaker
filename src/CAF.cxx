@@ -1,6 +1,3 @@
-#define CAF_cxx
-#ifdef CAF_cxx
-
 #include "CAF.h"
 
 #include "nusystematics/artless/response_helper.hh"
@@ -86,5 +83,3 @@ void CAF::setToBS()
   sr = caf::StandardRecord();
   srglobal = caf::SRGlobal();
 }
-
-#endif
