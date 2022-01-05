@@ -3,8 +3,8 @@ export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2
 export ROOTFLAGS = `root-config --cflags --glibs`
 export INCLUDE = -I$(HDF5_INC)
 INCLUDE += -I$(GENIE_INC)/GENIE
-INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
-INCLUDE += -I$(NUSYST)/build/Linux/include/
+#INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
+#INCLUDE += -I$(NUSYST)/build/Linux/include/
 INCLUDE += -I$(DUNEANAOBJ_INC)
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
@@ -55,8 +55,8 @@ LDLIBS += -L$(GENIE)/lib \
                                         -lGUtils \
                                         -lGReWeight
 
-LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders
-LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
+#LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders
+#LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
 LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
 
 export LIBDIR = $(PWD)/lib

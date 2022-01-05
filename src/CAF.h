@@ -6,7 +6,13 @@
 #include "Ntuple/NtpMCEventRecord.h"
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRGlobal.h"
-#include "nusystematics/artless/response_helper.hh"
+
+// fixme: this is a do-nothing replacement for nusystematics stuff until it's re-enabled
+//#include "nusystematics/artless/response_helper.hh"
+namespace nusyst
+{
+  typedef std::string response_helper;
+}
 
 class CAF {
 

@@ -1,6 +1,7 @@
 #include "CAF.h"
 
-#include "nusystematics/artless/response_helper.hh"
+// fixme: once DIRT-II is done with its work, this will be re-enabled
+//#include "nusystematics/artless/response_helper.hh"
 
 CAF::CAF( const std::string& filename, const std::string& rw_fhicl_filename )
   : rh(rw_fhicl_filename)
@@ -28,18 +29,19 @@ CAF::CAF( const std::string& filename, const std::string& rw_fhicl_filename )
   cafPOT->Branch( "subrun", &meta_subrun, "subrun/I" );
   cafPOT->Branch( "version", &version, "version/I" );
 
-  // Get list of variations, and make CAF branch for each one
-  std::vector<unsigned int> parIds = rh.GetParameters();
-  for( unsigned int i = 0; i < parIds.size(); ++i ) {
-    systtools::SystParamHeader head = rh.GetHeader(parIds[i]);
-    printf( "Adding reweight branch %u for %s with %lu shifts\n", parIds[i], head.prettyName.c_str(), head.paramVariations.size() );
-
-    caf::SRSystParamHeader hdr;
-    hdr.nshifts = head.paramVariations.size();
-    hdr.name = head.prettyName;
-    hdr.id = head.systParamId; // TODO is this necessary?
-    srglobal.wgts.params.push_back(hdr);
-  }
+  // fixme: the following is disabled until DIRT-II finishes on model + uncertainty decisions
+//  // Get list of variations, and make CAF branch for each one
+//  std::vector<unsigned int> parIds = rh.GetParameters();
+//  for( unsigned int i = 0; i < parIds.size(); ++i ) {
+//    systtools::SystParamHeader head = rh.GetHeader(parIds[i]);
+//    printf( "Adding reweight branch %u for %s with %lu shifts\n", parIds[i], head.prettyName.c_str(), head.paramVariations.size() );
+//
+//    caf::SRSystParamHeader hdr;
+//    hdr.nshifts = head.paramVariations.size();
+//    hdr.name = head.prettyName;
+//    hdr.id = head.systParamId; // TODO is this necessary?
+//    srglobal.wgts.params.push_back(hdr);
+//  }
   TBranch* br = cafSRGlobal->Branch("global", &srglobal);
   if(!br) abort();
   cafSRGlobal->Fill();

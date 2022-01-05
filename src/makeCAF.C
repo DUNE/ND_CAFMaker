@@ -9,7 +9,7 @@
 #include "TLorentzVector.h"
 #include "Ntuple/NtpMCEventRecord.h"
 #include "EVGCore/EventRecord.h"
-#include "nusystematics/artless/response_helper.hh"
+//#include "nusystematics/artless/response_helper.hh"
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
 #include "dumpTree.h"
@@ -117,13 +117,14 @@ void fillTruth(caf::StandardRecord& sr,
 
   // Add DUNErw weights to the CAF
   sr.total_xsSyst_cv_wgt = 1;
-  systtools::event_unit_response_w_cv_t resp = rh.GetEventVariationAndCVResponse(*event);
-  for( const systtools::VarAndCVResponse& it : resp ) {
-    // Need begin/end to convert double to float
-    sr.xsSyst_wgt.emplace_back(it.responses.begin(), it.responses.end());
-    sr.cvwgt.push_back(it.CV_response);
-    sr.total_xsSyst_cv_wgt *= it.CV_response;
-  }
+  // fixme: the following is disabled until DIRT-II finishes on model + uncertainty decisions
+  //systtools::event_unit_response_w_cv_t resp = rh.GetEventVariationAndCVResponse(*event);
+  //for( const systtools::VarAndCVResponse& it : resp ) {
+  //  // Need begin/end to convert double to float
+  //  sr.xsSyst_wgt.emplace_back(it.responses.begin(), it.responses.end());
+  //  sr.cvwgt.push_back(it.CV_response);
+  //  sr.total_xsSyst_cv_wgt *= it.CV_response;
+  //}
 
 } // void fillTruth()
 
