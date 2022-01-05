@@ -7,6 +7,7 @@
 #define ND_CAFMAKER_PARAMS_H
 
 #include "fhiclcpp/types/Atom.h"
+#include "fhiclcpp/types/OptionalAtom.h"
 #include "fhiclcpp/types/Table.h"
 
 namespace cafmaker
@@ -25,9 +26,22 @@ namespace cafmaker
 
   struct ControlConfig
   {
-    fhicl::Atom<int>  first  { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
+    // these are mandatory and have no default values
+    fhicl::Atom<std::string> dumpFile   { fhicl::Name{"InputDumpFile"}, fhicl::Comment("Input file (result of `dumpTree.py`)") };
+    fhicl::Atom<std::string> ghepFile   { fhicl::Name{"InputGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file") };
+    fhicl::Atom<std::string> outputFile { fhicl::Name{"OutputFile"}, fhicl::Comment("Filename for output CAF") };
 
-    fhicl::Atom<int>  seed   { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), 7 };  // a very random number
+    // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
+    // fixme: this file is currently not used for anything, but will be once DIRT-II is done and re-enables the interaction systematics
+    fhicl::Atom<std::string> nusystsFcl   { fhicl::Name{"NuSystsFCLFile"}, fhicl::Comment(".fcl configuration file for nusystematics"), "fhicl.fcl" };
+
+    // these are optional, but will change the contents of the output FCL if supplied
+    fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
+    fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
+
+    // these are optional and have defaults
+    fhicl::Atom<int>  first  { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
+    fhicl::Atom<int>  seed   { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
   };
 
   struct PseudoRecoParams

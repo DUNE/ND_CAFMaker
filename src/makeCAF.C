@@ -195,41 +195,37 @@ int main( int argc, char const *argv[] )
     return 0;
   }
 
-  // Need this to store event-by-event geometric efficiency
-  gInterpreter->GenerateDictionary("vector<vector<vector<uint64_t> > >", "vector");
-
-  // get command line options
-  std::string gfile;
-  std::string infile;
-  std::string outfile;
-  std::string fhicl_filename;
-
-  std::string mlreco_filename;
-
-
   if (argc != 2)
   {
     std::cerr << "Usage: " << argv[0] << " <fhicl configuration file>" << std::endl;
-    exit(1);
+    return 1;
   }
+
+  // Need this to store event-by-event geometric efficiency
+  gInterpreter->GenerateDictionary("vector<vector<vector<uint64_t> > >", "vector");
 
   cafmaker::Params par = parseConfig(argv[1]);
 
-  CAF caf( outfile, fhicl_filename );
+  CAF caf( par().cafmaker().outputFile(), par().cafmaker().nusystsFcl() );
 
-  TFile * tf = new TFile( infile.c_str() );
+  TFile * tf = new TFile( par().cafmaker().dumpFile().c_str() );
   TTree * tree = (TTree*) tf->Get( "tree" );
 
-  TFile * gf = new TFile( gfile.c_str() );
+  TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );
   TTree * gtree = (TTree*) gf->Get( "gtree" );
 
-  // hand off to the correct reco filler
-  TRandom3 rando;
+  // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
+  TRandom3 rando(par().cafmaker().seed() >= 0 ?
+                 par().cafmaker().seed() :
+                 par().runInfo().run() * 1000 + par().runInfo().subrun());
+
+  // hand off to the correct reco filler.
   std::unique_ptr<cafmaker::IRecoBranchFiller> recoFiller(nullptr);
-  if (mlreco_filename.empty())
-    recoFiller = std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(&rando);
+  std::string ndlarFile;
+  if (par().cafmaker().ndlarRecoFile(ndlarFile))
+    recoFiller = std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile);
   else
-    recoFiller = std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(mlreco_filename);
+    recoFiller = std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(&rando);
   loop( caf, par, tree, gtree, *recoFiller );
 
   caf.version = 4;
