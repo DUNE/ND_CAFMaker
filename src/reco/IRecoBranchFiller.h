@@ -8,24 +8,10 @@
 
 #include <stdexcept>
 
-namespace caf
-{
-  class StandardRecord;
-}
-
-// forward-declaring the fhiclcpp stuff
-// takes some gyrations since they're templated
-namespace fhicl
-{
-  template <typename T, typename KeysToIgnore>
-  class Table;
-}
+#include "fwd.h"
 
 namespace cafmaker
 {
-  class dumpTree;
-  class FhiclConfig;
-  using Params = fhicl::Table<cafmaker::FhiclConfig, void>;
 
   class IRecoBranchFiller
   {
