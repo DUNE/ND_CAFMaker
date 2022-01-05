@@ -138,7 +138,8 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile)
   cet::filepath_maker maker;
   fhicl::make_ParameterSet(configFile, maker, pset);
 
-  return fhicl::Table<cafmaker::FhiclConfig>{pset, std::set<std::string>{}};  // second param is 'ignorable keys' -- we want everything validated, so, empty
+  // note that this insists the top-level config be named "nd_cafmaker"
+  return fhicl::Table<cafmaker::FhiclConfig>{pset.get<fhicl::ParameterSet>("nd_cafmaker"), std::set<std::string>{}};  // second param is 'ignorable keys' -- we want everything validated, so, empty
 }
 
 // -------------------------------------------------
