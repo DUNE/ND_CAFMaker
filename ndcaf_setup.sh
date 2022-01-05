@@ -38,3 +38,6 @@ export LD_LIBRARY_PATH=${DUNEANAOBJ_LIB}:$LD_LIBRARY_PATH
 mydir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 export LD_LIBRARY_PATH=$mydir/lib:$LD_LIBRARY_PATH
 export PATH=$mydir/bin:$PATH
+
+# our FCL needs to be findable too
+export FHICL_FILE_PATH="$FHICL_FILE_PATH:$mydir/cfg"
