@@ -135,7 +135,7 @@ void fillTruth(caf::StandardRecord& sr,
 fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile)
 {
   fhicl::ParameterSet pset;
-  cet::filepath_maker maker;
+  cet::filepath_first_absolute_or_lookup_with_dot maker(getenv("FHICL_FILE_PATH"));
   fhicl::make_ParameterSet(configFile, maker, pset);
 
   // note that this insists the top-level config be named "nd_cafmaker"
