@@ -15,7 +15,7 @@ namespace cafmaker
   class NDLArTMSMatchRecoFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      NDLArTMSMatchRecoFiller(const std::string &ndLArFilename, const std::string &tmsRecoFilename);
+      NDLArTMSMatchRecoFiller();
 
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
@@ -24,10 +24,6 @@ namespace cafmaker
                              caf::StandardRecord &sr,
                              const cafmaker::dumpTree &dt,
                              const cafmaker::Params &par) const override;
-
-
-      std::unique_ptr<cafmaker::IRecoBranchFiller> fNDLArRecoFiller;
-      std::unique_ptr<cafmaker::IRecoBranchFiller> fTMSRecoFiller;
   };
 }
 

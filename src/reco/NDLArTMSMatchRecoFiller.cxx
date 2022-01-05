@@ -8,12 +8,10 @@
 
 namespace cafmaker
 {
-  NDLArTMSMatchRecoFiller::NDLArTMSMatchRecoFiller(const std::string &ndLArFilename,
-                                                   const std::string &tmsRecoFilename)
-      : fNDLArRecoFiller(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndLArFilename)),
-        fTMSRecoFiller(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsRecoFilename))
+  NDLArTMSMatchRecoFiller::NDLArTMSMatchRecoFiller()
   {
-
+    // nothing to do
+    SetConfigured(true);
   }
 
   void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
@@ -21,14 +19,8 @@ namespace cafmaker
                                                   const cafmaker::dumpTree &dt,
                                                   const cafmaker::Params &par) const
   {
-
-    // first copy the info out of the individual reco branch fillers
-    fNDLArRecoFiller->FillRecoBranches(evtIdx, sr, dt, par);
-    fTMSRecoFiller->FillRecoBranches(evtIdx, sr, dt, par);
-
-    // now we can match tracks using that info
+    // match tracks using the info that should have been filled by the ND-LAr and TMS reco fillers
     MatchTracks(sr);
-
   }
 
 // -----------------------------------------------------
