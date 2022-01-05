@@ -4,13 +4,16 @@
 
 #include "TRandom3.h"
 #include "TFile.h"
+#include "TInterpreter.h"
 #include "TTree.h"
 #include "TVector3.h"
 #include "TLorentzVector.h"
 #include "Ntuple/NtpMCEventRecord.h"
 #include "EVGCore/EventRecord.h"
+#include "cetlib/filepath_maker.h"
 //#include "nusystematics/artless/response_helper.hh"
 #include "duneanaobj/StandardRecord/StandardRecord.h"
+#include "fhiclcpp/make_ParameterSet.h"
 
 #include "dumpTree.h"
 #include "Params.h"
@@ -23,13 +26,13 @@ void fillTruth(caf::StandardRecord& sr,
                const cafmaker::dumpTree & dt,
                TTree * gtree,
                const genie::NtpMCEventRecord * mcrec,
-               const cafmaker::params &par,
+               const cafmaker::Params &par,
                nusyst::response_helper& rh)
 {
   sr.vtx_x = dt.vtx[0];
   sr.vtx_y = dt.vtx[1];
   sr.vtx_z = dt.vtx[2];
-  sr.det_x = -100.*par.OA_xcoord;
+  sr.det_x = -100.*par().runInfo().OA_xcoord();
 
   // get GENIE event record
   gtree->GetEntry( dt.ievt );
@@ -128,11 +131,20 @@ void fillTruth(caf::StandardRecord& sr,
 
 } // void fillTruth()
 
+// -------------------------------------------------
+fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile)
+{
+  fhicl::ParameterSet pset;
+  cet::filepath_maker maker;
+  fhicl::make_ParameterSet(configFile, maker, pset);
+
+  return fhicl::Table<cafmaker::FhiclConfig>{pset, std::set<std::string>{}};  // second param is 'ignorable keys' -- we want everything validated, so, empty
+}
 
 // -------------------------------------------------
 
 // main loop function
-void loop(CAF& caf, cafmaker::params &par,
+void loop(CAF& caf, cafmaker::Params &par,
           TTree * intree,
           TTree * gtree,
           const cafmaker::IRecoBranchFiller & recoFiller)
@@ -146,7 +158,7 @@ void loop(CAF& caf, cafmaker::params &par,
 
   // Main event loop
   int N = intree->GetEntries();
-  for( int ii = par.first; ii < N; ++ii ) {
+  for( int ii = par().cafmaker().first(); ii < N; ++ii ) {
 
     intree->GetEntry(ii);
     if( ii % 100 == 0 ) printf( "Event %d of %d...\n", ii, N );
@@ -154,11 +166,11 @@ void loop(CAF& caf, cafmaker::params &par,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-    caf.sr.run = par.run;
-    caf.sr.subrun = par.subrun;
+    caf.sr.run = par().runInfo().run();
+    caf.sr.subrun = par().runInfo().subrun();
     caf.sr.event = ii;
     caf.sr.isFD = 0;
-    caf.sr.isFHC = par.fhc;
+    caf.sr.isFHC = par().runInfo().fhc();
 
     fillTruth(caf.sr, dt, gtree, caf.mcrec, par, caf.rh);
     recoFiller.FillRecoBranches(ii, caf.sr, dt, par);
@@ -167,8 +179,8 @@ void loop(CAF& caf, cafmaker::params &par,
   }
 
   // set other metadata
-  caf.meta_run = par.run;
-  caf.meta_subrun = par.subrun;
+  caf.meta_run = par().runInfo().run();
+  caf.meta_subrun = par().runInfo().subrun();
 
 }
 
@@ -193,62 +205,14 @@ int main( int argc, char const *argv[] )
 
   std::string mlreco_filename;
 
-  // Make parameter object and set defaults
-  cafmaker::params par;
-  par.IsGasTPC = false;
-  par.OA_xcoord = 0.; // on-axis by default
-  par.fhc = true;
-  par.grid = false;
-  par.seed = 7; // a very random number
-  par.run = 1; // CAFAna doesn't like run number 0
-  par.subrun = 0;
-  par.first = 0;
-  par.trk_muRes = 0.02; // fractional muon energy resolution of HP GAr TPC
-  par.LAr_muRes = 0.05; // fractional muon energy resolution of muons contained in LAr
-  par.ECAL_muRes = 0.1; // fractional muon energy resolution of muons ending in ECAL
-  par.em_const = 0.03; // EM energy resolution constant term: A + B/sqrt(E) (GeV)
-  par.em_sqrtE = 0.1; // EM energy resolution 1/sqrt(E) term: A + B/sqrt(E) (GeV)
-  par.michelEff = 0.75; // Michel finder efficiency
-  par.CC_trk_length = 100.; // minimum track length for CC in cm
-  par.pileup_frac = 0.1; // fraction of events with non-zero pile-up
-  par.pileup_max = 0.5; // GeV
-  par.gastpc_len = 6.; // track length cut in cm
-  par.gastpc_B = 0.4; // B field strength in Tesla
-  par.gastpc_padPitch = 0.1; // 1 mm. Actual pad pitch varies, which is going to be impossible to implement
-  par.gastpc_X0 = 1300.; // cm = 13m radiation length
 
-  int i = 0;
-  while( i < argc ) {
-    if( argv[i] == std::string("--infile") ) {
-      infile = argv[i+1];
-      i += 2;
-    } else if( argv[i] == std::string("--gfile") ) {
-      gfile = argv[i+1];
-      i += 2;
-    } else if( argv[i] == std::string("--outfile") ) {
-      outfile = argv[i+1];
-      i += 2;
-    } else if( argv[i] == std::string("--fhicl") ) {
-      fhicl_filename = argv[i+1];
-      i += 2;
-    } else if( argv[i] == std::string("--seed") ) {
-      par.seed = atoi(argv[i+1]);
-      par.run = par.seed;
-      i += 2;
-    } else if( argv[i] == std::string("--oa") ) {
-      par.OA_xcoord = atof(argv[i+1]);
-      i += 2;
-    } else if( argv[i] == std::string("--rhc") ) {
-      par.fhc = false;
-      i += 1;
-    } else if( argv[i] == std::string("--gastpc") ) {
-      par.IsGasTPC = true;
-      i += 1;
-    } else if( argv[i] == std::string("--ndlar-reco") ) {
-      mlreco_filename = argv[i+1];
-      i += 2;
-    } else i += 1; // look for next thing
+  if (argc != 2)
+  {
+    std::cerr << "Usage: " << argv[0] << " <fhicl configuration file>" << std::endl;
+    exit(1);
   }
+
+  cafmaker::Params par = parseConfig(argv[1]);
 
   CAF caf( outfile, fhicl_filename );
 

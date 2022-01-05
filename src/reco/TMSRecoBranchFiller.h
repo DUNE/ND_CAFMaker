@@ -21,7 +21,7 @@ namespace cafmaker
       void _FillRecoBranches(std::size_t evtIdx,
                              caf::StandardRecord &sr,
                              const dumpTree &dt,
-                             const params &par) const override;
+                             const cafmaker::Params &par) const override;
 
       TFile fTMSRecoFile;
   };

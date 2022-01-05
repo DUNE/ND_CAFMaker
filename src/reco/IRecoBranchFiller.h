@@ -3,20 +3,29 @@
 ///  Base class for reco branch fillers for the CAFMaker.
 ///
 
-#include <stdexcept>
-
 #ifndef ND_CAFMAKER_IRECOBRANCHFILLER_H
 #define ND_CAFMAKER_IRECOBRANCHFILLER_H
+
+#include <stdexcept>
 
 namespace caf
 {
   class StandardRecord;
 }
 
+// forward-declaring the fhiclcpp stuff
+// takes some gyrations since they're templated
+namespace fhicl
+{
+  template <typename T, typename KeysToIgnore>
+  class Table;
+}
+
 namespace cafmaker
 {
   class dumpTree;
-  class params;
+  class FhiclConfig;
+  using Params = fhicl::Table<cafmaker::FhiclConfig, void>;
 
   class IRecoBranchFiller
   {
@@ -30,7 +39,7 @@ namespace cafmaker
       void FillRecoBranches(std::size_t evtIdx,
                             caf::StandardRecord &sr,
                             const cafmaker::dumpTree &dt,
-                            const cafmaker::params &par) const
+                            const Params &par) const
       {
         if (!isConfigured)
           throw std::runtime_error("Reco branch filler hasn't been configured!");
@@ -43,7 +52,7 @@ namespace cafmaker
       virtual void _FillRecoBranches(std::size_t evtIdx,
                                      caf::StandardRecord &sr,
                                      const cafmaker::dumpTree &dt,
-                                     const cafmaker::params &par) const = 0;
+                                     const cafmaker::Params &par) const = 0;
 
       void SetConfigured(bool configured = true)    { isConfigured = configured; };
 

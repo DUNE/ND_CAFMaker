@@ -28,12 +28,12 @@ namespace cafmaker
   void ParameterizedRecoBranchFiller::_FillRecoBranches(std::size_t ,  // this parameter isn't used in this particular reco branch filler
                                                         caf::StandardRecord &sr,
                                                         const cafmaker::dumpTree &dt,
-                                                        const cafmaker::params &par) const
+                                                        const cafmaker::Params &par) const
   {
     //--------------------------------------------------------------------------
     // Parameterized reconstruction
     //--------------------------------------------------------------------------
-    if( !par.IsGasTPC ) {
+    if( !par().runInfo().IsGasTPC() ) {
       // Loop over final-state particles
       double longest_mip = 0.;
       double longest_mip_KE = 0.;
@@ -106,20 +106,20 @@ namespace cafmaker
         sr.reco_numu = 0; sr.reco_nue = 1; sr.reco_nc = 0;
         sr.muon_contained = 0; sr.muon_tracker = 0; sr.muon_ecal = 0; sr.muon_exit = 0;
         sr.reco_lepton_pdg = reco_electron_pdg;
-      } else if( dt.muonReco <= 1 && !(abs(dt.lepPdg) == 11 && sr.Elep_reco > 0.) && (longest_mip < par.CC_trk_length || longest_mip_KE/longest_mip > 3.) ) {
+      } else if( dt.muonReco <= 1 && !(abs(dt.lepPdg) == 11 && sr.Elep_reco > 0.) && (longest_mip < par().pseudoReco().CC_trk_length() || longest_mip_KE/longest_mip > 3.) ) {
         // reco as NC
         sr.Elep_reco = 0.;
         sr.reco_q = 0;
         sr.reco_numu = 0; sr.reco_nue = 0; sr.reco_nc = 1;
         sr.muon_contained = 0; sr.muon_tracker = 0; sr.muon_ecal = 0; sr.muon_exit = 0;
         sr.reco_lepton_pdg = 0;
-      } else if( (abs(dt.lepPdg) == 12 || abs(dt.lepPdg) == 14) && longest_mip > par.CC_trk_length && longest_mip_KE/longest_mip < 3. ) { // true NC reco as CC numu
+      } else if( (abs(dt.lepPdg) == 12 || abs(dt.lepPdg) == 14) && longest_mip > par().pseudoReco().CC_trk_length() && longest_mip_KE/longest_mip < 3. ) { // true NC reco as CC numu
         sr.Elep_reco = longest_mip_KE*0.001 + mmu;
-        if( par.fhc ) sr.reco_q = -1;
+        if( par().runInfo().fhc() ) sr.reco_q = -1;
         else {
           double michel = fRando->Rndm();
-          if( longest_mip_charge == 1 && michel < par.michelEff ) sr.reco_q = 1; // correct mu+
-          else if( michel < par.michelEff*0.25 ) sr.reco_q = 1; // incorrect mu-
+          if( longest_mip_charge == 1 && michel < par().pseudoReco().michelEff() ) sr.reco_q = 1; // correct mu+
+          else if( michel < par().pseudoReco().michelEff()*0.25 ) sr.reco_q = 1; // incorrect mu-
           else sr.reco_q = -1; // no reco Michel
         }
         sr.reco_numu = 1; sr.reco_nue = 0; sr.reco_nc = 0;
@@ -137,7 +137,7 @@ namespace cafmaker
       sr.eRecoOther = dt.hadOther*0.001;
 
       sr.pileup_energy = 0.;
-      if( fRando->Rndm() < par.pileup_frac ) sr.pileup_energy = fRando->Rndm() * par.pileup_max;
+      if( fRando->Rndm() < par().pseudoReco().pileup_frac() ) sr.pileup_energy = fRando->Rndm() * par().pseudoReco().pileup_max();
       sr.Ev_reco += sr.pileup_energy;
     } else {
       // gas TPC: FS particle loop look for long enough tracks and smear momenta
@@ -153,11 +153,11 @@ namespace cafmaker
         // track length cut 6cm according to T Junk
         if( dt.fsTrkLen[i] > 0. && dt.fsPdg[i] != 2112 ) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
           double pT = 0.001*sqrt(dt.fsPy[i]*dt.fsPy[i] + dt.fsPz[i]*dt.fsPz[i]); // transverse to B field, in GeV
-          double nHits = dt.fsTrkLen[i] / par.gastpc_padPitch; // doesn't matter if not integer as only used in eq
+          double nHits = dt.fsTrkLen[i] / par().pseudoReco().gastpc_padPitch(); // doesn't matter if not integer as only used in eq
           // Gluckstern formula, sigmapT/pT, with sigmaX and L in meters
-          double fracSig_meas = sqrt(720./(nHits+4)) * (0.01*par.gastpc_padPitch/sqrt(12.)) * pT / (0.3 * par.gastpc_B * 0.0001 * dt.fsTrkLenPerp[i]*dt.fsTrkLenPerp[i]);
+          double fracSig_meas = sqrt(720./(nHits+4)) * (0.01*par().pseudoReco().gastpc_padPitch()/sqrt(12.)) * pT / (0.3 * par().pseudoReco().gastpc_B() * 0.0001 * dt.fsTrkLenPerp[i]*dt.fsTrkLenPerp[i]);
           // multiple scattering term
-          double fracSig_MCS = 0.052 / (par.gastpc_B * sqrt(par.gastpc_X0*dt.fsTrkLenPerp[i]*0.0001));
+          double fracSig_MCS = 0.052 / (par().pseudoReco().gastpc_B() * sqrt(par().pseudoReco().gastpc_X0()*dt.fsTrkLenPerp[i]*0.0001));
 
           double sigmaP = ptrue * sqrt( fracSig_meas*fracSig_meas + fracSig_MCS*fracSig_MCS );
           double preco = fRando->Gaus( ptrue, sigmaP );
@@ -167,7 +167,7 @@ namespace cafmaker
           sr.nd.gar.partEvReco[i] = ereco;
 
           // threshold cut
-          if( dt.fsTrkLen[i] > par.gastpc_len ) {
+          if( dt.fsTrkLen[i] > par().pseudoReco().gastpc_len() ) {
             sr.Ev_reco += ereco;
             if( dt.fsPdg[i] == 211 || (dt.fsPdg[i] == 2212 && preco > 1.5) ) sr.nd.gar.gastpc_pi_pl_mult++;
             else if( dt.fsPdg[i] == -211 ) sr.nd.gar.gastpc_pi_min_mult++;
@@ -201,11 +201,11 @@ namespace cafmaker
 
 
   /// Fill reco variables for muon reconstructed in magnetized tracker
-  void ParameterizedRecoBranchFiller::recoMuonTracker(caf::StandardRecord &sr, const params &par ) const
+  void ParameterizedRecoBranchFiller::recoMuonTracker(caf::StandardRecord &sr, const cafmaker::Params &par ) const
   {
     // smear momentum by resolution
     double p = sqrt(sr.LepE*sr.LepE - mmu*mmu);
-    double reco_p = fRando->Gaus( p, p*par.trk_muRes );
+    double reco_p = fRando->Gaus( p, p*par().pseudoReco().trk_muRes() );
     sr.Elep_reco = sqrt(reco_p*reco_p + mmu*mmu);
 
     double true_tx = 1000.*atan(sr.LepMomX / sr.LepMomZ);
@@ -226,11 +226,11 @@ namespace cafmaker
   }
 
   /// Fill reco muon variables for muon contained in LAr
-  void ParameterizedRecoBranchFiller::recoMuonLAr(caf::StandardRecord &sr, const params &par ) const
+  void ParameterizedRecoBranchFiller::recoMuonLAr(caf::StandardRecord &sr, const cafmaker::Params &par ) const
   {
     // range-based, smear kinetic energy
     double ke = sr.LepE - mmu;
-    double reco_ke = fRando->Gaus( ke, ke*par.LAr_muRes );
+    double reco_ke = fRando->Gaus( ke, ke*par().pseudoReco().LAr_muRes() );
     sr.Elep_reco = reco_ke + mmu;
 
     double true_tx = 1000.*atan(sr.LepMomX / sr.LepMomZ);
@@ -243,11 +243,11 @@ namespace cafmaker
 
 
     // assume negative for FHC, require Michel for RHC
-    if( par.fhc ) sr.reco_q = -1;
+    if( par().runInfo().fhc() ) sr.reco_q = -1;
     else {
       double michel = fRando->Rndm();
-      if( sr.LepPDG == -13 && michel < par.michelEff ) sr.reco_q = 1; // correct mu+
-      else if( sr.LepPDG == 13 && michel < par.michelEff*0.25 ) sr.reco_q = 1; // incorrect mu-
+      if( sr.LepPDG == -13 && michel < par().pseudoReco().michelEff() ) sr.reco_q = 1; // correct mu+
+      else if( sr.LepPDG == 13 && michel < par().pseudoReco().michelEff()*0.25 ) sr.reco_q = 1; // incorrect mu-
       else sr.reco_q = -1; // no reco Michel
     }
 
@@ -257,11 +257,11 @@ namespace cafmaker
   }
 
   /// Fill reco variables for muon reconstructed in magnetized tracker
-  void ParameterizedRecoBranchFiller::recoMuonECAL(caf::StandardRecord & sr, const params &par ) const
+  void ParameterizedRecoBranchFiller::recoMuonECAL(caf::StandardRecord & sr, const cafmaker::Params &par ) const
   {
     // range-based KE
     double ke = sr.LepE - mmu;
-    double reco_ke = fRando->Gaus( ke, ke*par.ECAL_muRes );
+    double reco_ke = fRando->Gaus( ke, ke*par().pseudoReco().ECAL_muRes() );
     sr.Elep_reco = reco_ke + mmu;
 
     double true_tx = 1000.*atan(sr.LepMomX / sr.LepMomZ);
@@ -282,7 +282,7 @@ namespace cafmaker
   }
 
   /// Fill reco variables for true electron
-  void ParameterizedRecoBranchFiller::recoElectron(caf::StandardRecord & sr, const params &par ) const
+  void ParameterizedRecoBranchFiller::recoElectron(caf::StandardRecord & sr, const cafmaker::Params &par ) const
   {
     sr.reco_q = 0; // never know charge
     sr.reco_numu = 0;
@@ -294,7 +294,7 @@ namespace cafmaker
       sr.reco_nue = 0; sr.reco_nc = 1;
       sr.Ev_reco = sr.LepE; // include electron energy in Ev anyway, since it won't show up in reco hadronic energy
     } else { // reco as CC
-      sr.Elep_reco = fRando->Gaus( sr.LepE, sr.LepE*(par.em_const + par.em_sqrtE/sqrt(sr.LepE)) );
+      sr.Elep_reco = fRando->Gaus( sr.LepE, sr.LepE*(par().pseudoReco().em_const() + par().pseudoReco().em_sqrtE()/sqrt(sr.LepE)) );
       sr.reco_nue = 1; sr.reco_nc = 0;
       sr.Ev_reco = sr.Elep_reco;
     }

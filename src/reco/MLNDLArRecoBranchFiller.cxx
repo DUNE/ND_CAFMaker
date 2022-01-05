@@ -21,7 +21,7 @@ namespace cafmaker
   MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
                                              caf::StandardRecord &sr,
                                              const cafmaker::dumpTree &dt,
-                                             const cafmaker::params &par) const
+                                             const cafmaker::Params &par) const
   {
     fTrackFiller.FillSR(sr, evtIdx);
     fShowerFiller.FillSR(sr, evtIdx);
