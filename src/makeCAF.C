@@ -109,13 +109,6 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
 }
 
 // -------------------------------------------------
-// update the FCL table with anything from the command line
-void updateConfig(fhicl::Table<cafmaker::FhiclConfig> & table, const progopt::variables_map & vm)
-{
-}
-
-
-// -------------------------------------------------
 // decide which reco fillers we need based on the configuration
 std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const cafmaker::Params &par)
 {
