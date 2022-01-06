@@ -164,11 +164,12 @@ void loop(CAF& caf,
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
 
   // Main event loop
-  int N = intree->GetEntries();
-  for( int ii = par().cafmaker().first(); ii < N; ++ii ) {
+  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : intree->GetEntries() - par().cafmaker().first();
+  int start = par().cafmaker().first();
+  for( int ii = start; ii < start + N; ++ii ) {
 
     intree->GetEntry(ii);
-    if( ii % 100 == 0 ) printf( "Event %d of %d...\n", ii, N );
+    if( ii % 100 == 0 ) printf( "Event %d (%d of %d)...\n", ii, ii-start, N );
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();
