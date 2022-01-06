@@ -40,8 +40,9 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
 
     // these are optional and have defaults
-    fhicl::Atom<int>  first  { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
-    fhicl::Atom<int>  seed   { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
+    fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
+    fhicl::Atom<int>  numevts { fhicl::Name("NumEvts"), fhicl::Comment("Number of events to process (-1 means 'all')"), -1 };
+    fhicl::Atom<int>  seed    { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
   };
 
   struct PseudoRecoParams

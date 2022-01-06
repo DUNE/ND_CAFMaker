@@ -61,6 +61,7 @@ LDLIBS += -L$(GENIE)/lib \
 
 #LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders
 #LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
+LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp
 LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
