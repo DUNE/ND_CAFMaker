@@ -11,13 +11,13 @@ setup cmake v3_9_0
 setup gcc v6_4_0
 setup pycurl
 setup ifdhc
-setup dk2nugenie   v01_06_01f -q debug:e15
+setup dk2nugenie   v01_06_01f -q prof:e15
 setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
 setup geant4 v4_10_3_p01b -q e15:prof
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v01_01_00 -q e15:gv1:debug
+setup duneanaobj v01_01_01 -q e15:gv1:prof
 setup hdf5 v1_10_2a -q e15
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
