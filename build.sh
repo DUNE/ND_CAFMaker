@@ -65,14 +65,14 @@ make -j pyGeoEff
 cd ${TOPDIR}
 
 # Add nusystematics to the paths
-export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/Linux/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/nusystematics/artless:$LD_LIBRARY_PATH
-export FHICL_FILE_PATH=${TOPDIR}/nusystematics/nusystematics/fcl:$FHICL_FILE_PATH
+#export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/Linux/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/nusystematics/artless:$LD_LIBRARY_PATH
+#export FHICL_FILE_PATH=${TOPDIR}/nusystematics/nusystematics/fcl:$FHICL_FILE_PATH
 
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${TOPDIR}/DUNE_ND_GeoEff/lib/
 
 # make tarballs of edep-sim and nusystematics for grid jobs
 tar -zcf edep-sim.tar.gz edep-sim
-tar -zcf nusystematics.tar.gz nusystematics
+#tar -zcf nusystematics.tar.gz nusystematics
 tar -zcf DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff
