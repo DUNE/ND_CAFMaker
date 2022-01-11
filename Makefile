@@ -12,7 +12,7 @@ INCLUDE += -I$(FHICLCPP_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
-LDLIBS += -L/usr/lib64 -lxml2
+LDLIBS += -L$(LIBXML2_FQ_DIR)/lib -lxml2
 LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp
 LDLIBS += -L$(PYTHIA6) -lPythia6
 LDLIBS += -L$(ROOTSYS)/lib -lGeom -lEGPythia6
