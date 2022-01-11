@@ -11,6 +11,7 @@ setup jobsub_client
 setup eigen v3_3_5
 setup duneanaobj v01_01_01 -q e15:gv1:debug
 setup hdf5 v1_10_2a -q e15
+setup fhiclcpp v4_06_08 -q debug:e15
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
