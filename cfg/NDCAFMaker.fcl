@@ -1,0 +1,38 @@
+BEGIN_PROLOG
+
+standard_nd_cafmaker: {
+   OnGrid: false
+
+   RunParams: {
+     Run: 1
+     Subrun: 0
+
+     IsFHC: true
+     IsGasTPC: false
+
+     OffAxisXCoord: 0   #  on-axis by default
+   }
+
+   CAFMakerSettings: {
+     FirstEvt: 0
+     Seed: 7
+   }
+
+   PseudoRecoParams: {
+     trk_muRes: 0.02
+     LAr_muRes: 0.05
+     ECAL_muRes: 0.1
+     em_const: 0.03
+     em_sqrtE: 0.1
+     michelEff: 0.75
+     CC_trk_length: 100.
+     pileup_frac: 0.1
+     pileup_max: 0.5
+     gastpc_len: 6.
+     gastpc_B: 0.4
+     gastpc_padPitch: 0.1
+     gastpc_X0: 1300.
+   }
+}
+
+END_PROLOG
