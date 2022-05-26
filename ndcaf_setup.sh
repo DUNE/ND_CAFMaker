@@ -1,20 +1,20 @@
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
-setup cmake v3_9_0
-setup gcc v6_4_0
+setup cmake v3_22_2
+setup gcc v9_3_0
 setup pycurl
 setup ifdhc
-setup dk2nugenie   v01_06_01f -q debug:e15
+setup dk2nugenie   v01_10_00d -q debug:e20
 setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
-setup geant4 v4_10_3_p01b -q e15:debug
+setup geant4 v4_11_0_p01c -q e20:debug
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v01_01_01 -q e15:gv1:debug
-setup hdf5 v1_10_2a -q e15
-setup fhiclcpp v4_06_08 -q debug:e15
+setup duneanaobj v01_01_01 -q e20:debug
+setup hdf5 v1_12_0b -q e20:debug
+setup fhiclcpp v4_15_03 -q debug:e20
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
-G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
+G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib -name 'Geant4Config.cmake'`
 export Geant4_DIR=`dirname $G4_cmake_file`
 
 # edep-sim needs to have the GEANT bin directory in the path

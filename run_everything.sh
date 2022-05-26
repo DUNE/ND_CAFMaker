@@ -110,13 +110,13 @@ export IFDH_DEBUG=0
 echo "Setting up software"
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 setup ifdhc
-setup dk2nugenie   v01_06_01f -q debug:e15
+setup dk2nugenie   v01_10_00d -q debug:e20
 setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
-setup geant4 v4_10_3_p01b -q e15:prof
+setup geant4 v4_11_0_p01b -q e20:prof
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
-G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
+G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib -name 'Geant4Config.cmake'`
 export Geant4_DIR=`dirname $G4_cmake_file`
 
 # edep-sim needs to have the GEANT bin directory in the path
@@ -217,10 +217,10 @@ edep-sim \
 # This is a hack, please avert your eyes if you don't want to see my garbage
 unset LD_LIBRARY_PATH
 setup ifdhc
-setup dk2nugenie   v01_06_01f -q debug:e15
+setup dk2nugenie   v01_10_00d -q debug:e20
 setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
-setup geant4 v4_10_3_p01b -q e15:prof
+setup geant4 v4_11_0_p01c -q e20:prof
 
 # Add nusystematics to the paths
 export LD_LIBRARY_PATH=${PWD}/nusystematics/build/Linux/lib:${LD_LIBRARY_PATH}
