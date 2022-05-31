@@ -1,6 +1,6 @@
 export CXX = g++
 export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2
-export ROOTFLAGS = `root-config --cflags --glibs`
+export ROOTFLAGS = $(shell root-config --cflags)
 export INCLUDE = -I$(HDF5_INC)
 INCLUDE += -I$(GENIE_INC)/GENIE
 #INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
@@ -15,56 +15,17 @@ export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L$(LIBXML2_FQ_DIR)/lib -lxml2
 LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp
 LDLIBS += -L$(PYTHIA6) -lPythia6
-LDLIBS += -L$(ROOTSYS)/lib -lGeom -lEGPythia6
-LDLIBS += -L$(GENIE)/lib \
-                                        -lGAlgorithm \
-                                        -lGBaryonResonance \
-                                        -lGBase \
-                                        -lGBodekYang \
-                                        -lGCharm \
-                                        -lGCoh \
-                                        -lGCrossSections \
-                                        -lGDecay \
-                                        -lGDfrc \
-                                        -lGDIS \
-                                        -lGElas \
-                                        -lGElFF \
-                                        -lGEVGCore \
-                                        -lGEVGDrivers \
-                                        -lGEVGModules \
-                                        -lGFluxDrivers \
-                                        -lGFragmentation \
-                                        -lGGeo \
-                                        -lGGiBUU \
-                                        -lGHadronTransp \
-                                        -lGHEP \
-                                        -lGInteraction \
-                                        -lGLlewellynSmith \
-                                        -lGMEC \
-                                        -lGReinSehgal \
-                                        -lGSingleKaon \
-                                        -lGMessenger \
-                                        -lGMuELoss \
-                                        -lGNtuple \
-                                        -lGNuclear \
-                                        -lGNuE \
-                                        -lGNuGamma \
-                                        -lGNumerical \
-                                        -lGPDF \
-                                        -lGPDG \
-                                        -lGQEL \
-                                        -lGQPM \
-                                        -lGRegistry \
-                                        -lGRES \
-                                        -lGUtils \
-                                        -lGReWeight
 
 #LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders
 #LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
+LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
+
+LDLIBS += $(shell genie-config --libs)
+LDLIBS += $(shell root-config --glibs)
+LDLIBS += -lGeom -lEGPythia6 -lGenVector
 LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp
-LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
 
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin

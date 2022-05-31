@@ -17,7 +17,7 @@ test: $(BINDIR)/testHDF
 
 # make an object for any .cxx requested
 %.o : %.cxx %.h
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -fPIC -o $@ -c $< #compile
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -o $@ -c $< #compile
 
 # should *really* make a .d rule for the objects
 # to get their dependencies on the headers right, but ... not now
@@ -25,10 +25,10 @@ $(LIBDIR)/lib$(LIBNAME).so: $(OBJS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -shared -o $@ $(OBJS)
 
 $(BINDIR)/makeCAF: $(LIBS) makeCAF.C
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) $(LDLIBS) -L$(LIBDIR) -l$(LIBNAME) -o $@ makeCAF.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -L$(LIBDIR) -l$(LIBNAME) $(LDLIBS) -o $@ makeCAF.C
 
 $(BINDIR)/testHDF: $(LIBS) testHDF.C
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) $(LDLIBS) -L$(LIBDIR) -l$(LIBNAME) -o $@ testHDF.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -L$(LIBDIR) -l$(LIBNAME) $(LDLIBS) -o $@ testHDF.C
 
 
 clean:
