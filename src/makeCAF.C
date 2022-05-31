@@ -132,7 +132,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   // next: did we do TMS reco?
   std::string tmsFile;
   if (par().cafmaker().tmsRecoFile(tmsFile))
-    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
+    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile));
 
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
@@ -219,11 +219,13 @@ int main( int argc, char const *argv[] )
 
   // Copy geometric efficiency throws TTree to CAF file
   std::cout << "Copying geometric efficiency throws TTree to output file" << std::endl;
-  TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
+  tf->cd();
+  TTree *tGeoEfficiencyThrows = (TTree*) tf->Get("geoEffThrows");
   caf.cafFile->cd();
-  tGeoEfficiencyThrowsOut->CloneTree()->Write();
+  tGeoEfficiencyThrows->CloneTree()->Write();
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();
-    
+
+  return 0;
 }
