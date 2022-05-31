@@ -24,6 +24,7 @@ namespace cafmaker
         // we don't have any further files to load or anything,
         // so we're all set
         SetConfigured(true);
+        name = "ParameterizedReco";
       }
 
     protected:

@@ -14,6 +14,7 @@ namespace cafmaker
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
+    name = "LArML";
   }
 
   // ------------------------------------------------------------------------------

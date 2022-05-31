@@ -12,6 +12,7 @@ namespace cafmaker
   {
     // nothing to do
     SetConfigured(true);
+    name = "LArTMSMatcher";
   }
 
   void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
