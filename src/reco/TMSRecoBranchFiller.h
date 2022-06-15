@@ -49,8 +49,10 @@ namespace cafmaker
       float _TrackLength[10];
       float _TotalTrackEnergy[10];
       float _Occupancy[10];
-      float _DirectionX[10];
-      float _DirectionZ[10];
+      float _DirectionX_Downstream[10];
+      float _DirectionZ_Downstream[10];
+      float _DirectionX_Upstream[10];
+      float _DirectionZ_Upstream[10];
       // [10][200][2] needs to match TMS reco output (check file if in doubt)
       float _TrackHitPos[10][200][2];
   };
