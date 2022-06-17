@@ -11,12 +11,14 @@ setup cmake v3_9_0
 setup gcc v6_4_0
 setup pycurl
 setup ifdhc
-setup dk2nugenie   v01_06_01f -q debug:e15
+setup dk2nugenie   v01_06_01f -q prof:e15
 setup genie_xsec   v2_12_10   -q DefaultPlusValenciaMEC
 setup genie_phyopt v2_12_10   -q dkcharmtau
 setup geant4 v4_10_3_p01b -q e15:prof
 setup jobsub_client
 setup eigen v3_3_5
+setup duneanaobj v01_01_01 -q e15:gv1:prof
+setup hdf5 v1_10_2a -q e15
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
@@ -32,18 +34,24 @@ source build/edep-build.sh
 
 cd ${TOPDIR}
 
+## Update Jan 5 2022:
+## DIRT-II task force is currently working on deciding on GENIE 3 models to work with for the ND TDR.
+## Since nusystematics' internal fhicl-cpp replacement conflicts with the official fhicl-cpp UPS product,
+## for the moment, we're disabling the nusystematics interface.
+## It will be re-enabled and cleaned up with help from the DIRT-II group once the model & uncertainties are settled.
+
 # Get nusystematics and built it "artless"
 # The ART-dependent version can be ups setup but for ND we need this special build
 #
 # v00_04_01 is the last version to depend on genie v2 (specifically v2_12_10d)
-if [ $FORCE == yes ]; then rm -rf nusystematics; fi
-git clone ssh://p-nusystematics@cdcvs.fnal.gov/cvs/projects/nusystematics -b v00_04_01
-mkdir nusystematics/build
-cd nusystematics/build
-cmake ../ -DUSEART=0 -DLIBXML2_LIB=/cvmfs/larsoft.opensciencegrid.org/products/libxml2/v2_9_5/Linux64bit+2.6-2.12-prof/lib/ -DLIBXML2_INC=/cvmfs/larsoft.opensciencegrid.org/products/libxml2/v2_9_5/Linux64bit+2.6-2.12-prof/include/libxml2 -DPYTHIA6=/cvmfs/larsoft.opensciencegrid.org/products/pythia/v6_4_28i/Linux64bit+2.6-2.12-gcc640-prof/lib
-make -j systematicstools # force this to build first
-make -j
-make -j install
+#if [ $FORCE == yes ]; then rm -rf nusystematics; fi
+#git clone ssh://p-nusystematics@cdcvs.fnal.gov/cvs/projects/nusystematics -b v00_04_01
+#mkdir nusystematics/build
+#cd nusystematics/build
+#cmake ../ -DUSEART=0 -DLIBXML2_LIB=/cvmfs/larsoft.opensciencegrid.org/products/libxml2/v2_9_5/Linux64bit+2.6-2.12-prof/lib/ -DLIBXML2_INC=/cvmfs/larsoft.opensciencegrid.org/products/libxml2/v2_9_5/Linux64bit+2.6-2.12-prof/include/libxml2 -DPYTHIA6=/cvmfs/larsoft.opensciencegrid.org/products/pythia/v6_4_28i/Linux64bit+2.6-2.12-gcc640-prof/lib
+#make -j systematicstools # force this to build first
+#make -j
+#make -j install
 
 cd ${TOPDIR}
 
@@ -57,14 +65,14 @@ make -j pyGeoEff
 cd ${TOPDIR}
 
 # Add nusystematics to the paths
-export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/Linux/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/nusystematics/artless:$LD_LIBRARY_PATH
-export FHICL_FILE_PATH=${TOPDIR}/nusystematics/nusystematics/fcl:$FHICL_FILE_PATH
+#export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/Linux/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=${TOPDIR}/nusystematics/build/nusystematics/artless:$LD_LIBRARY_PATH
+#export FHICL_FILE_PATH=${TOPDIR}/nusystematics/nusystematics/fcl:$FHICL_FILE_PATH
 
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${TOPDIR}/DUNE_ND_GeoEff/lib/
 
 # make tarballs of edep-sim and nusystematics for grid jobs
 tar -zcf edep-sim.tar.gz edep-sim
-tar -zcf nusystematics.tar.gz nusystematics
+#tar -zcf nusystematics.tar.gz nusystematics
 tar -zcf DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff
