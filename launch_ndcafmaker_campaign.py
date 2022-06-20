@@ -1,4 +1,8 @@
-# Describe the script here.
+# This script should help to automate ND productions. It will:
+#  - Interpret which horn currents and total POTs you would like at each position you specify.
+#  - Split these into bite size chunks of your choosing.
+#  - Build the `jobsub_submit` command automatically.
+#  - Query the grid conditions automatically before submitting another batch of jobs to check they are suitable (where suitable is definable by the user). 
 
 
 # Import, setup and define some useful things.
