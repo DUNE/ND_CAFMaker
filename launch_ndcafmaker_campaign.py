@@ -27,9 +27,9 @@ def add_log(name, log_file, level=logging.INFO):
 
 
 # Construct the jobsub command.
-def build_jobsub_cmd(n_jobs_per_submission, n_jobs_concurrent, horn_current, run_number, pot_per_file, position):
+def build_jobsub_cmd(n_jobs_per_submission, horn_current, run_number, pot_per_file, position):
 
-  cmd  = "jobsub_submit --group dune --role=Analysis -N " + str(n_jobs_per_submission) + " --maxConcurrent " + str(n_jobs_concurrent)
+  cmd  = "jobsub_submit --group dune --role=Analysis -N " + str(n_jobs_per_submission)
   cmd +=" --OS=SL7 --expected-lifetime=24h --memory=4000MB file://run_everything.sh "
   cmd += horn_current + " " + str(run_number) + " " + pot_per_file + " " + position
 
@@ -69,7 +69,6 @@ if __name__ == "__main__":
 
   # Define command line interface.
   parser = argparse.ArgumentParser()
-  parser.add_argument("--n_jobs_concurrent", required=False, type=int, default=2000, help="Maximum number of concurrent jobs that will run (passed straight though to jobsub_submit).")
   parser.add_argument("--n_jobs_per_submission", required=False, type=int, default=10000, help="Number of jobs submitted with each call to jobsub_submit.")
   parser.add_argument("--n_jobs_threshold", required=False, type=int, default=5000, help="Minimum number of jobs under your user before another call of jobsub_submit.")
   parser.add_argument("--continue_campaign", required=False, help="Pick-up from where you left off. Pass the appropriate *_lnc.progress file.")
@@ -157,7 +156,7 @@ if __name__ == "__main__":
         wait_for_grid_availability(args.wait_time*60, log, args.n_jobs_threshold)
 
         # When conditions are suitable, construct the jobsub command.
-        cmd = build_jobsub_cmd(args.n_jobs_per_submission, args.n_jobs_concurrent, horn_current, run_number, config_args_dict["--pot_per_file"][0], off_axis_position)
+        cmd = build_jobsub_cmd(args.n_jobs_per_submission, horn_current, run_number, config_args_dict["--pot_per_file"][0], off_axis_position)
     
         # Submit!
         if not args.print_only:
