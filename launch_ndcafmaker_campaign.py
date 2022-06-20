@@ -69,8 +69,8 @@ if __name__ == "__main__":
 
   # Define command line interface.
   parser = argparse.ArgumentParser()
-  parser.add_argument("--n_jobs_per_submission", required=False, type=int, default=10000, help="Number of jobs submitted with each call to jobsub_submit.")
-  parser.add_argument("--n_jobs_threshold", required=False, type=int, default=5000, help="Minimum number of jobs under your user before another call of jobsub_submit.")
+  parser.add_argument("--n_jobs_per_submission", required=False, type=int, default=5000, help="Number of jobs submitted with each call to jobsub_submit.")
+  parser.add_argument("--n_jobs_threshold", required=False, type=int, default=2500, help="Minimum number of jobs under your user before another call of jobsub_submit.")
   parser.add_argument("--continue_campaign", required=False, help="Pick-up from where you left off. Pass the appropriate *_lnc.progress file.")
   parser.add_argument("-c", "--config", required=True, help="Configuration file with campaign arguments - see ./launch_ndcafmaker_campaign_example.cfg for an example.")
   parser.add_argument("-l", "--log_dir", required=False, default="./", help="Directory that the log files for this script will be sent to (not the grid job log files).")
