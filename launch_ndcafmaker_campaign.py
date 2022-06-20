@@ -10,6 +10,7 @@ import argparse
 import logging
 import math
 import os
+import time
 
 
 # Add a new log stream
