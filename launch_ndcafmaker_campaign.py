@@ -72,7 +72,7 @@ if __name__ == "__main__":
   parser.add_argument("-c", "--config", required=True, help="Configuration file with campaign arguments - see ./launch_ndcafmaker_campaign_example.cfg for an example.")
   parser.add_argument("-l", "--log_dir", required=False, default="./", help="Directory that the log files for this script will be sent to (not the grid job log files).")
   parser.add_argument("-p", "--print_only", required=False, action='store_true', help="Only print the jobsub commands, don't excute them.")
-  parser.add_argument("-w", "--wait_time", required=False, type=int, default=0.15, help="How long should we wait (in minutes) between checks of the grid availability?")
+  parser.add_argument("-w", "--wait_time", required=False, type=int, default=15, help="How long should we wait (in minutes) between checks of the grid availability?")
   
   args = parser.parse_args()
 
