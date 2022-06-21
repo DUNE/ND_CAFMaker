@@ -58,7 +58,7 @@ def wait_for_grid_availability(wait_time, log, max_jobs):
   while n_current_jobs > max_jobs:
     log.info("... that's too many, waiting for " + str(wait_time) + " seconds.")
     time.sleep(wait_time)
-    n_current_jobs=count_current_jobs()
+    n_current_jobs=count_current_jobs(user)
     log.info("There are currently "+str(n_current_jobs)+" jobs under " + user  + " user...")
 
   log.info("That's fine, will go ahead with submission")
