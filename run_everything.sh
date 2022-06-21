@@ -82,8 +82,16 @@ if [ "${FLUX}" = "gsimple" ] && [ "${HORN}" = "FHC" ]; then
 OADIR="${OFFAXIS}mgsimple"
 fi
 
+if [ "${FLUX}" = "gsimple" ] && [ "${HORN}" = "RHC" ]; then
+OADIR="${OFFAXIS}mgsimpleRHC"
+fi
+
 RUNNO=$((${PROCESS}+${FIRST}))
-RNDSEED=$((1000000*${OFFAXIS}+${RUNNO}+1000000))
+# bc used here so non-integer values of OFFAXIS can be specified.
+RNDSEED=$(expr 1000000*${OFFAXIS}+${RUNNO}+1000000 | bc)
+# Strip numbers after the decimal point to go back to an
+# integer RNDSEED.
+RNDSEED=`echo "$RNDSEED" | cut -f 1 -d '.'`
 
 # 5E16 is about 15000 events on-axis which runs in ~6 hours
 NEVENTS="-e ${NPOT}"      # -n XXXX number of events, -e XE16 for POT
@@ -97,7 +105,8 @@ GEOMETRY="MPD_SPY_LAr"
 TOPVOL="volArgonCubeActive"
 
 TARDIR="/pnfs/dune/persistent/users/LBL_TDR/sw_tarballs"
-OUTDIR="/pnfs/dune/persistent/users/marshalc/nd_offaxis/v7"
+#OUTDIR="/pnfs/dune/persistent/users/marshalc/nd_offaxis/v7"
+OUTDIR="/pnfs/dune/persistent/users/abooth/Production/ND_CAFMaker/nd_offaxis/v7"
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
