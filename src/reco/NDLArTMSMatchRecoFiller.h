@@ -7,8 +7,11 @@
 #define ND_CAFMAKER_NDLARTMSMATCHRECOFILLER_H
 
 #include <memory>
+#include <iostream>
+#include "TF1.h"
 
 #include "IRecoBranchFiller.h"
+#include "duneanaobj/StandardRecord/StandardRecord.h"
 
 namespace cafmaker
 {
