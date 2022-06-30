@@ -106,7 +106,7 @@ TOPVOL="volArgonCubeActive"
 
 TARDIR="/pnfs/dune/persistent/users/LBL_TDR/sw_tarballs"
 #OUTDIR="/pnfs/dune/persistent/users/marshalc/nd_offaxis/v7"
-OUTDIR="/pnfs/dune/persistent/users/abooth/Production/ND_CAFMaker/nd_offaxis/v7"
+OUTDIR="/pnfs/dune/persistent/physicsgroups/dunelbl/abooth/PRISM/Production/Simulation/ND_CAFMaker/v7"
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
