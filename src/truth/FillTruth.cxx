@@ -32,13 +32,21 @@ void fillTruth(caf::StandardRecord& sr,
                const cafmaker::Params &par,
                nusyst::response_helper& rh)
 {
-  sr.vtx_x = dt.vtx[0];
-  sr.vtx_y = dt.vtx[1];
-  sr.vtx_z = dt.vtx[2];
-  sr.det_x = -100.*par().runInfo().OA_xcoord();
 
+  std::string ndlarFile;
+  bool ndlarcaf=false;
+  if (par().cafmaker().ndlarRecoFile(ndlarFile)) ndlarcaf=true;
+   
+  int ievent=0; 
+  if(ndlarcaf==true){
+     sr.vtx_x = dt.vtx[0];
+     sr.vtx_y = dt.vtx[1];
+     sr.vtx_z = dt.vtx[2];
+     sr.det_x = -100.*par().runInfo().OA_xcoord(); 
+     ievent=dt.ievt;
+  }
   // get GENIE event record
-  gtree->GetEntry( dt.ievt );
+  gtree->GetEntry(ievent);
   genie::EventRecord * event = mcrec->event;
   genie::Interaction * in = event->Summary();
 
@@ -78,25 +86,28 @@ void fillTruth(caf::StandardRecord& sr,
   sr.eRecoPim = 0.;
   sr.eRecoPi0 = 0.;
   sr.eOther = 0.;
-  for( int i = 0; i < dt.nFS; ++i ) {
-    double ke = 0.001*(dt.fsE[i] - sqrt(dt.fsE[i]*dt.fsE[i] - dt.fsPx[i]*dt.fsPx[i] - dt.fsPy[i]*dt.fsPy[i] - dt.fsPz[i]*dt.fsPz[i]));
-    if( dt.fsPdg[i] == sr.LepPDG ) {
-      lepP4.SetPxPyPzE( dt.fsPx[i]*0.001, dt.fsPy[i]*0.001, dt.fsPz[i]*0.001, dt.fsE[i]*0.001 );
-      sr.LepE = dt.fsE[i]*0.001;
-    }
-    else if( dt.fsPdg[i] == 2212 ) {sr.nP++; sr.eP += ke;}
-    else if( dt.fsPdg[i] == 2112 ) {sr.nN++; sr.eN += ke;}
-    else if( dt.fsPdg[i] ==  211 ) {sr.nipip++; sr.ePip += ke;}
-    else if( dt.fsPdg[i] == -211 ) {sr.nipim++; sr.ePim += ke;}
-    else if( dt.fsPdg[i] ==  111 ) {sr.nipi0++; sr.ePi0 += ke;}
-    else if( dt.fsPdg[i] ==  321 ) {sr.nikp++; sr.eOther += ke;}
-    else if( dt.fsPdg[i] == -321 ) {sr.nikm++; sr.eOther += ke;}
-    else if( dt.fsPdg[i] == 311 || dt.fsPdg[i] == -311 || dt.fsPdg[i] == 130 || dt.fsPdg[i] == 310 ) {sr.nik0++; sr.eOther += ke;}
-    else if( dt.fsPdg[i] ==   22 ) {sr.niem++; sr.eOther += ke;}
-    else if( dt.fsPdg[i] > 1000000000 ) sr.nNucleus++;
-    else {sr.niother++; sr.eOther += ke;}
-  }
+  
 
+  if(ndlarcaf==true){   //only for ndlar
+    for( int i = 0; i < dt.nFS; ++i ) {
+      double ke = 0.001*(dt.fsE[i] - sqrt(dt.fsE[i]*dt.fsE[i] - dt.fsPx[i]*dt.fsPx[i] - dt.fsPy[i]*dt.fsPy[i] - dt.fsPz[i]*dt.fsPz[i]));
+      if( dt.fsPdg[i] == sr.LepPDG ) {
+        lepP4.SetPxPyPzE( dt.fsPx[i]*0.001, dt.fsPy[i]*0.001, dt.fsPz[i]*0.001, dt.fsE[i]*0.001 );
+        sr.LepE = dt.fsE[i]*0.001;
+      }
+      else if( dt.fsPdg[i] == 2212 ) {sr.nP++; sr.eP += ke;}
+      else if( dt.fsPdg[i] == 2112 ) {sr.nN++; sr.eN += ke;}
+      else if( dt.fsPdg[i] ==  211 ) {sr.nipip++; sr.ePip += ke;}
+      else if( dt.fsPdg[i] == -211 ) {sr.nipim++; sr.ePim += ke;}
+      else if( dt.fsPdg[i] ==  111 ) {sr.nipi0++; sr.ePi0 += ke;}
+      else if( dt.fsPdg[i] ==  321 ) {sr.nikp++; sr.eOther += ke;}
+      else if( dt.fsPdg[i] == -321 ) {sr.nikm++; sr.eOther += ke;}
+      else if( dt.fsPdg[i] == 311 || dt.fsPdg[i] == -311 || dt.fsPdg[i] == 130 || dt.fsPdg[i] == 310 ) {sr.nik0++; sr.eOther += ke;}
+      else if( dt.fsPdg[i] ==   22 ) {sr.niem++; sr.eOther += ke;}
+      else if( dt.fsPdg[i] > 1000000000 ) sr.nNucleus++;
+      else {sr.niother++; sr.eOther += ke;}
+    }
+  }
   // true 4-momentum transfer
   TLorentzVector q = nuP4-lepP4;
 
@@ -117,9 +128,11 @@ void fillTruth(caf::StandardRecord& sr,
   sr.LepE = lepP4.E();
   sr.LepNuAngle = nuP4.Angle( lepP4.Vect() );
 
-  // todo: come back and make this work for electrons too. what about NC?
-  if (abs(sr.LepPDG) == 13)
-    sr.LepEndpoint = {dt.muon_endpoint[0], dt.muon_endpoint[1], dt.muon_endpoint[2]};
+  if(ndlarcaf==true){   //only for ndlar
+    // todo: come back and make this work for electrons too. what about NC?
+    if (abs(sr.LepPDG) == 13)
+      sr.LepEndpoint = {dt.muon_endpoint[0], dt.muon_endpoint[1], dt.muon_endpoint[2]};
+  }
 
   // Add DUNErw weights to the CAF
   sr.total_xsSyst_cv_wgt = 1;

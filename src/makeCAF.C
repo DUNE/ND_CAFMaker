@@ -24,6 +24,13 @@
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "truth/FillTruth.h"
 
+//for SAND
+#include "struct.h"
+#include "reco/SANDEvt.h"
+#include <TSystem.h>
+#include "reco/SANDRecoBranchFiller.h"
+#include "truth/FillTruthForSAND.h"
+
 namespace progopt = boost::program_options;
 
 // -------------------------------------------------
@@ -114,30 +121,40 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
-  // first: did we do ND-LAr reco?
+  // first: we do SAND or ND-LAr reco
   std::string ndlarFile;
-  if (par().cafmaker().ndlarRecoFile(ndlarFile))
-    recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
-  else
-  {
-    // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
-    // (yes, leak this pointer.  there's only one and sending it back to the main() is annoying)
-    auto rando = new TRandom3(par().cafmaker().seed() >= 0 ?
+  std::string sandFile;  
+
+  //check if sandRecoFile exists
+  if (par().cafmaker().sandRecoFile(sandFile)){
+    std::cout<<"I am using SAND reco File: "<<sandFile<<std::endl;
+    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile)); 
+   
+   } else {  //do for ND-Lar
+   //check if ndlarRecoFile exists
+     if (par().cafmaker().ndlarRecoFile(ndlarFile)){
+        std::cout<<"I am using NDLAR reco File "<<ndlarFile<<std::endl;
+        recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
+     }else{
+    	std::cout<<"I am using a parametrized reco for NDLAR"<<std::endl;
+        // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
+        // (yes, leak this pointer.  there's only one and sending it back to the main() is annoying)
+    	auto rando = new TRandom3(par().cafmaker().seed() >= 0 ?
                               par().cafmaker().seed() :
                               par().runInfo().run() * 1000 + par().runInfo().subrun());
 
-    recoFillers.emplace_back(std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(rando));
-  }
+    	recoFillers.emplace_back(std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(rando));
+     }
 
-  // next: did we do TMS reco?
-  std::string tmsFile;
-  if (par().cafmaker().tmsRecoFile(tmsFile))
-    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
+     // next: did we do TMS reco?
+     std::string tmsFile;
+     if (par().cafmaker().tmsRecoFile(tmsFile))  recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
 
-  // if we did both ND-LAr and TMS, we should try to match them, too
-  if (!ndlarFile.empty() && !tmsFile.empty())
-     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
-
+  	  // if we did both ND-LAr and TMS, we should try to match them, too
+  	  if (!ndlarFile.empty() && !tmsFile.empty()){
+     	     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+	  }
+      }
   return recoFillers;
 }
 
@@ -145,23 +162,39 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 // main loop function
 void loop(CAF& caf,
           cafmaker::Params &par,
-          TTree * intree,
+          TTree * intree,          //dumptree for ndlar or sand-reco for sand
           TTree * gtree,
           const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> & recoFillers)
 {
-  //// read in dumpTree output file
+  //check if we are processing sand or ndlar
+  std::string ndlarFile;
+  std::string sandFile;
+  bool ndlarcaf=false;  
+  bool sandcaf=false;
+
+  if (par().cafmaker().ndlarRecoFile(ndlarFile))  ndlarcaf=true;
+  else if (par().cafmaker().sandRecoFile(sandFile))  sandcaf=true;
+
+  event *evt=NULL;
   cafmaker::dumpTree dt;
-  dt.BindToTree(intree);
+ 
+  if(ndlarcaf==true) dt.BindToTree(intree);   //read dumpTree output file
+  else if (sandcaf==true) {                   //read sand-reco output file
+        gSystem->Load("/dune/app/users/ldinoto/edepsim-root6/sand-reco/lib/libStruct.so");
+        evt=new event;
+        intree->SetBranchAddress("event", &evt);
+       }
 
   caf.pot = gtree->GetWeight();
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
 
-  // Main event loop
-  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : intree->GetEntries() - par().cafmaker().first();
+  // Main event loop  
+  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
   int start = par().cafmaker().first();
   for( int ii = start; ii < start + N; ++ii ) {
 
     intree->GetEntry(ii);
+    if(sandcaf==true) gtree->GetEntry(ii);
     if( ii % 100 == 0 ) printf( "Event %d (%d of %d)...\n", ii, ii-start, N );
 
     // reset (the default constructor initializes its variables)
@@ -176,11 +209,15 @@ void loop(CAF& caf,
     // in the future this can be extended to use 'truth fillers'
     // (like the reco ones) if we find that the truth filling
     // is getting too complex for one function
-    fillTruth(caf.sr, dt, gtree, caf.mcrec, par, caf.rh);
+    if(ndlarcaf==true) fillTruth(caf.sr, dt, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie file e da dumpTree
+    if(sandcaf==true){
+        fillTruthForSAND(caf.sr, intree, gtree, evt, caf.mcrec, par, caf.rh);
+        SANDEvt::Get()->SetSANDEvt(evt);
+       }
 
     // hand off to the correct reco filler(s).
     for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(ii, caf.sr, dt, par);
+      filler->FillRecoBranches(ii, caf.sr, dt, par);    //for sand dt is empty
 
     caf.fill();
   }
@@ -205,10 +242,22 @@ int main( int argc, char const *argv[] )
 
   CAF caf( par().cafmaker().outputFile(), par().cafmaker().nusystsFcl() );
 
-  TFile * tf = new TFile( par().cafmaker().dumpFile().c_str() );
-  TTree * tree = (TTree*) tf->Get( "tree" );
+  TFile * tf=NULL;
+  TTree * tree=NULL;
+  std::string dumpFilename;
+  std::string sandFile;
 
-  TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );
+  if (par().cafmaker().dumpFile(dumpFilename)){
+     tf=new TFile( dumpFilename.c_str() );   //reading dump file 
+     tree = (TTree*) tf->Get( "tree" );
+  }
+  else if (par().cafmaker().sandRecoFile(sandFile)){
+      tf=new TFile( sandFile.c_str() );   //reading dump file 
+      tree = (TTree*) tf->Get( "tEvent" );   // for reading sand-reco file
+      std::cout<<"sand reco file has "<<tree->GetEntries()<<" entries"<<std::endl;
+ }
+  
+  TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );   //reading genie file
   TTree * gtree = (TTree*) gf->Get( "gtree" );
 
   loop( caf, par, tree, gtree, getRecoFillers(par) );
@@ -217,11 +266,13 @@ int main( int argc, char const *argv[] )
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
 
-  // Copy geometric efficiency throws TTree to CAF file
-  std::cout << "Copying geometric efficiency throws TTree to output file" << std::endl;
-  TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
-  caf.cafFile->cd();
-  tGeoEfficiencyThrowsOut->CloneTree()->Write();
+  if (par().cafmaker().dumpFile(dumpFilename)){
+    // Copy geometric efficiency throws TTree to CAF file
+    std::cout << "Copying geometric efficiency throws TTree to output file" << std::endl;
+    TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
+    caf.cafFile->cd();
+    tGeoEfficiencyThrowsOut->CloneTree()->Write();
+  }
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();
