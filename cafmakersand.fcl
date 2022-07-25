@@ -1,0 +1,11 @@
+#include "NDCAFMaker.fcl"
+
+nd_cafmaker: @local::standard_nd_cafmaker
+
+#nd_cafmaker.CAFMakerSettings.InputDumpFile: "/dune/data/users/jwolcott/nd-lar-reco/dump/geom-20210623/neutrino.99.dump.root"
+nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/dune/data/users/ldinoto/scratch/numu_15k_production_SAND_opt2_L100.0.edep-sim_RECO.root"
+
+#nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/dune/data/users/jwolcott/nd-lar-reco/genie/geom-20210623/neutrino.99.ghep.root"
+nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/dune/data/users/ldinoto/scratch/numu_15k_production_SAND_opt2_L100.0.ghep.root"
+nd_cafmaker.CAFMakerSettings.OutputFile: "/dune/data/users/ldinoto/scratch/numu_15k_production_SAND_opt2_L100.0.caf.root"
+#nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/dune/data/users/jwolcott/nd-lar-reco/summary_h5/geom-20210623/neutrino.98.summary.h5"
