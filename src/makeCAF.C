@@ -180,7 +180,7 @@ void loop(CAF& caf,
  
   if(ndlarcaf==true) dt.BindToTree(intree);   //read dumpTree output file
   else if (sandcaf==true) {                   //read sand-reco output file
-        gSystem->Load("/dune/app/users/ldinoto/edepsim-root6/sand-reco/lib/libStruct.so");
+        gSystem->Load("/dune/app/users/mvicenzi/FastReco/lib/libStruct.so");
         evt=new event;
         intree->SetBranchAddress("event", &evt);
        }
