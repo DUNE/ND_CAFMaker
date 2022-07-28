@@ -1,5 +1,3 @@
-
-
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 
 #recalling enviromental variables
@@ -7,8 +5,8 @@ source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 export MAIN_FOLDER=${PWD}
 export CUSTOM_UPS="/dune/app/users/$USER/ups"
 export PRODUCTS="$PRODUCTS:$CUSTOM_UPS"
-DUNEANAOBJ_SRC=/dune/app/users/ldinoto/dunesoft2/duneanaobj/
-DUNEANAOBJ_BUILD=/dune/app/users/ldinoto/duneanaobj-build2/
+DUNEANAOBJ_SRC=/dune/app/users/$USER/dunesoft/duneanaobj/
+DUNEANAOBJ_BUILD=/dune/app/users/$USER/duneanaobj-build/
 
 setup cmake v3_9_0
 setup gcc v6_4_0
@@ -48,7 +46,7 @@ export PATH=$mydir/bin:$PATH
 # our FCL needs to be findable too
 export FHICL_FILE_PATH="$FHICL_FILE_PATH:$mydir/cfg"
 
-echo "I keep you to the duneanaobj folder for building our own duneanaobj"
+echo "I take you to the duneanaobj folder to build our own duneanaobj"
 
 cd $DUNEANAOBJ_BUILD
 unsetup cmake
