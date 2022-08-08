@@ -45,9 +45,19 @@ namespace cafmaker
     	 sr.Elep_reco=-1;	
 
 	}
+ 
     //neutrino energy
     sr.Ev_reco = SANDEvt::Get()->GetSANDEvtEnureco()*0.001 ; 
-   
+
+	std::cout << ii << " -> " << sr.Ev_reco << std::endl;
+
+    //reco energy by species
+    sr.eRecoP = SANDEvt::Get()->GetSANDEvtErecopdg(2212)*0.001;   
+    sr.eRecoN = SANDEvt::Get()->GetSANDEvtErecopdg(2112)*0.001;   
+    sr.eRecoPip = SANDEvt::Get()->GetSANDEvtErecopdg(211)*0.001;   
+    sr.eRecoPim = SANDEvt::Get()->GetSANDEvtErecopdg(-211)*0.001;   
+    sr.eRecoPi0 = SANDEvt::Get()->GetSANDEvtErecopdg(111)*0.001;   
+    sr.eRecoOther = SANDEvt::Get()->GetSANDEvtErecopdg(0)*0.001;
 
 /*
    sr.reco_q = 100;

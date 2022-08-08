@@ -21,9 +21,10 @@ class SANDEvt{
     	static SANDEvt* Get();
 
 	void SetSANDEvt(event * evt){ fEvent=evt;}
-	double GetSANDEvtEnureco();
 	bool GetSANDEvtLepton(particle &Lepton);
 	
+	double GetSANDEvtEnureco();
+	double GetSANDEvtErecopdg(int pdg = 0);	
 
 };
 
