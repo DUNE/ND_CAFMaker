@@ -49,8 +49,6 @@ namespace cafmaker
     //neutrino energy
     sr.Ev_reco = SANDEvt::Get()->GetSANDEvtEnureco()*0.001 ; 
 
-	std::cout << ii << " -> " << sr.Ev_reco << std::endl;
-
     //reco energy by species
     sr.eRecoP = SANDEvt::Get()->GetSANDEvtErecopdg(2212)*0.001;   
     sr.eRecoN = SANDEvt::Get()->GetSANDEvtErecopdg(2112)*0.001;   
