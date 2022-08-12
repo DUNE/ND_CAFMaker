@@ -21,11 +21,10 @@ namespace cafmaker
                                                   const cafmaker::Params &par) const
   {
     // match tracks using the info that should have been filled by the ND-LAr and TMS reco fillers
-    //MatchTracks(sr);
     unsigned int n_TMS_tracks = sr.nd.tms.ntracks;  //# tracks in TMS in evtIdx
     unsigned int n_LAr_tracks = sr.nd.lar.ntracks;  //# tracks in LAr in evtIdx
 
-    sr.nd.trkmatch.resize(n_LAr_tracks);
+    sr.nd.ntrkmatch = 0;
 
     for(unsigned int ilar = 0; ilar < n_LAr_tracks; ++ilar )
     {
@@ -45,8 +44,6 @@ namespace cafmaker
           
           if(z1_tms >= 11000.0 && z1_tms <12000.0) //check: TMS track starts in first few planes.
           {
-            std::cout<<"ND_tracks = "<<x1_lar<<"\t"<<z1_lar<<"\t"<<x2_lar<<"\t"<<z2_lar<<std::endl;
-            std::cout<<"TMS_tracks = "<<x1_tms<<"\t"<<z1_tms<<"\t"<<x2_tms<<"\t"<<z2_tms<<std::endl;
 
             //Draw a straight line, extrapolate it to Z = 1000.0 cm and calculate slope
             TF1 *LAr = DrawLines(x1_lar, z1_lar, x2_lar, z2_lar, z1_lar, z2_lar);
@@ -62,27 +59,24 @@ namespace cafmaker
             ang = TMath::ATan(slope_TMS_LAr);  //theta = tan^-1()
             residual = x_LAr - x_TMS;   //distance between two tracks
             Costheta = cos(ang);        //angle between two tracks
+
+            if(abs(residual) < 400. && Costheta > 0.95){  //matching 
+
+               caf::SRNDTrackAssn match;
+               match.larid = ilar;
+               match.tmsid = itms;
+               match.transdispl = residual;
+               match.angdispl = Costheta;
+
+               sr.nd.ntrkmatch += 1;
+               sr.nd.trkmatch.emplace_back(match);
+               std::cout << "LAr " << ilar << " matches TMS " << itms << " with residual " << residual << " and angle " << Costheta << std::endl;
+               break; // found a match, stop looking for TMS tracks
+            }
           }
         }
       }
-        if(abs(residual) < 400. && Costheta > 0.95){  //matching 
-            sr.nd.LArID = evtIdx;
-            sr.nd.TMSID = evtIdx;
-            sr.nd.Residual = residual;
-            sr.nd.cosTheta = Costheta;
 
-            caf::SRNDTrackAssn match;
-            match.larid = evtIdx;
-            match.tmsid = evtIdx;
-            match.transdispl = residual;
-            match.angdispl = Costheta;
-
-            sr.nd.trkmatch.emplace_back(match);
-            std::cout<<"match track increment = "<<sr.nd.ntrkmatch<<std::endl;
-            std::cout<<"match:larid:tmsid = "<<evtIdx<<std::endl;
-            std::cout<<"match:residual = "<<residual<<std::endl;
-            std::cout<<"match:Costheta = "<<Costheta<<std::endl;
-      }
     }
   }
 }

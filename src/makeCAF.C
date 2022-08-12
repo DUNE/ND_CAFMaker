@@ -114,20 +114,18 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
+  // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
+  // (yes, leak this pointer.  there's only one and sending it back to the main() is annoying)
+  auto rando = new TRandom3(par().cafmaker().seed() >= 0 ?
+                            par().cafmaker().seed() :
+                            par().runInfo().run() * 1000 + par().runInfo().subrun());
+
+  recoFillers.emplace_back(std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(rando));
+
   // first: did we do ND-LAr reco?
   std::string ndlarFile;
   if (par().cafmaker().ndlarRecoFile(ndlarFile))
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
-  else
-  {
-    // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
-    // (yes, leak this pointer.  there's only one and sending it back to the main() is annoying)
-    auto rando = new TRandom3(par().cafmaker().seed() >= 0 ?
-                              par().cafmaker().seed() :
-                              par().runInfo().run() * 1000 + par().runInfo().subrun());
-
-    recoFillers.emplace_back(std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(rando));
-  }
 
   // next: did we do TMS reco?
   std::string tmsFile;
@@ -137,6 +135,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
      recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+
 
   return recoFillers;
 }
@@ -169,9 +168,12 @@ void loop(CAF& caf,
 
     caf.sr.run = par().runInfo().run();
     caf.sr.subrun = par().runInfo().subrun();
+    caf.sr.meta_run = par().runInfo().run();
+    caf.sr.meta_subrun = par().runInfo().subrun();
     caf.sr.event = ii;
     caf.sr.isFD = 0;
     caf.sr.isFHC = par().runInfo().fhc();
+    caf.sr.pot = caf.pot;
 
     // in the future this can be extended to use 'truth fillers'
     // (like the reco ones) if we find that the truth filling
@@ -179,8 +181,10 @@ void loop(CAF& caf,
     fillTruth(caf.sr, dt, gtree, caf.mcrec, par, caf.rh);
 
     // hand off to the correct reco filler(s).
-    for (const auto & filler : recoFillers)
+    for (const auto & filler : recoFillers) {
+      //std::cout << "Filling with " << filler->GetName() << std::endl;
       filler->FillRecoBranches(ii, caf.sr, dt, par);
+    }
 
     caf.fill();
   }
