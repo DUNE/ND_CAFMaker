@@ -2,7 +2,11 @@
 `ND_CAFMaker` takes input `edep-sim`, `GENIE`, and reconstructed objects from the DUNE ND and combines them into the Common Analysis Format ("CAF").
 
 # Setup
-The package has a number of dependencies, all accessible through the `ups` framework at Fermilab. Simply run
+The package has a number of dependencies, all accessible through the `ups` framework at Fermilab and github. Simply run
+```
+./build.sh
+```
+to build the dependencies of `DUNE_ND_GeoEff` and `edep-sim`. Then finally
 ```
 source ndcaf_setup.sh
 ```
