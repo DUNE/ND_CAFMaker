@@ -88,10 +88,10 @@ void fillTruth(int ii,
      genie::GHepParticle *p = (genie::GHepParticle *) (*event)[j];
      if( p->Status() != genie::EGHepStatus::kIStStableFinalState) continue;
 
-      double ke = 0.001*( p->E() - sqrt(p->E()*p->E() - p->Px()*p->Px() - p->Py()*p->Py() - p->Pz()*p->Pz()));
+      double ke =  p->E() - sqrt(p->E()*p->E() - p->Px()*p->Px() - p->Py()*p->Py() - p->Pz()*p->Pz()); //GeV
       if( p->Pdg() == sr.LepPDG ) {
-        lepP4.SetPxPyPzE( p->Px()*0.001, p->Py()*0.001, p->Pz()*0.001, p->E()*0.001 );
-        sr.LepE = p->E()*0.001;
+        lepP4.SetPxPyPzE( p->Px(), p->Py(), p->Pz(), p->E() ); //GeV
+        sr.LepE = p->E(); //GeV
       }
       else if( p->Pdg() == 2212 ) {sr.nP++; sr.eP += ke;}
       else if( p->Pdg() == 2112 ) {sr.nN++; sr.eN += ke;}
