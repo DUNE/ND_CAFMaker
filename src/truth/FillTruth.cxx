@@ -15,42 +15,37 @@
 // GENIE
 #include "EVGCore/EventRecord.h"
 #include "Ntuple/NtpMCEventRecord.h"
+#include "GHEP/GHepParticle.h"
 
 // Standard Record format
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
 // ND_CAFMaker
-#include "dumpTree.h"
 #include "CAF.h"
 #include "Params.h"
 
 // Fill truth info
-void fillTruth(caf::StandardRecord& sr,
-               const cafmaker::dumpTree & dt,
+void fillTruth(int ii,
+	       caf::StandardRecord& sr,
                TTree * gtree,
                const genie::NtpMCEventRecord * mcrec,
                const cafmaker::Params &par,
                nusyst::response_helper& rh)
 {
 
-  std::string ndlarFile;
-  bool ndlarcaf=false;
-  if (par().cafmaker().ndlarRecoFile(ndlarFile)) ndlarcaf=true;
-   
-  int ievent=0; 
-  if(ndlarcaf==true){
-     sr.vtx_x = dt.vtx[0];
-     sr.vtx_y = dt.vtx[1];
-     sr.vtx_z = dt.vtx[2];
-     sr.det_x = -100.*par().runInfo().OA_xcoord(); 
-     ievent=dt.ievt;
-  }
+  
   // get GENIE event record
-  gtree->GetEntry(ievent);
+  gtree->GetEntry(ii);
   genie::EventRecord * event = mcrec->event;
   genie::Interaction * in = event->Summary();
-
+     
   // Get truth stuff out of GENIE ghep record
+  TLorentzVector vtx = *(event->Vertex());
+  sr.vtx_x = vtx.X();
+  sr.vtx_y = vtx.Y();
+  sr.vtx_z = vtx.Z();
+  sr.det_x = -100.*par().runInfo().OA_xcoord(); 
+
   sr.nuPDG = in->InitState().ProbePdg();
   sr.nuPDGunosc = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
   sr.mode = in->ProcInfo().ScatteringTypeId();
@@ -86,28 +81,31 @@ void fillTruth(caf::StandardRecord& sr,
   sr.eRecoPim = 0.;
   sr.eRecoPi0 = 0.;
   sr.eOther = 0.;
-  
+ 
+  // loop truth particles
+  for(int j=0; j< event->GetEntries(); j++){
 
-  if(ndlarcaf==true){   //only for ndlar
-    for( int i = 0; i < dt.nFS; ++i ) {
-      double ke = 0.001*(dt.fsE[i] - sqrt(dt.fsE[i]*dt.fsE[i] - dt.fsPx[i]*dt.fsPx[i] - dt.fsPy[i]*dt.fsPy[i] - dt.fsPz[i]*dt.fsPz[i]));
-      if( dt.fsPdg[i] == sr.LepPDG ) {
-        lepP4.SetPxPyPzE( dt.fsPx[i]*0.001, dt.fsPy[i]*0.001, dt.fsPz[i]*0.001, dt.fsE[i]*0.001 );
-        sr.LepE = dt.fsE[i]*0.001;
+     genie::GHepParticle *p = (genie::GHepParticle *) (*event)[j];
+     if( p->Status() != genie::EGHepStatus::kIStStableFinalState) continue;
+
+      double ke = 0.001*( p->E() - sqrt(p->E()*p->E() - p->Px()*p->Px() - p->Py()*p->Py() - p->Pz()*p->Pz()));
+      if( p->Pdg() == sr.LepPDG ) {
+        lepP4.SetPxPyPzE( p->Px()*0.001, p->Py()*0.001, p->Pz()*0.001, p->E()*0.001 );
+        sr.LepE = p->E()*0.001;
       }
-      else if( dt.fsPdg[i] == 2212 ) {sr.nP++; sr.eP += ke;}
-      else if( dt.fsPdg[i] == 2112 ) {sr.nN++; sr.eN += ke;}
-      else if( dt.fsPdg[i] ==  211 ) {sr.nipip++; sr.ePip += ke;}
-      else if( dt.fsPdg[i] == -211 ) {sr.nipim++; sr.ePim += ke;}
-      else if( dt.fsPdg[i] ==  111 ) {sr.nipi0++; sr.ePi0 += ke;}
-      else if( dt.fsPdg[i] ==  321 ) {sr.nikp++; sr.eOther += ke;}
-      else if( dt.fsPdg[i] == -321 ) {sr.nikm++; sr.eOther += ke;}
-      else if( dt.fsPdg[i] == 311 || dt.fsPdg[i] == -311 || dt.fsPdg[i] == 130 || dt.fsPdg[i] == 310 ) {sr.nik0++; sr.eOther += ke;}
-      else if( dt.fsPdg[i] ==   22 ) {sr.niem++; sr.eOther += ke;}
-      else if( dt.fsPdg[i] > 1000000000 ) sr.nNucleus++;
+      else if( p->Pdg() == 2212 ) {sr.nP++; sr.eP += ke;}
+      else if( p->Pdg() == 2112 ) {sr.nN++; sr.eN += ke;}
+      else if( p->Pdg() ==  211 ) {sr.nipip++; sr.ePip += ke;}
+      else if( p->Pdg() == -211 ) {sr.nipim++; sr.ePim += ke;}
+      else if( p->Pdg() ==  111 ) {sr.nipi0++; sr.ePi0 += ke;}
+      else if( p->Pdg() ==  321 ) {sr.nikp++; sr.eOther += ke;}
+      else if( p->Pdg() == -321 ) {sr.nikm++; sr.eOther += ke;}
+      else if( p->Pdg() == 311 || p->Pdg() == -311 || p->Pdg() == 130 || p->Pdg() == 310 ) {sr.nik0++; sr.eOther += ke;}
+      else if( p->Pdg() ==   22 ) {sr.niem++; sr.eOther += ke;}
+      else if( p->Pdg() > 1000000000 ) sr.nNucleus++;
       else {sr.niother++; sr.eOther += ke;}
-    }
   }
+
   // true 4-momentum transfer
   TLorentzVector q = nuP4-lepP4;
 
@@ -128,12 +126,12 @@ void fillTruth(caf::StandardRecord& sr,
   sr.LepE = lepP4.E();
   sr.LepNuAngle = nuP4.Angle( lepP4.Vect() );
 
-  if(ndlarcaf==true){   //only for ndlar
+	/* FIXME: what to do since dt is gone?
     // todo: come back and make this work for electrons too. what about NC?
     if (abs(sr.LepPDG) == 13)
       sr.LepEndpoint = {dt.muon_endpoint[0], dt.muon_endpoint[1], dt.muon_endpoint[2]};
-  }
-
+	*/
+	
   // Add DUNErw weights to the CAF
   sr.total_xsSyst_cv_wgt = 1;
   // fixme: the following is disabled until DIRT-II finishes on model + uncertainty decisions
