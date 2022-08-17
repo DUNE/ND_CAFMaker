@@ -39,7 +39,6 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
 
-
     // these are optional and have defaults
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
     fhicl::Atom<int>  numevts { fhicl::Name("NumEvts"), fhicl::Comment("Number of events to process (-1 means 'all')"), -1 };

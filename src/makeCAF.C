@@ -113,23 +113,19 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   // first: we do SAND or ND-LAr reco
   std::string ndlarFile;
   std::string sandFile;  
-
-  //check if sandRecoFile exists
-  if (par().cafmaker().sandRecoFile(sandFile)){
+  if(par().cafmaker().ndlarRecoFile(ndlarFile))
+    recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));  
+  else if (par().cafmaker().sandRecoFile(sandFile))
     recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile)); 
-
-  //check if ndlarRecoFile exists
-  }else if(par().cafmaker().ndlarRecoFile(ndlarFile)){
-        recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
- 
-  }
 
   // next: did we do TMS reco?
   std::string tmsFile;
-  if (par().cafmaker().tmsRecoFile(tmsFile))  recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
+  if (par().cafmaker().tmsRecoFile(tmsFile))
+    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
 
   // if we did both ND-LAr and TMS, we should try to match them, too
-  if (!ndlarFile.empty() && !tmsFile.empty())   recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+  if (!ndlarFile.empty() && !tmsFile.empty())
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
 
   return recoFillers;
 }
