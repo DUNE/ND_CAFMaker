@@ -24,20 +24,18 @@ namespace cafmaker
       /// \param sr  The StandardRecord whose branches should be filled.
       void FillRecoBranches(std::size_t evtIdx,
                             caf::StandardRecord &sr,
-                            const cafmaker::dumpTree &dt,
                             const Params &par) const
       {
         if (!isConfigured)
           throw std::runtime_error("Reco branch filler hasn't been configured!");
 
-        _FillRecoBranches(evtIdx, sr, dt, par);
+        _FillRecoBranches(evtIdx, sr, par);
       }
 
     protected:
       /// Actual implementation of reco branch filling.  Derived classes should override this.
       virtual void _FillRecoBranches(std::size_t evtIdx,
                                      caf::StandardRecord &sr,
-                                     const cafmaker::dumpTree &dt,
                                      const cafmaker::Params &par) const = 0;
 
       void SetConfigured(bool configured = true)    { isConfigured = configured; };

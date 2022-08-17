@@ -13,7 +13,6 @@
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
-#include "dumpTree.h"
 #include "Params.h"
 #include "struct.h"    
 #include "SANDEvt.h"
@@ -23,7 +22,6 @@ namespace cafmaker
   const double mmu = 0.1056583745;
   void SANDRecoBranchFiller::_FillRecoBranches(std::size_t ii, //elemento del tree da guardare.. 
                                                         caf::StandardRecord &sr,
-                                                        const cafmaker::dumpTree &dt,  //this is not used here..it comes from  inheritance
                                                         const cafmaker::Params &par) const
   {
    //std::cout<<"riempio con i dati di SAND!"<<std::endl;
