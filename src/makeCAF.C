@@ -112,11 +112,11 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   // first: we do SAND or ND-LAr reco
   std::string ndlarFile;
-  std::string sandFile;  
+  std::string sandFile, sandLib;  
   if(par().cafmaker().ndlarRecoFile(ndlarFile))
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));  
-  else if (par().cafmaker().sandRecoFile(sandFile))
-    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile)); 
+  else if (par().cafmaker().sandRecoFile(sandFile) && par().cafmaker().sandRecoLib(sandLib))
+    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile,sandLib)); 
 
   // next: did we do TMS reco?
   std::string tmsFile;

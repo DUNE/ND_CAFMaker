@@ -14,9 +14,11 @@
 namespace cafmaker
 {
   
-  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename){
-    
-    gSystem->Load("/dune/app/users/mvicenzi/FastReco/lib/libStruct.so");
+  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename,
+					     const std::string &SANDLibFilename)
+  {  
+    std::cout << SANDLibFilename << std::endl;
+    gSystem->Load(SANDLibFilename.c_str());
     
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
     fTree = (TTree*) fSANDRecoFile->Get("tEvent");

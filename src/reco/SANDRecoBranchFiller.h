@@ -17,8 +17,8 @@ namespace cafmaker
   class SANDRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      SANDRecoBranchFiller(const std::string &SANDRecoFilename);
-
+      SANDRecoBranchFiller(const std::string &SANDRecoFilename,
+			   const std::string &SANDLibFilename);
 
     private:
       void _FillRecoBranches(std::size_t evtIdx,
