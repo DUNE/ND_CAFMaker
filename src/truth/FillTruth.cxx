@@ -125,12 +125,6 @@ void fillTruth(int ii,
   sr.LepMomZ = lepP4.Z();
   sr.LepE = lepP4.E();
   sr.LepNuAngle = nuP4.Angle( lepP4.Vect() );
-
-	/* FIXME: what to do since dt is gone?
-    // todo: come back and make this work for electrons too. what about NC?
-    if (abs(sr.LepPDG) == 13)
-      sr.LepEndpoint = {dt.muon_endpoint[0], dt.muon_endpoint[1], dt.muon_endpoint[2]};
-	*/
 	
   // Add DUNErw weights to the CAF
   sr.total_xsSyst_cv_wgt = 1;
