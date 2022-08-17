@@ -16,17 +16,12 @@
 #include "fhiclcpp/parse.h"
 
 #include "CAF.h"
-#include "dumpTree.h"
 #include "Params.h"
 #include "reco/MLNDLArRecoBranchFiller.h"
-#include "reco/ParameterizedRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/NDLArTMSMatchRecoFiller.h"
-#include "truth/FillTruth.h"
-
-//for SAND
 #include "reco/SANDRecoBranchFiller.h"
-#include "truth/FillTruthForSAND.h"
+#include "truth/FillTruth.h"
 
 namespace progopt = boost::program_options;
 
@@ -39,7 +34,6 @@ progopt::variables_map parseCmdLine(int argc, const char** argv)
 
   progopt::options_description fclopts("FCL overrides (for quick tests; edit your .fcl for regular usage)");
   fclopts.add_options()
-      ("dump,d",     progopt::value<std::string>(), "input 'dump' file from dumpTree.py")
       ("ghep,g",     progopt::value<std::string>(), "input GENIE .ghep file")
       ("out,o",      progopt::value<std::string>(), "output CAF file")
       ("startevt",   progopt::value<int>(),         "event number to start at")
@@ -87,8 +81,6 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
   }
 
   // insert anything overridden on the command line here
-  if (vm.count("dump"))
-    provisional.put("nd_cafmaker.CAFMakerSettings.InputDumpFile", vm["dump"].as<std::string>());
   if (vm.count("ghep"))
     provisional.put("nd_cafmaker.CAFMakerSettings.InputGHEPFile", vm["ghep"].as<std::string>());
   if (vm.count("out"))
@@ -129,15 +121,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   //check if ndlarRecoFile exists
   }else if(par().cafmaker().ndlarRecoFile(ndlarFile)){
         recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
-   
-  }else{
-        // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
-        // (yes, leak this pointer.  there's only one and sending it back to the main() is annoying)
-    	auto rando = new TRandom3(par().cafmaker().seed() >= 0 ?
-                              par().cafmaker().seed() :
-                              par().runInfo().run() * 1000 + par().runInfo().subrun());
-
-    	recoFillers.emplace_back(std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(rando));
+ 
   }
 
      // next: did we do TMS reco?
@@ -183,8 +167,8 @@ void loop(CAF& caf,
     fillTruth(ii, caf.sr, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie
 
     // hand off to the correct reco filler(s).
-    ///FIXME for (const auto & filler : recoFillers)
-    ///FIXME   filler->FillRecoBranches(ii, caf.sr, dt, par);    //for sand dt is empty
+    for (const auto & filler : recoFillers)
+      filler->FillRecoBranches(ii, caf.sr, par);
 
     caf.fill();
   }
@@ -202,9 +186,6 @@ int main( int argc, char const *argv[] )
 
   progopt::variables_map vars = parseCmdLine(argc, argv);
 
-  // Need this to store event-by-event geometric efficiency
-  gInterpreter->GenerateDictionary("vector<vector<vector<uint64_t> > >", "vector");
-
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
   CAF caf( par().cafmaker().outputFile(), par().cafmaker().nusystsFcl() );
@@ -217,15 +198,6 @@ int main( int argc, char const *argv[] )
   caf.version = 4;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
-
-  /* FIXME
-  if (par().cafmaker().dumpFile(dumpFilename)){
-    // Copy geometric efficiency throws TTree to CAF file
-    std::cout << "Copying geometric efficiency throws TTree to output file" << std::endl;
-    TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
-    caf.cafFile->cd();
-    tGeoEfficiencyThrowsOut->CloneTree()->Write();
-  } */
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();
