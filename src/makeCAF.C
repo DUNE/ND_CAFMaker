@@ -124,12 +124,12 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
  
   }
 
-     // next: did we do TMS reco?
-     std::string tmsFile;
-     if (par().cafmaker().tmsRecoFile(tmsFile))  recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
+  // next: did we do TMS reco?
+  std::string tmsFile;
+  if (par().cafmaker().tmsRecoFile(tmsFile))  recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
 
-     // if we did both ND-LAr and TMS, we should try to match them, too
-     if (!ndlarFile.empty() && !tmsFile.empty())   recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+  // if we did both ND-LAr and TMS, we should try to match them, too
+  if (!ndlarFile.empty() && !tmsFile.empty())   recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
 
   return recoFillers;
 }
