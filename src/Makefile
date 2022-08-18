@@ -17,7 +17,7 @@ test: $(BINDIR)/testHDF
 
 # make an object for any .cxx requested
 %.o : %.cxx %.h
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -fPIC -o $@ -c $< #compile
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -fPIC -DENABLE_SAND=1$(ENABLE_SAND) -o $@ -c $< #compile
 
 # should *really* make a .d rule for the objects
 # to get their dependencies on the headers right, but ... not now

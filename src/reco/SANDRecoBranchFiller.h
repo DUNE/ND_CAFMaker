@@ -9,9 +9,8 @@
 
 #include "IRecoBranchFiller.h"
 
-#include "TFile.h"
-#include "TTree.h"
-#include "SANDReco/SANDRecord.h" //fixme
+class TFile;
+class TTree;
 
 namespace cafmaker
 {

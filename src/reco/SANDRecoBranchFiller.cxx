@@ -6,9 +6,15 @@
 
 #include "SANDRecoBranchFiller.h"
 
+#if ENABLE_SAND == 11
+#warning Including SANDRecoBranchFiller in build
+
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
+#include "TFile.h"
 #include "TSystem.h"
+#include "TTree.h"
+
 #include "SANDReco/SANDRecord.h" //fixme
 
 namespace cafmaker
@@ -73,3 +79,23 @@ namespace cafmaker
 
   }
 }
+
+#else // ENABLE_SAND
+
+#warning Not configured to build SANDRecoBranchFiller. Build with 'make ENABLE_SAND=1' if required
+
+cafmaker::SANDRecoBranchFiller::
+SANDRecoBranchFiller(const std::string&, const std::string&)
+{
+  abort();
+}
+
+void cafmaker::SANDRecoBranchFiller::
+_FillRecoBranches(std::size_t,
+                  caf::StandardRecord&,
+                  const cafmaker::Params&) const
+{
+  abort();
+}
+
+#endif // ENABLE_SAND
