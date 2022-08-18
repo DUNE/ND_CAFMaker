@@ -1,5 +1,7 @@
+/// Fill SAND reco branches using SAND reco data
 ///
-/// Fill reco branches using SAND data.
+/// \author  L. Di Noto, reworked by M. Vicenzi
+/// \date    Apr. 2022
 ///
 
 #ifndef ND_CAFMAKER_SANDRECOBRANCHFILLER_H
@@ -9,7 +11,7 @@
 
 #include "TFile.h"
 #include "TTree.h"
-#include "struct.h" //FIXME
+#include "struct.h"
 
 namespace cafmaker
 {

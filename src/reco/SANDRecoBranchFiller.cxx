@@ -1,4 +1,4 @@
-/// Fill reco branches using SAND reco data
+/// Fill SAND reco branches using SAND reco data
 ///
 /// \author  L. Di Noto, reworked by M. Vicenzi
 /// \date    Apr. 2022
@@ -17,7 +17,7 @@ namespace cafmaker
   SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename,
 					     const std::string &SANDLibFilename)
   {  
-    std::cout << SANDLibFilename << std::endl;
+    
     gSystem->Load(SANDLibFilename.c_str());
     
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
