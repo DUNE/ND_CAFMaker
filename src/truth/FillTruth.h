@@ -17,8 +17,8 @@ namespace nusyst
   using response_helper = std::string;
 }
 
-void fillTruth(caf::StandardRecord& sr,
-               const cafmaker::dumpTree & dt,
+void fillTruth(int ii,
+	       caf::StandardRecord& sr,
                TTree * gtree,
                const genie::NtpMCEventRecord * mcrec,
                const cafmaker::Params &par,

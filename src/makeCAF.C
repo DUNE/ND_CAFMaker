@@ -16,12 +16,11 @@
 #include "fhiclcpp/parse.h"
 
 #include "CAF.h"
-#include "dumpTree.h"
 #include "Params.h"
 #include "reco/MLNDLArRecoBranchFiller.h"
-#include "reco/ParameterizedRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/NDLArTMSMatchRecoFiller.h"
+#include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 
 namespace progopt = boost::program_options;
@@ -35,7 +34,6 @@ progopt::variables_map parseCmdLine(int argc, const char** argv)
 
   progopt::options_description fclopts("FCL overrides (for quick tests; edit your .fcl for regular usage)");
   fclopts.add_options()
-      ("dump,d",     progopt::value<std::string>(), "input 'dump' file from dumpTree.py")
       ("ghep,g",     progopt::value<std::string>(), "input GENIE .ghep file")
       ("out,o",      progopt::value<std::string>(), "output CAF file")
       ("startevt",   progopt::value<int>(),         "event number to start at")
@@ -83,8 +81,6 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
   }
 
   // insert anything overridden on the command line here
-  if (vm.count("dump"))
-    provisional.put("nd_cafmaker.CAFMakerSettings.InputDumpFile", vm["dump"].as<std::string>());
   if (vm.count("ghep"))
     provisional.put("nd_cafmaker.CAFMakerSettings.InputGHEPFile", vm["ghep"].as<std::string>());
   if (vm.count("out"))
@@ -114,20 +110,13 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
-  // first: did we do ND-LAr reco?
+  // first: we do SAND or ND-LAr reco
   std::string ndlarFile;
-  if (par().cafmaker().ndlarRecoFile(ndlarFile))
+  std::string sandFile;
+  if(par().cafmaker().ndlarRecoFile(ndlarFile))
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
-  else
-  {
-    // use the run+subrun numbers to seed the random number generator if seed is not explicitly provided
-    // (yes, leak this pointer.  there's only one and sending it back to the main() is annoying)
-    auto rando = new TRandom3(par().cafmaker().seed() >= 0 ?
-                              par().cafmaker().seed() :
-                              par().runInfo().run() * 1000 + par().runInfo().subrun());
-
-    recoFillers.emplace_back(std::make_unique<cafmaker::ParameterizedRecoBranchFiller>(rando));
-  }
+  else if (par().cafmaker().sandRecoFile(sandFile))
+    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
 
   // next: did we do TMS reco?
   std::string tmsFile;
@@ -136,7 +125,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
-     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
 
   return recoFillers;
 }
@@ -145,23 +134,18 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 // main loop function
 void loop(CAF& caf,
           cafmaker::Params &par,
-          TTree * intree,
           TTree * gtree,
           const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> & recoFillers)
 {
-  //// read in dumpTree output file
-  cafmaker::dumpTree dt;
-  dt.BindToTree(intree);
 
   caf.pot = gtree->GetWeight();
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
 
   // Main event loop
-  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : intree->GetEntries() - par().cafmaker().first();
+  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
   int start = par().cafmaker().first();
   for( int ii = start; ii < start + N; ++ii ) {
 
-    intree->GetEntry(ii);
     if( ii % 100 == 0 ) printf( "Event %d (%d of %d)...\n", ii, ii-start, N );
 
     // reset (the default constructor initializes its variables)
@@ -176,11 +160,11 @@ void loop(CAF& caf,
     // in the future this can be extended to use 'truth fillers'
     // (like the reco ones) if we find that the truth filling
     // is getting too complex for one function
-    fillTruth(caf.sr, dt, gtree, caf.mcrec, par, caf.rh);
+    fillTruth(ii, caf.sr, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie
 
     // hand off to the correct reco filler(s).
     for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(ii, caf.sr, dt, par);
+      filler->FillRecoBranches(ii, caf.sr, par);
 
     caf.fill();
   }
@@ -193,37 +177,25 @@ void loop(CAF& caf,
 
 // -------------------------------------------------
 
-int main( int argc, char const *argv[] ) 
+int main( int argc, char const *argv[] )
 {
 
   progopt::variables_map vars = parseCmdLine(argc, argv);
-
-  // Need this to store event-by-event geometric efficiency
-  gInterpreter->GenerateDictionary("vector<vector<vector<uint64_t> > >", "vector");
 
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
   CAF caf( par().cafmaker().outputFile(), par().cafmaker().nusystsFcl() );
 
-  TFile * tf = new TFile( par().cafmaker().dumpFile().c_str() );
-  TTree * tree = (TTree*) tf->Get( "tree" );
-
-  TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );
+  TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );   //reading genie file
   TTree * gtree = (TTree*) gf->Get( "gtree" );
 
-  loop( caf, par, tree, gtree, getRecoFillers(par) );
+  loop( caf, par, gtree, getRecoFillers(par) );
 
   caf.version = 4;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
 
-  // Copy geometric efficiency throws TTree to CAF file
-  std::cout << "Copying geometric efficiency throws TTree to output file" << std::endl;
-  TTree *tGeoEfficiencyThrowsOut = (TTree*) tf->Get("geoEffThrows");
-  caf.cafFile->cd();
-  tGeoEfficiencyThrowsOut->CloneTree()->Write();
-
   std::cout << "Writing CAF" << std::endl;
   caf.write();
-    
+
 }
