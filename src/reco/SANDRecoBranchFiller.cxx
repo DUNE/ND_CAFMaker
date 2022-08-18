@@ -9,7 +9,7 @@
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
 #include "TSystem.h"
-#include "struct.h"    
+#include "SANDReco/SANDRecord.h" //fixme
 
 namespace cafmaker
 {

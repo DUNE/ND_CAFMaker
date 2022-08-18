@@ -11,7 +11,7 @@
 
 #include "TFile.h"
 #include "TTree.h"
-#include "struct.h"
+#include "SANDReco/SANDRecord.h" //fixme
 
 namespace cafmaker
 {
