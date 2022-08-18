@@ -17,7 +17,7 @@ setup genie_phyopt v2_12_10   -q dkcharmtau
 setup geant4 v4_11_0_p01c -q e20:prof
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v01_01_01 -q e20::prof
+setup duneanaobj v02_00_01 -q e20:prof
 setup hdf5 v1_12_0b -q e20:prof
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
