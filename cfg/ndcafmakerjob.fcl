@@ -8,6 +8,5 @@ nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/dune/data/users/jwolcott/nd/nd-lar
 
 # SAND test setup
 #nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/pnfs/dune/scratch/users/mvicenzi/100k_FHC.0.fast-reco.root"
-#nd_cafmaker.CAFMakerSettings.SANDRecoLib: "/dune/app/users/mvicenzi/FastReco/lib/libStruct.so"
 #nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/pnfs/dune/scratch/users/mvicenzi/100k_FHC.0.ghep.root"
 #nd_cafmaker.CAFMakerSettings.OutputFile: "/pnfs/dune/scratch/users/mvicenzi/test_SAND_CAF.root"

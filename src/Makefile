@@ -5,6 +5,19 @@ OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 
 INCLUDE += -I$(SRCDIR)
 
+
+# Automatically enable SAND if SANDRECO_INC or SANDRECO_LIB are set
+ifneq (x$(SANDRECO_INC), x)
+	INCLUDE += -I$(SANDRECO_INC)
+	SAND_OPT = -DENABLE_SAND
+endif
+
+ifneq (x$(SANDRECO_LIB), x)
+	LDLIBS += -L$(SANDRECO_LIB) -lStruct
+	SAND_OPT = -DENABLE_SAND
+endif
+
+
 LIBNAME = ND_CAFMaker
 LIBS = $(LIBDIR)/lib$(LIBNAME).so
 BINS = $(BINDIR)/makeCAF
@@ -17,7 +30,7 @@ test: $(BINDIR)/testHDF
 
 # make an object for any .cxx requested
 %.o : %.cxx %.h
-	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -fPIC -DENABLE_SAND=1$(ENABLE_SAND) -o $@ -c $< #compile
+	$(CXX) $(INCLUDE) $(CXXFLAGS) $(ROOTFLAGS) -fPIC $(SAND_OPT) -o $@ -c $< #compile
 
 # should *really* make a .d rule for the objects
 # to get their dependencies on the headers right, but ... not now

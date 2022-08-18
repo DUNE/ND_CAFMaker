@@ -12,14 +12,14 @@
 class TFile;
 class TTree;
 
+struct event;
+
 namespace cafmaker
 {
-
   class SANDRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      SANDRecoBranchFiller(const std::string &SANDRecoFilename,
-			   const std::string &SANDLibFilename);
+      SANDRecoBranchFiller(const std::string &SANDRecoFilename);
 
     private:
       void _FillRecoBranches(std::size_t evtIdx,

@@ -112,11 +112,11 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   // first: we do SAND or ND-LAr reco
   std::string ndlarFile;
-  std::string sandFile, sandLib;  
+  std::string sandFile;
   if(par().cafmaker().ndlarRecoFile(ndlarFile))
-    recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));  
-  else if (par().cafmaker().sandRecoFile(sandFile) && par().cafmaker().sandRecoLib(sandLib))
-    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile,sandLib)); 
+    recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
+  else if (par().cafmaker().sandRecoFile(sandFile))
+    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
 
   // next: did we do TMS reco?
   std::string tmsFile;
@@ -141,7 +141,7 @@ void loop(CAF& caf,
   caf.pot = gtree->GetWeight();
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
 
-  // Main event loop  
+  // Main event loop
   int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
   int start = par().cafmaker().first();
   for( int ii = start; ii < start + N; ++ii ) {
@@ -177,7 +177,7 @@ void loop(CAF& caf,
 
 // -------------------------------------------------
 
-int main( int argc, char const *argv[] ) 
+int main( int argc, char const *argv[] )
 {
 
   progopt::variables_map vars = parseCmdLine(argc, argv);
@@ -197,5 +197,5 @@ int main( int argc, char const *argv[] )
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();
-    
+
 }

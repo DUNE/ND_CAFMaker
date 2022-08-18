@@ -6,7 +6,7 @@
 
 #include "SANDRecoBranchFiller.h"
 
-#if ENABLE_SAND == 11
+#ifdef ENABLE_SAND
 #warning Including SANDRecoBranchFiller in build
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
@@ -15,17 +15,13 @@
 #include "TSystem.h"
 #include "TTree.h"
 
-#include "SANDReco/SANDRecord.h" //fixme
+#include "SANDReco/SANDRecord.h"
 
 namespace cafmaker
 {
   
-  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename,
-					     const std::string &SANDLibFilename)
+  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename)
   {  
-    
-    gSystem->Load(SANDLibFilename.c_str());
-    
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
     fTree = (TTree*) fSANDRecoFile->Get("tEvent");
 
@@ -82,10 +78,10 @@ namespace cafmaker
 
 #else // ENABLE_SAND
 
-#warning Not configured to build SANDRecoBranchFiller. Build with 'make ENABLE_SAND=1' if required
+#warning Not configured to build SANDRecoBranchFiller. Must set SANDRECO_INC and SANDRECO_LIB environment variables
 
 cafmaker::SANDRecoBranchFiller::
-SANDRecoBranchFiller(const std::string&, const std::string&)
+SANDRecoBranchFiller(const std::string&)
 {
   abort();
 }
