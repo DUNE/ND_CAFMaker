@@ -33,9 +33,8 @@ namespace cafmaker
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
   void TMSRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
-      caf::StandardRecord &sr,
-      const cafmaker::dumpTree &dt,
-      const cafmaker::Params &par) const
+                                              caf::StandardRecord &sr,
+                                              const cafmaker::Params &par) const
   {
     // Get nth entry from tree
     TMSRecoTree->GetEntry(evtIdx);

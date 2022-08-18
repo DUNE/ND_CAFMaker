@@ -27,7 +27,6 @@ namespace cafmaker
   struct ControlConfig
   {
     // these are mandatory and have no default values
-    fhicl::Atom<std::string> dumpFile   { fhicl::Name{"InputDumpFile"}, fhicl::Comment("Input file (result of `dumpTree.py`)") };
     fhicl::Atom<std::string> ghepFile   { fhicl::Name{"InputGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file") };
     fhicl::Atom<std::string> outputFile { fhicl::Name{"OutputFile"}, fhicl::Comment("Filename for output CAF") };
 
@@ -38,6 +37,7 @@ namespace cafmaker
     // these are optional, but will change the contents of the output FCL if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
+    fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
 
     // these are optional and have defaults
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };

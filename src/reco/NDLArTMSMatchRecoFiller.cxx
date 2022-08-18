@@ -17,7 +17,6 @@ namespace cafmaker
 
   void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
                                                   caf::StandardRecord &sr,
-                                                  const cafmaker::dumpTree &dt,
                                                   const cafmaker::Params &par) const
   {
     // match tracks using the info that should have been filled by the ND-LAr and TMS reco fillers
