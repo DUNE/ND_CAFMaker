@@ -25,8 +25,6 @@ namespace caf
 
 namespace cafmaker
 {
-  class dumpTree;
-
   class FhiclConfig;
   using Params = fhicl::Table<cafmaker::FhiclConfig, void>;
 }
