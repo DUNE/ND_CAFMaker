@@ -10,6 +10,11 @@ namespace cafmaker
       SetConfigured(true);
       // Save pointer to input tree
       TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
+      if (!TMSRecoTree) {
+        std::cerr << "Did not find TMS reco tree Line_Candidates in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
+        throw;
+      }
       TMSRecoTree->SetBranchAddress("nLines", &_nLines);
       TMSRecoTree->SetBranchAddress("nHitsInTrack", _nHitsInTrack);
       TMSRecoTree->SetBranchAddress("TrackLength", _TrackLength);
@@ -26,6 +31,9 @@ namespace cafmaker
     } else {
       fTMSRecoFile = NULL;
       TMSRecoTree = NULL;
+      std::cerr << "Did not find input TMS reco file you provided: " << tmsRecoFilename << std::endl;
+      std::cerr << "Are you sure it exists?" << std::endl;
+      throw;
     }
   }
 
@@ -50,8 +58,6 @@ namespace cafmaker
       // Loop might be unnecessary if you really want optimisation...
       for (int j = 0; j < _nHitsInTrack[i]; ++j) {
         double z = _TrackHitPos[i][j][0];
-        //double x = _TrackHitPos[i][j][1];
-        //std::cout << "line " << i << ", hit " << j << ", x, z = " << x << ", " << z << std::endl;
 
         // Should all be ordered in z, check this
         if (z < prevz) {
@@ -66,7 +72,7 @@ namespace cafmaker
       sr.nd.tms.tracks[i].end   = caf::SRVector3D(_TrackHitPos[i][_nHitsInTrack[i]-1][1], -999, _TrackHitPos[i][_nHitsInTrack[i]-1][0]);
 
       // Track info
-      sr.nd.tms.tracks[i].len_gcm3  = _TrackLength[i];
+      sr.nd.tms.tracks[i].len_gcm2  = _TrackLength[i];
       sr.nd.tms.tracks[i].qual      = _Occupancy[i];
       sr.nd.tms.tracks[i].E         = _TotalTrackEnergy[i];
 
