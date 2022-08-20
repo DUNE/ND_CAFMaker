@@ -20,15 +20,15 @@ namespace cafmaker
     sr.nd.ntrkmatch = 0;
 
     for(unsigned int ilar = 0; ilar < n_LAr_tracks; ++ilar ) {
-      double z2_lar = 10.*sr.nd.lar.tracks[ilar].end.z;     //mm
+      double z2_lar = sr.nd.lar.tracks[ilar].end.z;     //cm
 
       // Check LAr track exits through the end; if not move to next track
-      if (z2_lar < 8000) continue;
+      if (z2_lar < 800) continue;
 
       // Now get the other variables
-      double x1_lar = 10.*sr.nd.lar.tracks[ilar].start.x;   //mm
-      double z1_lar = 10.*sr.nd.lar.tracks[ilar].start.z;   //mm
-      double x2_lar = 10.*sr.nd.lar.tracks[ilar].end.x;     //mm
+      double x1_lar = sr.nd.lar.tracks[ilar].start.x;   //cm
+      double z1_lar = sr.nd.lar.tracks[ilar].start.z;   //cm
+      double x2_lar = sr.nd.lar.tracks[ilar].end.x;     //cm
 
       // The slope of the track in LAr
       // Unfortunately the saved unit vectors in the LAr reco are corrupted
@@ -38,12 +38,12 @@ namespace cafmaker
 
       // Loop over the TMS tracks
       for(unsigned int itms = 0; itms < n_TMS_tracks; ++itms ) {
-        double z1_tms = sr.nd.tms.tracks[itms].start.z;   //mm
+        double z1_tms = sr.nd.tms.tracks[itms].start.z;   //cm
 
         // Check that this TMS track starts in first few planes; if not move to next track
-        if (z1_tms > 12000) continue;
+        if (z1_tms > 1200) continue;
 
-        double x1_tms = sr.nd.tms.tracks[itms].start.x;   //mm
+        double x1_tms = sr.nd.tms.tracks[itms].start.x;   //cm
 
         // Use the most upstream slope of the TMS track 
         double slope_x_tms = sr.nd.tms.tracks[itms].dir.x;
@@ -60,8 +60,8 @@ namespace cafmaker
         double slope_z_lar = (z2_lar-z1_lar)/len;
         double costheta = slope_x_lar * slope_x_tms + slope_z_lar * slope_z_tms;
 
-        // Check matching
-        if (abs(residual) < 400. && fabs(costheta) > 0.95) {
+        // Check matching; 40cm and 0.95 costheta between the unit vectors in LAr and TMS
+        if (abs(residual) < 40. && fabs(costheta) > 0.95) {
           // Make the match
           caf::SRNDTrackAssn match;
           match.larid = ilar;
