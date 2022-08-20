@@ -7,12 +7,12 @@ INCLUDE += -I$(SRCDIR)
 
 
 # Automatically enable SAND if SANDRECO_INC or SANDRECO_LIB are set
-ifneq (x$(SANDRECO_INC), x)
+ifneq ($(origin SANDRECO_INC), undefined)
 	INCLUDE += -I$(SANDRECO_INC)
 	SAND_OPT = -DENABLE_SAND
 endif
 
-ifneq (x$(SANDRECO_LIB), x)
+ifneq ($(origin SANDRECO_LIB), undefined)
 	LDLIBS += -L$(SANDRECO_LIB) -lStruct
 	SAND_OPT = -DENABLE_SAND
 endif
