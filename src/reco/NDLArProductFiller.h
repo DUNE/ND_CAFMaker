@@ -33,6 +33,9 @@ namespace cafmaker
       "trk_end_x",
       "trk_end_y",
       "trk_end_z",
+      "trk_start_dir_x",
+      "trk_start_dir_y",
+      "trk_start_dir_z",
       "trk_end_dir_x",
       "trk_end_dir_y",
       "trk_end_dir_z",
@@ -51,6 +54,19 @@ namespace cafmaker
       "shw_dir_z",
       "shw_visE"
   };
+
+  /// Look up the column index that goes with a particular name
+  std::size_t ColumnNameIndex(const std::vector<std::string>& names, const std::string & name, const std::size_t& offset=0)
+  {
+    auto it_name = std::find(names.begin(), names.end(), name);
+    if (it_name == names.end())
+      throw std::runtime_error("Column name '" + name + "' not found in EXPECTED_COLUMN_NAMES");
+    return offset + std::distance(names.begin(), it_name);
+  }
+
+  /// utility macro used to find the column index that goes with a particular name and assign it to a variable of the same name
+#define BUFFER_LOOKUP_VAR(TYPE, NAME) \
+  static const std::size_t NAME = ColumnNameIndex(EXPECTED_COLUMN_NAMES<TYPE>, #NAME);
 
   // -----------------------------------------
 
