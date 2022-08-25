@@ -31,6 +31,7 @@ namespace cafmaker
 
         _FillRecoBranches(evtIdx, sr, par);
       }
+      std::string GetName() { return name; };
 
     protected:
       /// Actual implementation of reco branch filling.  Derived classes should override this.
@@ -40,6 +41,7 @@ namespace cafmaker
 
       void SetConfigured(bool configured = true)    { isConfigured = configured; };
 
+      std::string name;
     private:
       bool isConfigured;
   };

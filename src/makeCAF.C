@@ -121,11 +121,12 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   // next: did we do TMS reco?
   std::string tmsFile;
   if (par().cafmaker().tmsRecoFile(tmsFile))
-    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(ndlarFile));
+    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile));
 
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+
 
   return recoFillers;
 }
@@ -153,9 +154,12 @@ void loop(CAF& caf,
 
     caf.sr.run = par().runInfo().run();
     caf.sr.subrun = par().runInfo().subrun();
+    caf.sr.meta_run = par().runInfo().run();
+    caf.sr.meta_subrun = par().runInfo().subrun();
     caf.sr.event = ii;
     caf.sr.isFD = 0;
     caf.sr.isFHC = par().runInfo().fhc();
+    caf.sr.pot = caf.pot;
 
     // in the future this can be extended to use 'truth fillers'
     // (like the reco ones) if we find that the truth filling
@@ -198,4 +202,5 @@ int main( int argc, char const *argv[] )
   std::cout << "Writing CAF" << std::endl;
   caf.write();
 
+  return 0;
 }
