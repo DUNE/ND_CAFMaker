@@ -56,13 +56,7 @@ namespace cafmaker
   };
 
   /// Look up the column index that goes with a particular name
-  std::size_t ColumnNameIndex(const std::vector<std::string>& names, const std::string & name, const std::size_t& offset=0)
-  {
-    auto it_name = std::find(names.begin(), names.end(), name);
-    if (it_name == names.end())
-      throw std::runtime_error("Column name '" + name + "' not found in EXPECTED_COLUMN_NAMES");
-    return offset + std::distance(names.begin(), it_name);
-  }
+  std::size_t ColumnNameIndex(const std::vector<std::string>& names, const std::string & name, const std::size_t& offset=0);
 
   /// utility macro used to find the column index that goes with a particular name and assign it to a variable of the same name
 #define BUFFER_LOOKUP_VAR(TYPE, NAME) \

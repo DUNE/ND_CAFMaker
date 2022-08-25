@@ -9,6 +9,16 @@ namespace cafmaker
 
   // -------------------------------------------------------------
 
+  std::size_t ColumnNameIndex(const std::vector<std::string>& names, const std::string & name, const std::size_t& offset)
+  {
+    auto it_name = std::find(names.begin(), names.end(), name);
+    if (it_name == names.end())
+      throw std::runtime_error("Column name '" + name + "' not found in EXPECTED_COLUMN_NAMES");
+    return offset + std::distance(names.begin(), it_name);
+  }
+
+  // -------------------------------------------------------------
+
   template <>
   void NDLArProductFiller<caf::SRTrack>::FillSR(caf::StandardRecord &sr, std::size_t evtIdx) const
   {
