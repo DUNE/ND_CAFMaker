@@ -27,7 +27,7 @@ namespace cafmaker
 
   std::vector<float> NDLArSummaryH5DatasetReader::ColumnValues(std::size_t colIdx, std::size_t firstRow, int lastRow) const
   {
-    std::cout << "Reading column " << colIdx << std::endl;
+    //std::cout << "Reading column " << colIdx << std::endl;
 
     // in principle just taking the number of rows verbatim from the file
     // could cause us to run out of memory if it's a REALLY large number of rows.
@@ -41,7 +41,7 @@ namespace cafmaker
     }
     std::size_t nRows = lastRow - firstRow + 1;
 
-    std::cout << "Reading rows " << firstRow << " through " << lastRow << std::endl;
+    //std::cout << "Reading rows " << firstRow << " through " << lastRow << std::endl;
 
     // if we somehow wound up with an empty array?
     if (static_cast<std::size_t>(lastRow) <= firstRow)
@@ -68,12 +68,12 @@ namespace cafmaker
     coll_offset[0] = 0;
     H5::DataSpace memspace(1, col_dims);  // rank = 1 (1-D) == 1 column
 
-    std::cout << " memspace has " << memspace.getSimpleExtentNpoints() << " points" << std::endl;
+    //std::cout << " memspace has " << memspace.getSimpleExtentNpoints() << " points" << std::endl;
     for (std::size_t chunkIdx = 0; chunkIdx < nRows / chunkSize + 1; chunkIdx++)
     {
       std::size_t startRow = firstRow + chunkIdx * chunkSize;
       std::size_t chunkRows = std::min(chunkSize, nRows - startRow);
-      std::cout << "  reading chunk: rows " << startRow << " through " << startRow + chunkRows - 1 << std::endl;
+      //std::cout << "  reading chunk: rows " << startRow << " through " << startRow + chunkRows - 1 << std::endl;
       hsize_t offset[2]{startRow, colIdx};  // i.e., start from the first row, and the column of interest
       hsize_t count[2]{chunkRows, 1};       // i.e., read all the rows in this chunk, and a single column
 
@@ -84,7 +84,7 @@ namespace cafmaker
       }
 
       fInputDataspace.selectHyperslab(H5S_SELECT_SET, count, offset);
-      std::cout << "   input dataset has " << fInputDataspace.getSelectNpoints() << " points selected" << std::endl;
+      //std::cout << "   input dataset has " << fInputDataspace.getSelectNpoints() << " points selected" << std::endl;
 
       fInputDataset.read(&column[startRow],
                          H5Tget_native_type(fInputDataset.getDataType().getId(), H5T_DIR_DEFAULT),
@@ -100,9 +100,9 @@ namespace cafmaker
   const float * NDLArSummaryH5DatasetReader::GridValues(std::size_t startRow, std::size_t endRow,
                                                         std::size_t startCol, std::size_t endCol) const
   {
-    std::cout << "Reading 2D grid from (row, col) = (" << startRow << "," << startCol << ") "
-              << " to (" << endRow << "," << endCol << ") "
-              << std::endl;
+    //std::cout << "Reading 2D grid from (row, col) = (" << startRow << "," << startCol << ") "
+    //          << " to (" << endRow << "," << endCol << ") "
+    //          << std::endl;
 
     std::size_t nRows = endRow - startRow + 1;
     std::size_t nCols = endCol - startCol + 1;
@@ -122,12 +122,12 @@ namespace cafmaker
       if (chunk_dims[0] < chunkSize)
         chunkSize = chunk_dims[0];
 
-      if (chunk_dims[1] < endCol)
-      {
-        std::cerr << "Warning: chunk's horizontal size is " << chunk_dims[1] << ", which is less than the last column to read: "
-                  << endCol << std::endl;
-        std::cout << "This may impact data read speed!" << std::endl;
-      }
+      //if (chunk_dims[1] < endCol)
+      //{
+      //  std::cerr << "Warning: chunk's horizontal size is " << chunk_dims[1] << ", which is less than the last column to read: "
+      //            << endCol << std::endl;
+      //  std::cout << "This may impact data read speed!" << std::endl;
+      //}
     }
 
     hsize_t * grid_dims;
@@ -137,27 +137,27 @@ namespace cafmaker
       rank = 1;
       grid_dims = new hsize_t[1];
       grid_dims[0] = endCol - startCol + 1;
-      std::cout << "   memspace is 1-dimensional with size " << grid_dims[0] << std::endl;
+      //std::cout << "   memspace is 1-dimensional with size " << grid_dims[0] << std::endl;
     }
     else if (endCol - startCol == 0)
     {
       rank = 1;
       grid_dims = new hsize_t[1];
       grid_dims[0] = chunkSize;
-      std::cout << "   memspace is 1-dimensional with size " << grid_dims[0] << std::endl;
+      //std::cout << "   memspace is 1-dimensional with size " << grid_dims[0] << std::endl;
     }
     else
     {
       grid_dims = new hsize_t[2];
       grid_dims[0] = chunkSize;
       grid_dims[1] = endCol - startCol + 1;
-      std::cout << "   memspace has dims. " << grid_dims[0] << " x " << grid_dims[1] << std::endl;
+      //std::cout << "   memspace has dims. " << grid_dims[0] << " x " << grid_dims[1] << std::endl;
     }
     H5::DataSpace memspace(rank, grid_dims);
 
-    std::cout << "    memspace is rank " << rank << std::endl;
-    std::cout << "    memspace has " << memspace.getSimpleExtentNpoints() << " points" << std::endl;
-    std::cout << "    total n rows = " << nRows << "; initial row chunk size = " << chunkSize << std::endl;
+    //std::cout << "    memspace is rank " << rank << std::endl;
+    //std::cout << "    memspace has " << memspace.getSimpleExtentNpoints() << " points" << std::endl;
+    //std::cout << "    total n rows = " << nRows << "; initial row chunk size = " << chunkSize << std::endl;
     for (std::size_t chunkIdx = 0; ; chunkIdx++)
     {
       // i.e.: either startRow, or the aligned start of a chunk block.
@@ -170,8 +170,8 @@ namespace cafmaker
       // again note integer division (== floor())
       std::size_t chunkRows = std::min( (firstRow/chunkSize + 1) * chunkSize - startRow, endRow - firstRow + 1);
 
-      std::cout << "     this chunk nrows = " << chunkRows << std::endl;
-      std::cout << "     reading chunk: rows " << firstRow << " through " << firstRow + chunkRows - 1 << std::endl;
+      //std::cout << "     this chunk nrows = " << chunkRows << std::endl;
+      //std::cout << "     reading chunk: rows " << firstRow << " through " << firstRow + chunkRows - 1 << std::endl;
       hsize_t offset[2]{firstRow, startCol};
       hsize_t count[2]{chunkRows, nCols};
 
@@ -190,11 +190,11 @@ namespace cafmaker
         grid_offset[0] = grid_offset[1] = 0;
 //        std::cout << " resizing memspace to " << grid_dims[0] << " x " << grid_dims[1] << std::endl;
         memspace.selectHyperslab(H5S_SELECT_SET, grid_dims, grid_offset);
-        std::cout << " memspace now has " << memspace.getSimpleExtentNpoints() << " points" << std::endl;
+        //std::cout << " memspace now has " << memspace.getSimpleExtentNpoints() << " points" << std::endl;
       }
 
       fInputDataspace.selectHyperslab(H5S_SELECT_SET, count, offset);
-      std::cout << "   input dataset has " << fInputDataspace.getSelectNpoints() << " points selected" << std::endl;
+      //std::cout << "   input dataset has " << fInputDataspace.getSelectNpoints() << " points selected" << std::endl;
 
       fInputDataset.read(&fReadBuffer[(firstRow - startRow) * nCols],
                          H5Tget_native_type(fInputDataset.getDataType().getId(), H5T_DIR_DEFAULT),
@@ -233,16 +233,16 @@ namespace cafmaker
     {
       if (EventRowMap()[counter] == event)
       {
-        std::cout << " index " << counter << " starts block for event " << event << std::endl;
+        //std::cout << " index " << counter << " starts block for event " << event << std::endl;
         firstRow = counter;
         break;
       }
 
       if (EventRowMap()[EventRowMap().size() - counter - 1] == event)
       {
-        std::cout << " index " << EventRowMap().size() - counter - 1 << " ends block for event " << event << std::endl;
-        std::cout << "    EventRowMap()[" << EventRowMap().size() << " - " << counter << " - 1] = " << EventRowMap()[
-            EventRowMap().size() - counter - 1] << std::endl;
+        //std::cout << " index " << EventRowMap().size() - counter - 1 << " ends block for event " << event << std::endl;
+        //std::cout << "    EventRowMap()[" << EventRowMap().size() << " - " << counter << " - 1] = " << EventRowMap()[
+        //    EventRowMap().size() - counter - 1] << std::endl;
         lastRow = EventRowMap().size() - counter - 1;
         break;
       }

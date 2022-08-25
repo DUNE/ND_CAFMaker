@@ -1,4 +1,82 @@
-# ND_CAFMaker
+# ND CAFMaker
+`ND_CAFMaker` takes input `edep-sim`, `GENIE`, and reconstructed objects from the DUNE ND and combines them into the Common Analysis Format ("CAF").
+
+# Setup
+The package has a number of dependencies, all accessible through the `ups` framework at Fermilab and github. Simply run
+```
+./build.sh
+```
+to build the dependencies of `DUNE_ND_GeoEff` and `edep-sim`. Then finally
+```
+source ndcaf_setup.sh
+```
+and your environment should be set up. Depending on your role (developer or user), you may have to set up different `duneanaobj` versions, perhaps even your own custom UPS product.
+
+## Inputs
+The package is controlled by `fhicl` config files, found in the `cfg` directory. The `cfg/ndcafmakerjob.fcl` shows the basic setup.
+
+For the minimal test setup:
+* Provide an `InputDumpFile`, which essentially skims over the `edep-sim` output file and makes it into a flat-tree
+* Provide an `InputGHEPFile`, which contains the GENIE truth information in `GHEP` format
+* Provide an `OutputFile`, where your file will be saved
+
+Extending upon the minimal test setup you can:
+* Provide a `NDLArRecoFile`, which contains the output of the ND LAr reconstruction
+* Provide a `TMSRecoFile`, which contains the output of the TMS reconstruction
+
+## Making the dump file
+To make the dump file you simply run the `dumpTree.py` script as
+```
+./dumpTree.py --infile=edep_sim_output_file.root --outfile=output_file.root --seed=seed_for_geom_efficiency_throws
+```
+after setting up your environment through `ndcaf_setup.sh` mentioned above. If you're asked for the `GNUMIXML` environment variable, navigate into the `ND_CAFMaker` directory and do
+```
+export GNUMIXML=$(pwd -P)/sim_inputs/GNuMIFlux.xml
+```
+
+## Building
+Once you've set up your environment, it's just a matter of typing 
+```
+make
+```
+in the `ND_CAFMaker` folder, which goes through and builds the objects, library and single `makeCAF` executable.
+
+# Running
+There is currently only one main executable, `makeCAF`, which is controlled entirely by the input `fhicl` file. To run with the `fhicl` file that was specified under `Inputs`, do
+```
+./makeCAF --fcl=path_to_your_fhicl_file.fcl
+```
+
+You can also override some of the `fhicl` inputs, which are specified by typing 
+```
+./makeCAF --help
+```
+and should output
+```
+Usage: ./makeCAF [options] <driver.fcl> [options]
+
+General options:
+  -h [ --help ]          print this help message
+
+FCL overrides (for quick tests; edit your .fcl for regular usage):
+  -d [ --dump ] arg      input 'dump' file from dumpTree.py
+  -g [ --ghep ] arg      input GENIE .ghep file
+  -o [ --out ] arg       output CAF file
+  --startevt arg         event number to start at
+  -n [ --numevts ] arg   total number of events to process (-1 means 'all')
+```
+
+# Output tree and event format (this section needs expanding)
+
+The output contains a number of different `TTree` `ROOT` objects. `cafTree` contains the information from the reconstruction and some truth information from the `edep-sim` detector simulation, and `genieEvt` contains the true `GENIE` information from the neutrino interaction simulation.
+
+# Contact
+* Jeremy Wolcott (jwolcott@fnal.gov), most certainly the lead author
+* Chris Marshall (chris.marshall@rochester.edu), originally wrote much of the package before Jeremy's significant update
+* Cris Vilela (c.vilela@cern.ch), also originally wrote much of the package before Jeremy's significant update
+* Clarence Wret (c.wret@rochester.edu), tagged on TMS reconstruction and general updates
+
+# Old instructions (semi-valid still)
 Code for running ND parameterized reconstruction and making CAFs
 
 source build.sh in this directory initially.

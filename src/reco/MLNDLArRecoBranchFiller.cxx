@@ -14,13 +14,13 @@ namespace cafmaker
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
+    name = "LArML";
   }
 
   // ------------------------------------------------------------------------------
   void
   MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
                                              caf::StandardRecord &sr,
-                                             const cafmaker::dumpTree &dt,
                                              const cafmaker::Params &par) const
   {
     fTrackFiller.FillSR(sr, evtIdx);

@@ -24,13 +24,14 @@ setup hdf5 v1_12_0b -q e20:prof
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib -name 'Geant4Config.cmake'`
 export Geant4_DIR=`dirname $G4_cmake_file`
 
+# Just use the edep-sim UPS product, don't clone master branch off repos!
 # Get edep-sim and build it
-if [ $FORCE == yes ]; then rm -rf edep-sim; fi
-git clone https://github.com/ClarkMcGrew/edep-sim.git
-cd edep-sim
-sed -i 's/add_definitions(-DEDEPSIM_FORCE_PRIVATE_FIELDS)//g' */CMakeLists.txt
-source setup.sh
-source build/edep-build.sh
+#if [ $FORCE == yes ]; then rm -rf edep-sim; fi
+#git clone https://github.com/ClarkMcGrew/edep-sim.git
+#cd edep-sim
+#sed -i 's/add_definitions(-DEDEPSIM_FORCE_PRIVATE_FIELDS)//g' */CMakeLists.txt
+#source setup.sh
+#source build/edep-build.sh
 
 cd ${TOPDIR}
 

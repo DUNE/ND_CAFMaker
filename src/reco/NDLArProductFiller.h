@@ -80,7 +80,7 @@ namespace cafmaker
       {
         int firstRow, lastRow;
         std::tie(firstRow, lastRow) = fDSReader.EventRowEdges(evt);
-        std::cout << "  event " << evt << " spans rows " << firstRow << ", " << lastRow << std::endl;
+        //std::cout << "  event " << evt << " spans rows " << firstRow << ", " << lastRow << std::endl;
         if (firstRow < 0)
           return {};
 

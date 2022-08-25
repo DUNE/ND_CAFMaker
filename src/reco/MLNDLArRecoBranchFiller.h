@@ -28,7 +28,6 @@ namespace cafmaker
     protected:
       void _FillRecoBranches(std::size_t evtIdx,
                              caf::StandardRecord &sr,
-                             const cafmaker::dumpTree &dt,
                              const cafmaker::Params &par) const override;
 
     private:
