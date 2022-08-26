@@ -3,7 +3,7 @@
 
 #include "TFile.h"
 #include "TTree.h"
-#include "Ntuple/NtpMCEventRecord.h"
+#include "Framework/Ntuple/NtpMCEventRecord.h"
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRGlobal.h"
 

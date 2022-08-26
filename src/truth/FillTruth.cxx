@@ -13,9 +13,9 @@
 #include "TTree.h"
 
 // GENIE
-#include "EVGCore/EventRecord.h"
-#include "Ntuple/NtpMCEventRecord.h"
-#include "GHEP/GHepParticle.h"
+#include "Framework/EventGen/EventRecord.h"
+#include "Framework/Ntuple/NtpMCEventRecord.h"
+#include "Framework/GHEP/GHepParticle.h"
 
 // Standard Record format
 #include "duneanaobj/StandardRecord/StandardRecord.h"
@@ -26,25 +26,25 @@
 
 // Fill truth info
 void fillTruth(int ii,
-	       caf::StandardRecord& sr,
+	             caf::StandardRecord& sr,
                TTree * gtree,
                const genie::NtpMCEventRecord * mcrec,
                const cafmaker::Params &par,
                nusyst::response_helper& rh)
 {
 
-  
+
   // get GENIE event record
   gtree->GetEntry(ii);
   genie::EventRecord * event = mcrec->event;
   genie::Interaction * in = event->Summary();
-     
+
   // Get truth stuff out of GENIE ghep record
   TLorentzVector vtx = *(event->Vertex());
   sr.vtx_x = vtx.X();
   sr.vtx_y = vtx.Y();
   sr.vtx_z = vtx.Z();
-  sr.det_x = -100.*par().runInfo().OA_xcoord(); 
+  sr.det_x = -100.*par().runInfo().OA_xcoord();
 
   sr.nuPDG = in->InitState().ProbePdg();
   sr.nuPDGunosc = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
@@ -81,7 +81,7 @@ void fillTruth(int ii,
   sr.eRecoPim = 0.;
   sr.eRecoPi0 = 0.;
   sr.eOther = 0.;
- 
+
   // loop truth particles
   for(int j=0; j< event->GetEntries(); j++){
 
@@ -125,7 +125,7 @@ void fillTruth(int ii,
   sr.LepMomZ = lepP4.Z();
   sr.LepE = lepP4.E();
   sr.LepNuAngle = nuP4.Angle( lepP4.Vect() );
-	
+
   // Add DUNErw weights to the CAF
   sr.total_xsSyst_cv_wgt = 1;
   // fixme: the following is disabled until DIRT-II finishes on model + uncertainty decisions

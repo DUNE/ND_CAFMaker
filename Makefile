@@ -9,9 +9,10 @@ INCLUDE += -I$(BOOST_INC)
 INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
-INCLUDE += -I$(DUNEANAOBJ_INC)
+INCLUDE += -I$(DUNEANAOBJ_INC) -lduneanaobj_StandardRecord
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
+LDLIBS += -L$(TBB_LIB) -ltbb
 LDLIBS += -L$(LIBXML2_FQ_DIR)/lib -lxml2
 LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp
 LDLIBS += -L$(PYTHIA6) -lPythia6
@@ -20,12 +21,15 @@ LDLIBS += -L$(PYTHIA6) -lPythia6
 #LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
 LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
 
+LDLIBS += -L$(GSL_LIB) -lgsl -lgslcblas
+LDLIBS += -L$(LHAPDF_LIB) -lLHAPDF
 LDLIBS += $(shell genie-config --libs)
 LDLIBS += $(shell root-config --glibs)
+LDLIBS += -lMathMore
 LDLIBS += -lGeom -lEGPythia6 -lGenVector
 LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
-LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp
+LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
 
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin
