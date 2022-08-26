@@ -69,9 +69,8 @@ progopt::variables_map parseCmdLine(int argc, const char** argv)
 // -------------------------------------------------
 fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, const progopt::variables_map & vm)
 {
-  fhicl::intermediate_table provisional;
   cet::filepath_first_absolute_or_lookup_with_dot maker(getenv("FHICL_FILE_PATH"));
-  fhicl::parse_document(configFile, maker, provisional);
+  fhicl::intermediate_table provisional = fhicl::parse_document(configFile, maker);
 
   if (!provisional.exists("nd_cafmaker"))
   {
