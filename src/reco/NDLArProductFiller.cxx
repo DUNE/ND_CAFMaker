@@ -9,6 +9,16 @@ namespace cafmaker
 
   // -------------------------------------------------------------
 
+  std::size_t ColumnNameIndex(const std::vector<std::string>& names, const std::string & name, const std::size_t& offset)
+  {
+    auto it_name = std::find(names.begin(), names.end(), name);
+    if (it_name == names.end())
+      throw std::runtime_error("Column name '" + name + "' not found in EXPECTED_COLUMN_NAMES");
+    return offset + std::distance(names.begin(), it_name);
+  }
+
+  // -------------------------------------------------------------
+
   template <>
   void NDLArProductFiller<caf::SRTrack>::FillSR(caf::StandardRecord &sr, std::size_t evtIdx) const
   {
@@ -27,17 +37,34 @@ namespace cafmaker
     std::vector<caf::SRTrack> tracksOut;
     tracksOut.reserve(nRows);
 
+    // avoid looking these up every time since they won't change
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_start_x)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_start_y)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_start_z)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_end_x)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_end_y)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_end_z)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_start_dir_x)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_start_dir_y)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_start_dir_z)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_end_dir_x)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_end_dir_y)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_end_dir_z)
+    BUFFER_LOOKUP_VAR(caf::SRTrack, trk_visE)
+
     for (std::size_t rowIdx = 0; rowIdx < nRows; rowIdx++)
     {
       caf::SRTrack tr;
       std::size_t rowOffset = rowIdx * nCols;
 
-      // n.b.: if you change anything here,
-      //       make SURE the column assumptions matchs the checks in ValidateColumns()
-      tr.start = {buffer[rowOffset + 0], buffer[rowOffset + 1], buffer[rowOffset + 2]};
-      tr.end = {buffer[rowOffset + 3], buffer[rowOffset + 4], buffer[rowOffset + 5]};
-      tr.enddir = {buffer[rowOffset + 6], buffer[rowOffset + 7], buffer[rowOffset + 8]};
-      tr.Evis = buffer[rowOffset+9];
+      // just build the offset in ...
+      const float * offBuf = &buffer[rowOffset];
+
+      tr.start = {offBuf[trk_start_x], offBuf[trk_start_y], offBuf[trk_start_z]};
+      tr.end = {offBuf[trk_end_x], offBuf[trk_end_y], offBuf[trk_end_z]};
+      tr.dir = {offBuf[trk_start_dir_x], offBuf[trk_start_dir_y], offBuf[trk_start_dir_z]};
+      tr.enddir = {offBuf[trk_end_dir_x], offBuf[trk_end_dir_y], offBuf[trk_end_dir_z]};
+      tr.Evis = offBuf[trk_visE];
 
       //std::cout << "  filling track: " << tr << std::endl;
 
@@ -68,16 +95,25 @@ namespace cafmaker
     std::vector<caf::SRShower> shwOut;
     shwOut.reserve(nRows);
 
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_start_x)
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_start_y)
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_start_z)
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_dir_x)
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_dir_y)
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_dir_z)
+    BUFFER_LOOKUP_VAR(caf::SRShower, shw_visE)
+
     for (std::size_t rowIdx = 0; rowIdx < nRows; rowIdx++)
     {
       caf::SRShower shw;
       std::size_t rowOffset = rowIdx * nCols;
 
-      // todo: probably should come up with a scheme for validating
-      //       that these offsets really match up with the data we think they do
-      shw.start = {buffer[rowOffset + 0], buffer[rowOffset + 1], buffer[rowOffset + 2]};
-      shw.direction = {buffer[rowOffset + 3], buffer[rowOffset + 4], buffer[rowOffset + 5]};
-      shw.Evis = buffer[rowOffset + 6];
+      // just build the offset in ...
+      const float * offBuf = &buffer[rowOffset];
+
+      shw.start = {offBuf[shw_start_x], offBuf[shw_start_y], offBuf[shw_start_z]};
+      shw.direction = {offBuf[shw_dir_x], offBuf[shw_dir_y], offBuf[shw_dir_z]};
+      shw.Evis = offBuf[shw_visE];
 
       shwOut.emplace_back(std::move(shw));
     }
