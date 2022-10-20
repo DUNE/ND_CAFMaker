@@ -20,6 +20,7 @@
 #include "reco/MLNDLArRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/NDLArTMSMatchRecoFiller.h"
+#include "reco/NDGArRecoBranchFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 
@@ -109,13 +110,16 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
-  // first: we do SAND or ND-LAr reco
+  // first: we do SAND or ND-LAr or ND-GAr reco
   std::string ndlarFile;
   std::string sandFile;
+  std::string ndgarFile;
   if(par().cafmaker().ndlarRecoFile(ndlarFile))
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
   else if (par().cafmaker().sandRecoFile(sandFile))
     recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
+  else if (par().cafmaker().ndgarRecoFile(ndgarFile))
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDGArRecoBranchFiller>(ndgarFile));
 
   // next: did we do TMS reco?
   std::string tmsFile;
