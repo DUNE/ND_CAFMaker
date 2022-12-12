@@ -1,7 +1,6 @@
 #include "NDCAFMaker.fcl"
 nd_cafmaker: @local::standard_nd_cafmaker
 
-#nd_cafmaker.CAFMakerSettings.InputDumpFile: "/pnfs/dune/persistent/physicsgroups/dunendsim/example/neutrino_279_1659347965_InputDumpFile.root"
 nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/pnfs/dune/persistent/physicsgroups/dunendsim/example/neutrino.279_1659347965.ghep.root"
 nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/pnfs/dune/persistent/physicsgroups/dunendsim/example/neutrino.279_1659347965.summary.h5"
 nd_cafmaker.CAFMakerSettings.TMSRecoFile:   "/pnfs/dune/persistent/physicsgroups/dunendsim/example/neutrino.279_1659347965.tmsreco.root"

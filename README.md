@@ -16,23 +16,16 @@ and your environment should be set up. Depending on your role (developer or user
 The package is controlled by `fhicl` config files, found in the `cfg` directory. The `cfg/ndcafmakerjob.fcl` shows the basic setup.
 
 For the minimal test setup:
-* Provide an `InputDumpFile`, which essentially skims over the `edep-sim` output file and makes it into a flat-tree
 * Provide an `InputGHEPFile`, which contains the GENIE truth information in `GHEP` format
 * Provide an `OutputFile`, where your file will be saved
 
 Extending upon the minimal test setup you can:
 * Provide a `NDLArRecoFile`, which contains the output of the ND LAr reconstruction
 * Provide a `TMSRecoFile`, which contains the output of the TMS reconstruction
+* Provide a `SANDRecoFile`, which contains the output of the SAND reconstruction
 
-## Making the dump file
-To make the dump file you simply run the `dumpTree.py` script as
-```
-./dumpTree.py --infile=edep_sim_output_file.root --outfile=output_file.root --seed=seed_for_geom_efficiency_throws
-```
-after setting up your environment through `ndcaf_setup.sh` mentioned above. If you're asked for the `GNUMIXML` environment variable, navigate into the `ND_CAFMaker` directory and do
-```
-export GNUMIXML=$(pwd -P)/sim_inputs/GNuMIFlux.xml
-```
+To add variables and inspect what is set and how, check `src/Params.h`.
+
 
 ## Building
 Once you've set up your environment, it's just a matter of typing 
@@ -59,7 +52,6 @@ General options:
   -h [ --help ]          print this help message
 
 FCL overrides (for quick tests; edit your .fcl for regular usage):
-  -d [ --dump ] arg      input 'dump' file from dumpTree.py
   -g [ --ghep ] arg      input GENIE .ghep file
   -o [ --out ] arg       output CAF file
   --startevt arg         event number to start at
