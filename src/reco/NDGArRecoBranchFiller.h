@@ -34,6 +34,7 @@ namespace cafmaker
       std::vector<float_t> * fTrackStartX;
       std::vector<int>   * fTrackPIDCheatedF;
       std::vector<float_t> * fTrackLenF;
+      std::vector<float_t> * fTrackPF;
   };
 
 }
