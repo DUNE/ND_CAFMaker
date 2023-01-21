@@ -1,7 +1,7 @@
 /// Fill SAND reco branches using SAND reco data
 ///
 /// \author  L. Di Noto, reworked by M. Vicenzi
-/// \date    Apr. 2022
+/// \date    Jan. 2023
 ///
 
 #include "SANDRecoBranchFiller.h"
@@ -10,12 +10,18 @@
 #warning Including SANDRecoBranchFiller in build
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
+#include "duneanaobj/StandardRecord/SRRecoParticle.h"
+#include "duneanaobj/StandardRecord/SRParticleTruth.h"
 
+
+#include "TFile.h"
+
+#include "TFile.h"
 #include "TFile.h"
 #include "TSystem.h"
 #include "TTree.h"
 
-#include "SANDReco/SANDRecord.h"
+#include "SANDRecord.h"
 
 namespace cafmaker
 {
@@ -44,10 +50,43 @@ namespace cafmaker
 
    // neutrino energy
    sr.Ev_reco = fEvent->Enureco*0.001; //GeV
-  
+
+   //sr.nd.sand.ntracks=10; 
    std::vector<particle> particle_event = fEvent->particles; 
    bool foundLepton = false;
-   for ( auto it = particle_event.begin(); it != particle_event.end(); ++it){
+
+  sr.nd.sand.nparticles=particle_event.size(); 
+  caf::SRRecoParticle recop;
+
+  for ( auto it = particle_event.begin(); it != particle_event.end(); ++it){
+	recop.pdg=(*it).pdg;
+	
+	recop.primary=(*it).primary;
+	recop.reco_trkid=(*it).tid;
+	recop.mother_trkid=(*it).parent_tid;
+	recop.p.E=(*it).Ereco*0.001; //in GeV
+	recop.p.px=(*it).pxreco*0.001; //in GeV
+	recop.p.py=(*it).pyreco*0.001; //in GeV
+	recop.p.pz=(*it).pzreco*0.001; //in GeV
+	caf::SRVector3D start_point((*it).xreco, (*it).yreco,(*it).zreco);  //unità?
+   	recop.start=start_point;
+	
+	recop.trkid_best_match=(*it).tid;  //non abbiamo ancora un best match. TO DO
+
+	caf::SRParticleTruth truep;
+ 	truep.trkid=(*it).tid;
+	truep.pdg=(*it).pdg;
+	truep.p.E=(*it).Etrue*0.001; //in GeV
+	truep.p.px=(*it).pxtrue*0.001; //in GeV
+        truep.p.py=(*it).pytrue*0.001; //in GeV
+        truep.p.pz=(*it).pztrue*0.001; //in GeV
+	caf::SRVector3D start_point_true((*it).xtrue, (*it).ytrue,(*it).ztrue);  //unità?
+        truep.start=start_point_true;
+	recop.particle_true=truep;
+
+	sr.nd.sand.recoparticles.push_back(recop);
+	
+	
 
       // primary lepton
       if( abs(((*it).pdg) == 13 || abs((*it).pdg) == 11) && (*it).primary == 1){
