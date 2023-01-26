@@ -2,7 +2,6 @@
 
 nd_cafmaker: @local::standard_nd_cafmaker
 
-#nd_cafmaker.CAFMakerSettings.InputDumpFile: "/dune/data/users/jwolcott/nd/nd-lar-reco/cafmaker_input/neutrino.LArTMSProductionJun23withLArCV.99.dump.root"
 #nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/dune/data/users/jwolcott/nd/nd-lar-reco/cafmaker_input/neutrino.LArTMSProductionJun23withLArCV.99.ghep.root"
 #nd_cafmaker.CAFMakerSettings.OutputFile: "/dune/data/users/jwolcott/scratch/neutrino.LArTMSProductionJun23withLArCV.99.caf.root"
 #nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/dune/data/users/jwolcott/nd/nd-lar-reco/cafmaker_input/neutrino.LArTMSProductionJun23withLArCV.99.summary.h5"
