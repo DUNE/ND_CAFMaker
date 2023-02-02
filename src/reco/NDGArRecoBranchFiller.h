@@ -32,45 +32,46 @@ namespace cafmaker
       
       int                fEvent;
 
-      std::vector<float_t> * fTrackStartX;
-      std::vector<float_t> * fTrackStartY;
-      std::vector<float_t> * fTrackStartZ;
-      std::vector<float_t> * fTrackEndX;
-      std::vector<float_t> * fTrackEndY;
-      std::vector<float_t> * fTrackEndZ;
+      std::vector<float_t> * fTrackStartX=0;
+      std::vector<float_t> * fTrackStartY=0;
+      std::vector<float_t> * fTrackStartZ=0;
+      std::vector<float_t> * fTrackEndX=0;
+      std::vector<float_t> * fTrackEndY=0;
+      std::vector<float_t> * fTrackEndZ=0;
 
-      std::vector<float_t> * fTrackStartPx;
-      std::vector<float_t> * fTrackStartPy;
-      std::vector<float_t> * fTrackStartPz;
-      std::vector<float_t> * fTrackEndPx;
-      std::vector<float_t> * fTrackEndPy;
-      std::vector<float_t> * fTrackEndPz;
+      std::vector<float_t> * fTrackStartPX=0;
+      std::vector<float_t> * fTrackStartPY=0;
+      std::vector<float_t> * fTrackStartPZ=0;
+      std::vector<float_t> * fTrackEndPX=0;
+      std::vector<float_t> * fTrackEndPY=0;
+      std::vector<float_t> * fTrackEndPZ=0;
 
-      std::vector<float_t> * fTrackLenF;
-      std::vector<float_t> * fTrackLenB;
-      std::vector<float_t> * fTrackPF;
-      std::vector<float_t> * fTrackPB;
-      std::vector<float_t> * fTrackAvgIonF;
-      std::vector<float_t> * fTrackAvgIonB;
+      std::vector<float_t> * fTrackLenF=0;
+      std::vector<float_t> * fTrackLenB=0;
+      std::vector<float_t> * fTrackPF=0;
+      std::vector<float_t> * fTrackPB=0;
+      std::vector<float_t> * fTrackAvgIonF=0;
+      std::vector<float_t> * fTrackAvgIonB=0;
 
-      std::vector<int> * fTrackIDNumber;
+      std::vector<int> * fTrackIDNumber=0;
+      std::vector<int> * fTrackNClusters=0;
 
-      std::vector<std::vector<int>>     * fTrackPIDF;
-      std::vector<std::vector<float_t>> * fTrackPIDProbF;
-      std::vector<std::vector<int>>     * fTrackPIDB;
-      std::vector<std::vector<float_t>> * fTrackPIDProbB;
+      std::vector<int>     * fTrackPIDF=0;
+      std::vector<float_t> * fTrackPIDProbF=0;
+      std::vector<int>     * fTrackPIDB=0;
+      std::vector<float_t> * fTrackPIDProbB=0;
 
-      std::vector<float_t> * fECALClusterX;
-      std::vector<float_t> * fECALClusterY;
-      std::vector<float_t> * fECALClusterZ;
+      std::vector<float_t> * fECALClusterX=0;
+      std::vector<float_t> * fECALClusterY=0;
+      std::vector<float_t> * fECALClusterZ=0;
 
-      std::vector<int> * fECALClusterIDNumber;
+      std::vector<int> * fECALClusterIDNumber=0;
 
-      std::vector<float_t> * fECALClusterEnergy;
-      std::vector<int>     * fECALClusterNhits;
+      std::vector<float_t> * fECALClusterEnergy=0;
+      std::vector<int>     * fECALClusterNhits=0;
 
-      std::vector<int> * fECALAssn_ClusterID;
-      std::vector<int> * fECALAssn_TrackID;
+      std::vector<int> * fECALAssn_ClusterID=0;
+      std::vector<int> * fECALAssn_TrackID=0;
     
   };
 
