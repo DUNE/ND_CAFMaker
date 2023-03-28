@@ -4,6 +4,8 @@
 /// \date    Apr. 2022
 ///
 
+#include <iostream>
+
 #include "SANDRecoBranchFiller.h"
 
 #ifdef ENABLE_SAND
@@ -80,9 +82,20 @@ namespace cafmaker
 
 #warning Not configured to build SANDRecoBranchFiller. Must set SANDRECO_INC and SANDRECO_LIB environment variables
 
+namespace {
+  void error_msg()
+  {
+    std::cerr << "\n\nSAND Reco support was not enabled in your build. \n"
+              << " Either avoid setting `nd_cafmaker.CAFMakerSettings.SANDRecoFile` in your FCL\n"
+              << " or set $SANDRECO_INC and $SANDRECO_LIB in your environment and do a clean rebuild of ND_CAFMaker...\n";
+
+  }
+}
+
 cafmaker::SANDRecoBranchFiller::
 SANDRecoBranchFiller(const std::string&)
 {
+  error_msg();
   abort();
 }
 
@@ -91,6 +104,7 @@ _FillRecoBranches(std::size_t,
                   caf::StandardRecord&,
                   const cafmaker::Params&) const
 {
+  error_msg();
   abort();
 }
 
