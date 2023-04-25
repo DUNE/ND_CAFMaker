@@ -32,6 +32,23 @@ namespace cafmaker
       
       int                fEvent;
 
+      std::vector<int> *      fMCNuPDG=0;
+      std::vector<float_t> *  fMCNuPX=0;
+      std::vector<float_t> *  fMCNuPY=0;
+      std::vector<float_t> *  fMCNuPZ=0;
+
+      std::vector<int> * fMCTrkID=0;
+      std::vector<int> * fMCPDG=0;
+      std::vector<int> * fMCMotherIndex=0;
+      std::vector<int> * fMCPDGMother=0;
+
+      std::vector<float_t> * fMCStartX=0;
+      std::vector<float_t> * fMCStartY=0;
+      std::vector<float_t> * fMCStartZ=0;
+      std::vector<float_t> * fMCStartPX=0;
+      std::vector<float_t> * fMCStartPY=0;
+      std::vector<float_t> * fMCStartPZ=0;
+
       std::vector<float_t> * fTrackStartX=0;
       std::vector<float_t> * fTrackStartY=0;
       std::vector<float_t> * fTrackStartZ=0;
@@ -61,6 +78,9 @@ namespace cafmaker
       std::vector<int>     * fTrackPIDB=0;
       std::vector<float_t> * fTrackPIDProbB=0;
 
+      std::vector<int>     * fTrackMCindex=0;
+      std::vector<float_t> * fTrackMCfrac=0;
+
       std::vector<float_t> * fECALClusterX=0;
       std::vector<float_t> * fECALClusterY=0;
       std::vector<float_t> * fECALClusterZ=0;
@@ -69,6 +89,9 @@ namespace cafmaker
 
       std::vector<float_t> * fECALClusterEnergy=0;
       std::vector<int>     * fECALClusterNhits=0;
+
+      std::vector<int>     * fECALClusterMCindex=0;
+      std::vector<float_t> * fECALClusterMCfrac=0;
 
       std::vector<int> * fECALAssn_ClusterID=0;
       std::vector<int> * fECALAssn_TrackID=0;

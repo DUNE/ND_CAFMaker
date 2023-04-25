@@ -26,6 +26,24 @@ namespace cafmaker
 
       NDGArRecoTree->SetBranchAddress("Event", &fEvent);
 
+      NDGArRecoTree->SetBranchAddress("NType", &fMCNuPDG);
+      NDGArRecoTree->SetBranchAddress("MCNuPx", &fMCNuPX);
+      NDGArRecoTree->SetBranchAddress("MCNuPy", &fMCNuPY);
+      NDGArRecoTree->SetBranchAddress("MCNuPz", &fMCNuPZ);
+
+      ///MC Particles info
+      NDGArRecoTree->SetBranchAddress("MCTrkID", &fMCTrkID);
+      NDGArRecoTree->SetBranchAddress("PDG", &fMCPDG);
+      NDGArRecoTree->SetBranchAddress("MotherIndex", &fMCMotherIndex);
+      NDGArRecoTree->SetBranchAddress("PDGMother", &fMCPDGMother);
+
+      NDGArRecoTree->SetBranchAddress("MCPStartX", &fMCStartX);
+      NDGArRecoTree->SetBranchAddress("MCPStartY", &fMCStartY);
+      NDGArRecoTree->SetBranchAddress("MCPStartZ", &fMCStartZ);
+      NDGArRecoTree->SetBranchAddress("MCPStartPX", &fMCStartPX);
+      NDGArRecoTree->SetBranchAddress("MCPStartPY", &fMCStartPY);
+      NDGArRecoTree->SetBranchAddress("MCPStartPZ", &fMCStartPZ);
+
       //Track-related info
       NDGArRecoTree->SetBranchAddress("TrackStartX", &fTrackStartX);
       NDGArRecoTree->SetBranchAddress("TrackStartY", &fTrackStartY);
@@ -56,6 +74,9 @@ namespace cafmaker
       NDGArRecoTree->SetBranchAddress("TrackPIDB", &fTrackPIDB);
       NDGArRecoTree->SetBranchAddress("TrackPIDProbB", &fTrackPIDProbB);
 
+      NDGArRecoTree->SetBranchAddress("TrackMCindex", &fTrackMCindex);
+      NDGArRecoTree->SetBranchAddress("TrackMCfrac", &fTrackMCfrac);
+
       //ECAL-related info
       NDGArRecoTree->SetBranchAddress("ClusterX", &fECALClusterX);
       NDGArRecoTree->SetBranchAddress("ClusterY", &fECALClusterY);
@@ -65,6 +86,9 @@ namespace cafmaker
 
       NDGArRecoTree->SetBranchAddress("ClusterEnergy", &fECALClusterEnergy);
       NDGArRecoTree->SetBranchAddress("ClusterNhits", &fECALClusterNhits);
+
+      NDGArRecoTree->SetBranchAddress("ClusterMCindex", &fECALClusterMCindex);
+      NDGArRecoTree->SetBranchAddress("ClusterMCfrac", &fECALClusterMCfrac);
 
       //ECAL-track associations
       NDGArRecoTree->SetBranchAddress("ECALAssn_ClusIDNumber", &fECALAssn_ClusterID);
@@ -84,9 +108,12 @@ namespace cafmaker
   {
 
    NDGArRecoTree->GetEntry(ii);
-   //std::cout << "Event number: " << fEvent << std::endl;
+   std::cout << "Event number: " << fEvent << std::endl;
+   //std::cout << "Nu PDG: " << fMCNuPDG->at(0) << std::endl;
    //std::cout << "Number of reco tracks: " << fTrackStartX->size() << std::endl;
    //std::cout << "Number of reco ECAL clusters: " << fECALClusterX->size() << std::endl;
+
+   //std::cout << "Number of MC Particles: " << fMCTrkID->size() << std::endl;
 
    int n_tracks = fTrackStartX->size();
    sr.nd.gar.ntracks = n_tracks;
@@ -107,23 +134,83 @@ namespace cafmaker
       caf::SRVector3D enddir(fTrackEndPX->at(iTrack), fTrackEndPY->at(iTrack), fTrackEndPZ->at(iTrack));
       track.enddir = enddir.Unit();
 
-      track.len_cm_F = fTrackLenF->at(iTrack);
-      track.len_cm_B = fTrackLenB->at(iTrack);
-      track.p_F = fTrackPF->at(iTrack);
-      track.p_B = fTrackPB->at(iTrack);
-      track.dEdx_F = fTrackAvgIonF->at(iTrack);
-      track.dEdx_B = fTrackAvgIonB->at(iTrack);
+      track.len_cm_fwd = fTrackLenF->at(iTrack);
+      track.len_cm_bkwd = fTrackLenB->at(iTrack);
+      track.p_fwd = fTrackPF->at(iTrack);
+      track.p_bkwd = fTrackPB->at(iTrack);
+      track.dEdx_fwd = fTrackAvgIonF->at(iTrack);
+      track.dEdx_bkwd = fTrackAvgIonB->at(iTrack);
 
-      track.trk_id = fTrackIDNumber->at(iTrack);
+      track.garsoft_trk_id = fTrackIDNumber->at(iTrack);
       track.clusters_in_track = fTrackNClusters->at(iTrack);
 
       for (size_t iPID=6*pid_counter; iPID<6*(pid_counter+1); ++iPID){
-        track.pid_F.push_back(fTrackPIDF->at(iPID));
-        track.pid_prob_F.push_back(fTrackPIDProbF->at(iPID));
-        track.pid_B.push_back(fTrackPIDB->at(iPID));
-        track.pid_prob_B.push_back(fTrackPIDProbB->at(iPID));
+        track.pid_fwd.push_back(fTrackPIDF->at(iPID));
+        track.pid_prob_fwd.push_back(fTrackPIDProbF->at(iPID));
+        track.pid_bkwd.push_back(fTrackPIDB->at(iPID));
+        track.pid_prob_bkwd.push_back(fTrackPIDProbB->at(iPID));
       }
       ++pid_counter;
+
+      int iMCParticleTrack = fTrackMCindex->at(iTrack);
+      caf::SRParticleTruth mc_true_track;
+      if(iMCParticleTrack >= 0){
+        mc_true_track.trkid = fMCTrkID->at(iMCParticleTrack);
+        mc_true_track.pdg = fMCPDG->at(iMCParticleTrack);
+
+        caf::SRVector3D mc_start(fMCStartX->at(iMCParticleTrack), fMCStartY->at(iMCParticleTrack), fMCStartZ->at(iMCParticleTrack));
+        mc_true_track.start = mc_start;
+
+        caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleTrack), fMCStartPY->at(iMCParticleTrack), fMCStartPZ->at(iMCParticleTrack));
+        mc_true_track.p.E  = mc_p.Mag();
+        mc_true_track.p.px = mc_p.X();
+        mc_true_track.p.py = mc_p.Y();
+        mc_true_track.p.pz = mc_p.Z();
+
+        int iMCMotherTrack = fMCMotherIndex->at(iMCParticleTrack);
+        if(iMCMotherTrack >= 0){
+          mc_true_track.motherpdg = fMCPDGMother->at(iMCParticleTrack);
+
+          caf::SRVector3D mc_motherp(fMCStartPX->at(iMCMotherTrack), fMCStartPY->at(iMCMotherTrack), fMCStartPZ->at(iMCMotherTrack));
+          mc_true_track.motherp.E  = mc_motherp.Mag();
+          mc_true_track.motherp.px = mc_motherp.X();
+          mc_true_track.motherp.py = mc_motherp.Y();
+          mc_true_track.motherp.pz = mc_motherp.Z();
+        } else{
+          mc_true_track.motherpdg = fMCNuPDG->at(0);
+
+          caf::SRVector3D mc_nup(fMCNuPX->at(0), fMCNuPY->at(0), fMCNuPZ->at(0));
+          mc_true_track.motherp.E  = mc_nup.Mag();
+          mc_true_track.motherp.px = mc_nup.X();
+          mc_true_track.motherp.py = mc_nup.Y();
+          mc_true_track.motherp.pz = mc_nup.Z();
+        }
+
+        track.truth_fraction = fTrackMCfrac->at(iTrack);
+      } else {
+        mc_true_track.trkid = -1;
+        mc_true_track.pdg = -1;
+        mc_true_track.motherpdg = -1;
+
+        caf::SRVector3D mc_start(-1, -1, -1);
+        mc_true_track.start = mc_start;
+
+        caf::SRVector3D mc_p(-1, -1, -1);
+        mc_true_track.p.E  = mc_p.Mag();
+        mc_true_track.p.px = mc_p.X();
+        mc_true_track.p.py = mc_p.Y();
+        mc_true_track.p.pz = mc_p.Z();
+
+        caf::SRVector3D mc_motherp(-1, -1, -1);
+        mc_true_track.motherp.E  = mc_motherp.Mag();
+        mc_true_track.motherp.px = mc_motherp.X();
+        mc_true_track.motherp.py = mc_motherp.Y();
+        mc_true_track.motherp.pz = mc_motherp.Z();
+
+        track.truth_fraction = -1.;
+      }
+
+      track.truth = mc_true_track;
 
       sr.nd.gar.tracks.push_back(track);
 
@@ -142,13 +229,73 @@ namespace cafmaker
       cluster.E = fECALClusterEnergy->at(iECAL);
       cluster.hits_in_cluster = fECALClusterNhits->at(iECAL);
 
-      cluster.ecal_id = fECALClusterIDNumber->at(iECAL);
+      cluster.garsoft_ecal_id = fECALClusterIDNumber->at(iECAL);
 
       for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
-          if (cluster.ecal_id == fECALAssn_ClusterID->at(iAssn)){
-              cluster.trk_assn = fECALAssn_TrackID->at(iAssn);
+          if (cluster.garsoft_ecal_id == fECALAssn_ClusterID->at(iAssn)){
+              cluster.garsoft_trk_assn = fECALAssn_TrackID->at(iAssn);
           }
       }
+
+      int iMCParticleCluster = fECALClusterMCindex->at(iECAL);
+      caf::SRParticleTruth mc_true_cluster;
+      if(iMCParticleCluster >= 0){
+        mc_true_cluster.trkid = fMCTrkID->at(iMCParticleCluster);
+        mc_true_cluster.pdg = fMCPDG->at(iMCParticleCluster);
+
+        caf::SRVector3D mc_start(fMCStartX->at(iMCParticleCluster), fMCStartY->at(iMCParticleCluster), fMCStartZ->at(iMCParticleCluster));
+        mc_true_cluster.start = mc_start;
+
+        caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleCluster), fMCStartPY->at(iMCParticleCluster), fMCStartPZ->at(iMCParticleCluster));
+        mc_true_cluster.p.E  = mc_p.Mag();
+        mc_true_cluster.p.px = mc_p.X();
+        mc_true_cluster.p.py = mc_p.Y();
+        mc_true_cluster.p.pz = mc_p.Z();
+
+        int iMCMotherCluster = fMCMotherIndex->at(iMCParticleCluster);
+        if(iMCMotherCluster >= 0){
+          mc_true_cluster.motherpdg = fMCPDGMother->at(iMCParticleCluster);
+          
+          caf::SRVector3D mc_motherp(fMCStartPX->at(iMCMotherCluster), fMCStartPY->at(iMCMotherCluster), fMCStartPZ->at(iMCMotherCluster));
+          mc_true_cluster.motherp.E  = mc_motherp.Mag();
+          mc_true_cluster.motherp.px = mc_motherp.X();
+          mc_true_cluster.motherp.py = mc_motherp.Y();
+          mc_true_cluster.motherp.pz = mc_motherp.Z();
+        } else{
+          mc_true_cluster.motherpdg = fMCNuPDG->at(0);
+
+          caf::SRVector3D mc_nup(fMCNuPX->at(0), fMCNuPY->at(0), fMCNuPZ->at(0));
+          mc_true_cluster.motherp.E  = mc_nup.Mag();
+          mc_true_cluster.motherp.px = mc_nup.X();
+          mc_true_cluster.motherp.py = mc_nup.Y();
+          mc_true_cluster.motherp.pz = mc_nup.Z();
+        }
+
+        cluster.truth_fraction = fECALClusterMCfrac->at(iECAL);
+      } else {
+        mc_true_cluster.trkid = -1;
+        mc_true_cluster.pdg = -1;
+        mc_true_cluster.motherpdg = -1;
+
+        caf::SRVector3D mc_start(-1, -1, -1);
+        mc_true_cluster.start = mc_start;
+
+        caf::SRVector3D mc_p(-1, -1, -1);
+        mc_true_cluster.p.E  = mc_p.Mag();
+        mc_true_cluster.p.px = mc_p.X();
+        mc_true_cluster.p.py = mc_p.Y();
+        mc_true_cluster.p.pz = mc_p.Z();
+
+        caf::SRVector3D mc_motherp(-1, -1, -1);
+        mc_true_cluster.motherp.E  = mc_motherp.Mag();
+        mc_true_cluster.motherp.px = mc_motherp.X();
+        mc_true_cluster.motherp.py = mc_motherp.Y();
+        mc_true_cluster.motherp.pz = mc_motherp.Z();
+
+        cluster.truth_fraction = -1.;
+      }
+
+      cluster.truth = mc_true_cluster;
 
       sr.nd.gar.clusters.push_back(cluster);
 
@@ -157,9 +304,6 @@ namespace cafmaker
    //legacy variables
    //std::cout << "Event number: " << fEvent << std::endl;
    //std::cout << "Number of particles: " << fTrackStartX->size() << std::endl;
-    
-   //todo: currently filling pseudo reco variables in SRGAr.h
-   //once GAr reco is integrated they should be replaced with proper reco
 
    //using forward variables only!
 
