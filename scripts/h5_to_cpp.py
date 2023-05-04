@@ -82,6 +82,10 @@ simple_member_template = "{typ} {name};"
 
 # -----------
 
+region_ref_fn_template = "template <>\nhdset_reg_ref_t& GetRef<{typename}>() const {{ return {fieldname}; }}"
+
+# -----------
+
 handle_members_note = \
 """
 // note: the following 'handle' objects
@@ -108,6 +112,11 @@ void {klass}::SyncVectors()
 sync_method_member_template = "{var}.assign(static_cast<{typ}*>({handle}.p), static_cast<{typ}*>({handle}.p) + {handle}.len);"
 
 # -----------
+
+fwd_declare_template = "struct {typ};"
+
+# -----------
+
 
 enum_template = \
 """
@@ -151,6 +160,13 @@ compound_type_member_template = 'ctype.insertMember("{name}", HOFFSET({klass}, {
 
 # -------------------------------------------------------
 
+def dataset_to_name(dataset):
+    assert hasattr(dataset, "name")
+    return dataset.name.lstrip("/")
+
+# -------------------------------------------------------
+
+
 class Serializable:
     """ Takes a string template and (recursively, if necessary) fills it in with strings from its members """
     def __init__(self, template, template_args, member_list=(), member_join="\n", member_indent="  ", base_indent=""):
@@ -177,12 +193,16 @@ class Serializable:
 # -------------------------------------------------------
 
 class TypeSerializer:
-    def __init__(self):
+    def __init__(self, class_name_map):
+        self.class_name_map = class_name_map
+        print("class_name_map looks like:", self.class_name_map)
+
         self.discovered_enums = {}
         self.cpp_types = {}
         self.cpp_types_impl = {}
         self.comptype_builders_decl = {}
         self.comptype_builders_impl = {}
+        self.fwd_declares = {}
 
         self.cpp_headers = []
 
@@ -260,12 +280,17 @@ class TypeSerializer:
 
         return cpp_name if which == "cpp" else h5_name
 
-    def add_dataset(self, dataset, class_name):
+    def add_dataset(self, dataset):
+        ds_name = dataset_to_name(dataset)
+        assert ds_name in self.class_name_map, "Unrecognized dataset name: '{0}'".format(ds_name)
+        class_name = self.class_name_map[ds_name]
+
         self._dirty = True
 
         cpp_members = []
         h5_members = []
         handles = []
+        region_refs = {}
         print("Examining dataset:", dataset.name)
         for fieldname in dataset.dtype.names:
             typ = dataset.dtype[fieldname]
@@ -277,6 +302,14 @@ class TypeSerializer:
             # in addition to the vector generated for cpp_members
             if h5py.check_vlen_dtype(typ):
                 handles.append(fieldname)
+
+            # for region references, we need to connect the dtype to the field name
+            if h5py.check_dtype(ref=typ):
+#                need to pull the referred-to dataset out of the file and grab *its* type, then figure out that type's C++ name...
+                ref_name = dataset_to_name(dataset.file[fieldname])
+                print("region ref to dataset:", ref_name)
+                if ref_name in self.class_name_map:
+                    region_refs[self.class_name_map[ref_name]] = fieldname
 
             h5_members.append(Serializable(template=compound_type_member_template,
                                            template_args=dict(name=fieldname,
@@ -295,11 +328,17 @@ class TypeSerializer:
                 cpp_members.append(Serializable(template=simple_member_template,
                                                 template_args=dict(name=handle + "_handle", typ="hvl_t")))
 
-        # todo: need to add `template <> const hdset_reg_ref_t& GetRef<Particle>() const { return particles; }` (etc.)
-        #       but ONLY if they're structured datatypes...
+        if len(region_refs) > 0:
+            cpp_members.append(Serializable(template="\ntemplate <typename T>\nhdset_reg_ref_t& GetRef() const;\n", template_args={}))
+            for typename, region_fieldname in region_refs.items():
+                cpp_members.append(Serializable(template=region_ref_fn_template,
+                                                template_args=dict(typename=typename, fieldname=region_fieldname)))
+
 
         self.cpp_types[class_name] = Serializable(template=class_template, template_args=dict(name=class_name),
                                                   member_list=cpp_members)
+        self.fwd_declares[class_name] = Serializable(template=fwd_declare_template, template_args=dict(typ=class_name))
+
         if len(sync_members) > 0:
             self.cpp_types_impl[class_name] = Serializable(template=sync_method_template,
                                                            template_args=dict(klass=class_name),
@@ -315,6 +354,7 @@ class TypeSerializer:
             self._serializables[".h"] = Serializable(template=hdr_template,
                                                      template_args=dict(filename=os.path.basename(__file__), namespace=namespace),
                                                      member_list=tuple(itertools.chain(self.discovered_enums.values(),
+                                                                                       self.fwd_declares.values(),
                                                                                        self.cpp_types.values(),
                                                                                        self.comptype_builders_decl.values())),
                                                      member_indent="  ")
@@ -395,9 +435,9 @@ if __name__ == "__main__":
         files = {suffix: stack.enter_context(open(args.outfile_stub + suffix, "w")) for suffix in (".h", ".cxx")}
 
         # now go!
-        ser = TypeSerializer()
+        ser = TypeSerializer(class_name_map=dict(zip((dataset_to_name(ds) for ds in datasets), class_names)))
         for dataset, class_name in zip(datasets, class_names):
-            ser.add_dataset(dataset, class_name=class_name)
+            ser.add_dataset(dataset)
 
         output = ser.emit(namespace=args.namespace, header_filename=os.path.basename(args.outfile_stub + ".h"))
         for suffix, output in output.items():
