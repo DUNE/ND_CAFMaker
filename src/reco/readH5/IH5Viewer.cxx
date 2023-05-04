@@ -12,12 +12,6 @@ namespace cafmaker
 
   // -----------------------------------------------------------
 
-  void IH5Viewer::AddView(H5DataViewBase *view) const
-  {
-    fCurrentViews.insert(view);
-  }
-
-  // -----------------------------------------------------------
 
   void IH5Viewer::RemoveView(H5DataViewBase* view) const
   {

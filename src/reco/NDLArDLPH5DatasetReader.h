@@ -117,8 +117,7 @@ namespace cafmaker
           } // else if (T != Event)
         } // else if (evtIdx >= 0)
 
-        H5DataView<T> view(this, dsBuffer->bufferaddr());
-        AddView(&view);
+        H5DataView<T> view = AddView(dsBuffer->bufferaddr());;
 
         return view;
       } // H5DataView<T> NDLArDLPH5DatasetReader::GetProducts()
