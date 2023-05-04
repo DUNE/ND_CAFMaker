@@ -199,9 +199,8 @@ class TypeSerializer:
             # print("discovered enum:", typename, self.discovered_enums[typename])
             cpp_name += typename
         elif h5py.check_vlen_dtype(typ):
-            # for variable-length items, we have to maintain a special "handle"
             base_type = self.type_string(h5py.check_vlen_dtype(typ), fieldname)
-            cpp_name += "hvl_t {name}_handle;  std::vector<{base_type}>".format(name=fieldname, base_type=base_type)
+            cpp_name += "std::vector<{base_type}>".format(base_type=base_type)
             h5_name = "H5::VarLenType(H5::PredType::{typ})".format(typ=base_type)
         elif typ.ndim > 0:
             assert typ.ndim == 1, "Don't know how to handle multi-dimensional types"
@@ -225,6 +224,7 @@ class TypeSerializer:
         self._dirty = True
 
         cpp_members = []
+        cpp_private_members = []
         h5_members = []
         print("Examining dataset:", dataset.name)
         for fieldname in dataset.dtype.names:
@@ -232,10 +232,21 @@ class TypeSerializer:
             cpp_members.append(Serializable(template=simple_member_template,
                                             template_args=dict(name=fieldname,
                                                                typ=self.type_string(typ,fieldname=fieldname))))
+
+            # for variable-length items, we have to maintain a special "handle"
+            # in addition to the vector generated for cpp_members
+            if h5py.check_vlen_dtype(typ):
+                cpp_private_members.append(Serializable(template=simple_member_template,
+                                                        template_args=dict(name=fieldname, typ="hvl_t"),
+                                                        base_indent="  "))
+
             h5_members.append(Serializable(template=compound_type_member_template,
                                            template_args=dict(name=fieldname,
                                                               klass=class_name,
                                                               h5type=self.type_string(typ, fieldname=fieldname, which="h5"))))
+        if len(cpp_private_members) > 0:
+            cpp_members.append(Serializable(template="\nprivate:", template_args={}))
+            cpp_members += cpp_private_members
 
         self.cpp_types[class_name] = Serializable(template=class_template, template_args=dict(name=class_name),
                                                   member_list=cpp_members)
