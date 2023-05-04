@@ -57,6 +57,10 @@ namespace cafmaker
         throw std::runtime_error("H5DataView is invalid");
       }
 
+      // enable use with range-based for
+      const auto begin() const { return fBuffer->begin(); }
+      const auto end()   const { return fBuffer->end(); }
+
       const T & operator[](std::size_t idx) const
       {
         if(valid())
