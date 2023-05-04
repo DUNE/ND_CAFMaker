@@ -20,6 +20,7 @@ namespace cafmaker
   struct DatasetBufferBase
   {
     DatasetBufferBase(const H5::H5File &f, const std::string &dsName);
+    virtual ~DatasetBufferBase() = default;
 
     H5::DataSet ds;
     H5::DataSpace dsp;
