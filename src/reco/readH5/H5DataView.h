@@ -22,10 +22,8 @@ namespace cafmaker
     public:
       H5DataViewBase(const IH5Viewer * viewer);
 
-      // for now disallow copying.
-      // if we find out we need it, we'll need to make sure
-      // the Reader finds out about the copy too
-      H5DataViewBase(const H5DataViewBase&) = delete;
+      // the IH5Viewer needs to find out about the new object when copying
+      H5DataViewBase(const H5DataViewBase&);
 
       virtual ~H5DataViewBase();
 

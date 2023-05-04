@@ -18,5 +18,11 @@ namespace cafmaker
       fViewer->RemoveView(this);
   }
 
+  // -----------------------------------------------------------
+
+  H5DataViewBase::H5DataViewBase(const H5DataViewBase & other)
+    : fValid(other.fValid), fViewer(other.fViewer)
+  {}
+
 
 }
