@@ -248,6 +248,9 @@ class TypeSerializer:
             cpp_members.append(Serializable(template="\nprivate:", template_args={}))
             cpp_members += cpp_private_members
 
+        # todo: need to add `template <> const hdset_reg_ref_t& GetRef<Particle>() const { return particles; }` (etc.)
+        #       but ONLY if they're structured datatypes...
+
         self.cpp_types[class_name] = Serializable(template=class_template, template_args=dict(name=class_name),
                                                   member_list=cpp_members)
         self.comptype_builders_decl[class_name] = Serializable(template=compound_type_decl_template,
@@ -327,6 +330,12 @@ if __name__ == "__main__":
                 print("Dataset '{0}' not found in file: {1}".format(ds, args.filename), file=sys.stderr)
                 sys.exit(1)
             datasets.append(f[ds])
+
+    # todo: need to ensure `events` dataset always comes last.
+    #       otherwise we'd need to have forward declarations for the other types
+    #       so that the GetRef<>() methods that are emitted don't refer to unknown types.
+    #       (could try to do more generally and just put types that have region refs to datasets of structured types last,
+    #        but that sounds too hard right now)
 
     with contextlib.ExitStack() as stack:
         # this opens all of the files with a context manager
