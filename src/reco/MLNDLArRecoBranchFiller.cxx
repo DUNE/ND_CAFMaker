@@ -54,7 +54,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTracks(const const H5DataView<cafmaker::types::dlp::Particle> & particles,
+  void MLNDLArRecoBranchFiller::FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                                            caf::StandardRecord &sr) const
   {
     for (const auto & part : particles)
@@ -71,7 +71,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillShowers(const const H5DataView<cafmaker::types::dlp::Particle> & particles,
+  void MLNDLArRecoBranchFiller::FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                                             caf::StandardRecord &sr) const
   {
     // todo: fill in here
