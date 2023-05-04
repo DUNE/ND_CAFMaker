@@ -84,7 +84,7 @@ simple_member_template = "{typ} {name};"
 
 enum_template = \
 """
-enum {name}_t
+enum {name}
 {{
 {members}
 }};
@@ -182,7 +182,7 @@ class TypeSerializer:
             h5_name = "H5::PredType::" + self.type_string(typ, fieldname=None)
         elif h5py.check_enum_dtype(typ):
             typenames = fieldname.split("_")
-            typename = "".join(t.capitalize() for t in typenames)
+            typename = "".join(t.capitalize() for t in typenames) + "_t"
 
             # we really shouldn't have the side effect of storing the enums
             # performed inside a function that's doing something else,
