@@ -82,6 +82,19 @@ simple_member_template = "{typ} {name};"
 
 # -----------
 
+handle_members_note = \
+"""
+// note: the following 'handle' objects
+// are used internally by HDF5 to keep track
+// of the memory for variable-length buffers.
+// please use the SyncVectors() method
+// after loading data into the object
+// to fill the corresponding std::vector<>s above,
+// and then use those for access to the data.
+"""
+
+# -----------
+
 sync_method_template = \
 """
 void {klass}::SyncVectors()
@@ -274,14 +287,13 @@ class TypeSerializer:
             sync_members = [Serializable(template=sync_method_member_template,
                                          template_args=dict(var=handle.rsplit("_handle", 1)[0],
                                                             typ=self.type_string(dataset.dtype[handle.rsplit("_handle", 1)[0]]),
-                                                            handle=handle)) for handle in handles]
+                                                            handle=handle + "_handle")) for handle in handles]
             cpp_members.append(Serializable("\nvoid SyncVectors();", template_args={}))
 
-            cpp_members.append(Serializable(template="\nprivate:", template_args={}))
+            cpp_members.append(Serializable(template=handle_members_note, template_args={}))
             for handle in handles:
                 cpp_members.append(Serializable(template=simple_member_template,
-                                                template_args=dict(name=handle + "_handle", typ="hvl_t"),
-                                                base_indent="  "))
+                                                template_args=dict(name=handle + "_handle", typ="hvl_t")))
 
         # todo: need to add `template <> const hdset_reg_ref_t& GetRef<Particle>() const { return particles; }` (etc.)
         #       but ONLY if they're structured datatypes...
