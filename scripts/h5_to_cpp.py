@@ -238,7 +238,7 @@ class TypeSerializer:
             # in addition to the vector generated for cpp_members
             if h5py.check_vlen_dtype(typ):
                 cpp_private_members.append(Serializable(template=simple_member_template,
-                                                        template_args=dict(name=fieldname, typ="hvl_t"),
+                                                        template_args=dict(name=fieldname + "_handle", typ="hvl_t"),
                                                         base_indent="  "))
 
             h5_members.append(Serializable(template=compound_type_member_template,
