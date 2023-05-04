@@ -31,12 +31,16 @@ namespace cafmaker
       /// Only IH5Viewer derived types are supposed to be able to make views,
       /// so it's protected.
       template <typename T, typename ...Args>
-      H5DataView<T> AddView(Args&&...args) const
+      H5DataView<T> NewView(Args&&...args) const
       {
-        H5DataView<T> view(this, std::forward(args...));
+        H5DataView<T> view(this, std::forward<Args>(args)...);
         fCurrentViews.insert(&view);
         return view;
       }
+
+      /// Add an already-created view into the cache.
+      /// Should only be used by the H5DataView copy constructor.
+      void AddView(H5DataViewBase* view) const;
 
     private:
       mutable std::unordered_set<H5DataViewBase*> fCurrentViews;
