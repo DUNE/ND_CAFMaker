@@ -38,15 +38,6 @@ namespace cafmaker
   class NDLArDLPH5DatasetReader : public IH5Viewer
   {
     public:
-      struct DatasetNames
-      {
-        std::string event;
-        std::string particle;
-        std::string interaction;
-        std::string trueParticle;
-        std::string trueInteraction;
-      };
-
       NDLArDLPH5DatasetReader(const std::string & h5filename,
                               const std::unordered_map<std::type_index, std::string> & datasetNames);
 
