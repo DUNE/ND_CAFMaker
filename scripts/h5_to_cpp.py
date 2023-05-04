@@ -82,6 +82,20 @@ simple_member_template = "{typ} {name};"
 
 # -----------
 
+sync_method_template = \
+"""
+void {klass}::SyncVectors()
+{{
+{members}
+}}
+"""
+
+# -----------
+
+sync_method_member_template = "{var}.assign(static_cast<{typ}*>({handle}.p), static_cast<{typ}*>({handle}.p) + {handle}.len);"
+
+# -----------
+
 enum_template = \
 """
 enum {name}
@@ -153,6 +167,7 @@ class TypeSerializer:
     def __init__(self):
         self.discovered_enums = {}
         self.cpp_types = {}
+        self.cpp_types_impl = {}
         self.comptype_builders_decl = {}
         self.comptype_builders_impl = {}
 
@@ -225,8 +240,8 @@ class TypeSerializer:
         self._dirty = True
 
         cpp_members = []
-        cpp_private_members = []
         h5_members = []
+        handles = []
         print("Examining dataset:", dataset.name)
         for fieldname in dataset.dtype.names:
             typ = dataset.dtype[fieldname]
@@ -237,23 +252,35 @@ class TypeSerializer:
             # for variable-length items, we have to maintain a special "handle"
             # in addition to the vector generated for cpp_members
             if h5py.check_vlen_dtype(typ):
-                cpp_private_members.append(Serializable(template=simple_member_template,
-                                                        template_args=dict(name=fieldname + "_handle", typ="hvl_t"),
-                                                        base_indent="  "))
+                handles.append(fieldname)
 
             h5_members.append(Serializable(template=compound_type_member_template,
                                            template_args=dict(name=fieldname,
                                                               klass=class_name,
                                                               h5type=self.type_string(typ, fieldname=fieldname, which="h5"))))
-        if len(cpp_private_members) > 0:
+        sync_members = []
+        if len(handles) > 0:
+            sync_members = [Serializable(template=sync_method_member_template,
+                                         template_args=dict(var=handle.rsplit("_handle", 1)[0],
+                                                            typ=self.type_string(dataset.dtype[handle.rsplit("_handle", 1)[0]]),
+                                                            handle=handle)) for handle in handles]
+            cpp_members.append(Serializable("\nvoid SyncVectors();", template_args={}))
+
             cpp_members.append(Serializable(template="\nprivate:", template_args={}))
-            cpp_members += cpp_private_members
+            for handle in handles:
+                cpp_members.append(Serializable(template=simple_member_template,
+                                                template_args=dict(name=handle + "_handle", typ="hvl_t"),
+                                                base_indent="  "))
 
         # todo: need to add `template <> const hdset_reg_ref_t& GetRef<Particle>() const { return particles; }` (etc.)
         #       but ONLY if they're structured datatypes...
 
         self.cpp_types[class_name] = Serializable(template=class_template, template_args=dict(name=class_name),
                                                   member_list=cpp_members)
+        if len(sync_members) > 0:
+            self.cpp_types_impl[class_name] = Serializable(template=sync_method_template,
+                                                           template_args=dict(klass=class_name),
+                                                           member_list=sync_members)
         self.comptype_builders_decl[class_name] = Serializable(template=compound_type_decl_template,
                                                                template_args=dict(klass=class_name))
         self.comptype_builders_impl[class_name] = Serializable(template=compound_type_impl_template,
@@ -270,7 +297,8 @@ class TypeSerializer:
                                                      member_indent="  ")
             self._serializables[".cxx"] = Serializable(template=impl_template,
                                                        template_args=dict(filename=os.path.basename(__file__), namespace=namespace, hdr=header_filename),
-                                                       member_list=self.comptype_builders_impl.values(),
+                                                       member_list=tuple(itertools.chain(self.cpp_types_impl.values(),
+                                                                                         self.comptype_builders_impl.values())),
                                                        member_indent="  ")
 
             self._dirty = False
