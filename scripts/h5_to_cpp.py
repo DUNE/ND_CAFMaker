@@ -36,7 +36,7 @@ namespace {namespace}
   // This generic template will be overloaded
   // for every specific type that we create below
   template <typename T>
-  H5::CompType BuildCompType<T>();
+  H5::CompType BuildCompType();
 
 {members}
 
