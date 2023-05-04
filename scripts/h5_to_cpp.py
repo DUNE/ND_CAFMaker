@@ -125,6 +125,7 @@ compound_type_member_template = 'ctype.insertMember("{name}", HOFFSET({klass}, {
 # -------------------------------------------------------
 
 class Serializable:
+    """ Takes a string template and (recursively, if necessary) fills it in with strings from its members """
     def __init__(self, template, template_args, member_list=(), member_join="\n", member_indent="  ", base_indent=""):
         self.template = template
         self.template_args = template_args
