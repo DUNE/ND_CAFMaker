@@ -10,11 +10,11 @@ import numpy as np
 # -------------------------------------------------------
 
 numpy_to_hdf5 = {
-    "i": "H5T_STD_I",
-    "l": "H5T_STD_I",
-    "B": "H5T_STD_B",
-    "f": "H5T_IEEE_F",
-    "d": "H5T_IEEE_F",
+    "i": "STD_I",
+    "l": "STD_I",
+    "B": "STD_B",
+    "f": "IEEE_F",
+    "d": "IEEE_F",
 }
 
 # -------------------------------------------------------
@@ -195,7 +195,7 @@ class TypeSerializer:
         # horrible hack, but bools are always stored as ints, so we have no other way of knowing
         elif fieldname and fieldname.startswith("is_"):
             cpp_name += "bool"
-            h5_name = "H5::PredType::" + self.type_string(typ, fieldname=None)
+            h5_name = self.type_string(typ, fieldname=None, which="h5")
         elif h5py.check_enum_dtype(typ):
             typenames = fieldname.split("_")
             typename = "".join(t.capitalize() for t in typenames) + "_t"
@@ -211,24 +211,35 @@ class TypeSerializer:
                                                                                          val=v))
                                                                         for k, v in h5py.check_enum_dtype(typ).items()])
 
-            h5_name = "H5::EnumType(H5::PredType::{typ})".format(typ=self.type_string(np.dtype(str(typ)), fieldname))
+            h5_name = "H5::EnumType({typ})".format(typ=self.type_string(np.dtype(str(typ)), fieldname, which="h5"))
             # print("discovered enum:", typename, self.discovered_enums[typename])
             cpp_name += typename
         elif h5py.check_vlen_dtype(typ):
-            base_type = self.type_string(h5py.check_vlen_dtype(typ), fieldname)
-            cpp_name += "std::vector<{base_type}>".format(base_type=base_type)
-            h5_name = "H5::VarLenType(H5::PredType::{typ})".format(typ=base_type)
+            cpp_name += "std::vector<{base_type}>".format(base_type=self.type_string(h5py.check_vlen_dtype(typ), fieldname))
+            h5_name = "H5::VarLenType({typ})".format(typ=self.type_string(h5py.check_vlen_dtype(typ), fieldname, which="h5"))
         elif typ.ndim > 0:
             assert typ.ndim == 1, "Don't know how to handle multi-dimensional types"
-            base_type = self.type_string(typ.subdtype[0], fieldname)
-            cpp_name += "std::array<{type}, {len}>".format(type=base_type, len=typ.shape[0])
-            h5_name = "H5::ArrayType(H5::PredType::{typ}, 1, &std::array<hsize_t, 1>{{{count}}}[0])".format(
-                typ=base_type, count=typ.shape[0])
+            cpp_name += "std::array<{type}, {len}>".format(type=self.type_string(typ.subdtype[0], fieldname),
+                                                           len=typ.shape[0])
+            h5_name = "H5::ArrayType({typ}, 1, &std::array<hsize_t, 1>{{{count}}}[0])".format(
+                typ=self.type_string(typ.subdtype[0], fieldname, which="h5"), count=typ.shape[0])
         elif typ.char in numpy_to_hdf5:
-            cpp_name += numpy_to_hdf5[typ.char]
-            cpp_name += str(typ.itemsize * 8)
-            cpp_name += "BE" if typ.byteorder == ">" else "LE" if typ.byteorder == "<" else sysorder[sys.byteorder]
-            h5_name = "H5::PredType::" + cpp_name
+            h5_name = "H5::PredType::"
+            h5_name += numpy_to_hdf5[typ.char]
+            h5_name += str(typ.itemsize * 8)  # numpy reports bytes, HDF5 uses bits
+            h5_name += "BE" if typ.byteorder == ">" else "LE" if typ.byteorder == "<" else sysorder[sys.byteorder]
+
+            if typ.name.startswith("int") or typ.name.startswith("uint"):
+                cpp_name = typ.name + "_t"  # e.g.: int64_t
+            elif typ.name.startswith("float"):
+                if typ.name == "float32":
+                    cpp_name = "float"
+                elif typ.name == "float64":
+                    cpp_name = "double"
+                elif typ.name == "float128":
+                    cpp_name = "long double"
+            assert len(cpp_name) > 0, "Couldn't understand type name: '{0}'".format(typ.name)
+
         else:
             raise TypeError("Don't know how to handle type: " + str(typ))
 
