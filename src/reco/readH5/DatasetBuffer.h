@@ -34,10 +34,10 @@ namespace cafmaker
   template<typename T>
   class component_has_syncvector
   {
-      template<typename> static std::false_type test();
-      template<typename U> static auto test() -> decltype(std::declval<U>().SyncVectors(), std::true_type());
+      template<typename> static std::false_type test(...);
+      template<typename U> static auto test(int) -> decltype(std::declval<U>().SyncVectors(), std::true_type());
     public:
-      static constexpr bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
+      static constexpr bool value = std::is_same<decltype(test<T>()), std::true_type>::value;
   };
 
   /// Storage class for the buffer used for an HDF structured datatype,
