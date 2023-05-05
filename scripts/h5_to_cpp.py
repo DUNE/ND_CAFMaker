@@ -333,7 +333,7 @@ class TypeSerializer:
         if len(handles) > 0:
             sync_members = [Serializable(template=sync_method_member_template,
                                          template_args=dict(var=handle.rsplit("_handle", 1)[0],
-                                                            typ=self.type_string(dataset.dtype[handle.rsplit("_handle", 1)[0]]),
+                                                            typ=self.type_string(h5py.check_vlen_dtype(dataset.dtype[handle.rsplit("_handle", 1)[0]])),
                                                             handle=handle + "_handle")) for handle in handles]
             cpp_members.append(Serializable("\nvoid SyncVectors();", template_args={}))
 
