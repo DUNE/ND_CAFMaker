@@ -28,6 +28,18 @@ namespace cafmaker
     std::size_t nEntries;   //< loaded from dataset
   };
 
+  /// Class that tests if a given type has a method SyncVectors().
+  /// Used in DatasetBuffer<T>::syncVectors().
+  /// (Adapted from https://retroscience.net/cpp-detect-functions-template.html)
+  template<typename T>
+  class component_has_syncvector
+  {
+      template<typename> static std::false_type test();
+      template<typename U> static auto test() -> decltype(std::declval<U>().SyncVectors(), std::true_type());
+    public:
+      static constexpr bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
+  };
+
   /// Storage class for the buffer used for an HDF structured datatype,
   /// which is mapped to the C++ class specified by the template argument.
   template<typename T>
@@ -45,6 +57,17 @@ namespace cafmaker
 
       /// Get the address of the underlying std::vector buffer
       const std::vector <T> * bufferaddr() const { return &fBuffer; }
+
+      /// ensure any vectors within type T are synchroniz with the HDF5 'handles'
+      /// call this after loading data into the buffer...
+      void syncVectors()
+      {
+        if constexpr (component_has_syncvector<T>::value)
+        {
+          for (const auto & e : fBuffer)
+            e.SyncVectors();
+        }
+      }
 
       // ape the std::vector interface where relevant
       T *  data()                    { return fBuffer.data(); }
