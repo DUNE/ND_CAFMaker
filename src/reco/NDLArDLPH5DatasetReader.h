@@ -69,6 +69,7 @@ namespace cafmaker
         {
           dsBuffer->resize(dsBuffer->nEntries);
           dsBuffer->ds.read(dsBuffer->data(), dsBuffer->compType(), H5::DataSpace::ALL, H5::DataSpace::ALL);
+          dsBuffer->syncVectors();
         }
         else
         {
@@ -82,7 +83,7 @@ namespace cafmaker
             // I think the 3rd argument is likely suspect.  it should specify how to map events into memory,
             // but I'm not sure what happens when you give ALL for that and a subselection for the subsequent argument
             dsBuffer->ds.read(dsBuffer->data(), dsBuffer->compType(), H5::DataSpace::ALL, dsBuffer->dsp);
-
+            dsBuffer->syncVectors();
           } // if (T == Event)
           else
           {
@@ -91,7 +92,8 @@ namespace cafmaker
             H5::DataSet ds_ref;
             ds_ref.dereference(fInputFile, evts[0].GetRef<T>(),
                                H5R_DATASET_REGION);  // event 0 because we selected using the evtIdx...
-            H5::DataSpace ref_region = fInputFile.getRegion(evts[0].GetRef<T>());
+            // const_cast is necessary because the argument is passed to a void* (that should really be a const void*)...
+            H5::DataSpace ref_region = fInputFile.getRegion(const_cast<hdset_reg_ref_t&>(evts[0].GetRef<T>()));
 
             std::size_t newSize = ref_region.getSelectNpoints();
             dsBuffer->resize(newSize);
@@ -105,6 +107,7 @@ namespace cafmaker
             // in our case we want to use the reference region selection to pull from the file,
             // and to just stuff them all into the vector from the beginning
             ds_ref.read(dsBuffer->data(), dsBuffer->compType(), memspace, ref_region);
+            dsBuffer->syncVectors();
           } // else if (T != Event)
         } // else if (evtIdx >= 0)
 
