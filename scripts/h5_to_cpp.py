@@ -133,7 +133,7 @@ fwd_declare_template = "struct {typ};"
 # -----------
 
 
-enum_template = \
+enum_cpp_template = \
 """
 enum {name}
 {{
@@ -143,7 +143,7 @@ enum {name}
 
 # -----------
 
-enum_member_template = "{name} = {val},"
+enum_cpp_member_template = "{name} = {val},"
 
 # -----------
 
@@ -172,6 +172,19 @@ H5::CompType BuildCompType<{klass}>()
 
 compound_type_member_template = 'ctype.insertMember("{name}", HOFFSET({klass}, {name}), {h5type});'
 
+# -----------
+
+compound_type_enum_member_template = \
+"""
+H5::EnumType {name}_enumtype({h5type});
+{enum_type} {name}_enum_val;
+{members}
+ctype.insertMember("{name}", HOFFSET({klass}, {name}), {name}_enumtype);
+"""
+
+# -----------
+
+compound_type_enum_entry_template = '{name}_enum_val = {val}; {name}_enumtype.insert("{h5name}", &{name}_enum_val);'
 
 # -------------------------------------------------------
 
@@ -213,6 +226,7 @@ class TypeSerializer:
         print("class_name_map looks like:", self.class_name_map)
 
         self.discovered_enums = {}
+        self.enum_vals_h5 = {}
         self.cpp_types = {}
         self.cpp_types_impl = {}
         self.comptype_builders_decl = {}
@@ -251,15 +265,18 @@ class TypeSerializer:
             # we really shouldn't have the side effect of storing the enums
             # performed inside a function that's doing something else,
             # but it's the simplest way to do it
-            self.discovered_enums[typename] = Serializable(template=enum_template, template_args={"name": typename},
-                                                           member_list=[Serializable(template=enum_member_template,
+            self.discovered_enums[typename] = Serializable(template=enum_cpp_template, template_args={"name": typename},
+                                                           member_list=[Serializable(template=enum_cpp_member_template,
                                                                                      template_args=dict(
                                                                                          name="k{name}".format(
                                                                                              name="".join(k.split())),
                                                                                          val=v))
                                                                         for k, v in h5py.check_enum_dtype(typ).items()])
+            self.enum_vals_h5[fieldname] = {k: Serializable(template=compound_type_enum_entry_template,
+                                                            template_args=dict(name=fieldname, val=v, h5name=k))
+                                            for k, v in h5py.check_enum_dtype(typ).items()}
 
-            h5_name = "H5::EnumType({typ})".format(typ=self.type_string(np.dtype(str(typ)), fieldname, which="h5"))
+            h5_name = self.type_string(np.dtype(str(typ)), fieldname, which="h5")
             # print("discovered enum:", typename, self.discovered_enums[typename])
             cpp_name += typename
         elif h5py.check_vlen_dtype(typ):
@@ -321,14 +338,23 @@ class TypeSerializer:
             # for region references, we need to connect the dtype to the field name
             if h5py.check_dtype(ref=typ):
                 ref_name = dataset_to_name(dataset.file[fieldname])
-                print("region ref to dataset:", ref_name)
                 if ref_name in self.class_name_map:
                     region_refs[self.class_name_map[ref_name]] = fieldname
 
-            h5_members.append(Serializable(template=compound_type_member_template,
-                                           template_args=dict(name=fieldname,
-                                                              klass=class_name,
-                                                              h5type=self.type_string(typ, fieldname=fieldname, which="h5"))))
+            # enums need to be handled specially because they have a different template
+            if h5py.check_enum_dtype(typ):
+                h5_members.append(Serializable(template=compound_type_enum_member_template,
+                                               template_args=dict(name=fieldname,
+                                                                  klass=class_name,
+                                                                  enum_type=self.type_string(np.dtype(str(typ)), fieldname=fieldname),
+                                                                  h5type=self.type_string(typ, fieldname=fieldname, which="h5"),
+                                                                  ),
+                                               member_list=self.enum_vals_h5[fieldname].values()))
+            else:
+                h5_members.append(Serializable(template=compound_type_member_template,
+                                               template_args=dict(name=fieldname,
+                                                                  klass=class_name,
+                                                                  h5type=self.type_string(typ, fieldname=fieldname, which="h5"))))
         sync_members = []
         if len(handles) > 0:
             sync_members = [Serializable(template=sync_method_member_template,
