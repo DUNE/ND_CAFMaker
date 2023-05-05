@@ -89,7 +89,7 @@ simple_member_template = "{typ} {name};"
 
 region_ref_fn_template = """
 template <typename T>
-hdset_reg_ref_t& GetRef()
+const hdset_reg_ref_t& GetRef() const
 {{
 {members}
 }}
