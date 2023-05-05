@@ -87,7 +87,17 @@ simple_member_template = "{typ} {name};"
 
 # -----------
 
-region_ref_fn_template = "template <>\nhdset_reg_ref_t& GetRef<{typename}>() const {{ return {fieldname}; }}"
+region_ref_fn_template = """
+template <typename T>
+hdset_reg_ref_t& GetRef()
+{{
+{members}
+}}
+"""
+
+# -----------
+
+region_ref_member_template = "{if_expr}(std::is_same_v<T, {typename}>) return {fieldname};"
 
 # -----------
 
@@ -333,11 +343,14 @@ class TypeSerializer:
                                                 template_args=dict(name=handle + "_handle", typ="hvl_t")))
 
         if len(region_refs) > 0:
-            cpp_members.append(Serializable(template="\ntemplate <typename T>\nhdset_reg_ref_t& GetRef() const;\n", template_args={}))
-            for typename, region_fieldname in region_refs.items():
-                cpp_members.append(Serializable(template=region_ref_fn_template,
-                                                template_args=dict(typename=typename, fieldname=region_fieldname)))
-
+            if_stmts = [Serializable(template=region_ref_member_template,
+                                     template_args=dict(if_expr="if constexpr" if i==0 else "else if",
+                                                        typename=typename,
+                                                        fieldname=region_fieldname))
+                        for i, (typename, region_fieldname) in enumerate(region_refs.items())]
+            cpp_members.append(Serializable(template=region_ref_fn_template,
+                                            template_args={},
+                                            member_list=if_stmts))
 
         self.cpp_types[class_name] = Serializable(template=class_template, template_args=dict(name=class_name),
                                                   member_list=cpp_members)
@@ -428,12 +441,6 @@ if __name__ == "__main__":
                 print("Dataset '{0}' not found in file: {1}".format(ds, args.filename), file=sys.stderr)
                 sys.exit(1)
             datasets.append(f[ds])
-
-    # todo: need to ensure `events` dataset always comes last.
-    #       otherwise we'd need to have forward declarations for the other types
-    #       so that the GetRef<>() methods that are emitted don't refer to unknown types.
-    #       (could try to do more generally and just put types that have region refs to datasets of structured types last,
-    #        but that sounds too hard right now)
 
     with contextlib.ExitStack() as stack:
         # this opens all of the files with a context manager
