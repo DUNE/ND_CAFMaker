@@ -67,6 +67,8 @@ namespace cafmaker
       caf::SRTrack track;
       track.Evis = part.depositions_sum;
       // etc.
+
+      sr.nd.lar.tracks.push_back(std::move(track));
     }
   }
 
