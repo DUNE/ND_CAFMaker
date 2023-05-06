@@ -362,8 +362,10 @@ class TypeSerializer:
                                          template_args=dict(var=handle.rsplit("_handle", 1)[0],
                                                             typ=self.type_string(h5py.check_vlen_dtype(dataset.dtype[handle.rsplit("_handle", 1)[0]])),
                                                             handle=handle + "_handle")) for handle in handles]
-            cpp_members.append(Serializable("\nvoid SyncVectors();", template_args={}))
 
+        cpp_members.append(Serializable("\nvoid SyncVectors();", template_args={}))
+
+        if len(handles) > 0:
             cpp_members.append(Serializable(template=handle_members_note, template_args={}))
             for handle in handles:
                 cpp_members.append(Serializable(template=simple_member_template,
@@ -383,10 +385,9 @@ class TypeSerializer:
                                                   member_list=cpp_members)
         self.fwd_declares[class_name] = Serializable(template=fwd_declare_template, template_args=dict(typ=class_name))
 
-        if len(sync_members) > 0:
-            self.cpp_types_impl[class_name] = Serializable(template=sync_method_template,
-                                                           template_args=dict(klass=class_name),
-                                                           member_list=sync_members)
+        self.cpp_types_impl[class_name] = Serializable(template=sync_method_template,
+                                                       template_args=dict(klass=class_name),
+                                                       member_list=sync_members)
         self.comptype_builders_decl[class_name] = Serializable(template=compound_type_decl_template,
                                                                template_args=dict(klass=class_name))
         self.comptype_builders_impl[class_name] = Serializable(template=compound_type_impl_template,
