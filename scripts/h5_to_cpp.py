@@ -12,7 +12,7 @@ import numpy as np
 numpy_to_hdf5 = {
     "i": "STD_I",
     "l": "STD_I",
-    "B": "STD_B",
+    "B": "STD_U",
     "f": "IEEE_F",
     "d": "IEEE_F",
 }
