@@ -34,6 +34,8 @@ namespace cafmaker
   class DatasetBuffer : public DatasetBufferBase
   {
     public:
+      //todo: make a static_assert<> checking that T is an appropriate type
+
       DatasetBuffer(const H5::H5File &f,
                     const std::string &dsName,
                     const std::function<H5::CompType()> &compTypeBuilder)
@@ -56,6 +58,7 @@ namespace cafmaker
 
       // ape the std::vector interface where relevant
       T *  data()                    { return fBuffer.data(); }
+      std::size_t size() const       { return fBuffer.size(); }
       void resize(std::size_t count) { fBuffer.resize(count); }
 
     private:
