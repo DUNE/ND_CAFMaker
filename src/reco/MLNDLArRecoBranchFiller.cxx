@@ -15,8 +15,8 @@ namespace cafmaker
     : fDSReader(h5filename,
                 {{std::type_index(typeid(Particle)),         "particles"},
                  {std::type_index(typeid(Interaction)),      "interactions"},
-                 {std::type_index(typeid(TrueParticle)),     "true_particles"},
-                 {std::type_index(typeid(TrueInteraction)),  "true_interactions"},
+                 {std::type_index(typeid(TrueParticle)),     "truth_particles"},
+                 {std::type_index(typeid(TrueInteraction)),  "truth_interactions"},
                  {std::type_index(typeid(Event)),            "events"}})
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
