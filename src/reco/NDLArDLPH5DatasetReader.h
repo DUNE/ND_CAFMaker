@@ -77,12 +77,23 @@ namespace cafmaker
           if constexpr (std::is_same_v<T, cafmaker::types::dlp::Event>)
           {
             dsBuffer->resize(1);
-            hsize_t start[1] = {0};
-            hsize_t count[1] = {1};
-            dsBuffer->dsp.selectHyperslab(H5S_SELECT_SET, count, start);
-            // I think the 3rd argument is likely suspect.  it should specify how to map events into memory,
-            // but I'm not sure what happens when you give ALL for that and a subselection for the subsequent argument
-            dsBuffer->ds.read(dsBuffer->data(), dsBuffer->compType(), H5::DataSpace::ALL, dsBuffer->dsp);
+
+            H5::DataSpace dsp = dsBuffer->ds.getSpace();
+            std::vector<hsize_t> start(1, evtIdx);
+            std::vector<hsize_t> count(1, 1);
+            dsp.selectHyperslab(H5S_SELECT_SET, count.data(), start.data());
+
+            // see comments below on why we need this 'memspace'
+            H5::DataSpace memspace(H5S_SIMPLE);
+            std::vector<hsize_t> dims(dsp.getSimpleExtentNdims());
+            std::vector<hsize_t> dimsMax(dsp.getSimpleExtentNdims(), H5S_UNLIMITED);
+            dsp.getSimpleExtentDims(dims.data());
+            memspace.setExtentSimple(dsp.getSimpleExtentNdims(), dims.data(), dimsMax.data());
+            start[0] = 0;
+            count[0] = 1;
+            memspace.selectHyperslab(H5S_SELECT_SET, count.data(), start.data());
+
+            dsBuffer->ds.read(dsBuffer->data(), dsBuffer->compType(), memspace, dsp);
             dsBuffer->syncVectors();
           } // if (T == Event)
           else
@@ -97,15 +108,21 @@ namespace cafmaker
 
             std::size_t newSize = ref_region.getSelectNpoints();
             dsBuffer->resize(newSize);
-            H5::DataSpace memspace(ref_region);
-            hsize_t start[1] = {0};
-            hsize_t count[1] = {newSize};
-            memspace.selectHyperslab(H5S_SELECT_SET, count, start);
-            // we need two DataSpaces here because the first one specifies how to map the elements into memory
+
+            // we need two DataSpaces here because the first one ('memspace') specifies how to map the elements into memory
             // (you could in principle want to rearrange them from the input, though we don't want to here)
-            // and the second one specifies which elements to pull from the file.
+            // and the second one ('ref_region') specifies which elements to pull from the file.
             // in our case we want to use the reference region selection to pull from the file,
             // and to just stuff them all into the vector from the beginning
+            H5::DataSpace memspace(H5S_SIMPLE);
+            std::vector<hsize_t> dims(ref_region.getSimpleExtentNdims());
+            std::vector<hsize_t> dimsMax(ref_region.getSimpleExtentNdims(), H5S_UNLIMITED);
+            ref_region.getSimpleExtentDims(dims.data());
+            memspace.setExtentSimple(1, dims.data(), dimsMax.data());
+            std::vector<hsize_t> start(1, 0);
+            std::vector<hsize_t> count(1, static_cast<hsize_t>(ref_region.getSelectNpoints()));
+            memspace.selectHyperslab(H5S_SELECT_SET, count.data(), start.data());
+
             ds_ref.read(dsBuffer->data(), dsBuffer->compType(), memspace, ref_region);
             dsBuffer->syncVectors();
           } // else if (T != Event)
