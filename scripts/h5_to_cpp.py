@@ -135,7 +135,7 @@ fwd_declare_template = "struct {typ};"
 
 enum_cpp_template = \
 """
-enum {name}
+enum {name} : {size_type}
 {{
 {members}
 }};
@@ -264,7 +264,8 @@ class TypeSerializer:
             # we really shouldn't have the side effect of storing the enums
             # performed inside a function that's doing something else,
             # but it's the simplest way to do it
-            self.discovered_enums[typename] = Serializable(template=enum_cpp_template, template_args={"name": typename},
+            self.discovered_enums[typename] = Serializable(template=enum_cpp_template, template_args={"name": typename,
+                                                                                                      "size_type" : self.type_string(np.dtype(str(typ)))},
                                                            member_list=[Serializable(template=enum_cpp_member_template,
                                                                                      template_args=dict(
                                                                                          name="k{name}".format(
