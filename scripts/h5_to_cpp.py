@@ -29,9 +29,9 @@ hdr_template = \
 #define {guard_var}
 
 #include <array>
-#include <vector>
 
 #include "H5Cpp.h"
+#include "readH5/BufferView.h"
 
 namespace {namespace}
 {{
@@ -108,7 +108,7 @@ handle_members_note = \
 // of the memory for variable-length buffers.
 // please use the SyncVectors() method
 // after loading data into the object
-// to fill the corresponding std::vector<>s above,
+// to fill the corresponding BufferView<>s above,
 // and then use those for access to the data.
 """
 
@@ -124,7 +124,7 @@ void {klass}::SyncVectors()
 
 # -----------
 
-sync_method_member_template = "{var}.assign(static_cast<{typ}*>({handle}.p), static_cast<{typ}*>({handle}.p) + {handle}.len);"
+sync_method_member_template = "{var}.reset(&{handle});"
 
 # -----------
 
@@ -170,7 +170,7 @@ H5::CompType BuildCompType<{klass}>()
 
 # -----------
 
-compound_type_member_template = 'ctype.insertMember("{name}", HOFFSET({klass}, {name}), {h5type});'
+compound_type_member_template = 'ctype.insertMember("{h5_name}", HOFFSET({klass}, {cpp_name}), {h5type});'
 
 # -----------
 
@@ -223,7 +223,6 @@ class Serializable:
 class TypeSerializer:
     def __init__(self, class_name_map):
         self.class_name_map = class_name_map
-        print("class_name_map looks like:", self.class_name_map)
 
         self.discovered_enums = {}
         self.enum_vals_h5 = {}
@@ -280,10 +279,10 @@ class TypeSerializer:
             # print("discovered enum:", typename, self.discovered_enums[typename])
             cpp_name += typename
         elif h5py.check_vlen_dtype(typ):
-            cpp_name += "std::vector<{base_type}>".format(base_type=self.type_string(h5py.check_vlen_dtype(typ), fieldname))
+            cpp_name += "BufferView<{base_type}>".format(base_type=self.type_string(h5py.check_vlen_dtype(typ), fieldname))
             h5_name = "H5::VarLenType({typ})".format(typ=self.type_string(h5py.check_vlen_dtype(typ), fieldname, which="h5"))
         elif typ.ndim > 0:
-            assert typ.ndim == 1, "Don't know how to handle multi-dimensional types"
+            assert typ.ndim == 1, "Don't know how to handle multi-dimensional array types"
             cpp_name += "std::array<{type}, {len}>".format(type=self.type_string(typ.subdtype[0], fieldname),
                                                            len=typ.shape[0])
             h5_name = "H5::ArrayType({typ}, 1, &std::array<hsize_t, 1>{{{count}}}[0])".format(
@@ -352,7 +351,8 @@ class TypeSerializer:
                                                member_list=self.enum_vals_h5[fieldname].values()))
             else:
                 h5_members.append(Serializable(template=compound_type_member_template,
-                                               template_args=dict(name=fieldname,
+                                               template_args=dict(h5_name=fieldname,
+                                                                  cpp_name=fieldname + ("_handle" if h5py.check_vlen_dtype(typ) else ""),
                                                                   klass=class_name,
                                                                   h5type=self.type_string(typ, fieldname=fieldname, which="h5"))))
         sync_members = []
