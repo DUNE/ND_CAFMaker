@@ -59,6 +59,9 @@ namespace cafmaker
       const auto begin() const { return fBuffer->begin(); }
       const auto end()   const { return fBuffer->end(); }
 
+      // other vector-like operations
+      std::size_t size() const { return fBuffer->size(); }
+
       const T & operator[](std::size_t idx) const
       {
         if(valid())
