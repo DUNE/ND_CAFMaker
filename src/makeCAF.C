@@ -146,7 +146,8 @@ void loop(CAF& caf,
   int start = par().cafmaker().first();
   for( int ii = start; ii < start + N; ++ii ) {
 
-    if( ii % 100 == 0 ) printf( "Event %d (%d of %d)...\n", ii, ii-start, N );
+    if( ii % 100 == 0 )
+      printf( "Event %d (%d of %d)...\n", ii, (ii-start)+1, N );
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();

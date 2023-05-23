@@ -14,7 +14,7 @@
 
 #include "IRecoBranchFiller.h"
 
-#include "NDLArProductFiller.h"
+#include "NDLArDLPH5DatasetReader.h"
 
 namespace cafmaker
 {
@@ -31,8 +31,18 @@ namespace cafmaker
                              const cafmaker::Params &par) const override;
 
     private:
-      NDLArProductFiller<caf::SRTrack>  fTrackFiller;
-      NDLArProductFiller<caf::SRShower> fShowerFiller;
+      void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+                      caf::StandardRecord & sr) const;
+
+      void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+                       caf::StandardRecord & sr) const;
+
+      void FillTruth(const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
+                     const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
+                     caf::StandardRecord &sr) const;
+
+      NDLArDLPH5DatasetReader fDSReader;
+
   };  // class MLNDLArRecoBranchFiller
 
 } // namespace cafmaker
