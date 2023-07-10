@@ -22,6 +22,7 @@
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "duneanaobj/StandardRecord/SREnums.h"
 
 namespace progopt = boost::program_options;
 
@@ -138,37 +139,38 @@ void loop(CAF& caf,
           const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> & recoFillers)
 {
 
+  // Enable ND_LAr detector
   caf.pot = gtree->GetWeight();
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
+
 
   // Main event loop
   int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
   int start = par().cafmaker().first();
+
   for( int ii = start; ii < start + N; ++ii ) {
 
-    if( ii % 100 == 0 )
+    if( ii % 1 == 0 )
       printf( "Event %d (%d of %d)...\n", ii, (ii-start)+1, N );
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-    caf.sr.run = par().runInfo().run();
-    caf.sr.subrun = par().runInfo().subrun();
-    caf.sr.meta_run = par().runInfo().run();
-    caf.sr.meta_subrun = par().runInfo().subrun();
-    caf.sr.event = ii;
-    caf.sr.isFD = 0;
-    caf.sr.isFHC = par().runInfo().fhc();
-    caf.sr.pot = caf.pot;
+   //old SR variables
+
+  //  caf.sr.meta_run = par().runInfo().run();
+   // caf.sr.meta_subrun = par().runInfo().subrun();
+ //   caf.sr.isFD = 0;
+  //  caf.sr.isFHC = par().runInfo().fhc();
+    caf.sr.beam.pulsepot = caf.pot;
 
     // in the future this can be extended to use 'truth fillers'
     // (like the reco ones) if we find that the truth filling
     // is getting too complex for one function
     fillTruth(ii, caf.sr, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie
-
     // hand off to the correct reco filler(s).
     for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(ii, caf.sr, par);
+      filler->FillRecoBranches(N, ii, caf.sr, par);
 
     caf.fill();
   }
@@ -184,11 +186,13 @@ void loop(CAF& caf,
 int main( int argc, char const *argv[] )
 {
 
+
   progopt::variables_map vars = parseCmdLine(argc, argv);
 
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
   CAF caf( par().cafmaker().outputFile(), par().cafmaker().nusystsFcl() );
+
 
   TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );   //reading genie file
   TTree * gtree = (TTree*) gf->Get( "gtree" );

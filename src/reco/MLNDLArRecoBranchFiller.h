@@ -26,18 +26,21 @@ namespace cafmaker
       MLNDLArRecoBranchFiller(const std::string &h5filename);
 
     protected:
-      void _FillRecoBranches(std::size_t evtIdx,
+      void _FillRecoBranches(std::size_t N, std::size_t evtIdx,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par) const override;
 
     private:
-      void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+      void FillTracks(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Particle> & particles,
                       caf::StandardRecord & sr) const;
 
-      void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+      void FillShowers(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Particle> & particles,
                        caf::StandardRecord & sr) const;
 
-      void FillTruth(const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
+      void FillInteractions(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
+                                           caf::StandardRecord &sr) const;
+
+      void FillTruth(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
                      const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
                      caf::StandardRecord &sr) const;
 

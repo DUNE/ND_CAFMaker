@@ -34,7 +34,7 @@ namespace cafmaker
       SetConfigured(true);
   }
 
-  void SANDRecoBranchFiller::_FillRecoBranches(std::size_t ii, 
+  void SANDRecoBranchFiller::_FillRecoBranches(std::size_t N, std::size_t ii, 
 					       caf::StandardRecord &sr,
 					       const cafmaker::Params &par) const
   {
@@ -100,7 +100,7 @@ SANDRecoBranchFiller(const std::string&)
 }
 
 void cafmaker::SANDRecoBranchFiller::
-_FillRecoBranches(std::size_t,
+_FillRecoBranches(std::size_t, std::size_t,
                   caf::StandardRecord&,
                   const cafmaker::Params&) const
 {
