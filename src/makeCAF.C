@@ -170,7 +170,7 @@ void loop(CAF& caf,
     fillTruth(ii, caf.sr, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie
     // hand off to the correct reco filler(s).
     for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(N, ii, caf.sr, par);
+      filler->FillRecoBranches(ii, caf.sr, par);
 
     caf.fill();
   }

@@ -26,7 +26,7 @@ namespace cafmaker
       MLNDLArRecoBranchFiller(const std::string &h5filename);
 
     protected:
-      void _FillRecoBranches(std::size_t N, std::size_t evtIdx,
+      void _FillRecoBranches(std::size_t evtIdx,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par) const override;
 

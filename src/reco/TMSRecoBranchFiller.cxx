@@ -40,7 +40,7 @@ namespace cafmaker
   // ---------------------------------------------------------------------------
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
-  void TMSRecoBranchFiller::_FillRecoBranches(std::size_t N, std::size_t evtIdx,
+  void TMSRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
                                               caf::StandardRecord &sr,
                                               const cafmaker::Params &par) const
   {

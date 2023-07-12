@@ -100,7 +100,7 @@ SANDRecoBranchFiller(const std::string&)
 }
 
 void cafmaker::SANDRecoBranchFiller::
-_FillRecoBranches(std::size_t, std::size_t,
+_FillRecoBranches(std::size_t,
                   caf::StandardRecord&,
                   const cafmaker::Params&) const
 {

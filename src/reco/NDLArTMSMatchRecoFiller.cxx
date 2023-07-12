@@ -9,7 +9,7 @@ namespace cafmaker
     name = "LArTMSMatcher";
   }
 
-  void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t N, std::size_t evtIdx,
+  void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
                                                   caf::StandardRecord &sr,
                                                   const cafmaker::Params &par) const
   {

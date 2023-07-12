@@ -25,7 +25,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t N, std::size_t evtIdx,
+  void MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
                                                   caf::StandardRecord &sr,
                                                   const cafmaker::Params &par) const
 

@@ -22,7 +22,7 @@ namespace cafmaker
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
 
-      void _FillRecoBranches(std::size_t N, std::size_t evtIdx,
+      void _FillRecoBranches(std::size_t evtIdx,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par) const override;
   };
