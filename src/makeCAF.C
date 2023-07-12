@@ -110,22 +110,35 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
+  std::cout << "Filling Reco info for the following cases:\n";
+
   // first: we do SAND or ND-LAr reco
   std::string ndlarFile;
   std::string sandFile;
-  if(par().cafmaker().ndlarRecoFile(ndlarFile))
+  if (par().cafmaker().ndlarRecoFile(ndlarFile))
+  {
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
-  else if (par().cafmaker().sandRecoFile(sandFile))
+    std::cout << "   ND-LAr (Deep-Learn-Physics ML)\n";
+  } else if (par().cafmaker().sandRecoFile(sandFile))
+  {
     recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
+    std::cout << "   SAND\n";
+  }
 
   // next: did we do TMS reco?
   std::string tmsFile;
   if (par().cafmaker().tmsRecoFile(tmsFile))
+  {
     recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile));
+    std::cout << "   TMS\n";
+  }
 
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
+  {
     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
+    std::cout << "   ND-LAr + TMS matching\n";
+  }
 
 
   return recoFillers;
