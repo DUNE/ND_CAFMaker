@@ -32,20 +32,14 @@ namespace cafmaker
   {
     H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(evtIdx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(evtIdx);
-    FillTruth(N, evtIdx, trueParticles, trueInteractions, sr);
-
-    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(evtIdx);
-
-    FillTracks(N, evtIdx, particles, sr);  
-    FillShowers(N, evtIdx, particles, sr); 
+    FillTruth(evtIdx, trueParticles, trueInteractions, sr);
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(evtIdx);
-    FillInteractions(N, evtIdx, interactions, sr);
-   
-    //Resize here does not work 
-  //  sr.nd.lar.dlp.resize(N);
-  //  sr.mc.nu.resize(N);
-   // sr.common.ixn.dlp.resize(N);
+    FillInteractions(evtIdx, interactions, sr);
+
+    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(evtIdx);
+    FillTracks(particles, sr);
+    FillShowers(particles, sr);
 
     //Fill ND-LAr specificinfo in the meta branch
     sr.meta.nd_lar.enabled = true;
@@ -56,12 +50,11 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTruth(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+  void MLNDLArRecoBranchFiller::FillTruth(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
                                           const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
                                           caf::StandardRecord &sr) const
   {
-    sr.mc.nu.resize(N);
-
+    sr.mc.nu.resize(trueInxns.size());
 
     //Filling truth information for every interaction
     for (const auto & trueInx : trueInxns)
@@ -102,10 +95,11 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillInteractions(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
+  void MLNDLArRecoBranchFiller::FillInteractions(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
                                            caf::StandardRecord &sr) const
   {
-    sr.common.ixn.dlp.resize(N);
+    sr.common.ixn.dlp.reserve(Inxns.size());
+    sr.common.ixn.ndlp = Inxns.size();
 
     //filling interactions
     for (const auto & inx : Inxns)
@@ -123,10 +117,11 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTracks(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Particle> & particles,
+  void MLNDLArRecoBranchFiller::FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                                            caf::StandardRecord &sr) const
   {
-    sr.nd.lar.dlp.resize(N);
+    sr.nd.lar.dlp.resize(sr.common.ixn.dlp.size());
+
     for (const auto & part : particles)
     {
       // only choose 'particles' that correspond to Track semantic type
@@ -142,18 +137,21 @@ namespace cafmaker
       track.dir = {part.start_dir[0], part.start_dir[1], part.start_dir[2]};
       track.enddir = {part.end_dir[0], part.end_dir[1], part.end_dir[2]};
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
-       
-      
-      sr.nd.lar.dlp[evtIdx].tracks.push_back(std::move(track)); //make sure the variables correspond to the event index inside dlp vector
+
+//      std::size_t intIdx = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
+//                                        [](const caf::SRInteraction & ixn){ return ixn.})
+      // todo: WARNING! this interaction_id will not be the same as the index in the vector inside sr.common.ixn.dlp!
+      if (sr.nd.lar.dlp.size() <= part.interaction_id)
+        sr.nd.lar.dlp.resize(part.interaction_id+1);
+      sr.nd.lar.dlp[part.interaction_id].tracks.push_back(std::move(track)); //make sure the variables correspond to the event index inside dlp vector
      
     }
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillShowers(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Particle> & particles,
+  void MLNDLArRecoBranchFiller::FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                                             caf::StandardRecord &sr) const
   { 
-    sr.nd.lar.dlp.resize(N);
     for (const auto & part : particles)
     {
       if (part.semantic_type != types::dlp::kShower)
@@ -164,8 +162,11 @@ namespace cafmaker
       shower.Evis = part.depositions_sum;
       shower.start = {part.start_point[0], part.start_point[1], part.start_point[2]};
       shower.direction = {part.start_dir[0], part.start_dir[1], part.start_dir[2]};
-      
-      sr.nd.lar.dlp[evtIdx].showers.push_back(std::move(shower)); //make sure the variables correspond to the event index inside dlp vector
+
+      // we shouldn't ever hit this since FillInteractions() happens first
+      if (part.interaction_id >= sr.nd.lar.dlp.size())
+        sr.nd.lar.dlp.resize(part.interaction_id + 1);
+      sr.nd.lar.dlp[part.interaction_id].showers.push_back(std::move(shower)); //make sure the variables correspond to the event index inside dlp vector
      
     }
   }

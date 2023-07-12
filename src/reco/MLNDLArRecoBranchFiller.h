@@ -31,16 +31,16 @@ namespace cafmaker
                              const cafmaker::Params &par) const override;
 
     private:
-      void FillTracks(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Particle> & particles,
+      void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                       caf::StandardRecord & sr) const;
 
-      void FillShowers(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Particle> & particles,
+      void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                        caf::StandardRecord & sr) const;
 
-      void FillInteractions(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
+      void FillInteractions(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
                                            caf::StandardRecord &sr) const;
 
-      void FillTruth(std::size_t N, std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
+      void FillTruth(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
                      const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
                      caf::StandardRecord &sr) const;
 
