@@ -140,9 +140,11 @@ void loop(CAF& caf,
 {
 
   // Enable ND_LAr detector
-  caf.pot = gtree->GetWeight();
-  gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
-
+  if (gtree)
+  {
+    caf.pot = gtree->GetWeight();
+    gtree->SetBranchAddress("gmcrec", &caf.mcrec);
+  }
 
   // Main event loop
   int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
@@ -193,9 +195,13 @@ int main( int argc, char const *argv[] )
 
   CAF caf( par().cafmaker().outputFile(), par().cafmaker().nusystsFcl() );
 
-
-  TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );   //reading genie file
-  TTree * gtree = (TTree*) gf->Get( "gtree" );
+  TFile * gf = nullptr;
+  TTree * gtree = nullptr;
+  if (!par().cafmaker().ghepFile().empty())
+  {
+    gf = new TFile(par().cafmaker().ghepFile().c_str());   //reading genie file
+    gtree = (TTree *) gf->Get("gtree");
+  }
 
   loop( caf, par, gtree, getRecoFillers(par) );
 
