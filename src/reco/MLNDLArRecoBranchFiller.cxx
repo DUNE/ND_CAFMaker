@@ -32,12 +32,15 @@ namespace cafmaker
   {
     H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(evtIdx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(evtIdx);
-    FillTruth(evtIdx, trueParticles, trueInteractions, sr);
+
+    FillTrueInteractions(trueInteractions, sr);
+    FillTrueParticles(trueParticles, sr);
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(evtIdx);
-    FillInteractions(evtIdx, interactions, sr);
+    FillInteractions(interactions, sr);
 
     H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(evtIdx);
+    FillParticles(particles, sr);
     FillTracks(particles, sr);
     FillShowers(particles, sr);
 
@@ -50,8 +53,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTruth(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
-                                          const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
+  void MLNDLArRecoBranchFiller::FillTrueInteractions(const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
                                           caf::StandardRecord &sr) const
   {
     sr.mc.nu.resize(trueInxns.size());
@@ -63,55 +65,99 @@ namespace cafmaker
       true_interaction.vtx.x = trueInx.vertex[0];
       true_interaction.vtx.y = trueInx.vertex[1];
       true_interaction.vtx.z = trueInx.vertex[2];
-      if(trueInx.nu_current_type == 0){true_interaction.iscc = false;}
-      else{true_interaction.iscc = true;} 
+      if (trueInx.nu_current_type == 0) true_interaction.iscc = true;
+      //still have to do interaction mode, maybe there is a smart way to do that
       true_interaction.E = trueInx.nu_energy_init;
-      true_interaction.nprim = trueInx.num_primaries;
-      sr.mc.nu.push_back(std::move(true_interaction));
+      true_interaction.nprim = trueInx.num_particles;
+      true_interaction.nsec = trueInx.num_particles - trueInx.num_primaries;
 
-      //Fill only true primaries of each interaction 
-      for (int i =0; i < trueInx.num_primaries; i++){
-        for (const auto & truePart : trueParticles)
-        { 
-          if(truePart.is_primary)
-          {
-            caf::SRTrueParticle true_particle;
-            true_particle.interaction_id = trueInx.id;
-            true_particle.start_pos = {truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
-            true_particle.end_pos = {truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
-            true_particle.p.E = truePart.depositions_sum;
-            true_particle.p.px = truePart.momentum[0];
-            true_particle.p.py = truePart.momentum[1];
-            true_particle.p.pz = truePart.momentum[2];
-            true_particle.interaction_id = truePart.interaction_id;
-            true_particle.ancestor_id.ixn = truePart.interaction_id;
-            true_particle.ancestor_id.type = caf::TrueParticleID::kPrimary;
-            true_particle.ancestor_id.part = trueInx.particle_ids[i];
-            sr.mc.nu[evtIdx].prim.push_back(std::move(true_particle));
-          }
-        }
-      }
-    }
+     //TO DO:make sure the vector index corresponds to the interaction id, so you can access it later for particles
+      sr.mc.nu.push_back(std::move(true_interaction)); 
+     }
   }
-
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillInteractions(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
+  void MLNDLArRecoBranchFiller::FillTrueParticles(const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                                          caf::StandardRecord &sr) const
+  {
+      for (const auto & truePart : trueParticles)
+      { 
+        if(truePart.is_primary)
+        {
+          caf::SRTrueParticle true_particle;
+          true_particle.start_pos = {truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
+          true_particle.end_pos = {truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
+          true_particle.p.E = truePart.depositions_sum;
+          true_particle.p.px = truePart.momentum[0];
+          true_particle.p.py = truePart.momentum[1];
+          true_particle.p.pz = truePart.momentum[2];
+          true_particle.interaction_id = truePart.interaction_id;
+          true_particle.ancestor_id.ixn = truePart.interaction_id;
+          true_particle.ancestor_id.type = caf::TrueParticleID::kPrimary;
+          true_particle.ancestor_id.part = truePart.id;
+          if (truePart.interaction_id >= sr.mc.nu.size())
+            sr.mc.nu.resize(truePart.interaction_id+1);
+          sr.mc.nu[truePart.interaction_id].prim.push_back(std::move(true_particle)); //fill primary particles corresponding to the interaction id in the vector
+        }     
+        else{ //for now filling non-primary particles as secondaries, should be changed later. 
+          caf::SRTrueParticle true_particle;
+          true_particle.start_pos = {truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
+          true_particle.end_pos = {truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
+          true_particle.p.E = truePart.depositions_sum;
+          true_particle.p.px = truePart.momentum[0];
+          true_particle.p.py = truePart.momentum[1];
+          true_particle.p.pz = truePart.momentum[2];
+          true_particle.interaction_id = truePart.interaction_id;
+          true_particle.ancestor_id.ixn = truePart.interaction_id;
+          true_particle.ancestor_id.type = caf::TrueParticleID::kSecondary;
+          true_particle.ancestor_id.part = truePart.id;
+          if (truePart.interaction_id >= sr.mc.nu.size())
+            sr.mc.nu.resize(truePart.interaction_id+1);
+          sr.mc.nu[truePart.interaction_id].sec.push_back(std::move(true_particle)); //fill secondary particles corresponding to the interaction id in the vector
+       }
+     }
+  }
+  // ------------------------------------------------------------------------------
+  void MLNDLArRecoBranchFiller::FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
                                            caf::StandardRecord &sr) const
   {
-    sr.common.ixn.dlp.reserve(Inxns.size());
+    sr.common.ixn.dlp.resize(Inxns.size());
     sr.common.ixn.ndlp = Inxns.size();
 
     //filling interactions
     for (const auto & inx : Inxns)
     {
-
-     
       caf::SRInteraction interaction;
-      // fill interaction variables
+      interaction.id  = inx.id;
       interaction.vtx  = {inx.vertex[0], inx.vertex[1], inx.vertex[2]};
-      interaction.dir.lngtrk  = {0., 0., 0.};
-      //this does not work
-      sr.common.ixn.dlp.push_back(std::move(interaction)); //make sure the variables correspond to the event index inside dlp vector
+      sr.common.ixn.dlp.push_back(std::move(interaction)); 
+     
+    }
+  }
+
+  // ------------------------------------------------------------------------------
+  void MLNDLArRecoBranchFiller::FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
+                                           caf::StandardRecord &sr) const
+  {
+    //filling reco particles regardless of semantic type (track/shower)
+    for (const auto & part : particles)
+    {
+      caf::SRRecoParticle reco_particle;
+      if(part.is_primary) reco_particle.primary  = true;
+      reco_particle.E = part.depositions_sum;
+      reco_particle.start = {part.start_point[0], part.start_point[1], part.start_point[2]};
+      reco_particle.end = {part.end_point[0], part.end_point[1], part.end_point[2]}; 
+      reco_particle.E = part.depositions_sum;
+      //To do: momentum mcs is currently filled with just -1
+/*      reco_particle.p.x = part.momentum_mcs[0];
+      reco_particle.p.y = part.momentum_mcs[1];
+      reco_particle.p.z = part.momentum_mcs[2];
+  */    
+      reco_particle.truth.ixn = part.interaction_id;
+      if(part.is_primary)reco_particle.truth.type = caf::TrueParticleID::kPrimary;
+      reco_particle.truth.part = part.id;
+      if (sr.common.ixn.dlp.size() <= part.interaction_id)
+        sr.common.ixn.dlp.resize(part.interaction_id+1);
+      sr.common.ixn.dlp[part.interaction_id].part.dlp.push_back(std::move(reco_particle));//fill reco particles corresponding to the interaction id in the vector
      
     }
   }
@@ -137,13 +183,16 @@ namespace cafmaker
       track.dir = {part.start_dir[0], part.start_dir[1], part.start_dir[2]};
       track.enddir = {part.end_dir[0], part.end_dir[1], part.end_dir[2]};
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
+      track.truth.ixn = part.interaction_id;
+      if(part.is_primary)track.truth.type = caf::TrueParticleID::kPrimary;
+      track.truth.part = part.id;
 
 //      std::size_t intIdx = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
 //                                        [](const caf::SRInteraction & ixn){ return ixn.})
       // todo: WARNING! this interaction_id will not be the same as the index in the vector inside sr.common.ixn.dlp!
       if (sr.nd.lar.dlp.size() <= part.interaction_id)
         sr.nd.lar.dlp.resize(part.interaction_id+1);
-      sr.nd.lar.dlp[part.interaction_id].tracks.push_back(std::move(track)); //make sure the variables correspond to the event index inside dlp vector
+      sr.nd.lar.dlp[part.interaction_id].tracks.push_back(std::move(track)); //fill reco track corresponding to the interaction id in the vector
      
     }
   }
@@ -162,11 +211,14 @@ namespace cafmaker
       shower.Evis = part.depositions_sum;
       shower.start = {part.start_point[0], part.start_point[1], part.start_point[2]};
       shower.direction = {part.start_dir[0], part.start_dir[1], part.start_dir[2]};
+      shower.truth.ixn = part.interaction_id;
+      if(part.is_primary)shower.truth.type = caf::TrueParticleID::kPrimary;
+      shower.truth.part = part.id;
 
       // we shouldn't ever hit this since FillInteractions() happens first
       if (part.interaction_id >= sr.nd.lar.dlp.size())
         sr.nd.lar.dlp.resize(part.interaction_id + 1);
-      sr.nd.lar.dlp[part.interaction_id].showers.push_back(std::move(shower)); //make sure the variables correspond to the event index inside dlp vector
+      sr.nd.lar.dlp[part.interaction_id].showers.push_back(std::move(shower)); //fill reco showers corresponding to the interaction id in the vector
      
     }
   }

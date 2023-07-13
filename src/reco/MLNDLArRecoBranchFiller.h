@@ -37,12 +37,16 @@ namespace cafmaker
       void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                        caf::StandardRecord & sr) const;
 
-      void FillInteractions(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
+      void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
+                                           caf::StandardRecord &sr) const;
+      void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
                                            caf::StandardRecord &sr) const;
 
-      void FillTruth(std::size_t evtIdx, const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
-                     const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
-                     caf::StandardRecord &sr) const;
+      void FillTrueParticles(const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
+                             caf::StandardRecord &sr) const;
+      
+      void FillTrueInteractions(const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
+                               caf::StandardRecord &sr) const;
 
       NDLArDLPH5DatasetReader fDSReader;
 
