@@ -128,7 +128,8 @@ namespace cafmaker
     {
       caf::SRInteraction interaction;
       interaction.id  = inx.id;
-      interaction.vtx  = {inx.vertex[0], inx.vertex[1], inx.vertex[2]};
+      interaction.vtx  = {inx.vertex[0], inx.vertex[1], inx.vertex[2]};  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser
+      interaction.dir.lngtrk  = {1., 2., 3.};  // same with this one
       sr.common.ixn.dlp.push_back(std::move(interaction)); 
      
     }
@@ -158,6 +159,7 @@ namespace cafmaker
       if (sr.common.ixn.dlp.size() <= part.interaction_id)
         sr.common.ixn.dlp.resize(part.interaction_id+1);
       sr.common.ixn.dlp[part.interaction_id].part.dlp.push_back(std::move(reco_particle));//fill reco particles corresponding to the interaction id in the vector
+
      
     }
   }
@@ -187,13 +189,16 @@ namespace cafmaker
       if(part.is_primary)track.truth.type = caf::TrueParticleID::kPrimary;
       track.truth.part = part.id;
 
-//      std::size_t intIdx = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
-//                                        [](const caf::SRInteraction & ixn){ return ixn.})
-      // todo: WARNING! this interaction_id will not be the same as the index in the vector inside sr.common.ixn.dlp!
-      if (sr.nd.lar.dlp.size() <= part.interaction_id)
-        sr.nd.lar.dlp.resize(part.interaction_id+1);
-      sr.nd.lar.dlp[part.interaction_id].tracks.push_back(std::move(track)); //fill reco track corresponding to the interaction id in the vector
-     
+      // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
+      // (some interaction IDs are filtered out as they're not beam triggers etc.)
+      auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
+                                [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
+      if (itIxn == sr.common.ixn.dlp.end())
+      {
+        std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        abort();
+      }
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track)); //make sure the variables correspond to the interaction index inside dlp vector
     }
   }
 
