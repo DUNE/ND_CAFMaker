@@ -62,6 +62,8 @@ namespace cafmaker
     for (const auto & trueInx : trueInxns)
     {
       caf::SRTrueInteraction true_interaction;
+      //TO DO: id should be added for true interaction. For now using pdg value as holder  for this variable that is needed for true particles
+      true_interaction.pdg = trueInx.id;
       true_interaction.vtx.x = trueInx.vertex[0];
       true_interaction.vtx.y = trueInx.vertex[1];
       true_interaction.vtx.z = trueInx.vertex[2];
@@ -81,6 +83,17 @@ namespace cafmaker
   {
       for (const auto & truePart : trueParticles)
       { 
+        // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
+        // (some interaction IDs are filtered out as they're not beam triggers etc.)
+        //
+        //To do: warning. Change to ixn.id once SR is changed
+        auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
+                                  [&truePart](const caf::SRTrueInteraction & ixn){ return ixn.pdg == truePart.interaction_id; });
+        if (itIxn == sr.mc.nu.end())
+        {
+          std::cerr << "ERROR: True particle's interaction ID (" << truePart.interaction_id << ") does not match any in the DLP set!\n";
+          abort();
+        }
         if(truePart.is_primary)
         {
           caf::SRTrueParticle true_particle;
@@ -94,9 +107,8 @@ namespace cafmaker
           true_particle.ancestor_id.ixn = truePart.interaction_id;
           true_particle.ancestor_id.type = caf::TrueParticleID::kPrimary;
           true_particle.ancestor_id.part = truePart.id;
-          if (truePart.interaction_id >= sr.mc.nu.size())
-            sr.mc.nu.resize(truePart.interaction_id+1);
-          sr.mc.nu[truePart.interaction_id].prim.push_back(std::move(true_particle)); //fill primary particles corresponding to the interaction id in the vector
+          
+          sr.mc.nu[std::distance(sr.mc.nu.begin(), itIxn)].prim.push_back(std::move(true_particle)); 
         }     
         else{ //for now filling non-primary particles as secondaries, should be changed later. 
           caf::SRTrueParticle true_particle;
@@ -110,9 +122,9 @@ namespace cafmaker
           true_particle.ancestor_id.ixn = truePart.interaction_id;
           true_particle.ancestor_id.type = caf::TrueParticleID::kSecondary;
           true_particle.ancestor_id.part = truePart.id;
-          if (truePart.interaction_id >= sr.mc.nu.size())
-            sr.mc.nu.resize(truePart.interaction_id+1);
-          sr.mc.nu[truePart.interaction_id].sec.push_back(std::move(true_particle)); //fill secondary particles corresponding to the interaction id in the vector
+          
+          sr.mc.nu[std::distance(sr.mc.nu.begin(), itIxn)].sec.push_back(std::move(true_particle)); 
+
        }
      }
   }
@@ -156,11 +168,17 @@ namespace cafmaker
       reco_particle.truth.ixn = part.interaction_id;
       if(part.is_primary)reco_particle.truth.type = caf::TrueParticleID::kPrimary;
       reco_particle.truth.part = part.id;
-      if (sr.common.ixn.dlp.size() <= part.interaction_id)
-        sr.common.ixn.dlp.resize(part.interaction_id+1);
-      sr.common.ixn.dlp[part.interaction_id].part.dlp.push_back(std::move(reco_particle));//fill reco particles corresponding to the interaction id in the vector
-
-     
+      // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
+      // (some interaction IDs are filtered out as they're not beam triggers etc.)
+      auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
+                                [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
+      if (itIxn == sr.common.ixn.dlp.end())
+      {
+        std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        abort();
+      }
+      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
+  
     }
   }
 
@@ -198,7 +216,7 @@ namespace cafmaker
         std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track)); //make sure the variables correspond to the interaction index inside dlp vector
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track)); 
     }
   }
 
@@ -220,10 +238,16 @@ namespace cafmaker
       if(part.is_primary)shower.truth.type = caf::TrueParticleID::kPrimary;
       shower.truth.part = part.id;
 
-      // we shouldn't ever hit this since FillInteractions() happens first
-      if (part.interaction_id >= sr.nd.lar.dlp.size())
-        sr.nd.lar.dlp.resize(part.interaction_id + 1);
-      sr.nd.lar.dlp[part.interaction_id].showers.push_back(std::move(shower)); //fill reco showers corresponding to the interaction id in the vector
+      // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
+      // (some interaction IDs are filtered out as they're not beam triggers etc.)
+      auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
+                                [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
+      if (itIxn == sr.common.ixn.dlp.end())
+      {
+        std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        abort();
+      }
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower)); 
      
     }
   }
