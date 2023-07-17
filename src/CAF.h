@@ -49,9 +49,9 @@ public:
   TTree * cafPOT;
   TTree * genie;
 
-  TFile * flatCAFFile;
-  TTree * flatCAFTree;
-  flat::Flat<caf::StandardRecord>* flatCAFRecord;
+  TFile * flatCAFFile                             = nullptr;
+  TTree * flatCAFTree                             = nullptr;
+  flat::Flat<caf::StandardRecord>* flatCAFRecord  = nullptr;
 
   nusyst::response_helper rh;
 };
