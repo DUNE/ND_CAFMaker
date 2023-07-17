@@ -7,6 +7,8 @@
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRGlobal.h"
 
+#include "duneanaobj/StandardRecord/Flat/FwdDeclare.h"
+
 // fixme: this is a do-nothing replacement for nusystematics stuff until it's re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 namespace nusyst
@@ -17,7 +19,7 @@ namespace nusyst
 class CAF {
 
 public:
-  CAF(  const std::string& filename, const std::string& rw_fhicl_filename );
+  CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF);
   ~CAF() = default;
   void fill();
   void fillPOT();
@@ -47,8 +49,11 @@ public:
   TTree * cafPOT;
   TTree * genie;
 
+  TFile * flatCAFFile                             = nullptr;
+  TTree * flatCAFTree                             = nullptr;
+  flat::Flat<caf::StandardRecord>* flatCAFRecord  = nullptr;
+
   nusyst::response_helper rh;
 };
 
 #endif
-
