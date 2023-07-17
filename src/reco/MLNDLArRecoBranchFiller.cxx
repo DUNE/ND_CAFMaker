@@ -62,8 +62,7 @@ namespace cafmaker
     for (const auto & trueInx : trueInxns)
     {
       caf::SRTrueInteraction true_interaction;
-      //TO DO: id should be added for true interaction. For now using pdg value as holder  for this variable that is needed for true particles
-      true_interaction.pdg = trueInx.id;
+      true_interaction.id = trueInx.id;
       true_interaction.vtx.x = trueInx.vertex[0];
       true_interaction.vtx.y = trueInx.vertex[1];
       true_interaction.vtx.z = trueInx.vertex[2];
@@ -73,7 +72,6 @@ namespace cafmaker
       true_interaction.nprim = trueInx.num_particles;
       true_interaction.nsec = trueInx.num_particles - trueInx.num_primaries;
 
-     //TO DO:make sure the vector index corresponds to the interaction id, so you can access it later for particles
       sr.mc.nu.push_back(std::move(true_interaction)); 
      }
   }
@@ -86,9 +84,8 @@ namespace cafmaker
         // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
         // (some interaction IDs are filtered out as they're not beam triggers etc.)
         //
-        //To do: warning. Change to ixn.id once SR is changed
         auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
-                                  [&truePart](const caf::SRTrueInteraction & ixn){ return ixn.pdg == truePart.interaction_id; });
+                                  [&truePart](const caf::SRTrueInteraction & ixn){ return ixn.id == truePart.interaction_id; });
         if (itIxn == sr.mc.nu.end())
         {
           std::cerr << "ERROR: True particle's interaction ID (" << truePart.interaction_id << ") does not match any in the DLP set!\n";
@@ -97,8 +94,8 @@ namespace cafmaker
         if(truePart.is_primary)
         {
           caf::SRTrueParticle true_particle;
-          true_particle.start_pos = {truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
-          true_particle.end_pos = {truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
+          true_particle.start_pos = caf::SRVector3D{truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
+          true_particle.end_pos = caf::SRVector3D{truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
           true_particle.p.E = truePart.depositions_sum;
           true_particle.p.px = truePart.momentum[0];
           true_particle.p.py = truePart.momentum[1];
@@ -112,8 +109,8 @@ namespace cafmaker
         }     
         else{ //for now filling non-primary particles as secondaries, should be changed later. 
           caf::SRTrueParticle true_particle;
-          true_particle.start_pos = {truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
-          true_particle.end_pos = {truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
+          true_particle.start_pos = caf::SRVector3D{truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
+          true_particle.end_pos = caf::SRVector3D{truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
           true_particle.p.E = truePart.depositions_sum;
           true_particle.p.px = truePart.momentum[0];
           true_particle.p.py = truePart.momentum[1];
@@ -140,8 +137,7 @@ namespace cafmaker
     {
       caf::SRInteraction interaction;
       interaction.id  = inx.id;
-      interaction.vtx  = {inx.vertex[0], inx.vertex[1], inx.vertex[2]};  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser
-      interaction.dir.lngtrk  = {1., 2., 3.};  // same with this one
+      interaction.vtx  = caf::SRVector3D{inx.vertex[0], inx.vertex[1], inx.vertex[2]};  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser
       sr.common.ixn.dlp.push_back(std::move(interaction)); 
      
     }
@@ -157,8 +153,8 @@ namespace cafmaker
       caf::SRRecoParticle reco_particle;
       if(part.is_primary) reco_particle.primary  = true;
       reco_particle.E = part.depositions_sum;
-      reco_particle.start = {part.start_point[0], part.start_point[1], part.start_point[2]};
-      reco_particle.end = {part.end_point[0], part.end_point[1], part.end_point[2]}; 
+      reco_particle.start = caf::SRVector3D{part.start_point[0], part.start_point[1], part.start_point[2]};
+      reco_particle.end = caf::SRVector3D{part.end_point[0], part.end_point[1], part.end_point[2]}; 
       reco_particle.E = part.depositions_sum;
       //To do: momentum mcs is currently filled with just -1
 /*      reco_particle.p.x = part.momentum_mcs[0];
@@ -198,10 +194,10 @@ namespace cafmaker
       caf::SRTrack track;
       // fill shower variables
       track.Evis = part.depositions_sum;
-      track.start = {part.start_point[0], part.start_point[1], part.start_point[2]};
-      track.end = {part.end_point[0], part.end_point[1], part.end_point[2]}; 
-      track.dir = {part.start_dir[0], part.start_dir[1], part.start_dir[2]};
-      track.enddir = {part.end_dir[0], part.end_dir[1], part.end_dir[2]};
+      track.start = caf::SRVector3D{part.start_point[0], part.start_point[1], part.start_point[2]};
+      track.end = caf::SRVector3D{part.end_point[0], part.end_point[1], part.end_point[2]}; 
+      track.dir = caf::SRVector3D{part.start_dir[0], part.start_dir[1], part.start_dir[2]};
+      track.enddir = caf::SRVector3D{part.end_dir[0], part.end_dir[1], part.end_dir[2]};
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
       track.truth.ixn = part.interaction_id;
       if(part.is_primary)track.truth.type = caf::TrueParticleID::kPrimary;
@@ -232,8 +228,8 @@ namespace cafmaker
       caf::SRShower shower;
       // fill shower variables
       shower.Evis = part.depositions_sum;
-      shower.start = {part.start_point[0], part.start_point[1], part.start_point[2]};
-      shower.direction = {part.start_dir[0], part.start_dir[1], part.start_dir[2]};
+      shower.start = caf::SRVector3D{part.start_point[0], part.start_point[1], part.start_point[2]};
+      shower.direction = caf::SRVector3D{part.start_dir[0], part.start_dir[1], part.start_dir[2]};
       shower.truth.ixn = part.interaction_id;
       if(part.is_primary)shower.truth.type = caf::TrueParticleID::kPrimary;
       shower.truth.part = part.id;
