@@ -7,6 +7,8 @@
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRGlobal.h"
 
+#include "duneanaobj/StandardRecord/Flat/FwdDeclare.h"
+
 // fixme: this is a do-nothing replacement for nusystematics stuff until it's re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 namespace nusyst
@@ -47,8 +49,11 @@ public:
   TTree * cafPOT;
   TTree * genie;
 
+  TFile * flatCAFFile;
+  TTree * flatCAFTree;
+  flat::Flat<caf::StandardRecord>* flatCAFRecord;
+
   nusyst::response_helper rh;
 };
 
 #endif
-
