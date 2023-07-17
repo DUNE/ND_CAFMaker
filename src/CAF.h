@@ -19,7 +19,7 @@ namespace nusyst
 class CAF {
 
 public:
-  CAF(  const std::string& filename, const std::string& rw_fhicl_filename );
+  CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF);
   ~CAF() = default;
   void fill();
   void fillPOT();
