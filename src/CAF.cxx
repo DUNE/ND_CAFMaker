@@ -1,9 +1,13 @@
 #include "CAF.h"
 
+#include <regex>
+
+#include "duneanaobj/StandardRecord/Flat/FlatRecord.h"
+
 // fixme: once DIRT-II is done with its work, this will be re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 
-CAF::CAF( const std::string& filename, const std::string& rw_fhicl_filename )
+CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF)
   : rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
@@ -13,8 +17,20 @@ CAF::CAF( const std::string& filename, const std::string& rw_fhicl_filename )
   cafPOT = new TTree( "meta", "meta" );
   genie = new TTree( "genieEvt", "genieEvt" );
 
+  if (makeFlatCAF)
+  {
+    // LZ4 is the fastest format to decompress. I get 3x faster loading with
+    // this compared to the default, and the files are only slightly larger.
+    flatCAFFile = new TFile( std::regex_replace(filename, std::regex("\\.root"), ".flat.root").c_str(),
+                             "RECREATE", "",
+                             ROOT::CompressionSettings(ROOT::kLZ4, 1));
+
+    flatCAFTree = new TTree("cafTree", "cafTree");
+
+    flatCAFRecord = new flat::Flat<caf::StandardRecord>(flatCAFTree, "rec", "", 0);
+  }
   // initialize standard record bits
-  cafSR->Branch("rec", "caf::StandardRecord", &sr);
+  if(cafSR) cafSR->Branch("rec", "caf::StandardRecord", &sr);
 
   // initialize geometric efficiency throw results
   geoEffThrowResults = new std::vector< std::vector < std::vector < uint64_t > > >();
@@ -49,9 +65,15 @@ CAF::CAF( const std::string& filename, const std::string& rw_fhicl_filename )
 
 void CAF::fill()
 {
-  cafSR->Fill();
+  if(cafSR) cafSR->Fill();
   cafMVA->Fill();
   genie->Fill();
+
+  if(flatCAFFile){
+    flatCAFRecord->Clear();
+    flatCAFRecord->Fill(sr);
+    flatCAFTree->Fill();
+  }
 }
 
 void CAF::Print()
@@ -69,13 +91,30 @@ void CAF::fillPOT()
 
 void CAF::write()
 {
-  cafFile->cd();
-  cafSR->Write();
-  cafSRGlobal->Write();
-  cafMVA->Write();
-  cafPOT->Write();
-  genie->Write();
-  cafFile->Close();
+  if(cafFile){
+    cafFile->cd();
+    cafSR->Write();
+
+    for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
+    {
+      tree->Write();
+
+      // don't let it get stuck attached to only this file in case we need it again below
+      tree->LoadBaskets();
+      tree->SetDirectory(nullptr);
+    }
+    cafFile->Close();
+  }
+
+  if(flatCAFFile){
+    flatCAFFile->cd();
+    flatCAFTree->Write();
+    cafSRGlobal->Write();
+    cafMVA->Write();
+    cafPOT->Write();
+    genie->Write();
+    flatCAFFile->Close();
+  }
 }
 
 
