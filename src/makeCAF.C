@@ -188,7 +188,7 @@ int main( int argc, char const *argv[] )
 
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
-  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), false);
+  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF());
 
   TFile * gf = new TFile( par().cafmaker().ghepFile().c_str() );   //reading genie file
   TTree * gtree = (TTree*) gf->Get( "gtree" );
