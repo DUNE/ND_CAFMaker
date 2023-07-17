@@ -94,10 +94,15 @@ void CAF::write()
   if(cafFile){
     cafFile->cd();
     cafSR->Write();
-    cafSRGlobal->Write();
-    cafMVA->Write();
-    cafPOT->Write();
-    genie->Write();
+
+    for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
+    {
+      tree->Write();
+
+      // don't let it get stuck attached to only this file in case we need it again below
+      tree->LoadBaskets();
+      tree->SetDirectory(nullptr);
+    }
     cafFile->Close();
   }
 
