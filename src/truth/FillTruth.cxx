@@ -223,4 +223,6 @@ void fillTruth(int ii,
   //  sr.total_xsSyst_cv_wgt *= it.CV_response;
   //}
 
+  sr.mc.nu.push_back(std::move(nu));
+  sr.mc.nnu++;
 }
