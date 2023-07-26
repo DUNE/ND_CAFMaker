@@ -1,4 +1,5 @@
 import argparse
+import builtins
 import contextlib
 import itertools
 import os.path
@@ -186,6 +187,15 @@ ctype.insertMember("{name}", HOFFSET({klass}, {name}), {name}_enumtype);
 
 compound_type_enum_entry_template = '{name}_enum_val = {val}; {name}_enumtype.insert("{h5name}", &{name}_enum_val);'
 
+# -----------
+
+compound_type_string_template = \
+"""
+H5::StrType {h5_name}_strType({strtype}, {len});
+{h5_name}_strType.setCset({charset});
+ctype.insertMember("{h5_name}", HOFFSET({klass}, {cpp_name}), {h5_name}_strType);
+"""
+
 # -------------------------------------------------------
 
 def dataset_to_name(dataset):
@@ -250,7 +260,7 @@ class TypeSerializer:
         cpp_name = ""
         h5_name = ""
 
-        if h5py.check_dtype(ref=typ):
+        if not isinstance(typ, builtins.type) and h5py.check_dtype(ref=typ):
             cpp_name += "hdset_reg_ref_t"
             h5_name = "H5::PredType::STD_REF_DSETREG"
         # horrible hack, but bools are always stored as ints, so we have no other way of knowing
@@ -279,6 +289,9 @@ class TypeSerializer:
             h5_name = self.type_string(np.dtype(str(typ)), fieldname, which="h5")
             # print("discovered enum:", typename, self.discovered_enums[typename])
             cpp_name += typename
+        elif typ == str or h5py.check_string_dtype(typ):
+            cpp_name += "char *"
+            h5_name = "H5::PredType::H5T_C_S1"
         elif h5py.check_vlen_dtype(typ):
             cpp_name += "BufferView<{base_type}>".format(base_type=self.type_string(h5py.check_vlen_dtype(typ), fieldname))
             h5_name = "H5::VarLenType({typ})".format(typ=self.type_string(h5py.check_vlen_dtype(typ), fieldname, which="h5"))
@@ -332,7 +345,8 @@ class TypeSerializer:
 
             # for variable-length items, we have to maintain a special "handle"
             # in addition to the vector generated for cpp_members
-            if h5py.check_vlen_dtype(typ):
+            # (unfortunately check_vlen_dtype() will return True for string types...)
+            if not h5py.check_string_dtype(typ) and h5py.check_vlen_dtype(typ):
                 handles.append(fieldname)
 
             # for region references, we need to connect the dtype to the field name
@@ -350,6 +364,18 @@ class TypeSerializer:
                                                                   h5type=self.type_string(typ, fieldname=fieldname, which="h5"),
                                                                   ),
                                                member_list=self.enum_vals_h5[fieldname].values()))
+            # strings too
+            elif h5py.check_string_dtype(typ):
+                info = h5py.check_string_dtype(typ)
+                h5_members.append(Serializable(template=compound_type_string_template,
+                                               template_args=dict(h5_name=fieldname,
+                                                                  cpp_name=fieldname,
+                                                                  klass=class_name,
+                                                                  len="H5T_VARIABLE" if info.length is None else info.length,
+                                                                  charset="H5T_CSET_UTF8" if info.encoding == "utf-8" else "H5T_CSET_ASCII",
+                                                                  strtype=self.type_string(typ, fieldname=fieldname, which="h5"),)
+                                               )
+                                  )
             else:
                 h5_members.append(Serializable(template=compound_type_member_template,
                                                template_args=dict(h5_name=fieldname,
