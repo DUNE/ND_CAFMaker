@@ -94,8 +94,8 @@ namespace cafmaker
         if(truePart.is_primary)
         {
           caf::SRTrueParticle true_particle;
-          true_particle.start_pos = caf::SRVector3D{truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
-          true_particle.end_pos = caf::SRVector3D{truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
+          true_particle.start_pos = caf::SRVector3D(truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]);
+          true_particle.end_pos = caf::SRVector3D(truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]);
           true_particle.p.E = truePart.depositions_sum;
           true_particle.p.px = truePart.momentum[0];
           true_particle.p.py = truePart.momentum[1];
@@ -109,8 +109,8 @@ namespace cafmaker
         }     
         else{ //for now filling non-primary particles as secondaries, should be changed later. 
           caf::SRTrueParticle true_particle;
-          true_particle.start_pos = caf::SRVector3D{truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]};
-          true_particle.end_pos = caf::SRVector3D{truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]};
+          true_particle.start_pos = caf::SRVector3D(truePart.start_point[0], truePart.start_point[1], truePart.start_point[2]);
+          true_particle.end_pos = caf::SRVector3D(truePart.end_point[0], truePart.end_point[1], truePart.end_point[2]);
           true_particle.p.E = truePart.depositions_sum;
           true_particle.p.px = truePart.momentum[0];
           true_particle.p.py = truePart.momentum[1];
@@ -137,7 +137,7 @@ namespace cafmaker
     {
       caf::SRInteraction interaction;
       interaction.id  = inx.id;
-      interaction.vtx  = caf::SRVector3D{inx.vertex[0], inx.vertex[1], inx.vertex[2]};  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser
+      interaction.vtx  = caf::SRVector3D(inx.vertex[0], inx.vertex[1], inx.vertex[2]);  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser unless using a FlatCAF
       sr.common.ixn.dlp.push_back(std::move(interaction)); 
      
     }
@@ -153,8 +153,8 @@ namespace cafmaker
       caf::SRRecoParticle reco_particle;
       if(part.is_primary) reco_particle.primary  = true;
       reco_particle.E = part.depositions_sum;
-      reco_particle.start = caf::SRVector3D{part.start_point[0], part.start_point[1], part.start_point[2]};
-      reco_particle.end = caf::SRVector3D{part.end_point[0], part.end_point[1], part.end_point[2]}; 
+      reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
+      reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
       reco_particle.E = part.depositions_sum;
       //To do: momentum mcs is currently filled with just -1
 /*      reco_particle.p.x = part.momentum_mcs[0];
@@ -194,10 +194,10 @@ namespace cafmaker
       caf::SRTrack track;
       // fill shower variables
       track.Evis = part.depositions_sum;
-      track.start = caf::SRVector3D{part.start_point[0], part.start_point[1], part.start_point[2]};
-      track.end = caf::SRVector3D{part.end_point[0], part.end_point[1], part.end_point[2]}; 
-      track.dir = caf::SRVector3D{part.start_dir[0], part.start_dir[1], part.start_dir[2]};
-      track.enddir = caf::SRVector3D{part.end_dir[0], part.end_dir[1], part.end_dir[2]};
+      track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
+      track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
+      track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
+      track.enddir = caf::SRVector3D(part.end_dir[0], part.end_dir[1], part.end_dir[2]);
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
       track.truth.ixn = part.interaction_id;
       if(part.is_primary)track.truth.type = caf::TrueParticleID::kPrimary;
@@ -228,8 +228,8 @@ namespace cafmaker
       caf::SRShower shower;
       // fill shower variables
       shower.Evis = part.depositions_sum;
-      shower.start = caf::SRVector3D{part.start_point[0], part.start_point[1], part.start_point[2]};
-      shower.direction = caf::SRVector3D{part.start_dir[0], part.start_dir[1], part.start_dir[2]};
+      shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
+      shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       shower.truth.ixn = part.interaction_id;
       if(part.is_primary)shower.truth.type = caf::TrueParticleID::kPrimary;
       shower.truth.part = part.id;
