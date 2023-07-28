@@ -1,4 +1,5 @@
 #include "TMSRecoBranchFiller.h"
+#include "truth/FillTruth.h"
 
 namespace cafmaker
 {
@@ -42,7 +43,8 @@ namespace cafmaker
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
   void TMSRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
                                               caf::StandardRecord &sr,
-                                              const cafmaker::Params &par) const
+                                              const cafmaker::Params &par,
+                                              const TruthMatcher *truthMatcher) const
   {
     // Get nth entry from tree
     TMSRecoTree->GetEntry(evtIdx);

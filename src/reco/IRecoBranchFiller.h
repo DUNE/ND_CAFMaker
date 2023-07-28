@@ -12,6 +12,7 @@
 
 namespace cafmaker
 {
+  class TruthMatcher;
 
   class IRecoBranchFiller
   {
@@ -24,12 +25,13 @@ namespace cafmaker
       /// \param sr  The StandardRecord whose branches should be filled.
       void FillRecoBranches(std::size_t evtIdx,
                             caf::StandardRecord &sr,
-                            const Params &par) const
+                            const Params &par,
+                            const TruthMatcher * truthMatcher=nullptr) const
       {
         if (!isConfigured)
           throw std::runtime_error("Reco branch filler hasn't been configured!");
 
-        _FillRecoBranches(evtIdx, sr, par);
+        _FillRecoBranches(evtIdx, sr, par, truthMatcher);
       }
       std::string GetName() { return name; };
 
@@ -37,7 +39,8 @@ namespace cafmaker
       /// Actual implementation of reco branch filling.  Derived classes should override this.
       virtual void _FillRecoBranches(std::size_t evtIdx,
                                      caf::StandardRecord &sr,
-                                     const cafmaker::Params &par) const = 0;
+                                     const cafmaker::Params &par,
+                                     const TruthMatcher * truthMatcher) const = 0;
 
       void SetConfigured(bool configured = true)    { isConfigured = configured; };
 

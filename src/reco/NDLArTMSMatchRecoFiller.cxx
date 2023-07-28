@@ -9,9 +9,11 @@ namespace cafmaker
     name = "LArTMSMatcher";
   }
 
-  void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
-                                                  caf::StandardRecord &sr,
-                                                  const cafmaker::Params &par) const
+  void
+  NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
+                                             caf::StandardRecord &sr,
+                                             const cafmaker::Params &par,
+                                             const TruthMatcher *truthMatcher) const
   {
     // match tracks using the info that should have been filled by the ND-LAr and TMS reco fillers
     unsigned int n_TMS_tracks = sr.nd.tms.ntracks;  //# tracks in TMS in evtIdx
