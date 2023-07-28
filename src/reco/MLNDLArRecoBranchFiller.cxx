@@ -66,7 +66,7 @@ namespace cafmaker
       true_interaction.vtx.x = trueInx.vertex[0];
       true_interaction.vtx.y = trueInx.vertex[1];
       true_interaction.vtx.z = trueInx.vertex[2];
-      if (trueInx.nu_current_type == 0) true_interaction.iscc = true;
+      if (trueInx.nu_current_type == cafmaker::types::dlp::NuCurrentType::kCC) true_interaction.iscc = true;
       //still have to do interaction mode, maybe there is a smart way to do that
       true_interaction.E = trueInx.nu_energy_init;
       true_interaction.nprim = trueInx.num_particles;
@@ -187,7 +187,7 @@ namespace cafmaker
     for (const auto & part : particles)
     {
       // only choose 'particles' that correspond to Track semantic type
-      if (part.semantic_type != types::dlp::kTrack)
+      if (part.semantic_type != types::dlp::SemanticType::kTrack)
         continue;
 
 
@@ -222,7 +222,7 @@ namespace cafmaker
   { 
     for (const auto & part : particles)
     {
-      if (part.semantic_type != types::dlp::kShower)
+      if (part.semantic_type != types::dlp::SemanticType::kShower)
         continue;
 
       caf::SRShower shower;
