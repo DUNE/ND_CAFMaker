@@ -141,6 +141,12 @@ void loop(CAF& caf,
   caf.pot = gtree->GetWeight();
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
 
+  // if this is a data file, there won't be any truth, of course
+  std::unique_ptr<cafmaker::TruthMatcher> truthMatcher;
+  if (gtree)
+    truthMatcher = std::make_unique<cafmaker::TruthMatcher>(gtree, caf.mcrec);
+
+
   // Main event loop
   int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
   int start = par().cafmaker().first();
@@ -161,14 +167,9 @@ void loop(CAF& caf,
     caf.sr.isFHC = par().runInfo().fhc();
     caf.sr.pot = caf.pot;
 
-    // in the future this can be extended to use 'truth fillers'
-    // (like the reco ones) if we find that the truth filling
-    // is getting too complex for one function
-    fillTruth(ii, caf.sr, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie
-
     // hand off to the correct reco filler(s).
     for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(ii, caf.sr, par);
+      filler->FillRecoBranches(ii, caf.sr, par, truthMatcher.get());
 
     caf.fill();
   }
