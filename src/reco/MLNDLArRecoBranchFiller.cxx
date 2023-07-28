@@ -4,6 +4,7 @@
 
 #include "DLP_h5_classes.h"
 #include "Params.h"
+#include "truth/FillTruth.h"
 
 using namespace cafmaker::types::dlp;
 
@@ -25,9 +26,11 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
-                                                  caf::StandardRecord &sr,
-                                                  const cafmaker::Params &par) const
+  void
+  MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
+                                             caf::StandardRecord &sr,
+                                             const cafmaker::Params &par,
+                                             const TruthMatcher *truthMatcher) const
 
   {
     H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(evtIdx);

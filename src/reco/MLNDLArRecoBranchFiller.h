@@ -28,7 +28,8 @@ namespace cafmaker
     protected:
       void _FillRecoBranches(std::size_t evtIdx,
                              caf::StandardRecord &sr,
-                             const cafmaker::Params &par) const override;
+                             const cafmaker::Params &par,
+                             const TruthMatcher *truthMatcher) const override;
 
     private:
       void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,

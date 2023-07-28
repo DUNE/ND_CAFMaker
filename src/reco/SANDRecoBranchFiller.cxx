@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "SANDRecoBranchFiller.h"
+#include "truth/FillTruth.h"
 
 #ifdef ENABLE_SAND
 #warning Including SANDRecoBranchFiller in build
@@ -100,9 +101,7 @@ SANDRecoBranchFiller(const std::string&)
 }
 
 void cafmaker::SANDRecoBranchFiller::
-_FillRecoBranches(std::size_t,
-                  caf::StandardRecord&,
-                  const cafmaker::Params&) const
+_FillRecoBranches(std::size_t, caf::StandardRecord &, const cafmaker::Params &, const TruthMatcher *truthMatcher) const
 {
   error_msg();
   abort();
