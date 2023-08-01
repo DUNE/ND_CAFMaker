@@ -165,7 +165,7 @@ void loop(CAF& caf,
 
   for( int ii = start; ii < start + N; ++ii ) {
 
-    if( ii % 1 == 0 )
+    if( ii % 10000 == 0 )
       printf( "Event %d (%d of %d)...\n", ii, (ii-start)+1, N );
 
     // reset (the default constructor initializes its variables)
