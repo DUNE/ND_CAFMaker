@@ -99,6 +99,8 @@ caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
 
 namespace cafmaker
 {
+
+  // ------------------------------------------------------------
   TruthMatcher::TruthMatcher(TTree *gTree, const genie::NtpMCEventRecord *gEvt)
     : fGTree(gTree), fGEvt(gEvt)
   {}
@@ -217,7 +219,7 @@ namespace cafmaker
 
   // ------------------------------------------------------------
   caf::SRTrueParticle &
-  TruthMatcher::GetTrueParticle(caf::StandardRecord &sr, int ixnID, int G4ID, bool isPrimary, bool createNew)
+  TruthMatcher::GetTrueParticle(caf::StandardRecord &sr, int ixnID, int G4ID, bool isPrimary, bool createNew) const
   {
     caf::SRTrueInteraction & ixn = GetTrueInteraction(sr, ixnID, createNew);
 
@@ -245,7 +247,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew)
+  caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew) const
   {
     caf::SRTrueInteraction * ixn = nullptr;
 
