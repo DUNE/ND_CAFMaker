@@ -123,7 +123,8 @@ namespace cafmaker
                  {std::type_index(typeid(Interaction)),      "interactions"},
                  {std::type_index(typeid(TrueParticle)),     "truth_particles"},
                  {std::type_index(typeid(TrueInteraction)),  "truth_interactions"},
-                 {std::type_index(typeid(Event)),            "events"}})
+                 {std::type_index(typeid(Event)),            "events"},
+                 {std::type_index(typeid(RunInfo)), "run_info"}})
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
@@ -149,16 +150,22 @@ namespace cafmaker
     FillTracks(particles, sr);
     FillShowers(particles, sr);
 
+    // todo:
     // now do some sanity checks:
     // compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
     // do the same with the reco particles
     // etc.
 
     //Fill ND-LAr specificinfo in the meta branch
+    H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(evtIdx);
     sr.meta.nd_lar.enabled = true;
-    sr.meta.nd_lar.run = par().runInfo().run();
-    sr.meta.nd_lar.subrun = par().runInfo().subrun();
-    sr.meta.nd_lar.event = evtIdx;
+    for (const auto & runinf : run_info)
+    {
+      sr.meta.nd_lar.run = runinf.run;
+      sr.meta.nd_lar.subrun = runinf.subrun;
+      sr.meta.nd_lar.event = runinf.event;
+    }
+
   
   }
 
@@ -344,6 +351,8 @@ namespace cafmaker
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
       reco_particle.E = part.depositions_sum;
+      reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
+      reco_particle.pdg = part.pdg_code;
       //To do: momentum mcs is currently filled with just -1
 /*      reco_particle.p.x = part.momentum_mcs[0];
       reco_particle.p.y = part.momentum_mcs[1];
