@@ -16,6 +16,12 @@
 
 #include "NDLArDLPH5DatasetReader.h"
 
+namespace caf
+{
+  class SRTrueInteraction;
+  class SRTrueParticle;
+}
+
 namespace cafmaker
 {
 
@@ -39,15 +45,20 @@ namespace cafmaker
                        caf::StandardRecord & sr) const;
 
       void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
-                                           caf::StandardRecord &sr) const;
-      void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
-                                           caf::StandardRecord &sr) const;
+                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
+                            const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr) const;
 
-      void FillTrueParticles(const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
-                             caf::StandardRecord &sr) const;
+      void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
+                         const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                         const TruthMatcher * truthMatch,
+                         caf::StandardRecord &sr) const;
+
+      void FillTrueParticle(caf::SRTrueParticle & srTruePart,
+                            const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const;
       
-      void FillTrueInteractions(const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
-                               caf::StandardRecord &sr) const;
+      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
+                               const cafmaker::types::dlp::TrueInteraction & trueIntPassthrough) const;
 
       NDLArDLPH5DatasetReader fDSReader;
 
