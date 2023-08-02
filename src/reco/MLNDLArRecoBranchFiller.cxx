@@ -34,8 +34,8 @@ namespace cafmaker
     H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(evtIdx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(evtIdx);
 
-    FillTrueInteractions(trueInteractions, sr);
-    FillTrueParticles(trueParticles, sr);
+    //FillTrueInteractions(trueInteractions, sr);
+    //FillTrueParticles(trueParticles, sr);
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(evtIdx);
     FillInteractions(interactions, sr);
