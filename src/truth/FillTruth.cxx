@@ -258,27 +258,31 @@ namespace cafmaker
       if (!createNew)
         throw std::runtime_error("True interaction with interaction ID " + std::to_string(ixnID) + " was not found in this StandardRecord");
 
-      if (fGTree->GetReadEvent() < 0)
-        fGTree->GetEntry(0);
-
-      // the most likely place to find the matching event is just beyond wherever we currently are,
-      // so look there first, then loop back around to consider events previous to where we were
-      for (int evtIdx = fGTree->GetReadEvent(); evtIdx % fGTree->GetEntries() != fGTree->GetReadEvent(); evtIdx++)
+      if (fGTree)
       {
-        fGTree->GetEntry(evtIdx % fGTree->GetEntries());
+        if (fGTree->GetReadEvent() < 0)
+          fGTree->GetEntry(0);
 
-        if (fGEvt->hdr.ievent == ixnID)
-          break;
+        // the most likely place to find the matching event is just beyond wherever we currently are,
+        // so look there first, then loop back around to consider events previous to where we were
+        for (int evtIdx = fGTree->GetReadEvent(); evtIdx % fGTree->GetEntries() != fGTree->GetReadEvent(); evtIdx++)
+        {
+          fGTree->GetEntry(evtIdx % fGTree->GetEntries());
+
+          if (fGEvt->hdr.ievent == ixnID)
+            break;
+        }
+
+        if (fGEvt->hdr.ievent != ixnID)
+          throw std::runtime_error("Could not locate GENIE event record with ID = " + std::to_string(ixnID));
       }
-
-      if (fGEvt->hdr.ievent != ixnID)
-        throw std::runtime_error("Could not locate GENIE event record with ID = " + std::to_string(ixnID));
 
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
 
       ixn = &sr.mc.nu.back();
-      FillInteraction(*ixn, fGEvt);
+      if (fGTree)
+        FillInteraction(*ixn, fGEvt);
     }
     else
       ixn = &(*itIxn);
