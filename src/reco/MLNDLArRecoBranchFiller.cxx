@@ -170,14 +170,83 @@ namespace cafmaker
     //       - do the same with the reco particles
     //       - etc.
 
-    //Fill ND-LAr specificinfo in the meta branch
+    //Fill ND-LAr specific info in the meta branch
+    H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
     sr.meta.nd_lar.enabled = true;
-    sr.meta.nd_lar.run = par().runInfo().run();
-    sr.meta.nd_lar.subrun = par().runInfo().subrun();
-    sr.meta.nd_lar.event = evtIdx;
-  
-  }
+    for (const auto & runinf : run_info)
+    {
+      sr.meta.nd_lar.run = runinf.run;
+      sr.meta.nd_lar.subrun = runinf.subrun;
+      sr.meta.nd_lar.event = runinf.event;
+    }
 
+
+    // todo: figure out what to do with these
+//    int64_t num_particles;
+//    int64_t num_primaries;
+//    std::array<int64_t, 6> particle_counts;
+//    BufferView<int64_t> particle_ids;
+//    std::array<int64_t, 6> primary_counts;
+//    int64_t size;
+//    char * topology;
+//    BufferView<int64_t> truth_particle_counts;
+//    BufferView<int64_t> truth_primary_counts;
+//    char * truth_topology;
+//    BufferView<double> truth_vertex;
+//    char * units;
+//    int64_t volume_id;
+
+  }
+  // ------------------------------------------------------------------------------
+  void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
+                                                 const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
+  {
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+
+    ValidateOrCopy(truePartPassthrough.interaction_id, srTruePart.interaction_id, -1);
+    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1);
+
+    const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
+                                  {
+                                    if (strcmp(inProc, "primary") == 0)
+                                      return outType == caf::TrueParticleID::kPrimary;
+                                    else
+                                      return outType == caf::TrueParticleID::kSecondary;
+                                  };
+    const auto ancestorTypeAssgn = [](const char* inProc, caf::TrueParticleID::PartType & outType)
+                                   {
+                                     if (strcmp(inProc, "primary") == 0)
+                                       outType = caf::TrueParticleID::kPrimary;
+                                     else
+                                       outType = caf::TrueParticleID::kSecondary;
+                                   };
+    ValidateOrCopy(truePartPassthrough.ancestor_creation_process, srTruePart.ancestor_id.type, caf::TrueParticleID::kUnknown,
+                   ancestorTypeComp, ancestorTypeAssgn);
+
+    // todo: this is incorrect; the track_id (what we have) won't be the same as the index of the ancestor SRParticle (what we want).
+    //       to fix this I think we need access to the SRTrueInteraction for this particle too, so we can dig around in its particle vectors
+    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.part, -1);
+
+    ValidateOrCopy(truePartPassthrough.parent_track_id, srTruePart.parent, -1);
+
+    // todo: need to figure out how to translate "1::91" etc. to the enums...
+//    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
+
+    ValidateOrCopy(truePartPassthrough.start_point[0], srTruePart.start_pos.x, NaN);
+    ValidateOrCopy(truePartPassthrough.start_point[1], srTruePart.start_pos.y, NaN);
+    ValidateOrCopy(truePartPassthrough.start_point[2], srTruePart.start_pos.z, NaN);
+
+    ValidateOrCopy(truePartPassthrough.end_point[0], srTruePart.end_pos.x, NaN);
+    ValidateOrCopy(truePartPassthrough.end_point[1], srTruePart.end_pos.y, NaN);
+    ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN);
+
+    ValidateOrCopy(truePartPassthrough.energy_init, srTruePart.p.E, NaN);
+    ValidateOrCopy(truePartPassthrough.momentum[0], srTruePart.p.px, NaN);
+    ValidateOrCopy(truePartPassthrough.momentum[1], srTruePart.p.py, NaN);
+    ValidateOrCopy(truePartPassthrough.momentum[2], srTruePart.p.pz, NaN);
+
+
+  }
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
                                                     const cafmaker::types::dlp::TrueInteraction & ptTrueInt /* pt = "pass-through" */) const
@@ -209,7 +278,7 @@ namespace cafmaker
 
     // int64_t image_id;      // ID of event passed to reco within the file.  use the event ID instead.
     // bool is_contained;     // If the whole event is contained.  we don't have a landing spot for this right now
-    // bool is_neutrino;      // We really want the initiating PDG instead :-\
+    // bool is_neutrino;      // We really want the initiating PDG instead :-/
     // bool is_principal_match;          // for now at least we're going to focus on matching from the Reco end first
     // BufferView<int64_t> match;        //   |
     // BufferView<float> match_overlap;  //   |
@@ -358,8 +427,10 @@ namespace cafmaker
       caf::SRRecoParticle reco_particle;
       if(part.is_primary) reco_particle.primary  = true;
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
-      reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
+      reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       reco_particle.E = part.depositions_sum;
+      reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
+      reco_particle.pdg = part.pdg_code;
       //To do: momentum mcs is currently filled with just -1
 /*      reco_particle.p.x = part.momentum_mcs[0];
       reco_particle.p.y = part.momentum_mcs[1];
@@ -413,7 +484,7 @@ namespace cafmaker
         abort();
       }
       sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
-  
+
     }
   }
 
@@ -434,7 +505,7 @@ namespace cafmaker
       // fill shower variables
       track.Evis = part.depositions_sum;
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
-      track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
+      track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       track.enddir = caf::SRVector3D(part.end_dir[0], part.end_dir[1], part.end_dir[2]);
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
@@ -451,14 +522,14 @@ namespace cafmaker
         std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track)); 
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
     }
   }
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                                             caf::StandardRecord &sr) const
-  { 
+  {
     for (const auto & part : particles)
     {
       if (part.semantic_type != types::dlp::SemanticType::kShower)
@@ -482,8 +553,8 @@ namespace cafmaker
         std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower)); 
-     
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
+
     }
   }
 
