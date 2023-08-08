@@ -22,6 +22,8 @@
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "util/Progress.h"
+
 #include "duneanaobj/StandardRecord/SREnums.h"
 
 namespace progopt = boost::program_options;
@@ -140,9 +142,97 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   ND-LAr + TMS matching\n";
   }
 
+  if (recoFillers.size() > 1)
+  {
+    std::cerr << "While the conversion to looping over reco triggers is happening, "
+              << "ND_CAFMaker can currently only accept ONE reco file (ND-LAr/2x2, TMS/MINERvA, or SAND).\n"
+              << "This restriction will be lifted soon once trigger matching is in place.\n"
+              << "You supplied " << recoFillers.size() << " of them.\n"
+              << "Abort.\n";
+  }
 
   return recoFillers;
 }
+
+// -------------------------------------------------
+// todo: implement the logic
+bool doTriggersMatch(const cafmaker::Trigger&, const cafmaker::Trigger&)
+{
+  return false;
+}
+
+// -------------------------------------------------
+// return type: each element of outer vector corresponds to one group of matched triggers
+std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByFiller)
+{
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
+
+  auto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
+  {
+    return t1.triggerTime_s < t2.triggerTime_s || (t1.triggerTime_s  == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
+  };
+
+  // don't assume input comes in sorted
+  for (auto & fillerTrigPair : triggersByFiller)
+    std::sort(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), triggerTimeCmp);
+
+  while (!triggersByFiller.empty())
+  {
+    // look at the first element of each reco filler stream.
+    std::vector<const cafmaker::Trigger*> firstTrigs;
+    std::transform(triggersByFiller.begin(), triggersByFiller.end(), std::back_inserter(firstTrigs),
+                   [](const std::pair<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> & pair)
+                   {
+                     return &pair.second[0];
+                   });
+
+    // the earliest one will be our next group seed.
+    auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(),
+                                        [](const cafmaker::Trigger * t1, const cafmaker::Trigger * t2)
+                                        {
+                                          return t1->triggerTime_s < t2->triggerTime_s || (t1->triggerTime_s  == t2->triggerTime_s && t1->triggerTime_ns < t2->triggerTime_ns);
+                                        }
+    );
+
+    // pull that one out of its original container so we don't reconsider it in the next loop iteration
+    auto seedFillerIt = triggersByFiller.begin();
+    std::advance(seedFillerIt, std::distance(firstTrigs.begin(), groupSeedIt));
+    ret.push_back({{seedFillerIt->first, std::move(seedFillerIt->second.front())}});  // note that we're stealing the contents of the element from its deque since we're about to pop it anyway
+    seedFillerIt->second.pop_front();
+
+    // now consider the other reco filler streams.
+    // do they have any events in them that should go in this group?
+    std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> & trigGroup = ret.back();
+    const cafmaker::Trigger & trigSeed = trigGroup.front().second;
+    for (auto & fillerTrigPair : triggersByFiller)
+    {
+      // we don't want to consider the stream we're already working with.
+      // (but don't continue, because we want to remove this stream from the
+      //  map if it's empty, per below)
+      if (fillerTrigPair.first != seedFillerIt->first)
+      {
+        // we will only take at most one trigger from each of the other streams.
+        // since the seed was the earliest one out of all the triggers,
+        // we only need to check the first one in each other stream
+        if (doTriggersMatch( trigSeed, fillerTrigPair.second.front()))
+        {
+            trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
+            fillerTrigPair.second.pop_front();
+        }
+      }
+
+      // if there are no more elements in this reco filler stream,
+      // remove them from consideration
+      if (fillerTrigPair.second.empty())
+        triggersByFiller.erase(fillerTrigPair.first);
+
+    }
+  }
+
+  return ret;
+}
+
 
 // -------------------------------------------------
 // main loop function
@@ -159,35 +249,50 @@ void loop(CAF& caf,
     gtree->SetBranchAddress("gmcrec", &caf.mcrec);
   }
 
-  // if this is a data file, there won't be any truth, of course
-  std::unique_ptr<cafmaker::TruthMatcher> truthMatcher;
-  if (gtree)
-    truthMatcher = std::make_unique<cafmaker::TruthMatcher>(gtree, caf.mcrec);
+  // if this is a data file, there won't be any truth, of course,
+  // but the TruthMatching knows not to try to do anything with a null gtree
+  cafmaker::TruthMatcher truthMatcher(gtree, caf.mcrec);
+
+  // figure out which triggers we need to loop over between the various reco fillers
+  std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
+  for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+    triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> groupedTriggers = buildTriggerList(triggersByRBF);
+
+  // sanity checks
+  if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
+  {
+    std::cerr << "Requested starting event (" << par().cafmaker().first() << ") "
+              << "is larger than total number of triggers (" << groupedTriggers.size() << ".\n"
+              << "Do nothing ...\n";
+    return;
+  }
+
+  int start = par().cafmaker().first();
+  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : static_cast<int>(groupedTriggers.size()) - par().cafmaker().first();
+  if (N < 1)
+  {
+    std::cerr << "Requested number of events (" << N << ") is non-positive!  Abort.\n";
+    abort();
+  }
 
 
   // Main event loop
-  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
-  int start = par().cafmaker().first();
-
-  for( int ii = start; ii < start + N; ++ii ) {
-
-    if( ii % 10000 == 0 )
-      printf( "Event %d (%d of %d)...\n", ii, (ii-start)+1, N );
+  cafmaker::Progress progBar("Processing triggers");
+  for( int ii = start; ii < start + N; ++ii )
+  {
+    progBar.SetProgress( static_cast<double>(ii - start)/N );
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-   //old SR variables
-
-  //  caf.sr.meta_run = par().runInfo().run();
-   // caf.sr.meta_subrun = par().runInfo().subrun();
- //   caf.sr.isFD = 0;
-  //  caf.sr.isFHC = par().runInfo().fhc();
-    caf.sr.beam.pulsepot = caf.pot;
 
     // hand off to the correct reco filler(s).
-    for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(ii, caf.sr, par, truthMatcher.get());
+    for (const auto & fillerTrigPair : groupedTriggers[ii])
+    {
+      std::cout << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+      fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+    }
 
     caf.fill();
   }
@@ -216,6 +321,12 @@ int main( int argc, char const *argv[] )
   {
     gf = new TFile(par().cafmaker().ghepFile().c_str());   //reading genie file
     gtree = (TTree *) gf->Get("gtree");
+    if (!gtree)
+    {
+      std::cerr << "Could not load TTree 'gtree' from supplied .ghep file: " << par().cafmaker().ghepFile() << "\n";
+      std::cerr << "Abort.\n";
+      abort();
+    }
   }
 
   loop( caf, par, gtree, getRecoFillers(par) );

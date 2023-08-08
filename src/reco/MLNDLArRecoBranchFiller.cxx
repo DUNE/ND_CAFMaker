@@ -124,7 +124,9 @@ namespace cafmaker
                  {std::type_index(typeid(TrueParticle)),     "truth_particles"},
                  {std::type_index(typeid(TrueInteraction)),  "truth_interactions"},
                  {std::type_index(typeid(Event)),            "events"},
-                 {std::type_index(typeid(RunInfo)), "run_info"}})
+                 {std::type_index(typeid(RunInfo)), "run_info"}}),
+      fTriggers(),
+      fLastTriggerReqd(fTriggers.end())
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
@@ -133,31 +135,43 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void
-  MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
+  MLNDLArRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
                                              const cafmaker::Params &par,
                                              const TruthMatcher *truthMatcher) const
 
   {
-    H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(evtIdx);
-    H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(evtIdx);
+    // figure out where in our list of triggers this event index is.
+    // we should always be looking forwards, since we expect to be traversing in that direction
+    auto it_start = (fLastTriggerReqd == fTriggers.end()) ? fTriggers.cbegin() : fLastTriggerReqd;
+    auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
+    if (itTrig == fTriggers.end())
+    {
+      std::cerr << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
+      abort();
+    }
+    std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
+
+
+    std::cout << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
+    H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
+    H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
     FillInteractions(interactions, trueInteractions, truthMatcher, sr);
 
-    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(evtIdx);
-    H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(evtIdx);
+    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(idx);
+    H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(idx);
     FillParticles(particles, trueParticles, truthMatcher, sr);
 
     FillTracks(particles, sr);
     FillShowers(particles, sr);
 
-    // todo:
-    // now do some sanity checks:
-    // compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
-    // do the same with the reco particles
-    // etc.
+    // todo: now do some sanity checks:
+    //       - compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
+    //       - do the same with the reco particles
+    //       - etc.
 
-    //Fill ND-LAr specificinfo in the meta branch
-    H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(evtIdx);
+    //Fill ND-LAr specific info in the meta branch
+    H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
     sr.meta.nd_lar.enabled = true;
     for (const auto & runinf : run_info)
     {
@@ -167,8 +181,72 @@ namespace cafmaker
     }
 
 
-  }
+    // todo: figure out what to do with these
+//    int64_t num_particles;
+//    int64_t num_primaries;
+//    std::array<int64_t, 6> particle_counts;
+//    BufferView<int64_t> particle_ids;
+//    std::array<int64_t, 6> primary_counts;
+//    int64_t size;
+//    char * topology;
+//    BufferView<int64_t> truth_particle_counts;
+//    BufferView<int64_t> truth_primary_counts;
+//    char * truth_topology;
+//    BufferView<double> truth_vertex;
+//    char * units;
+//    int64_t volume_id;
 
+  }
+  // ------------------------------------------------------------------------------
+  void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
+                                                 const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
+  {
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+
+    ValidateOrCopy(truePartPassthrough.interaction_id, srTruePart.interaction_id, -1);
+    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1);
+
+    const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
+                                  {
+                                    if (strcmp(inProc, "primary") == 0)
+                                      return outType == caf::TrueParticleID::kPrimary;
+                                    else
+                                      return outType == caf::TrueParticleID::kSecondary;
+                                  };
+    const auto ancestorTypeAssgn = [](const char* inProc, caf::TrueParticleID::PartType & outType)
+                                   {
+                                     if (strcmp(inProc, "primary") == 0)
+                                       outType = caf::TrueParticleID::kPrimary;
+                                     else
+                                       outType = caf::TrueParticleID::kSecondary;
+                                   };
+    ValidateOrCopy(truePartPassthrough.ancestor_creation_process, srTruePart.ancestor_id.type, caf::TrueParticleID::kUnknown,
+                   ancestorTypeComp, ancestorTypeAssgn);
+
+    // todo: this is incorrect; the track_id (what we have) won't be the same as the index of the ancestor SRParticle (what we want).
+    //       to fix this I think we need access to the SRTrueInteraction for this particle too, so we can dig around in its particle vectors
+    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.part, -1);
+
+    ValidateOrCopy(truePartPassthrough.parent_track_id, srTruePart.parent, -1);
+
+    // todo: need to figure out how to translate "1::91" etc. to the enums...
+//    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
+
+    ValidateOrCopy(truePartPassthrough.start_point[0], srTruePart.start_pos.x, NaN);
+    ValidateOrCopy(truePartPassthrough.start_point[1], srTruePart.start_pos.y, NaN);
+    ValidateOrCopy(truePartPassthrough.start_point[2], srTruePart.start_pos.z, NaN);
+
+    ValidateOrCopy(truePartPassthrough.end_point[0], srTruePart.end_pos.x, NaN);
+    ValidateOrCopy(truePartPassthrough.end_point[1], srTruePart.end_pos.y, NaN);
+    ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN);
+
+    ValidateOrCopy(truePartPassthrough.energy_init, srTruePart.p.E, NaN);
+    ValidateOrCopy(truePartPassthrough.momentum[0], srTruePart.p.px, NaN);
+    ValidateOrCopy(truePartPassthrough.momentum[1], srTruePart.p.py, NaN);
+    ValidateOrCopy(truePartPassthrough.momentum[2], srTruePart.p.pz, NaN);
+
+
+  }
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
                                                     const cafmaker::types::dlp::TrueInteraction & ptTrueInt /* pt = "pass-through" */) const
@@ -200,7 +278,7 @@ namespace cafmaker
 
     // int64_t image_id;      // ID of event passed to reco within the file.  use the event ID instead.
     // bool is_contained;     // If the whole event is contained.  we don't have a landing spot for this right now
-    // bool is_neutrino;      // We really want the initiating PDG instead :-\
+    // bool is_neutrino;      // We really want the initiating PDG instead :-/
     // bool is_principal_match;          // for now at least we're going to focus on matching from the Reco end first
     // BufferView<int64_t> match;        //   |
     // BufferView<float> match_overlap;  //   |
@@ -481,6 +559,57 @@ namespace cafmaker
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
 
     }
+  }
+
+  // ------------------------------------------------------------------------------
+  std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    auto runInfos = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(-1); // get ALL the RunInfo products
+
+    std::deque<Trigger> triggers;
+    if (fTriggers.empty())
+    {
+      std::cout << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << runInfos.size() << " ND-LAr RunInfo products:\n";
+      fTriggers.reserve(runInfos.size());
+      for (const cafmaker::types::dlp::RunInfo &runInfo: runInfos)
+      {
+        const int placeholderTriggerType = 0;
+        // todo: this check needs to be fixed in when we have trigger type info
+        if (triggerType >= 0 && triggerType != placeholderTriggerType)
+        {
+          std::cout << "    skipping runinfo with event=" << runInfo.event << "\n";
+          continue;
+        }
+
+        fTriggers.emplace_back();
+        Trigger & trig = fTriggers.back();
+        trig.evtID = runInfo.event;
+
+        // todo: these are placeholder values until we can propagate enough info through the reco files
+        trig.triggerType = 0;
+        trig.triggerTime_s = runInfo.event;
+        trig.triggerTime_ns = 0.;
+
+        triggers.push_back(trig);
+
+        std::cout << "  added trigger:  evtID=" << trig.evtID
+                  << ", triggerType=" << trig.triggerType
+                  << ", triggerTime_s=" << trig.triggerTime_s
+                  << ", triggerTime_ns=" << trig.triggerTime_ns
+                  << "\n";
+      }
+      fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
+    }
+    else
+    {
+      for (const Trigger & trigger : fTriggers)
+      {
+        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+          triggers.push_back(trigger);
+      }
+    }
+
+    return triggers;
   }
 
 } // namespace cafmaker

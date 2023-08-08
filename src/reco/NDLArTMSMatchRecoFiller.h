@@ -19,10 +19,12 @@ namespace cafmaker
     public:
       NDLArTMSMatchRecoFiller();
 
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
+
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
 
-      void _FillRecoBranches(std::size_t evtIdx,
+      void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;

@@ -41,7 +41,7 @@ namespace cafmaker
   // ---------------------------------------------------------------------------
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
-  void TMSRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
+  void TMSRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                               caf::StandardRecord &sr,
                                               const cafmaker::Params &par,
                                               const TruthMatcher *truthMatcher) const
@@ -85,4 +85,11 @@ namespace cafmaker
 //    }
 
   }
+
+  // todo: this is a placeholder
+  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    return std::deque<Trigger>();
+  }
+
 } // end namespace
