@@ -42,7 +42,7 @@ namespace cafmaker
   template <typename InputType, typename OutputType>
   void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal)
   {
-    const auto defaultComp = [](const decltype(input) & a, const decltype(target) &b) -> bool { return a == b; };
+    const auto defaultComp = [](const decltype(input) & a, const decltype(target) &b) -> bool { return static_cast<OutputType>(a) == b; };
     const auto defaultAssgn = [](const decltype(input) & a, decltype(target) &b) {  b = a; };
     return ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn);
   }

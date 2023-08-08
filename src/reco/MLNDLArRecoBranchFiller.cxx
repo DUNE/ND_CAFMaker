@@ -166,7 +166,7 @@ namespace cafmaker
       sr.meta.nd_lar.event = runinf.event;
     }
 
-  
+
   }
 
   // ------------------------------------------------------------------------------
@@ -220,7 +220,6 @@ namespace cafmaker
 
     // NuInteractionType nu_interaction_type;    // this appears to be identical to nu_interaction_mode
 
-
     // todo: figure out what to do with these
 //    int64_t num_particles;
 //    int64_t num_primaries;
@@ -236,6 +235,10 @@ namespace cafmaker
 //    char * units;
 //    int64_t volume_id;
 
+    // todo: add these when new StandardRecord is in place
+    H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(evtIdx);
+    //FillParticles(particles, sr);
+    //FillInteractions(interactions, sr);
   }
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
@@ -349,7 +352,7 @@ namespace cafmaker
       caf::SRRecoParticle reco_particle;
       if(part.is_primary) reco_particle.primary  = true;
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
-      reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
+      reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       reco_particle.E = part.depositions_sum;
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
       reco_particle.pdg = part.pdg_code;
@@ -406,7 +409,7 @@ namespace cafmaker
         abort();
       }
       sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
-  
+
     }
   }
 
@@ -427,7 +430,7 @@ namespace cafmaker
       // fill shower variables
       track.Evis = part.depositions_sum;
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
-      track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]); 
+      track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       track.enddir = caf::SRVector3D(part.end_dir[0], part.end_dir[1], part.end_dir[2]);
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
@@ -444,14 +447,14 @@ namespace cafmaker
         std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track)); 
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
     }
   }
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                                             caf::StandardRecord &sr) const
-  { 
+  {
     for (const auto & part : particles)
     {
       if (part.semantic_type != types::dlp::SemanticType::kShower)
@@ -475,8 +478,8 @@ namespace cafmaker
         std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower)); 
-     
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
+
     }
   }
 
