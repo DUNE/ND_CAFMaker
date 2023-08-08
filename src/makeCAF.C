@@ -22,6 +22,9 @@
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "util/Progress.h"
+
+#include "duneanaobj/StandardRecord/SREnums.h"
 
 namespace progopt = boost::program_options;
 
@@ -148,12 +151,10 @@ void loop(CAF& caf,
 
 
   // Main event loop
-  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
-  int start = par().cafmaker().first();
-  for( int ii = start; ii < start + N; ++ii ) {
-
-    if( ii % 100 == 0 )
-      printf( "Event %d (%d of %d)...\n", ii, (ii-start)+1, N );
+  cafmaker::Progress progBar("Processing triggers");
+  for( int ii = start; ii < start + N; ++ii )
+  {
+    progBar.SetProgress( static_cast<double>(ii - start)/N );
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();
