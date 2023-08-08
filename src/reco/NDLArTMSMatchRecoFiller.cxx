@@ -10,7 +10,7 @@ namespace cafmaker
   }
 
   void
-  NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
+  NDLArTMSMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
                                              const cafmaker::Params &par,
                                              const TruthMatcher *truthMatcher) const
@@ -78,4 +78,11 @@ namespace cafmaker
       }
     }
   }
+
+  // todo: this is a placeholder
+  std::deque<Trigger> NDLArTMSMatchRecoFiller::GetTriggers(int triggerType) const
+  {
+    return std::deque<Trigger>();
+  }
+
 }

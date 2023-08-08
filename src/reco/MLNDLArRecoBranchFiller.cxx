@@ -123,7 +123,10 @@ namespace cafmaker
                  {std::type_index(typeid(Interaction)),      "interactions"},
                  {std::type_index(typeid(TrueParticle)),     "truth_particles"},
                  {std::type_index(typeid(TrueInteraction)),  "truth_interactions"},
-                 {std::type_index(typeid(Event)),            "events"}})
+                 {std::type_index(typeid(Event)),            "events"},
+                 {std::type_index(typeid(RunInfo)), "run_info"}}),
+      fTriggers(),
+      fLastTriggerReqd(fTriggers.end())
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
@@ -132,27 +135,40 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void
-  MLNDLArRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
+  MLNDLArRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
                                              const cafmaker::Params &par,
                                              const TruthMatcher *truthMatcher) const
 
   {
-    H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(evtIdx);
-    H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(evtIdx);
+    // figure out where in our list of triggers this event index is.
+    // we should always be looking forwards, since we expect to be traversing in that direction
+    auto it_start = (fLastTriggerReqd == fTriggers.end()) ? fTriggers.cbegin() : fLastTriggerReqd;
+    auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
+    if (itTrig == fTriggers.end())
+    {
+      std::cerr << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
+      abort();
+    }
+    std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
+
+
+    std::cout << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
+    H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
+    H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
     FillInteractions(interactions, trueInteractions, truthMatcher, sr);
 
-    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(evtIdx);
-    H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(evtIdx);
+    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(idx);
+    H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(idx);
     FillParticles(particles, trueParticles, truthMatcher, sr);
 
     FillTracks(particles, sr);
     FillShowers(particles, sr);
 
-    // now do some sanity checks:
-    // compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
-    // do the same with the reco particles
-    // etc.
+    // todo: now do some sanity checks:
+    //       - compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
+    //       - do the same with the reco particles
+    //       - etc.
 
     //Fill ND-LAr specificinfo in the meta branch
     sr.meta.nd_lar.enabled = true;
@@ -469,6 +485,57 @@ namespace cafmaker
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower)); 
      
     }
+  }
+
+  // ------------------------------------------------------------------------------
+  std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    auto runInfos = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(-1); // get ALL the RunInfo products
+
+    std::deque<Trigger> triggers;
+    if (fTriggers.empty())
+    {
+      std::cout << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << runInfos.size() << " ND-LAr RunInfo products:\n";
+      fTriggers.reserve(runInfos.size());
+      for (const cafmaker::types::dlp::RunInfo &runInfo: runInfos)
+      {
+        const int placeholderTriggerType = 0;
+        // todo: this check needs to be fixed in when we have trigger type info
+        if (triggerType >= 0 && triggerType != placeholderTriggerType)
+        {
+          std::cout << "    skipping runinfo with event=" << runInfo.event << "\n";
+          continue;
+        }
+
+        fTriggers.emplace_back();
+        Trigger & trig = fTriggers.back();
+        trig.evtID = runInfo.event;
+
+        // todo: these are placeholder values until we can propagate enough info through the reco files
+        trig.triggerType = 0;
+        trig.triggerTime_s = runInfo.event;
+        trig.triggerTime_ns = 0.;
+
+        triggers.push_back(trig);
+
+        std::cout << "  added trigger:  evtID=" << trig.evtID
+                  << ", triggerType=" << trig.triggerType
+                  << ", triggerTime_s=" << trig.triggerTime_s
+                  << ", triggerTime_ns=" << trig.triggerTime_ns
+                  << "\n";
+      }
+      fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
+    }
+    else
+    {
+      for (const Trigger & trigger : fTriggers)
+      {
+        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+          triggers.push_back(trigger);
+      }
+    }
+
+    return triggers;
   }
 
 } // namespace cafmaker

@@ -31,8 +31,10 @@ namespace cafmaker
     public:
       MLNDLArRecoBranchFiller(const std::string &h5filename);
 
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
+
     protected:
-      void _FillRecoBranches(std::size_t evtIdx,
+      void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;
@@ -56,11 +58,13 @@ namespace cafmaker
 
       void FillTrueParticle(caf::SRTrueParticle & srTruePart,
                             const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const;
-      
+
       void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
                                const cafmaker::types::dlp::TrueInteraction & trueIntPassthrough) const;
 
       NDLArDLPH5DatasetReader fDSReader;
+      mutable std::vector<cafmaker::Trigger> fTriggers;
+      mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
 
   };  // class MLNDLArRecoBranchFiller
 
