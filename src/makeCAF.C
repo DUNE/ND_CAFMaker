@@ -236,14 +236,14 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 
 // -------------------------------------------------
 // main loop function
-void loop(CAF& caf,
+void loop(CAF &caf,
           cafmaker::Params &par,
-          TTree * gtree,
-          const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> & recoFillers)
+          TTree *contGTree,
+          TTree *uncontGTree,
+          const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> &recoFillers)
 {
 
-  // Enable ND_LAr detector
-  if (gtree)
+  for (TTree * tree : {contGTree, uncontGTree})
   {
     if (!tree)
       continue;
@@ -255,7 +255,7 @@ void loop(CAF& caf,
 
   // if this is a data file, there won't be any truth, of course,
   // but the TruthMatching knows not to try to do anything with a null gtree
-  cafmaker::TruthMatcher truthMatcher(gtree, caf.mcrec);
+  cafmaker::TruthMatcher truthMatcher(contGTree, uncontGTree, caf.mcrec);
 
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
@@ -319,23 +319,33 @@ int main( int argc, char const *argv[] )
 
   CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF());
 
-  TFile * gf = nullptr;
-  TTree * gtree = nullptr;
-  if (!par().cafmaker().ghepFile().empty())
+  struct GENIETree
   {
-    gf = new TFile(par().cafmaker().ghepFile().c_str());   //reading genie file
-    gtree = (TTree *) gf->Get("gtree");
-    if (!gtree)
+    GENIETree(const std::string& fname)
+      : f(std::make_unique<TFile>(fname.c_str())), tree(dynamic_cast<TTree*>(f->Get("gtree")))
     {
-      std::cerr << "Could not load TTree 'gtree' from supplied .ghep file: " << par().cafmaker().ghepFile() << "\n";
-      std::cerr << "Abort.\n";
-      abort();
+      if (!tree)
+      {
+        std::cerr << "Could not load TTree 'gtree' from supplied .ghep file: " << fname << "\n";
+        std::cerr << "Abort.\n";
+        abort();
+      }
     }
-  }
 
-  loop( caf, par, gtree, getRecoFillers(par) );
+    std::unique_ptr<TFile> f;
+    TTree * tree;
+  };
+  std::map<std::string, GENIETree> treeBundles;
+  treeBundles.emplace(std::piecewise_construct,
+                      std::forward_as_tuple("contained"),
+                      std::forward_as_tuple(par().cafmaker().contNuGHEPFile().c_str()));
+  treeBundles.emplace(std::piecewise_construct,
+                      std::forward_as_tuple("uncontained"),
+                      std::forward_as_tuple(par().cafmaker().uncontNuGHEPFile().c_str()));
 
-  caf.version = 4;
+  loop(caf, par, treeBundles.at("contained").tree, treeBundles.at("uncontained").tree, getRecoFillers(par));
+
+  caf.version = 5;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
 
