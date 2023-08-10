@@ -114,10 +114,11 @@ namespace cafmaker
 
     nu.id = gEvt->hdr.ievent;  //todo: need to make sure this ID is the one we get all the way out the other end from det sim
 
-    TLorentzVector vtx = *(event->Vertex());
-    nu.vtx = vtx.Vect();
-    // nu.isvtxcont =    // todo: how do we get the right geometry info here?
-    nu.time = vtx.T();
+    // todo: GENIE doesn't know about the detector geometry.  do we just leave these for the passthrough from G4?
+//    TLorentzVector vtx = *(event->Vertex());
+//    nu.vtx = vtx.Vect();
+//      nu.isvtxcont =
+//    nu.time = vtx.T();
 
     nu.pdg = in->InitState().ProbePdg();
     nu.pdgorig = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
@@ -170,10 +171,11 @@ namespace cafmaker
       caf::SRTrueParticle part;
       part.pdg = p->Pdg();
       part.interaction_id = nu.id;
-      part.time = nu.time;
-
-      part.p = *p->P4();
-      part.start_pos = p->X4()->Vect();
+      // todo: original GENIE events haven't been transferred to det coordinates
+      //       or bunched in spill time structure yet.  just leave out?
+//      part.time = nu.time;
+//      part.p = *p->P4();
+//      part.start_pos = p->X4()->Vect();
 
       // remaining fields need to be filled in with post-G4 info
 
