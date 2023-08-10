@@ -101,7 +101,7 @@ namespace cafmaker
   class TruthMatcher
   {
     public:
-      TruthMatcher(TTree * gTree, const genie::NtpMCEventRecord * gEvt);
+      TruthMatcher(TTree * contGTree, TTree * uncontGTree, const genie::NtpMCEventRecord * gEvt);
 
       /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
@@ -147,12 +147,13 @@ namespace cafmaker
                                                   std::function<bool(const genie::NtpMCEventRecord*)> genieCmp,
                                                   bool createNew = true) const;
 
-      bool HaveGENIE() const { return fGTree != nullptr; }
+      bool HaveGENIE() const { return fContNuGTree != nullptr || fUncontNuGTree != nullptr; }
 
     private:
       static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt);
 
-      mutable TTree * fGTree;
+      mutable TTree * fContNuGTree;           ///< GENIE tree for 'contained' neutrinos (near/inside the detector volumes)
+      mutable TTree * fUncontNuGTree;         ///< GENIE tree for 'uncontained' neutrinos (rock and/or ND hall interactions)
       const genie::NtpMCEventRecord * fGEvt;
   };
 }

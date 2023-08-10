@@ -108,9 +108,11 @@ namespace cafmaker
   }
 
 
-  // ------------------------------------------------------------
-  TruthMatcher::TruthMatcher(TTree *gTree, const genie::NtpMCEventRecord *gEvt)
-    : fGTree(gTree), fGEvt(gEvt)
+// ------------------------------------------------------------
+  TruthMatcher::TruthMatcher(TTree * contGTree,
+                             TTree * uncontGTree,
+                             const genie::NtpMCEventRecord *gEvt)
+    : fContNuGTree(contGTree), fUncontNuGTree(uncontGTree), fGEvt(gEvt)
   {}
 
   // --------------------------------------------------------------
@@ -272,58 +274,72 @@ namespace cafmaker
   {
     caf::SRTrueInteraction * ixn = nullptr;
 
-    // if we can't find a GENIE record with matching ID, we may need to make a new one
+    // if we can't find a SRTrueInteraction with matching ID, we may need to make a new one
     if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), srTrueIxnCmp);
          itIxn == sr.mc.nu.end() )
     {
       if (!createNew)
         throw std::runtime_error("True interaction not found in this StandardRecord");
 
-      if (fGTree)
+      std::cout << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
+
+      // todo: when we finally have interaction IDs that conform to the edep-sim vertexID convention,
+      //       we can use those to only search the correct GENIE true (contained or uncontained).
+      //       for now, though, we need to look at both.
+      bool foundEv = false;
+      std::cout << "     examining GENIE records...\n ";
+      for (TTree * tree: {fContNuGTree, fUncontNuGTree})
       {
-        std::cout << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
-        long int lastReadEvt = fGTree->GetReadEvent();
-        if (fGTree->GetReadEvent() < 0)
+        if (!tree)
+          continue;
+
+        // if we already found the event in the first tree
+        if (foundEv)
+          break;
+
+        long int lastReadEvt = tree->GetReadEvent();
+        if (tree->GetReadEvent() < 0)
         {
-          fGTree->GetEntry(0);
+          tree->GetEntry(0);
           lastReadEvt = -1;
         }
 
-        std::cout << "     examining GENIE records...\n ";
         // the most likely place to find the matching event is just beyond wherever we currently are,
         // so look there first, then loop back around to consider events previous to where we were
-        std::cout << "       last read evt = " << lastReadEvt << ", total entries = " << fGTree->GetEntries() << "\n";
-        for (long int evtIdx = lastReadEvt + 1; evtIdx % fGTree->GetEntries() != lastReadEvt; evtIdx++)
+        std::cout << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries() << "\n";
+        for (long int evtIdx = lastReadEvt + 1; evtIdx % tree->GetEntries() != lastReadEvt; evtIdx++)
         {
-          int wrappedIdx = evtIdx % fGTree->GetEntries();
-          std::cout << " " << wrappedIdx;
-          fGTree->GetEntry(wrappedIdx);
+          int wrappedIdx = evtIdx % tree->GetEntries();
+//          std::cout << " " << wrappedIdx;
+          tree->GetEntry(wrappedIdx);
 
           if (lastReadEvt < 0)
             lastReadEvt = evtIdx;
 
           if (genieCmp(fGEvt))
+          {
+            foundEv = true;
             break;
+          }
         }
         std::cout << "\n";
+      } // for (tree)
 
-        // todo: re-enable this check when we can distinguish between rock mu and contained nu
-//        if (!genieCmp(fGEvt))
-//          throw std::runtime_error("Could not locate GENIE event record");
-      }
+      if (HaveGENIE() && !foundEv)
+        throw std::runtime_error("Could not locate GENIE event record!");
 
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
 
       ixn = &sr.mc.nu.back();
-      if (fGTree && genieCmp(fGEvt))
+      if (HaveGENIE())
       {
         std::cout << "      --> GENIE record found.  copying...\n";
         FillInteraction(*ixn, fGEvt);
       }
       else
         std::cout << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
-    }
+    } // if ( didn't find a matching SRTrueInteraction )
     else
     {
       std::cout << "   Found previously created SRTrueInteraction.  Returning that.\n";
