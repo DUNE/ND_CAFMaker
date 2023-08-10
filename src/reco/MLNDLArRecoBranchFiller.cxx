@@ -272,17 +272,24 @@ namespace cafmaker
 //    int64_t volume_id;
 
   }
+
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    ValidateOrCopy(truePartPassthrough.interaction_id, srTruePart.interaction_id, -1);
+    ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0);
+    ValidateOrCopy(truePartPassthrough.track_id, srTruePart.G4ID, -1);
+
+    // note: cafmaker::types::dlp::TrueParticle::interaction_id refers to the id in the MLReco stack.
+    //        it does NOT give the GENIE interaction ID, which is what SRTrueParticle wants
+//    ValidateOrCopy(truePartPassthrough.interaction_id, srTruePart.interaction_id, -1);
     ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1);
 
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
+      // fixme: the process codes don't look like this
       if (strcmp(inProc, "primary") == 0)
         return outType == caf::TrueParticleID::kPrimary;
       else
@@ -290,6 +297,7 @@ namespace cafmaker
     };
     const auto ancestorTypeAssgn = [](const char* inProc, caf::TrueParticleID::PartType & outType)
     {
+      // fixme: the process codes don't look like this
       if (strcmp(inProc, "primary") == 0)
         outType = caf::TrueParticleID::kPrimary;
       else
@@ -298,7 +306,7 @@ namespace cafmaker
     ValidateOrCopy(truePartPassthrough.ancestor_creation_process, srTruePart.ancestor_id.type, caf::TrueParticleID::kUnknown,
                    ancestorTypeComp, ancestorTypeAssgn);
 
-    // todo: this is incorrect; the track_id (what we have) won't be the same as the index of the ancestor SRParticle (what we want).
+    // fixme: this is incorrect; the track_id (what we have) won't be the same as the index of the ancestor SRParticle (what we want).
     //       to fix this I think we need access to the SRTrueInteraction for this particle too, so we can dig around in its particle vectors
     ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.part, -1);
 
