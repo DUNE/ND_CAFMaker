@@ -8,7 +8,7 @@
 //#include "nusystematics/artless/response_helper.hh"
 
 CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF)
-  : rh(rw_fhicl_filename)
+  : pot(std::numeric_limits<decltype(pot)>::signaling_NaN()),  rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
   cafSR = new TTree("cafTree", "cafTree");

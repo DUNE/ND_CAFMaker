@@ -245,8 +245,12 @@ void loop(CAF& caf,
   // Enable ND_LAr detector
   if (gtree)
   {
-    caf.pot = gtree->GetWeight();
-    gtree->SetBranchAddress("gmcrec", &caf.mcrec);
+    if (!tree)
+      continue;
+
+    // yes, we're attaching both trees to the same record.
+    // we'll never be using them at the same time, so it should be ok.
+    tree->SetBranchAddress("gmcrec", &caf.mcrec);
   }
 
   // if this is a data file, there won't be any truth, of course,
