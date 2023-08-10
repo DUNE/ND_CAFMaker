@@ -125,6 +125,21 @@ namespace cafmaker
       caf::SRTrueParticle &
       GetTrueParticle(caf::StandardRecord &sr, caf::SRTrueInteraction& ixn, int G4ID, bool isPrimary, bool createNew = true) const;
 
+      /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
+      ///
+      /// \param sr         The caf::StandardRecord in question
+      /// \param ixn        Interaction object (if you only have its ID, use the other signature of GetTrueParticle() instead)
+      /// \param cmp        Function used to decide whether a SRTrueParticle already in the SRTrueInteraction matches desired criteria
+      /// \param isPrimary  Was this a "primary" particle (i.e., came out of the true neutrino interaction)?
+      /// \param createNew  Should a new SRTrueParticle be made if one corresponding to the given characteristics is not found?
+      /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
+      caf::SRTrueParticle &
+      GetTrueParticle(caf::StandardRecord &sr,
+                      caf::SRTrueInteraction& ixn,
+                      std::function<bool(const caf::SRTrueParticle&)> cmp,
+                      bool isPrimary,
+                      bool createNew = true) const;
+
       /// Find a TrueInteraction within  a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
       /// \param sr         The caf::StandardRecord in question

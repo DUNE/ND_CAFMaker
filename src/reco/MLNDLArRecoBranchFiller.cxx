@@ -344,13 +344,23 @@ namespace cafmaker
       }
     };
 
+    struct SRPartCmp
+    {
+      float E;
+      bool operator()(const caf::SRTrueParticle & part) const
+      {
+        std::cout << "       SRPartCmp::operator()():  looking for E = " << E << "; this particle E = " << part.p.E << "\n";
+        return part.p.E == E;
+      }
+    };
+
     struct GENIECmp
     {
       float lepE;
       bool operator()(const genie::NtpMCEventRecord * gEvt) const
       {
 //        std::cout << "  GENIE E = " << gEvt->event->FinalStatePrimaryLepton()->E() << ", lepE = " << lepE << " ";
-        return std::abs(gEvt->event->FinalStatePrimaryLepton()->E() - lepE/1000.) < 1e-6;
+        return std::abs(static_cast<float>(gEvt->event->FinalStatePrimaryLepton()->E()) - lepE) < 1e-6;
       }
     };
 
@@ -360,7 +370,6 @@ namespace cafmaker
                     GENIECmp &genieCmp)
     {
       float lepE = std::numeric_limits<float>::signaling_NaN();
-      bool foundPrim = false;
 
       std::cout << "      SetCmpLepE(): pdgs, is_primary, energies of particles in interaction:\n";
       for (long int partIdx : trueIxnPassThrough.particle_ids)
@@ -368,8 +377,6 @@ namespace cafmaker
         const cafmaker::types::dlp::TrueParticle &part = trueParticles[partIdx];
         std::cout << "         " << part.pdg_code << ", " << part.is_primary << ", " << part.energy_init << "\n";
         long int abspdg = std::abs(part.pdg_code);
-        if (part.is_primary)
-          foundPrim = true;
 
         // rock muons are the only non-primaries we consider here
         if ((part.is_primary && abspdg >= 11 && abspdg <= 16) || abspdg == 13)
@@ -382,8 +389,8 @@ namespace cafmaker
       // rock mus aren't "primary" for some reason,
       // so we need to ensure we *did* find *some* primary
       // before triggering this condition
-      if (foundPrim && std::isnan(lepE))
-        throw std::runtime_error("Couldn't find primary lepton in true interaction!");
+      if (std::isnan(lepE))
+        throw std::runtime_error("Couldn't find any lepton in true interaction!");
 
       srCmp.lepE = genieCmp.lepE = lepE / 1000.;
       std::cout << "       --> found primary lepton with energy = " << srCmp.lepE << "\n";
@@ -401,6 +408,10 @@ namespace cafmaker
   {
     sr.common.ixn.dlp.resize(ixns.size());
     sr.common.ixn.ndlp = ixns.size();
+
+    // note: used in hack below
+    static SRCmp srCmp;
+    static GENIECmp genieCmp;
 
     std::cout << "Filling reco interactions...\n";
     for (const auto & ixn : ixns)
@@ -425,9 +436,16 @@ namespace cafmaker
           //       containing the vertexID from upstream (which uniquely identifies the neutrino).
           //       WIP...
           // begin hack------------------------------------------------
-          static SRCmp srCmp;
-          static GENIECmp genieCmp;
-          SetCmpLepE(trueParticles, trueIxnPassThrough, srCmp, genieCmp);
+          try
+          {
+            SetCmpLepE(trueParticles, trueIxnPassThrough, srCmp, genieCmp);
+          }
+          catch (std::runtime_error & err)  // thrown if no lepton could be found
+          {
+            // if we couldn't find ANY lepton, there's no point continuing.
+            // we won't be able to match.
+            continue;
+          }
 
           // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
@@ -480,6 +498,11 @@ namespace cafmaker
   {
     std::cout << "Filling reco particles...\n";
 
+    // note: used in the hack further below
+    static SRCmp srCmp;
+    static GENIECmp genieCmp;
+    static SRPartCmp srPartCmp;
+
     //filling reco particles regardless of semantic type (track/shower)
     for (const auto & part : particles)
     {
@@ -504,8 +527,12 @@ namespace cafmaker
         {
           std::cout << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
-          std::cout << "      track id = " << truePartPassThrough.track_id << "; "
-                    << "interaction id = " << truePartPassThrough.interaction_id << "\n";
+          std::cout << "      id = " << truePartPassThrough.id << "; "
+                    << "track id = " << truePartPassThrough.track_id << "; "
+                    << "is primary = " << truePartPassThrough.is_primary << "; "
+                    << "pdg = " << truePartPassThrough.pdg_code << "; "
+                    << "energy = " << truePartPassThrough.energy_init
+                    << "\n";
 
           // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
@@ -516,9 +543,20 @@ namespace cafmaker
           //       containing the vertexID from upstream (which uniquely identifies the neutrino).
           //       WIP...
           // begin hack------------------------------------------------
-          static SRCmp srCmp;
-          static GENIECmp genieCmp;
-          SetCmpLepE(trueParticles, trueIxn, srCmp, genieCmp);
+          try
+          {
+            SetCmpLepE(trueParticles, trueIxn, srCmp, genieCmp);
+          }
+          catch (std::runtime_error & err)
+          {
+            // no lepton was found in the event.
+            // this interaction won't have been inserted
+            // (wouldn't be able to find the corresponding GENIE event)
+            // so we should just skip it.
+            // when we switch to the non-hack version of interaction finding
+            // this won't be an issue.
+            continue;
+          }
 
           std::cout << "        searching for its parent SRTrueInteraction.  should have primary lepton energy = " << srCmp.lepE << "\n";
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, srCmp, genieCmp, false);
@@ -527,33 +565,51 @@ namespace cafmaker
           // non-hack version (needs cafmaker::types::dlp::TrueInteraction::track_id to be the edep-sim VertexID)
           // caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.track_id, false);
 
+          // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+          int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                           std::find_if(sr.mc.nu.begin(),
+                                                        sr.mc.nu.end(),
+                                                        [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
           // find the true particle this reco particle goes with.
           // if we had GENIE info and it was a primary, it should already be filled in.
-          caf::SRTrueParticle & srTruePart = truthMatch->GetTrueParticle(sr,
-                                                                         srTrueInt,
-                                                                         truePartPassThrough.track_id,
-                                                                         truthMatch->HaveGENIE() && !truePartPassThrough.is_primary);
+          // we use the comparison version because the G4ID from the pass-through
+          // counts up monotonically from 0 across the whole FILE,
+          // whereas the GENIE events start over at every interaction.
+          // moreover, the cafmaker::types::dlp::TrueParticle flag appears
+          // not to be deserializing correctly (every particle is marked FALSE)
+          // so we need to try both collections :(
+          srPartCmp.E = truePartPassThrough.energy_init / 1000.;
+          bool isPrim = false;
+          caf::SRTrueParticle * srTruePart = nullptr;
+          try
+          {
+            srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
+            isPrim = true;
+          }
+          catch ( std::runtime_error& err )
+          {
+            // guess if it wasn't a primary, it must be a secondary :(
+            srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+          }
 
           // however this will fill in any other fields that weren't copied from a GENIE record
           // (which also handles the case where this particle is a secondary)
-          FillTrueParticle(srTruePart, truePartPassThrough);
+          FillTrueParticle(*srTruePart, truePartPassThrough);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
-          std::vector<caf::SRTrueParticle> & collection = (truePartPassThrough.is_primary)
-                                                          ? sr.mc.nu[srTruePart.interaction_id].prim
-                                                          : sr.mc.nu[srTruePart.interaction_id].sec;
+          std::cout << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
+          std::vector<caf::SRTrueParticle> & collection = (isPrim)
+                                                          ? srTrueInt.prim
+                                                          : srTrueInt.sec;
           std::size_t truthVecIdx = std::distance(collection.begin(),
                                                   std::find_if(collection.begin(),
                                                                collection.end(),
-                                                               [&truePartPassThrough](const caf::SRTrueParticle& part)
-                                                               {
-                                                                 return part.G4ID == truePartPassThrough.id;
-                                                               }));
+                                                               srPartCmp));
 
-          reco_particle.truth.push_back(caf::TrueParticleID{srTruePart.interaction_id,
-                                                            (truePartPassThrough.is_primary) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
+          reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                                            (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
           reco_particle.truthOverlap.push_back(truePartPassThrough.match_overlap[idx]);
         }

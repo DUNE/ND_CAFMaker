@@ -237,30 +237,55 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  // helper class used only to avoid building and tearing down a new lambda every iteration
+  namespace
+  {
+    struct SRPartCmp
+    {
+      int partID;
+      bool operator()(const caf::SRTrueParticle & part) const { return part.G4ID == partID; }
+    };
+  }
+
+  // ------------------------------------------------------------
   caf::SRTrueParticle &
   TruthMatcher::GetTrueParticle(caf::StandardRecord &sr, caf::SRTrueInteraction& ixn, int G4ID, bool isPrimary, bool createNew) const
+  {
+    static SRPartCmp srPartCmp;
+    srPartCmp.partID = G4ID;
+    return GetTrueParticle(sr, ixn, srPartCmp, isPrimary, createNew);
+  }
+
+  // ------------------------------------------------------------
+  caf::SRTrueParticle &TruthMatcher::GetTrueParticle(caf::StandardRecord &sr,
+                                                     caf::SRTrueInteraction &ixn,
+                                                     std::function<bool(const caf::SRTrueParticle &)> cmp,
+                                                     bool isPrimary,
+                                                     bool createNew) const
   {
     caf::SRTrueParticle * part = nullptr;
     std::vector<caf::SRTrueParticle> & collection = (isPrimary) ? ixn.prim : ixn.sec;
     int & counter = (isPrimary) ? ixn.nprim : ixn.nsec;
-    if ( auto itPart = std::find_if(collection.begin(), collection.end(), [G4ID](const caf::SRTrueParticle & part) { return part.G4ID == G4ID; });
+    if ( auto itPart = std::find_if(collection.begin(), collection.end(), cmp);
          itPart == collection.end() )
     {
       if (!createNew)
-        throw std::runtime_error("True particle with interaction ID " + std::to_string(ixn.id) + " and G4ID " + std::to_string(G4ID)
+        throw std::runtime_error("True particle with interaction ID " + std::to_string(ixn.id)
                                  + " was not found in the " + std::string(isPrimary ? "primary" : "secondary") + " true particle collection");
       else
-        std::cout << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection for G4 trackID = " << G4ID << "\n";
+        std::cout << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
 
       collection.emplace_back();
       counter++;
 
       part = &collection.back();
-      part->G4ID = G4ID;
-      part->interaction_id = ixn.id;
+      part->interaction_id = ixn.id;  // todo: eventually this should be ixn.track_id
     }
     else
+    {
+      std::cout << "    --> found previously created SRTrueParticle.  Returning that.\n";
       part = &(*itPart);
+    }
 
     return *part;
   }
