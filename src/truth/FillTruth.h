@@ -65,6 +65,8 @@ namespace cafmaker
     if (compFn(input, target))
      return;
 
+    std::cout << "       ValidateOrCopy(): supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+
     // is this the default val?
     // note that NaN isn't equal to anything, even itself, so we have to do the check differently
     bool isNan = false;
