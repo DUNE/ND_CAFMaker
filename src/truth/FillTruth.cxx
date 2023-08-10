@@ -221,8 +221,13 @@ namespace cafmaker
   caf::SRTrueParticle &
   TruthMatcher::GetTrueParticle(caf::StandardRecord &sr, int ixnID, int G4ID, bool isPrimary, bool createNew) const
   {
-    caf::SRTrueInteraction & ixn = GetTrueInteraction(sr, ixnID, createNew);
+    return GetTrueParticle(sr, GetTrueInteraction(sr, ixnID, false), G4ID, isPrimary, createNew);
+  }
 
+  // ------------------------------------------------------------
+  caf::SRTrueParticle &
+  TruthMatcher::GetTrueParticle(caf::StandardRecord &sr, caf::SRTrueInteraction& ixn, int G4ID, bool isPrimary, bool createNew) const
+  {
     caf::SRTrueParticle * part = nullptr;
     std::vector<caf::SRTrueParticle> & collection = (isPrimary) ? ixn.prim : ixn.sec;
     int & counter = (isPrimary) ? ixn.nprim : ixn.nsec;
@@ -230,15 +235,17 @@ namespace cafmaker
          itPart == collection.end() )
     {
       if (!createNew)
-        throw std::runtime_error("True particle with interaction ID " + std::to_string(ixnID) + " and G4ID " + std::to_string(G4ID)
+        throw std::runtime_error("True particle with interaction ID " + std::to_string(ixn.id) + " and G4ID " + std::to_string(G4ID)
                                  + " was not found in the " + std::string(isPrimary ? "primary" : "secondary") + " true particle collection");
+      else
+        std::cout << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection for G4 trackID = " << G4ID << "\n";
 
       collection.emplace_back();
       counter++;
 
       part = &collection.back();
       part->G4ID = G4ID;
-      part->interaction_id = ixnID;
+      part->interaction_id = ixn.id;
     }
     else
       part = &(*itPart);
@@ -247,47 +254,107 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew) const
+  caf::SRTrueInteraction &
+  TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr,
+                                   std::function<bool(const caf::SRTrueInteraction &)> srTrueIxnCmp,
+                                   std::function<bool(const genie::NtpMCEventRecord*)> genieCmp,
+                                   bool createNew) const
   {
     caf::SRTrueInteraction * ixn = nullptr;
 
     // if we can't find a GENIE record with matching ID, we may need to make a new one
-    if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), [ixnID](const caf::SRTrueInteraction & ixn) { return ixn.id == ixnID; });
+    if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), srTrueIxnCmp);
          itIxn == sr.mc.nu.end() )
     {
       if (!createNew)
-        throw std::runtime_error("True interaction with interaction ID " + std::to_string(ixnID) + " was not found in this StandardRecord");
+        throw std::runtime_error("True interaction not found in this StandardRecord");
 
       if (fGTree)
       {
+        std::cout << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
+        long int lastReadEvt = fGTree->GetReadEvent();
         if (fGTree->GetReadEvent() < 0)
-          fGTree->GetEntry(0);
-
-        // the most likely place to find the matching event is just beyond wherever we currently are,
-        // so look there first, then loop back around to consider events previous to where we were
-        for (int evtIdx = fGTree->GetReadEvent(); evtIdx % fGTree->GetEntries() != fGTree->GetReadEvent(); evtIdx++)
         {
-          fGTree->GetEntry(evtIdx % fGTree->GetEntries());
-
-          if (fGEvt->hdr.ievent == ixnID)
-            break;
+          fGTree->GetEntry(0);
+          lastReadEvt = -1;
         }
 
-        if (fGEvt->hdr.ievent != ixnID)
-          throw std::runtime_error("Could not locate GENIE event record with ID = " + std::to_string(ixnID));
+        std::cout << "     examining GENIE records...\n ";
+        // the most likely place to find the matching event is just beyond wherever we currently are,
+        // so look there first, then loop back around to consider events previous to where we were
+        std::cout << "       last read evt = " << lastReadEvt << ", total entries = " << fGTree->GetEntries() << "\n";
+        for (long int evtIdx = lastReadEvt + 1; evtIdx % fGTree->GetEntries() != lastReadEvt; evtIdx++)
+        {
+          int wrappedIdx = evtIdx % fGTree->GetEntries();
+          std::cout << " " << wrappedIdx;
+          fGTree->GetEntry(wrappedIdx);
+
+          if (lastReadEvt < 0)
+            lastReadEvt = evtIdx;
+
+          if (genieCmp(fGEvt))
+            break;
+        }
+        std::cout << "\n";
+
+        // todo: re-enable this check when we can distinguish between rock mu and contained nu
+//        if (!genieCmp(fGEvt))
+//          throw std::runtime_error("Could not locate GENIE event record");
       }
 
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
 
       ixn = &sr.mc.nu.back();
-      if (fGTree)
+      if (fGTree && genieCmp(fGEvt))
+      {
+        std::cout << "      --> GENIE record found.  copying...\n";
         FillInteraction(*ixn, fGEvt);
+      }
+      else
+        std::cout << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
     }
     else
+    {
+      std::cout << "   Found previously created SRTrueInteraction.  Returning that.\n";
       ixn = &(*itIxn);
+    }
 
     return *ixn;
+  }
+
+  // ------------------------------------------------------------
+  // helper classes used only to avoid building and tearing down a new lambda every iteration
+  namespace
+  {
+    struct SRCmp
+    {
+      int ixnID;
+      bool operator()(const caf::SRTrueInteraction & ixn) const { return ixn.id == ixnID; }
+    };
+
+    struct GENIECmp
+    {
+      int ixnID;
+      bool operator()(const genie::NtpMCEventRecord * gEvt) const { return static_cast<int>(gEvt->hdr.ievent) == ixnID; }
+    };
+  }
+
+  // ------------------------------------------------------------
+  caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew) const
+  {
+    static SRCmp srCmp;
+    static GENIECmp genieCmp;
+    try
+    {
+      srCmp.ixnID = genieCmp.ixnID = ixnID;
+      return GetTrueInteraction(sr, srCmp, genieCmp, createNew);
+    }
+    catch (std::runtime_error & err)
+    {
+      // just re-throw with a nicer error message
+      throw std::runtime_error("Could not locate GENIE event record with ID = " + std::to_string(ixnID));
+    }
   }
 
 }

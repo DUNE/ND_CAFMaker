@@ -101,13 +101,38 @@ namespace cafmaker
       caf::SRTrueParticle &
       GetTrueParticle(caf::StandardRecord &sr, int ixnID, int G4ID, bool isPrimary, bool createNew = true) const;
 
+      /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
+      ///
+      /// \param sr         The caf::StandardRecord in question
+      /// \param ixn        Interaction object (if you only have its ID, use the other signature of GetTrueParticle() instead)
+      /// \param G4ID       TrackID of the particle from GEANT4 (or, if not propagated by GEANT4, GENIE)
+      /// \param isPrimary  Was this a "primary" particle (i.e., came out of the true neutrino interaction)?
+      /// \param createNew  Should a new SRTrueParticle be made if one corresponding to the given characteristics is not found?
+      /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
+      caf::SRTrueParticle &
+      GetTrueParticle(caf::StandardRecord &sr, caf::SRTrueInteraction& ixn, int G4ID, bool isPrimary, bool createNew = true) const;
+
       /// Find a TrueInteraction within  a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
       /// \param sr         The caf::StandardRecord in question
       /// \param ixnID      Interaction ID (should match the one coming from upstream, i.e., edep-sim)
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
-      caf::SRTrueInteraction &GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew = true) const;
+      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew = true) const;
+
+      /// Find a TrueInteraction within  a given StandardRecord, or, if it doesn't exist, optionally make a new one.
+      /// Use the 'interaction ID' variant of GetTrueInteraction() if at all possible.
+      /// This version just exists to supply necessary hacks when interaction IDs from upstream are broken...
+      ///
+      /// \param sr           The caf::StandardRecord in question
+      /// \param srTrueIxnCmp Function used to decide whether a SRTrueInteraction already in the StandardRecord matches desired criteria
+      /// \param genieCmp     Function used to match a GENIE record to desired criteria
+      /// \param createNew    Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
+      /// \return             The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
+      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord &sr,
+                                                  std::function<bool(const caf::SRTrueInteraction&)> srTrueIxnCmp,
+                                                  std::function<bool(const genie::NtpMCEventRecord*)> genieCmp,
+                                                  bool createNew = true) const;
 
       bool HaveGENIE() const { return fGTree != nullptr; }
 
