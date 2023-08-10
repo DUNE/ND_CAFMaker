@@ -46,12 +46,14 @@ namespace cafmaker
       void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                        caf::StandardRecord & sr) const;
 
-      void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &Inxns,
-                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
+      void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
+                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
+                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
                             const TruthMatcher * truthMatch,
                             caf::StandardRecord &sr) const;
 
       void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
+                         const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
                          const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
                          const TruthMatcher * truthMatch,
                          caf::StandardRecord &sr) const;
@@ -65,7 +67,6 @@ namespace cafmaker
       NDLArDLPH5DatasetReader fDSReader;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
-
   };  // class MLNDLArRecoBranchFiller
 
 } // namespace cafmaker
