@@ -65,16 +65,20 @@ namespace cafmaker
     if (compFn(input, target))
      return;
 
-    std::cout << "       ValidateOrCopy(): supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+    // note that NaN and inf aren't equal to anything, even themselves, so we have check that differently
+    if constexpr (std::numeric_limits<InputType>::has_signaling_NaN && std::numeric_limits<OutputType>::has_signaling_NaN)
+      if (std::isnan(input) && std::isnan(target)) return;
+    if constexpr ( std::numeric_limits<InputType>::has_infinity && std::numeric_limits<OutputType>::has_infinity )
+      if (std::isinf(input) && std::isinf(target)) return;
 
     // is this the default val?
-    // note that NaN isn't equal to anything, even itself, so we have to do the check differently
-    bool isNan = false;
+    bool isNanInf = false;
     if constexpr (std::numeric_limits<OutputType>::has_signaling_NaN)
-    {
-      isNan = std::isnan(target) && std::isnan(unsetVal);
-    }
-    if (target == unsetVal || isNan)
+      isNanInf = (std::isnan(target) && std::isnan(unsetVal));
+    if constexpr ( std::numeric_limits<OutputType>::has_infinity )
+      isNanInf = isNanInf || (std::isinf(target) && std::isinf(unsetVal));
+
+    if (target == unsetVal || isNanInf)
     {
       assgnFn(input, target);
       return;
@@ -85,6 +89,13 @@ namespace cafmaker
     std::cerr << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
     abort();
   }
+
+  // --------------------------------------------------------------
+  // specialize the template for double-> float conversions, which we do a lot,
+  // and which have roundoff problems in the comparison operator otherwise
+  template <>
+  void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal);
+
   // --------------------------------------------------------------
 
   class TruthMatcher
