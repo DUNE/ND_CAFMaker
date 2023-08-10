@@ -171,28 +171,32 @@ namespace cafmaker
 
     // loop truth particles
 
-    int stableCtr = 0;
     for (int j=0; j< event->GetEntries(); j++)
     {
       auto p = dynamic_cast<const genie::GHepParticle *>((*event)[j]);
+
       if( p->Status() != genie::EGHepStatus::kIStStableFinalState
           && p->Status() != genie::EGHepStatus::kIStHadronInTheNucleus) continue;
 
       caf::SRTrueParticle part;
       part.pdg = p->Pdg();
       part.interaction_id = nu.id;
+      part.p = *p->P4();
       // todo: original GENIE events haven't been transferred to det coordinates
       //       or bunched in spill time structure yet.  just leave out?
 //      part.time = nu.time;
-//      part.p = *p->P4();
 //      part.start_pos = p->X4()->Vect();
 
       // remaining fields need to be filled in with post-G4 info
 
-      if( p->Status() != genie::EGHepStatus::kIStStableFinalState)
+      if( p->Status() == genie::EGHepStatus::kIStStableFinalState )
       {
-        part.G4ID = stableCtr++;        // todo: check if this is always the number given to G4!
+        // note: we leave part.id unset since it won't match with the G4 values
+        // (edep-sim numbers them all sequentially from 0 throughout the whole file)
+        // and the pass-through value is more useful
+
         nu.prim.push_back(std::move(part));
+        nu.nprim++;
 
         if( p->Pdg() == 2212 ) nu.nproton++;
         else if( p->Pdg() == 2112 ) nu.nneutron++;
@@ -201,7 +205,11 @@ namespace cafmaker
         else if( p->Pdg() ==  111 ) nu.npi0++;
       }
       else // kIStHadronInTheNucleus
+      {
+        std::cout << "  particle " << j << " with pdg = " << p->Pdg() << " and energy = " << p->E() << " has GENIE status " << p->Status() << "\n";
         nu.prefsi.push_back(std::move(part));
+        nu.nprefsi++;
+      }
 
     }
 

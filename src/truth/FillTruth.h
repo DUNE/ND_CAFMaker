@@ -42,11 +42,13 @@ namespace cafmaker
   template <typename InputType, typename OutputType>
   void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal)
   {
-    const auto defaultComp = [](const decltype(input) & a, const decltype(target) &b) -> bool { return static_cast<OutputType>(a) == b; };
+    const auto defaultComp = [](const decltype(input) & a,
+                                const decltype(target) &b) -> bool { return static_cast<OutputType>(a) == b; };
     const auto defaultAssgn = [](const decltype(input) & a, decltype(target) &b) {  b = a; };
     return ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn);
   }
 
+ // --------------------------------------------------------------
 
   /// Similar to the other variant of ValidateOrCopy(),
   /// but allowing the user to specify a function that determines if input and target are equal
@@ -61,6 +63,8 @@ namespace cafmaker
                       std::function<bool(const decltype(input) &, const decltype(target) &)> compFn,
                       std::function<void(const decltype(input) &, decltype(target) &)> assgnFn)
   {
+    std::cout << "       ValidateOrCopy(): supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+
     // vals match?  nothing more to do
     if (compFn(input, target))
      return;
@@ -112,7 +116,7 @@ namespace cafmaker
       /// \param createNew  Should a new SRTrueParticle be made if one corresponding to the given characteristics is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
       caf::SRTrueParticle &
-      GetTrueParticle(caf::StandardRecord &sr, int ixnID, int G4ID, bool isPrimary, bool createNew = true) const;
+      GetTrueParticle(caf::StandardRecord& sr, int ixnID, int G4ID, bool isPrimary, bool createNew = true) const;
 
       /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
@@ -146,7 +150,7 @@ namespace cafmaker
       /// \param ixnID      Interaction ID (should match the one coming from upstream, i.e., edep-sim)
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
-      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew = true) const;
+      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, int ixnID, bool createNew = true) const;
 
       /// Find a TrueInteraction within  a given StandardRecord, or, if it doesn't exist, optionally make a new one.
       /// Use the 'interaction ID' variant of GetTrueInteraction() if at all possible.
