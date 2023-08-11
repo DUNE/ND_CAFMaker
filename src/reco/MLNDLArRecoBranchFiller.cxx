@@ -153,12 +153,12 @@ namespace cafmaker
     auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
     if (itTrig == fTriggers.end())
     {
-      std::cerr << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
+      LOG.FATAL() << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
       abort();
     }
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
 
-    std::cout << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
+    LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
 
     //Fill ND-LAr specific info in the meta branch
     H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
@@ -208,7 +208,7 @@ namespace cafmaker
   void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
                                                     const cafmaker::types::dlp::TrueInteraction & ptTrueInt /* pt = "pass-through" */) const
   {
-    std::cout << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
+    LOG.DEBUG() << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
@@ -357,7 +357,7 @@ namespace cafmaker
       float E;
       bool operator()(const caf::SRTrueParticle & part) const
       {
-        std::cout << "       SRPartCmp::operator()():  looking for E = " << E << "; this particle E = " << part.p.E << "\n";
+        LOG_S("SRPartCmp").VERBOSE() << "       SRPartCmp::operator()():  looking for E = " << E << "; this particle E = " << part.p.E << "\n";
         return part.p.E == E;
       }
     };
@@ -367,7 +367,7 @@ namespace cafmaker
       float lepE;
       bool operator()(const genie::NtpMCEventRecord * gEvt) const
       {
-//        std::cout << "  GENIE E = " << gEvt->event->FinalStatePrimaryLepton()->E() << ", lepE = " << lepE << " ";
+//        LOG_S("GENIECmp").VERBOSE() << "  GENIE E = " << gEvt->event->FinalStatePrimaryLepton()->E() << ", lepE = " << lepE << " ";
         return std::abs(static_cast<float>(gEvt->event->FinalStatePrimaryLepton()->E()) - lepE) < 1e-6;
       }
     };
@@ -379,11 +379,11 @@ namespace cafmaker
     {
       float lepE = std::numeric_limits<float>::signaling_NaN();
 
-      std::cout << "      SetCmpLepE(): pdgs, is_primary, energies of particles in interaction:\n";
+      LOG_S("SetCmpLep()").VERBOSE() << "      pdgs, is_primary, energies of particles in interaction:\n";
       for (long int partIdx : trueIxnPassThrough.particle_ids)
       {
         const cafmaker::types::dlp::TrueParticle &part = trueParticles[partIdx];
-        std::cout << "         " << part.pdg_code << ", " << part.is_primary << ", " << part.energy_init << "\n";
+        LOG_S("SetCmpLep()").VERBOSE()  << "         " << part.pdg_code << ", " << part.is_primary << ", " << part.energy_init << "\n";
         long int abspdg = std::abs(part.pdg_code);
 
         // rock muons are the only non-primaries we consider here
@@ -401,7 +401,7 @@ namespace cafmaker
         throw std::runtime_error("Couldn't find any lepton in true interaction!");
 
       srCmp.lepE = genieCmp.lepE = lepE / 1000.;
-      std::cout << "       --> found primary lepton with energy = " << srCmp.lepE << "\n";
+      LOG_S("SetCmpLep()").VERBOSE()  << "       --> found primary lepton with energy = " << srCmp.lepE << "\n";
     }
 
   }
@@ -421,14 +421,14 @@ namespace cafmaker
     static SRCmp srCmp;
     static GENIECmp genieCmp;
 
-    std::cout << "Filling reco interactions...\n";
+    LOG.DEBUG() << "Filling reco interactions...\n";
     for (const auto & ixn : ixns)
     {
       caf::SRInteraction interaction;
       interaction.id  = ixn.id;
       interaction.vtx  = caf::SRVector3D(ixn.vertex[0], ixn.vertex[1], ixn.vertex[2]);  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser unless using a FlatCAF
 
-      std::cout << " --> interaction id = "  << interaction.id << "\n";
+      LOG.VERBOSE() << " --> interaction id = "  << interaction.id << "\n";
 
       // if we *have* truth matches, we need to connect them now
       if (ixn.matched)
@@ -437,7 +437,7 @@ namespace cafmaker
         {
           cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = trueIxns[ixn.match[idx]];
 
-          std::cout << "  ** Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id << "\n";
+          LOG.VERBOSE() << "  ** Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id << "\n";
 
           // todo: this hack exists for now because
           //       we have no handle in cafmaker::types::dlp::TrueInteraction
@@ -457,20 +457,20 @@ namespace cafmaker
 
           // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
-          std::cout << "  searching for SRTrueInteraction with primary lepton energy = " << srCmp.lepE << "\n";
+          LOG.VERBOSE() << "  searching for SRTrueInteraction with primary lepton energy = " << srCmp.lepE << "\n";
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, srCmp, genieCmp);
           // end hack -----------------------------------------------------------------------
 
           // todo: re-enable when hack above no longer needed
 //          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);
 
-          std::cout << "    --> resulting SRTrueInteraction has the following primary particles in it:\n";
+          LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following primary particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
-            std::cout << "    (prim) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+            LOG.VERBOSE() << "    (prim) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prefsi)
-            std::cout << "    (prefsi) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+            LOG.VERBOSE() << "    (prefsi) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
           for (const caf::SRTrueParticle & part : srTrueInt.sec)
-            std::cout << "    (sec) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+            LOG.VERBOSE() << "    (sec) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
 
           // here we need to fill in any additional info
           // that GENIE didn't know about: e.g., secondary particles made by GEANT4
@@ -488,7 +488,7 @@ namespace cafmaker
           interaction.truth.push_back(truthVecIdx);
           interaction.truthOverlap.push_back(ixn.match_overlap[idx]);
 
-          std::cout << "  ** end matched true interaction search for ML-reco ID " << trueIxnPassThrough.id << ".\n";
+          LOG.VERBOSE() << "  ** end matched true interaction search for ML-reco ID " << trueIxnPassThrough.id << ".\n";
         }
       }
 
@@ -504,7 +504,7 @@ namespace cafmaker
                                               const TruthMatcher * truthMatch,
                                               caf::StandardRecord &sr) const
   {
-    std::cout << "Filling reco particles...\n";
+    LOG.DEBUG() << "Filling reco particles...\n";
 
     // note: used in the hack further below
     static SRCmp srCmp;
@@ -514,7 +514,7 @@ namespace cafmaker
     //filling reco particles regardless of semantic type (track/shower)
     for (const auto & part : particles)
     {
-      std::cout << " --> reco particle id = "  << part.id << "\n";
+      LOG.VERBOSE() << " --> reco particle id = "  << part.id << "\n";
 
       caf::SRRecoParticle reco_particle;
       if(part.is_primary) reco_particle.primary = true;
@@ -533,9 +533,9 @@ namespace cafmaker
       {
         for (std::size_t idx = 0; idx < part.match.size(); idx++)
         {
-          std::cout << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
+          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
-          std::cout << "      id = " << truePartPassThrough.id << "; "
+          LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
                     << "is primary = " << truePartPassThrough.is_primary << "; "
                     << "pdg = " << truePartPassThrough.pdg_code << "; "
@@ -566,7 +566,7 @@ namespace cafmaker
             continue;
           }
 
-          std::cout << "        searching for its parent SRTrueInteraction.  should have primary lepton energy = " << srCmp.lepE << "\n";
+          LOG.VERBOSE() << "        searching for its parent SRTrueInteraction.  should have primary lepton energy = " << srCmp.lepE << "\n";
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, srCmp, genieCmp, false);
           // end hack -----------------------------------------------------------------------
 
@@ -607,7 +607,7 @@ namespace cafmaker
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
-          std::cout << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
+          LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
           std::vector<caf::SRTrueParticle> & collection = (isPrim)
                                                           ? srTrueInt.prim
                                                           : srTrueInt.sec;
@@ -629,7 +629,7 @@ namespace cafmaker
                                 [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
       if (itIxn == sr.common.ixn.dlp.end())
       {
-        std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
       sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
@@ -668,7 +668,7 @@ namespace cafmaker
                                 [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
       if (itIxn == sr.common.ixn.dlp.end())
       {
-        std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
@@ -699,7 +699,7 @@ namespace cafmaker
                                 [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
       if (itIxn == sr.common.ixn.dlp.end())
       {
-        std::cerr << "ERROR: Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
@@ -715,15 +715,15 @@ namespace cafmaker
     std::deque<Trigger> triggers;
     if (fTriggers.empty())
     {
-      std::cout << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << runInfos.size() << " ND-LAr RunInfo products:\n";
+      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << runInfos.size() << " ND-LAr RunInfo products:\n";
       fTriggers.reserve(runInfos.size());
       for (const cafmaker::types::dlp::RunInfo &runInfo: runInfos)
       {
         const int placeholderTriggerType = 0;
-        // todo: this check needs to be fixed when we have trigger type info
+        // fixme: this check needs to be fixed when we have trigger type info
         if (triggerType >= 0 && triggerType != placeholderTriggerType)
         {
-          std::cout << "    skipping runinfo with event=" << runInfo.event << "\n";
+          LOG.VERBOSE() << "    skipping runinfo with event=" << runInfo.event << "\n";
           continue;
         }
 
@@ -738,11 +738,11 @@ namespace cafmaker
 
         triggers.push_back(trig);
 
-        std::cout << "  added trigger:  evtID=" << trig.evtID
-                  << ", triggerType=" << trig.triggerType
-                  << ", triggerTime_s=" << trig.triggerTime_s
-                  << ", triggerTime_ns=" << trig.triggerTime_ns
-                  << "\n";
+        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                      << ", triggerType=" << trig.triggerType
+                      << ", triggerTime_s=" << trig.triggerTime_s
+                      << ", triggerTime_ns=" << trig.triggerTime_ns
+                      << "\n";
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
