@@ -22,9 +22,11 @@
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "util/Logger.h"
 #include "util/Progress.h"
 
 #include "duneanaobj/StandardRecord/SREnums.h"
+
 
 namespace progopt = boost::program_options;
 
@@ -108,7 +110,8 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
 
 // -------------------------------------------------
 // decide which reco fillers we need based on the configuration
-std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const cafmaker::Params &par)
+std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const cafmaker::Params &par,
+                                                                         cafmaker::Logger::THRESHOLD logThresh)
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
@@ -142,14 +145,11 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   ND-LAr + TMS matching\n";
   }
 
-  if (recoFillers.size() > 1)
-  {
-    std::cerr << "While the conversion to looping over reco triggers is happening, "
-              << "ND_CAFMaker can currently only accept ONE reco file (ND-LAr/2x2, TMS/MINERvA, or SAND).\n"
-              << "This restriction will be lifted soon once trigger matching is in place.\n"
-              << "You supplied " << recoFillers.size() << " of them.\n"
-              << "Abort.\n";
-  }
+  // for now all the fillers get the same threshold.
+  // if we decide we need to do it differently later
+  // we can adjust the FCL params...
+  for (std::unique_ptr<cafmaker::IRecoBranchFiller> & filler : recoFillers)
+    filler->SetLogThrehsold(logThresh);
 
   return recoFillers;
 }
@@ -255,7 +255,9 @@ void loop(CAF &caf,
 
   // if this is a data file, there won't be any truth, of course,
   // but the TruthMatching knows not to try to do anything with a null gtree
+  cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::TruthMatcher truthMatcher(contGTree, uncontGTree, caf.mcrec);
+  truthMatcher.SetLogThrehsold(thresh);
 
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
@@ -285,7 +287,11 @@ void loop(CAF &caf,
   cafmaker::Progress progBar("Processing triggers");
   for( int ii = start; ii < start + N; ++ii )
   {
-    progBar.SetProgress( static_cast<double>(ii - start)/N );
+    // don't bother with updating the prog bar if we're going to be spamming lots of messages
+    if (thresh >= cafmaker::Logger::THRESHOLD::WARNING)
+      progBar.SetProgress( static_cast<double>(ii - start)/N );
+    else
+      cafmaker::LOG_S("loop()").INFO() << "Processing trigger: " << ii << "\n";
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();
@@ -294,12 +300,13 @@ void loop(CAF &caf,
     // hand off to the correct reco filler(s).
     for (const auto & fillerTrigPair : groupedTriggers[ii])
     {
-      std::cout << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+      cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
       fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
     }
 
     caf.fill();
   }
+  progBar.Done();
 
   // set other metadata
   caf.meta_run = par().runInfo().run();
@@ -317,12 +324,15 @@ int main( int argc, char const *argv[] )
 
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
+  cafmaker::Logger::THRESHOLD logThresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
+  cafmaker::LOG_S().SetThreshold(logThresh);
+
   CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF());
 
   struct GENIETree
   {
     GENIETree(const std::string& fname)
-      : f(std::make_unique<TFile>(fname.c_str())), tree(dynamic_cast<TTree*>(f->Get("gtree")))
+      : f(fname.empty() ? nullptr : std::make_unique<TFile>(fname.c_str())), tree(f ? dynamic_cast<TTree*>(f->Get("gtree")) : nullptr)
     {
       if (!tree)
       {
@@ -343,7 +353,7 @@ int main( int argc, char const *argv[] )
                       std::forward_as_tuple("uncontained"),
                       std::forward_as_tuple(par().cafmaker().uncontNuGHEPFile().c_str()));
 
-  loop(caf, par, treeBundles.at("contained").tree, treeBundles.at("uncontained").tree, getRecoFillers(par));
+  loop(caf, par, treeBundles.at("contained").tree, treeBundles.at("uncontained").tree, getRecoFillers(par, logThresh));
 
   caf.version = 5;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
