@@ -12,9 +12,8 @@
 #include <unordered_map>
 #include <typeindex>
 
-#include "IRecoBranchFiller.h"
-
-#include "NDLArDLPH5DatasetReader.h"
+#include "reco/IRecoBranchFiller.h"
+#include "reco/NDLArDLPH5DatasetReader.h"
 
 namespace caf
 {
