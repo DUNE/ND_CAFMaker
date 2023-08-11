@@ -284,7 +284,7 @@ void loop(CAF &caf,
 
 
   // Main event loop
-  cafmaker::Progress progBar("Processing triggers");
+  cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
   for( int ii = start; ii < start + N; ++ii )
   {
     // don't bother with updating the prog bar if we're going to be spamming lots of messages
