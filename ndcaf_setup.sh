@@ -8,7 +8,7 @@ setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v03_00_00 -q e20:prof
+setup duneanaobj v03_01_00 -q e20:prof
 setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_15_03 -q debug:e20
 
