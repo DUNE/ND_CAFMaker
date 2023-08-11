@@ -346,12 +346,14 @@ int main( int argc, char const *argv[] )
     TTree * tree;
   };
   std::map<std::string, GENIETree> treeBundles;
+  std::string contNuGHEPFile;
   treeBundles.emplace(std::piecewise_construct,
                       std::forward_as_tuple("contained"),
-                      std::forward_as_tuple(par().cafmaker().contNuGHEPFile().c_str()));
+                      std::forward_as_tuple(par().cafmaker().contNuGHEPFile(contNuGHEPFile) ? contNuGHEPFile.c_str() : ""));
+  std::string uncontNuGHEPFile;
   treeBundles.emplace(std::piecewise_construct,
                       std::forward_as_tuple("uncontained"),
-                      std::forward_as_tuple(par().cafmaker().uncontNuGHEPFile().c_str()));
+                      std::forward_as_tuple(par().cafmaker().uncontNuGHEPFile(uncontNuGHEPFile) ? uncontNuGHEPFile.c_str() : ""));
 
   loop(caf, par, treeBundles.at("contained").tree, treeBundles.at("uncontained").tree, getRecoFillers(par, logThresh));
 

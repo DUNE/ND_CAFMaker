@@ -27,8 +27,8 @@ namespace cafmaker
   struct ControlConfig
   {
     // these are mandatory and have no default values
-    fhicl::Atom<std::string> contNuGHEPFile     {fhicl::Name{"ContainedNuGHEPFile"},   fhicl::Comment("Input .ghep (GENIE) file for in-detector neutrinos") };
-    fhicl::Atom<std::string> uncontNuGHEPFile   {fhicl::Name{"UncontainedNuGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file for rock/hall neutrinos") };
+    fhicl::OptionalAtom<std::string> contNuGHEPFile     {fhicl::Name{"ContainedNuGHEPFile"},   fhicl::Comment("Input .ghep (GENIE) file for in-detector neutrinos") };
+    fhicl::OptionalAtom<std::string> uncontNuGHEPFile   {fhicl::Name{"UncontainedNuGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file for rock/hall neutrinos") };
     fhicl::Atom<std::string> outputFile         { fhicl::Name{"OutputFile"},           fhicl::Comment("Filename for output CAF") };
 
     // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
