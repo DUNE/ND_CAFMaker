@@ -14,6 +14,7 @@
 #include <limits>
 
 #include "fwd.h"
+#include "util/Loggable.h"
 
 // fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
 #include <string>
@@ -63,7 +64,7 @@ namespace cafmaker
                       std::function<bool(const decltype(input) &, const decltype(target) &)> compFn,
                       std::function<void(const decltype(input) &, decltype(target) &)> assgnFn)
   {
-    std::cout << "       ValidateOrCopy(): supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+    LOG_S("ValidateOrCopy()").VERBOSE() << "     supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
 
     // vals match?  nothing more to do
     if (compFn(input, target))
@@ -90,7 +91,7 @@ namespace cafmaker
 
     // if neither of the above conditions were met,
     // we have a discrepancy.  bail loudly
-    std::cerr << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
+    LOG_S("ValidateOrCopy()").FATAL() << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
     abort();
   }
 
@@ -102,7 +103,7 @@ namespace cafmaker
 
   // --------------------------------------------------------------
 
-  class TruthMatcher
+  class TruthMatcher : public cafmaker::Loggable
   {
     public:
       TruthMatcher(TTree * contGTree, TTree * uncontGTree, const genie::NtpMCEventRecord * gEvt);

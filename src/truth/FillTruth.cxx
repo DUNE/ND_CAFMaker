@@ -112,7 +112,7 @@ namespace cafmaker
   TruthMatcher::TruthMatcher(TTree * contGTree,
                              TTree * uncontGTree,
                              const genie::NtpMCEventRecord *gEvt)
-    : fContNuGTree(contGTree), fUncontNuGTree(uncontGTree), fGEvt(gEvt)
+    : cafmaker::Loggable("TruthMatcher"), fContNuGTree(contGTree), fUncontNuGTree(uncontGTree), fGEvt(gEvt)
   {}
 
   // --------------------------------------------------------------
@@ -206,7 +206,7 @@ namespace cafmaker
       }
       else // kIStHadronInTheNucleus
       {
-        std::cout << "  particle " << j << " with pdg = " << p->Pdg() << " and energy = " << p->E() << " has GENIE status " << p->Status() << "\n";
+        LOG_S("TruthMatcher::FillInteraction").DEBUG() << "  particle " << j << " with pdg = " << p->Pdg() << " and energy = " << p->E() << " has GENIE status " << p->Status() << "\n";
         nu.prefsi.push_back(std::move(part));
         nu.nprefsi++;
       }
@@ -281,7 +281,7 @@ namespace cafmaker
         throw std::runtime_error("True particle with interaction ID " + std::to_string(ixn.id)
                                  + " was not found in the " + std::string(isPrimary ? "primary" : "secondary") + " true particle collection");
       else
-        std::cout << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
+        LOG.VERBOSE() << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
 
       collection.emplace_back();
       counter++;
@@ -291,7 +291,7 @@ namespace cafmaker
     }
     else
     {
-      std::cout << "    --> found previously created SRTrueParticle.  Returning that.\n";
+      LOG.VERBOSE() << "    --> found previously created SRTrueParticle.  Returning that.\n";
       part = &(*itPart);
     }
 
@@ -314,14 +314,14 @@ namespace cafmaker
       if (!createNew)
         throw std::runtime_error("True interaction not found in this StandardRecord");
 
-      std::cout << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
+      LOG.VERBOSE() << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
 
       // todo: when we finally have interaction IDs that conform to the edep-sim vertexID convention,
       //       we can use those to only search the correct GENIE true (contained or uncontained).
       //       for now, though, we need to look at both.
       bool foundEv = false;
       int wrappedIdx = -1;
-      std::cout << "     examining GENIE records...\n ";
+      LOG.VERBOSE() << "     examining GENIE records...\n ";
       for (TTree * tree: {fContNuGTree, fUncontNuGTree})
       {
         if (!tree)
@@ -340,7 +340,7 @@ namespace cafmaker
 
         // the most likely place to find the matching event is just beyond wherever we currently are,
         // so look there first, then loop back around to consider events previous to where we were
-        std::cout << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries() << "\n";
+        LOG.VERBOSE() << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries() << "\n";
         for (long int evtIdx = lastReadEvt + 1; evtIdx % tree->GetEntries() != lastReadEvt; evtIdx++)
         {
           wrappedIdx = evtIdx % tree->GetEntries();
@@ -356,7 +356,7 @@ namespace cafmaker
             break;
           }
         }
-        std::cout << "\n";
+        LOG.VERBOSE() << "\n";
       } // for (tree)
 
       if (HaveGENIE() && !foundEv)
@@ -368,16 +368,16 @@ namespace cafmaker
       ixn = &sr.mc.nu.back();
       if (HaveGENIE())
       {
-        std::cout << "      --> GENIE record found.  copying...\n";
+        LOG.VERBOSE() << "      --> GENIE record found.  copying...\n";
         ixn->genieIdx = wrappedIdx;
         FillInteraction(*ixn, fGEvt);
       }
       else
-        std::cout << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
+        LOG.VERBOSE() << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
     } // if ( didn't find a matching SRTrueInteraction )
     else
     {
-      std::cout << "   Found previously created SRTrueInteraction.  Returning that.\n";
+      LOG.VERBOSE() << "   Found previously created SRTrueInteraction.  Returning that.\n";
       ixn = &(*itIxn);
     }
 
