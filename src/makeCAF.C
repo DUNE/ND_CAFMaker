@@ -334,10 +334,9 @@ int main( int argc, char const *argv[] )
     GENIETree(const std::string& fname)
       : f(fname.empty() ? nullptr : std::make_unique<TFile>(fname.c_str())), tree(f ? dynamic_cast<TTree*>(f->Get("gtree")) : nullptr)
     {
-      if (!tree)
+      if (!fname.empty() && !tree)
       {
-        std::cerr << "Could not load TTree 'gtree' from supplied .ghep file: " << fname << "\n";
-        std::cerr << "Abort.\n";
+        cafmaker::LOG_S("main()").FATAL() << "Could not load TTree 'gtree' from supplied .ghep file: " << fname << "\n";
         abort();
       }
     }
