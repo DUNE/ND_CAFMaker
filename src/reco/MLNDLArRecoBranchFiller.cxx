@@ -124,7 +124,8 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   // todo: possibly build some mechanism for customizing the dataset names in the file here
   MLNDLArRecoBranchFiller::MLNDLArRecoBranchFiller(const std::string &h5filename)
-    : fDSReader(h5filename,
+    : IRecoBranchFiller("LArML"),
+      fDSReader(h5filename,
                 {{std::type_index(typeid(Particle)),         "particles"},
                  {std::type_index(typeid(Interaction)),      "interactions"},
                  {std::type_index(typeid(TrueParticle)),     "truth_particles"},
@@ -136,7 +137,6 @@ namespace cafmaker
   {
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
-    name = "LArML";
   }
 
   // ------------------------------------------------------------------------------

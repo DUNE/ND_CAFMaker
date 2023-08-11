@@ -4,6 +4,7 @@
 namespace cafmaker
 {
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename)
+    : IRecoBranchFiller("TMS")
   {
 //    fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
 //    name = std::string("TMS");

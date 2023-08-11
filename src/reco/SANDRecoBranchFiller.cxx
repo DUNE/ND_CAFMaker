@@ -24,6 +24,7 @@ namespace cafmaker
 {
   
   SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename)
+    : IRecoBranchFiller("SAND")
   {  
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
     fTree = (TTree*) fSANDRecoFile->Get("tEvent");
@@ -95,8 +96,8 @@ namespace {
 
 namespace cafmaker
 {
-  SANDRecoBranchFiller::
-  SANDRecoBranchFiller(const std::string &)
+  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
+    : IRecoBranchFiller("SAND")
   {
     error_msg();
     abort();

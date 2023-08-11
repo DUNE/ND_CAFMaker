@@ -3,10 +3,10 @@
 namespace cafmaker
 {
   NDLArTMSMatchRecoFiller::NDLArTMSMatchRecoFiller()
+    : IRecoBranchFiller("LArTMSMatcher")
   {
     // nothing to do
     SetConfigured(true);
-    name = "LArTMSMatcher";
   }
 
   void

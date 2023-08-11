@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include "fwd.h"
+#include "util/Loggable.h"
 
 namespace cafmaker
 {
@@ -25,9 +26,13 @@ namespace cafmaker
     bool operator==(const Trigger & other) const  { return evtID == other.evtID && triggerType == other.triggerType; }
   };
 
-  class IRecoBranchFiller
+  class IRecoBranchFiller: public Loggable
   {
     public:
+      IRecoBranchFiller(std::string n, cafmaker::Logger::THRESHOLD logThresh=cafmaker::Logger::THRESHOLD::WARNING)
+        : Loggable(n, logThresh), name(n)
+      {}
+
       /// Public interface for filling.
       ///
       /// Just checks if the derived class is configured and hands off to the internal method.
