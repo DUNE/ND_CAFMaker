@@ -336,6 +336,7 @@ namespace cafmaker
     struct SRCmp
     {
       float lepE;
+      int   lepPDG;
       bool operator()(const caf::SRTrueInteraction & ixn) const
       {
         return std::any_of(ixn.prim.begin(), ixn.prim.end(),
@@ -378,6 +379,7 @@ namespace cafmaker
                     GENIECmp &genieCmp)
     {
       float lepE = std::numeric_limits<float>::signaling_NaN();
+      int lepPDG = -1;
 
       LOG_S("SetCmpLep()").VERBOSE() << "      pdgs, is_primary, energies of particles in interaction:\n";
       for (long int partIdx : trueIxnPassThrough.particle_ids)
@@ -390,6 +392,7 @@ namespace cafmaker
         if ((part.is_primary && abspdg >= 11 && abspdg <= 16) || abspdg == 13)
         {
           lepE = part.energy_init;
+          lepPDG = part.pdg_code;
           break;
         }
       }
@@ -401,6 +404,7 @@ namespace cafmaker
         throw std::runtime_error("Couldn't find any lepton in true interaction!");
 
       srCmp.lepE = genieCmp.lepE = lepE / 1000.;
+      srCmp.lepPDG = lepPDG;
       LOG_S("SetCmpLep()").VERBOSE()  << "       --> found primary lepton with energy = " << srCmp.lepE << "\n";
     }
 
@@ -459,12 +463,22 @@ namespace cafmaker
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           LOG.VERBOSE() << "  searching for SRTrueInteraction with primary lepton energy = " << srCmp.lepE << "\n";
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, srCmp, genieCmp);
+
+          // if there's no GENIE info available, we won't get a SRTrueParticle in the stack
+          // with the lepton energy, which will make it impossible to match this interaction...
+          if (!truthMatch->HaveGENIE())
+          {
+            srTrueInt.prim.emplace_back();
+            srTrueInt.prim.back().pdg = srCmp.lepPDG;
+            srTrueInt.prim.back().p.E = srCmp.lepE;
+          }
+
           // end hack -----------------------------------------------------------------------
 
           // todo: re-enable when hack above no longer needed
 //          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);
 
-          LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following primary particles in it:\n";
+          LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
             LOG.VERBOSE() << "    (prim) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prefsi)
