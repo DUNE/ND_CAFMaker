@@ -320,6 +320,7 @@ namespace cafmaker
       //       we can use those to only search the correct GENIE true (contained or uncontained).
       //       for now, though, we need to look at both.
       bool foundEv = false;
+      int wrappedIdx = -1;
       std::cout << "     examining GENIE records...\n ";
       for (TTree * tree: {fContNuGTree, fUncontNuGTree})
       {
@@ -342,7 +343,7 @@ namespace cafmaker
         std::cout << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries() << "\n";
         for (long int evtIdx = lastReadEvt + 1; evtIdx % tree->GetEntries() != lastReadEvt; evtIdx++)
         {
-          int wrappedIdx = evtIdx % tree->GetEntries();
+          wrappedIdx = evtIdx % tree->GetEntries();
 //          std::cout << " " << wrappedIdx;
           tree->GetEntry(wrappedIdx);
 
@@ -368,6 +369,7 @@ namespace cafmaker
       if (HaveGENIE())
       {
         std::cout << "      --> GENIE record found.  copying...\n";
+        ixn->genieIdx = wrappedIdx;
         FillInteraction(*ixn, fGEvt);
       }
       else
