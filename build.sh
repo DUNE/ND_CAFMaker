@@ -11,9 +11,6 @@ setup cmake v3_22_2
 setup gcc v9_3_0
 setup pycurl
 setup ifdhc
-#setup dk2nugenie   v01_10_01k -q debug:e20
-#setup genie_xsec   v3_04_00 -q ar2320i00000:e1000:k250
-#setup genie_phyopt v3_04_00 -q dkcharmtau
 setup geant4 v4_11_0_p01c -q e20:debug
 setup dk2nugenie   v01_10_01k -q debug:e20
 setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
