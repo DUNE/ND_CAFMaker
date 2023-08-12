@@ -1,3 +1,4 @@
+source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 setup cmake v3_22_2
 setup gcc v9_3_0
 setup pycurl
