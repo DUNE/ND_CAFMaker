@@ -476,7 +476,7 @@ namespace cafmaker
           // end hack -----------------------------------------------------------------------
 
           // todo: re-enable when hack above no longer needed
-//          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);
+//          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);  // yes, track_id.  that's where the neutrino ID from edep-sim will be stored
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
