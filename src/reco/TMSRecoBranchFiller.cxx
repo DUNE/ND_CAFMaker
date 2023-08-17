@@ -15,24 +15,22 @@ namespace cafmaker
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
-      TMSRecoTree->SetBranchAddress("nLines", &_nLines);
-      TMSRecoTree->SetBranchAddress("nHitsInTrack", _nHitsInTrack);
-      TMSRecoTree->SetBranchAddress("TrackLength", _TrackLength);
-      TMSRecoTree->SetBranchAddress("TotalTrackEnergy", _TotalTrackEnergy);
-      TMSRecoTree->SetBranchAddress("Occupancy", _Occupancy);
+      TMSRecoTree->SetBranchAddress("nLines",               &_nLines);
+      TMSRecoTree->SetBranchAddress("nHitsInTrack",          _nHitsInTrack);
+      TMSRecoTree->SetBranchAddress("TrackLength",           _TrackLength);
+      TMSRecoTree->SetBranchAddress("TotalTrackEnergy",      _TotalTrackEnergy);
+      TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
 
-      TMSRecoTree->SetBranchAddress("DirectionX_Upstream", _DirectionX_Upstream);
-      TMSRecoTree->SetBranchAddress("DirectionZ_Upstream", _DirectionZ_Upstream);
-
+      TMSRecoTree->SetBranchAddress("TrackHitPos",           _TrackHitPos);
+      TMSRecoTree->SetBranchAddress("DirectionX_Upstream",   _DirectionX_Upstream);
+      TMSRecoTree->SetBranchAddress("DirectionZ_Upstream",   _DirectionZ_Upstream);
       TMSRecoTree->SetBranchAddress("DirectionX_Downstream", _DirectionX_Downstream);
       TMSRecoTree->SetBranchAddress("DirectionZ_Downstream", _DirectionZ_Downstream);
-
-      TMSRecoTree->SetBranchAddress("TrackHitPos", _TrackHitPos);
     } else {
       fTMSRecoFile = NULL;
-      TMSRecoTree = NULL;
-      std::cerr << "Did not find input TMS reco file you provided: " << tmsRecoFilename << std::endl;
-      std::cerr << "Are you sure it exists?" << std::endl;
+      TMSRecoTree  = NULL;
+      std::cerr << "The TMS reco file you provided: " << tmsRecoFilename 
+                << " appears to be a Zombie 🧟<" << std::endl;
       throw;
     }
   }
@@ -56,12 +54,15 @@ namespace cafmaker
 
     // Fill in the track info 
     for (int i = 0; i < _nLines; ++i) {
-    /* TODO
+    /* TODO :)
      * Currently StandardRecord has events split by 'triggers' and 'interactions', with potentially
-     * multiple interactions per trigger. TMS only has 'events', where one event == one interaction,
-     * which obviously removes any of the bunching that would be expressed by triggers.
+     * multiple interactions per trigger. TMS only has 'events', where we define one event == one trigger,
+     * which obviously removes any of the bunching that would be expressed by this change.
      * Think about this interplay sometime.
-     *   - Liam, Aug/23   */
+     *   - Liam, late Aug 2023   */
+
+      sr.nd.tms.ixn[i].ntracks = 1; // One reco track per interaction (ixn)
+      sr.nd.tms.ixn[i].tracks.resize(sr.nd.tms.ixn[i].ntracks);
 
       double prevz = -9E10;
       // Hit info
@@ -70,7 +71,7 @@ namespace cafmaker
         double z = _TrackHitPos[i][j][0];
 
         // Should all be ordered in z, check this
-        if (z < prevz) {
+        if (z < prevz - 81) { // TODO: There was previously no -81 here, but allow one layer missmatch. Trackfinding a bit wonky?
           std::cerr << "hits in z not ordered" << std::endl;
           throw;
         }
@@ -80,17 +81,17 @@ namespace cafmaker
       // Save first and last hit in track
       // TMS Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
       // TODO TMS reco now has the ability to convert to mm, understand if this is still necessary or desirable - Liam
-      sr.nd.tms.ixn[0].tracks[i].start = caf::SRVector3D(_TrackHitPos[i][0][1]/10., -999, _TrackHitPos[i][0][0]/10.);
-      sr.nd.tms.ixn[0].tracks[i].end   = caf::SRVector3D(_TrackHitPos[i][_nHitsInTrack[i]-1][1]/10., -999, _TrackHitPos[i][_nHitsInTrack[i]-1][0]/10.);
+      sr.nd.tms.ixn[i].tracks[0].start = caf::SRVector3D(_TrackHitPos[i][0][1]/10., -999, _TrackHitPos[i][0][0]/10.);
+      sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackHitPos[i][_nHitsInTrack[i]-1][1]/10., -999, _TrackHitPos[i][_nHitsInTrack[i]-1][0]/10.);
 
       // Track info
-      sr.nd.tms.ixn[0].tracks[i].len_gcm2  = _TrackLength[i];
-      sr.nd.tms.ixn[0].tracks[i].qual      = _Occupancy[i];
-      sr.nd.tms.ixn[0].tracks[i].E         = _TotalTrackEnergy[i];
+      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i];
+      sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i];
+      sr.nd.tms.ixn[i].tracks[0].E         = _TotalTrackEnergy[i];
 
       // Get the directions
-      sr.nd.tms.ixn[0].tracks[i].dir     = caf::SRVector3D(_DirectionX_Upstream[i], -999, _DirectionZ_Upstream[i]);
-      sr.nd.tms.ixn[0].tracks[i].enddir  = caf::SRVector3D(_DirectionX_Downstream[i], -999, _DirectionZ_Downstream[i]);
+      sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_DirectionX_Upstream[i], -999, _DirectionZ_Upstream[i]);
+      sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_DirectionX_Downstream[i], -999, _DirectionZ_Downstream[i]);
     }
 
   }
