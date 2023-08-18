@@ -78,4 +78,5 @@ Consult the README for more details.
 * Jeremy Wolcott (jwolcott@fnal.gov), most certainly the lead author
 * Chris Marshall (chris.marshall@rochester.edu), originally wrote much of the package before Jeremy's significant update
 * Cris Vilela (c.vilela@cern.ch), also originally wrote much of the package before Jeremy's significant update
-* Clarence Wret (c.wret@rochester.edu), tagged on TMS reconstruction and general updates
+* Liam O'Sullivan (liam.osullivan@uni-mainz.de), updated TMS reconstruction 
+* (Inactive) Clarence Wret (c.wret@rochester.edu), tagged on TMS reconstruction and general updates
