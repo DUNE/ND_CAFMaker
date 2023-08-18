@@ -47,7 +47,7 @@ namespace cafmaker
 
     // First set number of tracks
     sr.nd.tms.nixn = _nLines;
-    sr.nd.tms.ixn.resize(_nLines);
+    sr.nd.tms.ixn.resize(sr.nd.tms.nixn);
 
     //sr.nd.tms.nixn = _nLines;
     //sr.SRTMSInt.ntracks= _nLines;
@@ -56,7 +56,7 @@ namespace cafmaker
     for (int i = 0; i < _nLines; ++i) {
     /* TODO :)
      * Currently StandardRecord has events split by 'triggers' and 'interactions', with potentially
-     * multiple interactions per trigger. TMS only has 'events', where we define one event == one trigger,
+     * multiple interactions per trigger. TMS simulation only has 'events', where we define one event == one trigger,
      * which obviously removes any of the bunching that would be expressed by this change.
      * Think about this interplay sometime.
      *   - Liam, late Aug 2023   */
@@ -72,7 +72,7 @@ namespace cafmaker
 
         // Should all be ordered in z, check this
         if (z < prevz - 81) { // TODO: There was previously no -81 here, but allow one layer missmatch. Trackfinding a bit wonky?
-          std::cerr << "hits in z not ordered" << std::endl;
+          std::cerr << "hits in z not ordered " << (prevz - z) << std::endl;
           throw;
         }
         prevz = z;
@@ -80,12 +80,11 @@ namespace cafmaker
 
       // Save first and last hit in track
       // TMS Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
-      // TODO TMS reco now has the ability to convert to mm, understand if this is still necessary or desirable - Liam
       sr.nd.tms.ixn[i].tracks[0].start = caf::SRVector3D(_TrackHitPos[i][0][1]/10., -999, _TrackHitPos[i][0][0]/10.);
       sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackHitPos[i][_nHitsInTrack[i]-1][1]/10., -999, _TrackHitPos[i][_nHitsInTrack[i]-1][0]/10.);
 
       // Track info
-      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i];
+      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i]/10.;
       sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i];
       sr.nd.tms.ixn[i].tracks[0].E         = _TotalTrackEnergy[i];
 
@@ -93,6 +92,6 @@ namespace cafmaker
       sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_DirectionX_Upstream[i], -999, _DirectionZ_Upstream[i]);
       sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_DirectionX_Downstream[i], -999, _DirectionZ_Downstream[i]);
     }
-
   }
+
 } // end namespace
