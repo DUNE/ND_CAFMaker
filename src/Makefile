@@ -5,6 +5,13 @@ OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 
 INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC)
 
+# enable TMS unless otherwise specified
+# (set ENABLE_TMS=0 in the make command line)
+ENABLE_TMS := 1
+ifneq ($(ENABLE_TMS), 1)
+	CXXFLAGS += -DDISABLE_TMS
+endif
+
 
 # Automatically enable SAND if SANDRECO_INC or SANDRECO_LIB are set
 ifneq ($(origin SANDRECO_INC), undefined)

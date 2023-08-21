@@ -8,7 +8,7 @@
 //#include "nusystematics/artless/response_helper.hh"
 
 CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF)
-  : rh(rw_fhicl_filename)
+  : pot(std::numeric_limits<decltype(pot)>::signaling_NaN()),  rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
   cafSR = new TTree("cafTree", "cafTree");
@@ -78,9 +78,9 @@ void CAF::fill()
 
 void CAF::Print()
 {
-  printf( "Event %d:\n", sr.event );
-  printf( "   Truth: Ev = %3.3f Elep = %3.3f Q2 = %3.3f W = %3.3f x = %3.3f y = %3.3f lepton %d mode %d\n", sr.Ev, sr.LepE, sr.Q2, sr.W, sr.X, sr.Y, sr.LepPDG, sr.mode );
-  printf( "    Reco: Ev = %3.3f Elep = %3.3f q %d mu/e/nc %d%d%d cont/trk/ecal/exit %d%d%d%d had veto %2.1f\n\n", sr.Ev_reco, sr.Elep_reco, sr.reco_q, sr.reco_numu, sr.reco_nue, sr.reco_nc, sr.muon_contained, sr.muon_tracker, sr.muon_ecal, sr.muon_exit, sr.Ehad_veto );
+  //printf( "Event %d:\n", sr.event );
+  //printf( "   Truth: Ev = %3.3f Elep = %3.3f Q2 = %3.3f W = %3.3f x = %3.3f y = %3.3f lepton %d mode %d\n", sr.Ev, sr.LepE, sr.Q2, sr.W, sr.X, sr.Y, sr.LepPDG, sr.mode );
+  //printf( "    Reco: Ev = %3.3f Elep = %3.3f q %d mu/e/nc %d%d%d cont/trk/ecal/exit %d%d%d%d had veto %2.1f\n\n", sr.Ev_reco, sr.Elep_reco, sr.reco_q, sr.reco_numu, sr.reco_nue, sr.reco_nc, sr.muon_contained, sr.muon_tracker, sr.muon_ecal, sr.muon_exit, sr.Ehad_veto );
 }
 
 void CAF::fillPOT()

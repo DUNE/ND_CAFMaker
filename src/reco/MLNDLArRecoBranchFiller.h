@@ -12,9 +12,14 @@
 #include <unordered_map>
 #include <typeindex>
 
-#include "IRecoBranchFiller.h"
+#include "reco/IRecoBranchFiller.h"
+#include "reco/NDLArDLPH5DatasetReader.h"
 
-#include "NDLArDLPH5DatasetReader.h"
+namespace caf
+{
+  class SRTrueInteraction;
+  class SRTrueParticle;
+}
 
 namespace cafmaker
 {
@@ -25,10 +30,13 @@ namespace cafmaker
     public:
       MLNDLArRecoBranchFiller(const std::string &h5filename);
 
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
+
     protected:
-      void _FillRecoBranches(std::size_t evtIdx,
+      void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
-                             const cafmaker::Params &par) const override;
+                             const cafmaker::Params &par,
+                             const TruthMatcher *truthMatcher) const override;
 
     private:
       void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
@@ -37,12 +45,27 @@ namespace cafmaker
       void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
                        caf::StandardRecord & sr) const;
 
-      void FillTruth(const H5DataView<cafmaker::types::dlp::TrueParticle> & trueParticles,
-                     const H5DataView<cafmaker::types::dlp::TrueInteraction> & trueInxns,
-                     caf::StandardRecord &sr) const;
+      void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
+                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
+                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                            const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr) const;
+
+      void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
+                         const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
+                         const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                         const TruthMatcher * truthMatch,
+                         caf::StandardRecord &sr) const;
+
+      void FillTrueParticle(caf::SRTrueParticle & srTruePart,
+                            const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const;
+
+      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
+                               const cafmaker::types::dlp::TrueInteraction & trueIntPassthrough) const;
 
       NDLArDLPH5DatasetReader fDSReader;
-
+      mutable std::vector<cafmaker::Trigger> fTriggers;
+      mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
   };  // class MLNDLArRecoBranchFiller
 
 } // namespace cafmaker

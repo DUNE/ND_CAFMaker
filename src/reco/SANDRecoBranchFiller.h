@@ -21,10 +21,13 @@ namespace cafmaker
     public:
       SANDRecoBranchFiller(const std::string &SANDRecoFilename);
 
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
+
     private:
-      void _FillRecoBranches(std::size_t evtIdx,
-			     caf::StandardRecord &sr,
-			     const cafmaker::Params &par) const override;
+      void _FillRecoBranches(const Trigger &trigger,
+                             caf::StandardRecord &sr,
+                             const cafmaker::Params &par,
+                             const TruthMatcher *truthMatcher) const override;
 
       TFile* fSANDRecoFile;
       TTree* fTree;

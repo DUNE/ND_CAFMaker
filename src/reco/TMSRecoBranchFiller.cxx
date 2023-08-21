@@ -1,8 +1,11 @@
 #include "TMSRecoBranchFiller.h"
+#include "truth/FillTruth.h"
+
 
 namespace cafmaker
 {
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename)
+    : IRecoBranchFiller("TMS")
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
@@ -40,10 +43,13 @@ namespace cafmaker
   // ---------------------------------------------------------------------------
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
-  void TMSRecoBranchFiller::_FillRecoBranches(std::size_t evtIdx,
+  void TMSRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                               caf::StandardRecord &sr,
-                                              const cafmaker::Params &par) const
+                                              const cafmaker::Params &par,
+                                              const TruthMatcher *truthMatcher) const
   {
+#ifndef DISABLE_TMS
+
     // Get nth entry from tree
     TMSRecoTree->GetEntry(evtIdx);
 
@@ -51,7 +57,7 @@ namespace cafmaker
     sr.nd.tms.ntracks = _nLines;
     sr.nd.tms.tracks.resize(_nLines);
 
-    // Fill in the track info 
+    // Fill in the track info
     for (int i = 0; i < _nLines; ++i) {
       double prevz = -9E10;
       // Hit info
@@ -82,5 +88,13 @@ namespace cafmaker
       sr.nd.tms.tracks[i].enddir  = caf::SRVector3D(_DirectionX_Downstream[i], -999, _DirectionZ_Downstream[i]);
     }
 
+#endif  // DISABLE_TMS
   }
+
+  // todo: this is a placeholder
+  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    return std::deque<Trigger>();
+  }
+
 } // end namespace
