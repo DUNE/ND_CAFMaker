@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f /dune/data/users/jwolcott/nd/nd-lar-reco/reco-out/mlreco_official_test2x2.2.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
+//       ./h5_to_cpp.py -f ../2x2_test.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
 //
 
 
@@ -198,12 +198,12 @@ namespace cafmaker::types::dlp
   
   struct Event
   {
-    hdset_reg_ref_t meta;
     hdset_reg_ref_t run_info;
+    hdset_reg_ref_t meta;
     hdset_reg_ref_t index;
-    hdset_reg_ref_t truth_interactions;
     hdset_reg_ref_t interactions;
     hdset_reg_ref_t particles;
+    hdset_reg_ref_t truth_interactions;
     hdset_reg_ref_t truth_particles;
     
     void SyncVectors();
@@ -212,9 +212,9 @@ namespace cafmaker::types::dlp
     const hdset_reg_ref_t& GetRef() const
     {
       if constexpr(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
       else if(std::is_same_v<T, Interaction>) return interactions;
       else if(std::is_same_v<T, Particle>) return particles;
+      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
       else if(std::is_same_v<T, TrueParticle>) return truth_particles;
     }
     
@@ -248,7 +248,7 @@ namespace cafmaker::types::dlp
     int64_t size;
     char * topology;
     char * units;
-    std::array<double, 3> vertex;
+    std::array<float, 3> vertex;
     int64_t volume_id;
     
     void SyncVectors();
@@ -271,7 +271,7 @@ namespace cafmaker::types::dlp
   {
     double csda_kinetic_energy;
     double depositions_sum;
-    std::array<float, 3> end_dir;
+    std::array<double, 3> end_dir;
     std::array<double, 3> end_point;
     BufferView<int64_t> fragment_ids;
     int64_t id;
@@ -294,7 +294,7 @@ namespace cafmaker::types::dlp
     std::array<float, 2> primary_scores;
     SemanticType semantic_type;
     int64_t size;
-    std::array<float, 3> start_dir;
+    std::array<double, 3> start_dir;
     std::array<double, 3> start_point;
     char * units;
     int64_t volume_id;
@@ -339,6 +339,7 @@ namespace cafmaker::types::dlp
     int64_t nu_id;
     NuInteractionMode nu_interaction_mode;
     NuInteractionType nu_interaction_type;
+    int64_t nu_pdg_code;
     int64_t num_particles;
     int64_t num_primaries;
     std::array<int64_t, 6> particle_counts;
@@ -346,12 +347,13 @@ namespace cafmaker::types::dlp
     std::array<int64_t, 6> primary_counts;
     int64_t size;
     char * topology;
+    int64_t truth_id;
     BufferView<int64_t> truth_particle_counts;
     BufferView<int64_t> truth_primary_counts;
     char * truth_topology;
-    BufferView<double> truth_vertex;
+    std::array<double, 3> truth_vertex;
     char * units;
-    std::array<double, 3> vertex;
+    std::array<float, 3> vertex;
     int64_t volume_id;
     
     void SyncVectors();
@@ -369,7 +371,6 @@ namespace cafmaker::types::dlp
     hvl_t particle_ids_handle;
     hvl_t truth_particle_counts_handle;
     hvl_t truth_primary_counts_handle;
-    hvl_t truth_vertex_handle;
   };
   
   
@@ -425,9 +426,7 @@ namespace cafmaker::types::dlp
     int64_t parent_track_id;
     int64_t pdg_code;
     Pid pid;
-    std::array<float, 5> pid_scores;
     BufferView<double> position;
-    std::array<float, 2> primary_scores;
     float sed_depositions_MeV_sum;
     BufferView<int64_t> sed_index;
     int64_t sed_size;
