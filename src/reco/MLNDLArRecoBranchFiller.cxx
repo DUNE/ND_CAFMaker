@@ -431,7 +431,6 @@ namespace cafmaker
       caf::SRInteraction interaction;
       interaction.id  = ixn.id;
       interaction.vtx  = caf::SRVector3D(ixn.vertex[0], ixn.vertex[1], ixn.vertex[2]);  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser unless using a FlatCAF
-
       LOG.VERBOSE() << " --> interaction id = "  << interaction.id << "\n";
 
       // if we *have* truth matches, we need to connect them now
@@ -535,7 +534,9 @@ namespace cafmaker
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       reco_particle.E = part.depositions_sum;
+      reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
+      if(part.is_contained) reco_particle.tgtA = 40;
       reco_particle.pdg = part.pdg_code;
       // todo: momentum mcs is currently filled with just -1.  also may be able to use reco_particle.E with a direction estimate in some cases...
 /*      reco_particle.p.x = part.momentum_mcs[0];
@@ -667,6 +668,7 @@ namespace cafmaker
       caf::SRTrack track;
       // fill shower variables
       track.Evis = part.depositions_sum;
+      track.E = part.csda_kinetic_energy; //range based energy
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
