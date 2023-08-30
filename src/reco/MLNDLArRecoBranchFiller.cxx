@@ -537,6 +537,10 @@ namespace cafmaker
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
       if(part.is_contained) reco_particle.tgtA = 40;
       reco_particle.pdg = part.pdg_code;
+      //to do: Why is this not working
+//      reco_particle.truth.ixn = part.interaction_id;
+  //    if(part.is_primary)reco_particle.truth.type = caf::TrueParticleID::kPrimary;
+    //  reco_particle.truth.part = part.id;
       // todo: momentum mcs is currently filled with just -1.  also may be able to use reco_particle.E with a direction estimate in some cases...
 /*      reco_particle.p.x = part.momentum_mcs[0];
       reco_particle.p.y = part.momentum_mcs[1];
@@ -689,6 +693,7 @@ namespace cafmaker
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].ntracks++;
     }
   }
 
@@ -720,6 +725,7 @@ namespace cafmaker
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].nshowers++;
 
     }
   }
