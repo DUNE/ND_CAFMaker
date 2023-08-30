@@ -532,7 +532,7 @@ namespace cafmaker
       if(part.is_primary) reco_particle.primary = true;
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
-      reco_particle.E = part.depositions_sum;
+      reco_particle.E = part.depositions_sum/1000.;
       reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
       if(part.is_contained) reco_particle.tgtA = 40;
@@ -668,7 +668,7 @@ namespace cafmaker
 
       caf::SRTrack track;
       // fill shower variables
-      track.Evis = part.depositions_sum;
+      track.Evis = part.depositions_sum/1000.;
       track.E = part.csda_kinetic_energy; //range based energy
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
@@ -703,7 +703,7 @@ namespace cafmaker
 
       caf::SRShower shower;
       // fill shower variables
-      shower.Evis = part.depositions_sum;
+      shower.Evis = part.depositions_sum/1000.;
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       shower.truth.ixn = part.interaction_id;
