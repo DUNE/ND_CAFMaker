@@ -278,7 +278,6 @@ namespace cafmaker
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
-
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0);
     ValidateOrCopy(truePartPassthrough.track_id, srTruePart.G4ID, -1);
 
@@ -550,6 +549,7 @@ namespace cafmaker
         {
           LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
                     << "is primary = " << truePartPassThrough.is_primary << "; "
@@ -648,6 +648,7 @@ namespace cafmaker
         abort();
       }
       sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
+      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.ndlp++;
 
     }
   }
