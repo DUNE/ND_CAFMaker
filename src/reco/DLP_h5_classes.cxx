@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f /dune/data/users/skumara/Datafiles_2x2/MLreco_h5files/test_2x2_5events_minirun3-1890_vAug22-2023.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
+//       ./h5_to_cpp.py -f ../../2x2_minirun4_test.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
 //
 
 #include "DLP_h5_classes.h"
@@ -81,12 +81,12 @@ namespace cafmaker::types::dlp
     H5::CompType ctype(sizeof(Event));
   
     ctype.insertMember("run_info", HOFFSET(Event, run_info), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("meta", HOFFSET(Event, meta), H5::PredType::STD_REF_DSETREG);
     ctype.insertMember("index", HOFFSET(Event, index), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("interactions", HOFFSET(Event, interactions), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("particles", HOFFSET(Event, particles), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("truth_interactions", HOFFSET(Event, truth_interactions), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("meta", HOFFSET(Event, meta), H5::PredType::STD_REF_DSETREG);
     ctype.insertMember("truth_particles", HOFFSET(Event, truth_particles), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("particles", HOFFSET(Event, particles), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("interactions", HOFFSET(Event, interactions), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("truth_interactions", HOFFSET(Event, truth_interactions), H5::PredType::STD_REF_DSETREG);
   
     return ctype;
   }
@@ -131,6 +131,11 @@ namespace cafmaker::types::dlp
     ctype.insertMember("units", HOFFSET(Interaction, units), units_strType);
     
     ctype.insertMember("vertex", HOFFSET(Interaction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    
+    H5::StrType vertex_mode_strType(H5::PredType::C_S1, H5T_VARIABLE);
+    vertex_mode_strType.setCset(H5T_CSET_UTF8);
+    ctype.insertMember("vertex_mode", HOFFSET(Interaction, vertex_mode), vertex_mode_strType);
+    
     ctype.insertMember("volume_id", HOFFSET(Interaction, volume_id), H5::PredType::STD_I64LE);
   
     return ctype;
@@ -142,7 +147,8 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(Particle));
   
-    ctype.insertMember("csda_kinetic_energy", HOFFSET(Particle, csda_kinetic_energy), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("calo_ke", HOFFSET(Particle, calo_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("csda_ke", HOFFSET(Particle, csda_ke), H5::PredType::IEEE_F64LE);
     ctype.insertMember("depositions_sum", HOFFSET(Particle, depositions_sum), H5::PredType::IEEE_F64LE);
     ctype.insertMember("end_dir", HOFFSET(Particle, end_dir), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_point", HOFFSET(Particle, end_point), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
@@ -158,7 +164,8 @@ namespace cafmaker::types::dlp
     ctype.insertMember("match", HOFFSET(Particle, match_handle), H5::VarLenType(H5::PredType::STD_I64LE));
     ctype.insertMember("match_overlap", HOFFSET(Particle, match_overlap_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("matched", HOFFSET(Particle, matched), H5::PredType::STD_U8LE);
-    ctype.insertMember("momentum_mcs", HOFFSET(Particle, momentum_mcs), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("mcs_ke", HOFFSET(Particle, mcs_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("momentum", HOFFSET(Particle, momentum), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("nu_id", HOFFSET(Particle, nu_id), H5::PredType::STD_I64LE);
     ctype.insertMember("num_fragments", HOFFSET(Particle, num_fragments), H5::PredType::STD_I64LE);
     ctype.insertMember("pdg_code", HOFFSET(Particle, pdg_code), H5::PredType::STD_I64LE);
@@ -166,6 +173,7 @@ namespace cafmaker::types::dlp
     H5::EnumType pid_enumtype(H5::PredType::STD_I64LE);
     int64_t pid_enum_val;
       pid_enum_val = 1; pid_enumtype.insert("Electron", &pid_enum_val);
+      pid_enum_val = 5; pid_enumtype.insert("Kaon", &pid_enum_val);
       pid_enum_val = 2; pid_enumtype.insert("Muon", &pid_enum_val);
       pid_enum_val = 0; pid_enumtype.insert("Photon", &pid_enum_val);
       pid_enum_val = 3; pid_enumtype.insert("Pion", &pid_enum_val);
@@ -392,6 +400,11 @@ namespace cafmaker::types::dlp
     ctype.insertMember("units", HOFFSET(TrueInteraction, units), units_strType);
     
     ctype.insertMember("vertex", HOFFSET(TrueInteraction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    
+    H5::StrType vertex_mode_strType(H5::PredType::C_S1, H5T_VARIABLE);
+    vertex_mode_strType.setCset(H5T_CSET_UTF8);
+    ctype.insertMember("vertex_mode", HOFFSET(TrueInteraction, vertex_mode), vertex_mode_strType);
+    
     ctype.insertMember("volume_id", HOFFSET(TrueInteraction, volume_id), H5::PredType::STD_I64LE);
   
     return ctype;
@@ -412,6 +425,8 @@ namespace cafmaker::types::dlp
     ctype.insertMember("ancestor_position", HOFFSET(TrueParticle, ancestor_position_handle), H5::VarLenType(H5::PredType::IEEE_F64LE));
     ctype.insertMember("ancestor_t", HOFFSET(TrueParticle, ancestor_t), H5::PredType::IEEE_F64LE);
     ctype.insertMember("ancestor_track_id", HOFFSET(TrueParticle, ancestor_track_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("calo_ke", HOFFSET(TrueParticle, calo_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("calo_ke_tng", HOFFSET(TrueParticle, calo_ke_tng), H5::PredType::IEEE_F64LE);
     ctype.insertMember("children_counts", HOFFSET(TrueParticle, children_counts_handle), H5::VarLenType(H5::PredType::STD_I64LE));
     ctype.insertMember("children_id", HOFFSET(TrueParticle, children_id_handle), H5::VarLenType(H5::PredType::IEEE_F64LE));
     
@@ -419,12 +434,12 @@ namespace cafmaker::types::dlp
     creation_process_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("creation_process", HOFFSET(TrueParticle, creation_process), creation_process_strType);
     
-    ctype.insertMember("csda_kinetic_energy", HOFFSET(TrueParticle, csda_kinetic_energy), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("csda_kinetic_energy_tng", HOFFSET(TrueParticle, csda_kinetic_energy_tng), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("csda_ke", HOFFSET(TrueParticle, csda_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("csda_ke_tng", HOFFSET(TrueParticle, csda_ke_tng), H5::PredType::IEEE_F64LE);
     ctype.insertMember("depositions_sum", HOFFSET(TrueParticle, depositions_sum), H5::PredType::IEEE_F64LE);
     ctype.insertMember("direction", HOFFSET(TrueParticle, direction_handle), H5::VarLenType(H5::PredType::IEEE_F64LE));
     ctype.insertMember("distance_travel", HOFFSET(TrueParticle, distance_travel), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("end_dir", HOFFSET(TrueParticle, end_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("end_dir", HOFFSET(TrueParticle, end_dir), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_point", HOFFSET(TrueParticle, end_point), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_position", HOFFSET(TrueParticle, end_position), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("energy_deposit", HOFFSET(TrueParticle, energy_deposit), H5::PredType::IEEE_F64LE);
@@ -445,10 +460,11 @@ namespace cafmaker::types::dlp
     ctype.insertMember("match", HOFFSET(TrueParticle, match_handle), H5::VarLenType(H5::PredType::STD_I64LE));
     ctype.insertMember("match_overlap", HOFFSET(TrueParticle, match_overlap_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("matched", HOFFSET(TrueParticle, matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("mcs_ke", HOFFSET(TrueParticle, mcs_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("mcs_ke_tng", HOFFSET(TrueParticle, mcs_ke_tng), H5::PredType::IEEE_F64LE);
     ctype.insertMember("mcst_index", HOFFSET(TrueParticle, mcst_index), H5::PredType::STD_I64LE);
     ctype.insertMember("mct_index", HOFFSET(TrueParticle, mct_index), H5::PredType::STD_I64LE);
     ctype.insertMember("momentum", HOFFSET(TrueParticle, momentum), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("momentum_mcs", HOFFSET(TrueParticle, momentum_mcs), H5::PredType::IEEE_F64LE);
     ctype.insertMember("nu_id", HOFFSET(TrueParticle, nu_id), H5::PredType::STD_I64LE);
     ctype.insertMember("num_fragments", HOFFSET(TrueParticle, num_fragments), H5::PredType::STD_I64LE);
     ctype.insertMember("num_voxels", HOFFSET(TrueParticle, num_voxels), H5::PredType::STD_I64LE);
@@ -468,6 +484,7 @@ namespace cafmaker::types::dlp
     H5::EnumType pid_enumtype(H5::PredType::STD_I64LE);
     int64_t pid_enum_val;
       pid_enum_val = 1; pid_enumtype.insert("Electron", &pid_enum_val);
+      pid_enum_val = 5; pid_enumtype.insert("Kaon", &pid_enum_val);
       pid_enum_val = 2; pid_enumtype.insert("Muon", &pid_enum_val);
       pid_enum_val = 0; pid_enumtype.insert("Photon", &pid_enum_val);
       pid_enum_val = 3; pid_enumtype.insert("Pion", &pid_enum_val);
@@ -492,7 +509,7 @@ namespace cafmaker::types::dlp
     
     ctype.insertMember("shape", HOFFSET(TrueParticle, shape), H5::PredType::STD_I64LE);
     ctype.insertMember("size", HOFFSET(TrueParticle, size), H5::PredType::STD_I64LE);
-    ctype.insertMember("start_dir", HOFFSET(TrueParticle, start_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("start_dir", HOFFSET(TrueParticle, start_dir), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("start_point", HOFFSET(TrueParticle, start_point), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("t", HOFFSET(TrueParticle, t), H5::PredType::IEEE_F64LE);
     ctype.insertMember("track_id", HOFFSET(TrueParticle, track_id), H5::PredType::STD_I64LE);

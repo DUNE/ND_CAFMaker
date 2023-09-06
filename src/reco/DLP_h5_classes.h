@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f ../2x2_test.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
+//       ./h5_to_cpp.py -f ../../2x2_minirun4_test.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
 //
 
 
@@ -29,6 +29,7 @@ namespace cafmaker::types::dlp
   enum class Pid : int64_t
   {
     kElectron = 1,
+    kKaon = 5,
     kMuon = 2,
     kPhoton = 0,
     kPion = 3,
@@ -199,12 +200,12 @@ namespace cafmaker::types::dlp
   struct Event
   {
     hdset_reg_ref_t run_info;
-    hdset_reg_ref_t meta;
     hdset_reg_ref_t index;
-    hdset_reg_ref_t interactions;
-    hdset_reg_ref_t particles;
-    hdset_reg_ref_t truth_interactions;
+    hdset_reg_ref_t meta;
     hdset_reg_ref_t truth_particles;
+    hdset_reg_ref_t particles;
+    hdset_reg_ref_t interactions;
+    hdset_reg_ref_t truth_interactions;
     
     void SyncVectors();
     
@@ -212,10 +213,10 @@ namespace cafmaker::types::dlp
     const hdset_reg_ref_t& GetRef() const
     {
       if constexpr(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, Interaction>) return interactions;
-      else if(std::is_same_v<T, Particle>) return particles;
-      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
       else if(std::is_same_v<T, TrueParticle>) return truth_particles;
+      else if(std::is_same_v<T, Particle>) return particles;
+      else if(std::is_same_v<T, Interaction>) return interactions;
+      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
     }
     
   };
@@ -249,6 +250,7 @@ namespace cafmaker::types::dlp
     char * topology;
     char * units;
     std::array<float, 3> vertex;
+    char * vertex_mode;
     int64_t volume_id;
     
     void SyncVectors();
@@ -269,7 +271,8 @@ namespace cafmaker::types::dlp
   
   struct Particle
   {
-    double csda_kinetic_energy;
+    double calo_ke;
+    double csda_ke;
     double depositions_sum;
     std::array<double, 3> end_dir;
     std::array<double, 3> end_point;
@@ -285,7 +288,8 @@ namespace cafmaker::types::dlp
     BufferView<int64_t> match;
     BufferView<float> match_overlap;
     uint8_t matched;
-    double momentum_mcs;
+    double mcs_ke;
+    std::array<double, 3> momentum;
     int64_t nu_id;
     int64_t num_fragments;
     int64_t pdg_code;
@@ -354,6 +358,7 @@ namespace cafmaker::types::dlp
     std::array<double, 3> truth_vertex;
     char * units;
     std::array<float, 3> vertex;
+    char * vertex_mode;
     int64_t volume_id;
     
     void SyncVectors();
@@ -381,15 +386,17 @@ namespace cafmaker::types::dlp
     BufferView<double> ancestor_position;
     double ancestor_t;
     int64_t ancestor_track_id;
+    double calo_ke;
+    double calo_ke_tng;
     BufferView<int64_t> children_counts;
     BufferView<double> children_id;
     char * creation_process;
-    double csda_kinetic_energy;
-    double csda_kinetic_energy_tng;
+    double csda_ke;
+    double csda_ke_tng;
     double depositions_sum;
     BufferView<double> direction;
     double distance_travel;
-    std::array<float, 3> end_dir;
+    std::array<double, 3> end_dir;
     std::array<double, 3> end_point;
     std::array<double, 3> end_position;
     double energy_deposit;
@@ -410,10 +417,11 @@ namespace cafmaker::types::dlp
     BufferView<int64_t> match;
     BufferView<float> match_overlap;
     uint8_t matched;
+    double mcs_ke;
+    double mcs_ke_tng;
     int64_t mcst_index;
     int64_t mct_index;
     std::array<double, 3> momentum;
-    double momentum_mcs;
     int64_t nu_id;
     int64_t num_fragments;
     int64_t num_voxels;
@@ -433,7 +441,7 @@ namespace cafmaker::types::dlp
     SemanticType semantic_type;
     int64_t shape;
     int64_t size;
-    std::array<float, 3> start_dir;
+    std::array<double, 3> start_dir;
     std::array<double, 3> start_point;
     double t;
     int64_t track_id;
