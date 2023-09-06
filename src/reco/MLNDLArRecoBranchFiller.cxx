@@ -473,9 +473,10 @@ namespace cafmaker
 
           // end hack -----------------------------------------------------------------------
 
-          // todo: re-enable when hack above no longer needed
-//          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);
+         // todo: re-enable when hack above no longer needed
+//          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);// yes, track_id.  that's where the neutrino ID from edep-sim will be stored
 
+          
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
             LOG.VERBOSE() << "    (prim) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
@@ -532,21 +533,13 @@ namespace cafmaker
       if(part.is_primary) reco_particle.primary = true;
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
-      reco_particle.E = part.depositions_sum/1000.;
+      reco_particle.E = part.calo_ke/1000.;
       reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
       if(part.is_contained) reco_particle.tgtA = 40;
       reco_particle.pdg = part.pdg_code;
-      //to do: Why is this not working
-//      reco_particle.truth.ixn = part.interaction_id;
-  //    if(part.is_primary)reco_particle.truth.type = caf::TrueParticleID::kPrimary;
-    //  reco_particle.truth.part = part.id;
-      // todo: momentum mcs is currently filled with just -1.  also may be able to use reco_particle.E with a direction estimate in some cases...
-/*      reco_particle.p.x = part.momentum_mcs[0];
-      reco_particle.p.y = part.momentum_mcs[1];
-      reco_particle.p.z = part.momentum_mcs[2];
-  */
-
+      reco_particle.p =  caf::SRVector3D(part.momentum[0], part.momentum[1], part.momentum[2]);
+  
       if (part.matched)
       {
         for (std::size_t idx = 0; idx < part.match.size(); idx++)
@@ -635,10 +628,11 @@ namespace cafmaker
                                                                collection.end(),
                                                                srPartCmp));
 
+	  //There is a problem here
           reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                                             (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
-          reco_particle.truthOverlap.push_back(truePartPassThrough.match_overlap[idx]);
+          reco_particle.truthOverlap.push_back(part.match_overlap[idx]);
         }
       }
 
@@ -672,8 +666,8 @@ namespace cafmaker
 
       caf::SRTrack track;
       // fill shower variables
-      track.Evis = part.depositions_sum/1000.;
-      track.E = part.csda_kinetic_energy; //range based energy
+      track.Evis = part.calo_ke/1000.;
+      track.E = part.csda_ke/1000.; //range based energy
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
@@ -708,7 +702,7 @@ namespace cafmaker
 
       caf::SRShower shower;
       // fill shower variables
-      shower.Evis = part.depositions_sum/1000.;
+      shower.Evis = part.calo_ke/1000.;
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       shower.truth.ixn = part.interaction_id;
