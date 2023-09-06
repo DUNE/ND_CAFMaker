@@ -149,7 +149,7 @@ fwd_declare_template = "struct {typ};"
 
 enum_cpp_template = \
 """
-enum {name} : {size_type}
+enum class {name} : {size_type}
 {{
 {members}
 }};
@@ -282,7 +282,7 @@ class TypeSerializer:
             h5_name = self.type_string(typ, fieldname=None, which="h5")
         elif h5py.check_enum_dtype(typ):
             typenames = fieldname.split("_")
-            typename = "".join(t.capitalize() for t in typenames) + "_t"
+            typename = "".join(t.capitalize() for t in typenames)
 
             # we really shouldn't have the side effect of storing the enums
             # performed inside a function that's doing something else,
