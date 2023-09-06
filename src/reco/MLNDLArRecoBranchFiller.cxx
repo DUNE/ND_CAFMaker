@@ -538,7 +538,9 @@ namespace cafmaker
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
       if(part.is_contained) reco_particle.tgtA = 40;
       reco_particle.pdg = part.pdg_code;
-      reco_particle.p =  caf::SRVector3D(part.momentum[0], part.momentum[1], part.momentum[2]);
+      reco_particle.p.x = part.momentum[0];
+      reco_particle.p.y = part.momentum[1];
+      reco_particle.p.z = part.momentum[2];
   
       if (part.matched)
       {
