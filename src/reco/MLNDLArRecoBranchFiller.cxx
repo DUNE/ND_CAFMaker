@@ -630,7 +630,6 @@ namespace cafmaker
                                                                collection.end(),
                                                                srPartCmp));
 
-	  //There is a problem here
           reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                                             (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
