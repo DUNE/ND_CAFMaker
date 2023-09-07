@@ -356,10 +356,12 @@ namespace cafmaker
     struct SRPartCmp
     {
       float E;
+      int trkid;
       bool operator()(const caf::SRTrueParticle & part) const
       {
-        LOG_S("SRPartCmp").VERBOSE() << "       SRPartCmp::operator()():  looking for E = " << E << "; this particle E = " << part.p.E << "\n";
-        return part.p.E == E;
+        LOG_S("SRPartCmp").VERBOSE() << "       SRPartCmp::operator()():  looking for E = " << E << "; this particle E = " << part.p.E << ","
+                                     << "trk ID = " << trkid << ", this particle trkID = " << part.G4ID << "\n";
+        return part.p.E == E && (trkid < 0 || part.G4ID < 0 || trkid == part.G4ID);
       }
     };
 
@@ -385,7 +387,7 @@ namespace cafmaker
       for (long int partIdx : trueIxnPassThrough.particle_ids)
       {
         const cafmaker::types::dlp::TrueParticle &part = trueParticles[partIdx];
-        LOG_S("SetCmpLep()").VERBOSE()  << "         " << part.pdg_code << ", " << part.is_primary << ", " << part.energy_init << "\n";
+        LOG_S("SetCmpLep()").VERBOSE()  << "         " << part.pdg_code << ", " << part.is_primary << ", " << part.energy_init/1000. << "\n";
         long int abspdg = std::abs(part.pdg_code);
 
         // rock muons are the only non-primaries we consider here
@@ -598,10 +600,11 @@ namespace cafmaker
           // we use the comparison version because the G4ID from the pass-through
           // counts up monotonically from 0 across the whole FILE,
           // whereas the GENIE events start over at every interaction.
-          // moreover, the cafmaker::types::dlp::TrueParticle flag appears
-          // not to be deserializing correctly (every particle is marked FALSE)
+          // moreover, the cafmaker::types::dlp::TrueParticle::is_primary flag
+          // is currently broken (upstream info from Supera is screwed up)
           // so we need to try both collections :(
           srPartCmp.E = truePartPassThrough.energy_init / 1000.;
+          srPartCmp.trkid = truePartPassThrough.track_id;
           bool isPrim = false;
           caf::SRTrueParticle * srTruePart = nullptr;
           try
