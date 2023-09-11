@@ -42,8 +42,7 @@ progopt::variables_map parseCmdLine(int argc, const char** argv)
       ("ghep,g",     progopt::value<std::string>(), "input GENIE .ghep file")
       ("out,o",      progopt::value<std::string>(), "output CAF file")
       ("startevt",   progopt::value<int>(),         "event number to start at")
-      ("numevts,n",  progopt::value<int>(),         "total number of events to process (-1 means 'all')")
-      ("flatcaf",    progopt::value<bool>(),        "bool for making flat CAFs in addition to structured ones");
+      ("numevts,n",  progopt::value<int>(),         "total number of events to process (-1 means 'all')");
 
   // this option needs to exist for the positional argument be assigned to it,
   // but we don't want to show it in the '--help' printout
@@ -95,8 +94,6 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
     provisional.put("nd_cafmaker.CAFMakerSettings.FirstEvt", vm["startevt"].as<int>());
   if (vm.count("numevts"))
     provisional.put("nd_cafmaker.CAFMakerSettings.NumEvts", vm["numevts"].as<int>());
-  if (vm.count("flatcaf"))
-    provisional.put("nd_cafmaker.CAFMakerSettings.MakeFlatCAF", vm["flatcaf"].as<bool>());
 
   // now that we've updated it, convert to actual ParameterSet
   fhicl::ParameterSet pset;
