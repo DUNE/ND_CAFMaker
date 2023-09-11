@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f ../../2x2_minirun4_test.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
+//       ./h5_to_cpp.py -f /dune/data/users/skumara/Datafiles_2x2/MLreco_h5files/test_minirun4.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
 //
 
 
