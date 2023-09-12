@@ -278,7 +278,6 @@ namespace cafmaker
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
-
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0);
     ValidateOrCopy(truePartPassthrough.track_id, srTruePart.G4ID, -1);
 
@@ -433,7 +432,6 @@ namespace cafmaker
       caf::SRInteraction interaction;
       interaction.id  = ixn.id;
       interaction.vtx  = caf::SRVector3D(ixn.vertex[0], ixn.vertex[1], ixn.vertex[2]);  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser unless using a FlatCAF
-
       LOG.VERBOSE() << " --> interaction id = "  << interaction.id << "\n";
 
       // if we *have* truth matches, we need to connect them now
@@ -477,8 +475,9 @@ namespace cafmaker
 
           // end hack -----------------------------------------------------------------------
 
-          // todo: re-enable when hack above no longer needed
+         // todo: re-enable when hack above no longer needed
 //          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.track_id);  // yes, track_id.  that's where the neutrino ID from edep-sim will be stored
+
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
@@ -536,14 +535,14 @@ namespace cafmaker
       if(part.is_primary) reco_particle.primary = true;
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
-      reco_particle.E = part.depositions_sum;
+      reco_particle.E = part.calo_ke/1000.;
+      reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
+      if(part.is_contained) reco_particle.tgtA = 40;
       reco_particle.pdg = part.pdg_code;
-      // todo: momentum mcs is currently filled with just -1.  also may be able to use reco_particle.E with a direction estimate in some cases...
-/*      reco_particle.p.x = part.momentum_mcs[0];
-      reco_particle.p.y = part.momentum_mcs[1];
-      reco_particle.p.z = part.momentum_mcs[2];
-  */
+      reco_particle.p.x = part.momentum[0]/1000.;
+      reco_particle.p.y = part.momentum[1]/1000.;
+      reco_particle.p.z = part.momentum[2]/1000.;
 
       if (part.matched)
       {
@@ -551,6 +550,7 @@ namespace cafmaker
         {
           LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
                     << "is primary = " << truePartPassThrough.is_primary << "; "
@@ -636,7 +636,7 @@ namespace cafmaker
           reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                                             (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
-          reco_particle.truthOverlap.push_back(truePartPassThrough.match_overlap[idx]);
+          reco_particle.truthOverlap.push_back(part.match_overlap[idx]);
         }
       }
 
@@ -650,6 +650,7 @@ namespace cafmaker
         abort();
       }
       sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
+      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.ndlp++;
 
     }
   }
@@ -669,7 +670,8 @@ namespace cafmaker
 
       caf::SRTrack track;
       // fill shower variables
-      track.Evis = part.depositions_sum;
+      track.Evis = part.calo_ke/1000.;
+      track.E = part.csda_ke/1000.; //range based energy
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
@@ -689,6 +691,7 @@ namespace cafmaker
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].ntracks++;
     }
   }
 
@@ -703,7 +706,7 @@ namespace cafmaker
 
       caf::SRShower shower;
       // fill shower variables
-      shower.Evis = part.depositions_sum;
+      shower.Evis = part.calo_ke/1000.;
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       shower.truth.ixn = part.interaction_id;
@@ -720,6 +723,7 @@ namespace cafmaker
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
+      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].nshowers++;
 
     }
   }

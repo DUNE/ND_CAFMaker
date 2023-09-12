@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f /dune/data/users/jwolcott/nd/nd-lar-reco/reco-out/minirun4.00041.larcv.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
+//       ./h5_to_cpp.py -f /dune/data/users/skumara/Datafiles_2x2/MLreco_h5files/test_minirun4.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
 //
 
 
@@ -202,10 +202,10 @@ namespace cafmaker::types::dlp
     hdset_reg_ref_t run_info;
     hdset_reg_ref_t index;
     hdset_reg_ref_t meta;
-    hdset_reg_ref_t interactions;
-    hdset_reg_ref_t truth_interactions;
     hdset_reg_ref_t truth_particles;
     hdset_reg_ref_t particles;
+    hdset_reg_ref_t interactions;
+    hdset_reg_ref_t truth_interactions;
     
     void SyncVectors();
     
@@ -213,10 +213,10 @@ namespace cafmaker::types::dlp
     const hdset_reg_ref_t& GetRef() const
     {
       if constexpr(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, Interaction>) return interactions;
-      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
       else if(std::is_same_v<T, TrueParticle>) return truth_particles;
       else if(std::is_same_v<T, Particle>) return particles;
+      else if(std::is_same_v<T, Interaction>) return interactions;
+      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
     }
     
   };
