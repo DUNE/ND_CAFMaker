@@ -8,6 +8,7 @@
 
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/OptionalAtom.h"
+#include "fhiclcpp/types/OptionalSequence.h"
 #include "fhiclcpp/types/Table.h"
 
 namespace cafmaker
@@ -27,9 +28,11 @@ namespace cafmaker
   struct ControlConfig
   {
     // these are mandatory and have no default values
-    fhicl::OptionalAtom<std::string> contNuGHEPFile     {fhicl::Name{"ContainedNuGHEPFile"},   fhicl::Comment("Input .ghep (GENIE) file for in-detector neutrinos") };
-    fhicl::OptionalAtom<std::string> uncontNuGHEPFile   {fhicl::Name{"UncontainedNuGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file for rock/hall neutrinos") };
-    fhicl::Atom<std::string> outputFile         { fhicl::Name{"OutputFile"},           fhicl::Comment("Filename for output CAF") };
+    fhicl::OptionalSequence<std::string> contNuGHEPFiles     { fhicl::Name{"ContainedNuGHEPFiles"},   fhicl::Comment("Input .ghep (GENIE) file(s) for in-detector neutrinos") };
+//    fhicl::OptionalAtom<std::string> contNuGHEPFile     {fhicl::Name{"ContainedNuGHEPFile"},   fhicl::Comment("Input .ghep (GENIE) file for in-detector neutrinos") };
+    fhicl::OptionalSequence<std::string> uncontNuGHEPFiles   {fhicl::Name{"UncontainedNuGHEPFiles"}, fhicl::Comment("Input .ghep (GENIE) file(s) for rock/hall neutrinos") };
+//    fhicl::OptionalAtom<std::string> uncontNuGHEPFile   {fhicl::Name{"UncontainedNuGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file for rock/hall neutrinos") };
+    fhicl::Atom<std::string> outputFile                      { fhicl::Name{"OutputFile"},           fhicl::Comment("Filename for output CAF") };
 
     // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
     // fixme: this file is currently not used for anything, but will be once DIRT-II is done and re-enables the interaction systematics

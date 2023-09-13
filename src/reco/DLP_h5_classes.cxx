@@ -79,7 +79,7 @@ namespace cafmaker::types::dlp
   H5::CompType BuildCompType<Event>()
   {
     H5::CompType ctype(sizeof(Event));
-  
+
     ctype.insertMember("run_info", HOFFSET(Event, run_info), H5::PredType::STD_REF_DSETREG);
     ctype.insertMember("index", HOFFSET(Event, index), H5::PredType::STD_REF_DSETREG);
     ctype.insertMember("meta", HOFFSET(Event, meta), H5::PredType::STD_REF_DSETREG);
@@ -131,11 +131,11 @@ namespace cafmaker::types::dlp
     ctype.insertMember("units", HOFFSET(Interaction, units), units_strType);
     
     ctype.insertMember("vertex", HOFFSET(Interaction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    
+
     H5::StrType vertex_mode_strType(H5::PredType::C_S1, H5T_VARIABLE);
     vertex_mode_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("vertex_mode", HOFFSET(Interaction, vertex_mode), vertex_mode_strType);
-    
+
     ctype.insertMember("volume_id", HOFFSET(Interaction, volume_id), H5::PredType::STD_I64LE);
   
     return ctype;
@@ -400,11 +400,11 @@ namespace cafmaker::types::dlp
     ctype.insertMember("units", HOFFSET(TrueInteraction, units), units_strType);
     
     ctype.insertMember("vertex", HOFFSET(TrueInteraction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    
+
     H5::StrType vertex_mode_strType(H5::PredType::C_S1, H5T_VARIABLE);
     vertex_mode_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("vertex_mode", HOFFSET(TrueInteraction, vertex_mode), vertex_mode_strType);
-    
+
     ctype.insertMember("volume_id", HOFFSET(TrueInteraction, volume_id), H5::PredType::STD_I64LE);
   
     return ctype;
@@ -490,7 +490,7 @@ namespace cafmaker::types::dlp
       pid_enum_val = 3; pid_enumtype.insert("Pion", &pid_enum_val);
       pid_enum_val = 4; pid_enumtype.insert("Proton", &pid_enum_val);
     ctype.insertMember("pid", HOFFSET(TrueParticle, pid), pid_enumtype);
-    
+
     ctype.insertMember("position", HOFFSET(TrueParticle, position_handle), H5::VarLenType(H5::PredType::IEEE_F64LE));
     ctype.insertMember("sed_depositions_MeV_sum", HOFFSET(TrueParticle, sed_depositions_MeV_sum), H5::PredType::IEEE_F32LE);
     ctype.insertMember("sed_index", HOFFSET(TrueParticle, sed_index_handle), H5::VarLenType(H5::PredType::STD_I64LE));

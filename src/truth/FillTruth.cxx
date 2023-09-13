@@ -109,10 +109,13 @@ namespace cafmaker
 
 
 // ------------------------------------------------------------
-  TruthMatcher::TruthMatcher(TTree * contGTree,
-                             TTree * uncontGTree,
+  TruthMatcher::TruthMatcher(std::vector<TTree *> &contGTrees,
+                             std::vector<TTree *> &uncontGTrees,
                              const genie::NtpMCEventRecord *gEvt)
-    : cafmaker::Loggable("TruthMatcher"), fContNuGTree(contGTree), fUncontNuGTree(uncontGTree), fGEvt(gEvt)
+    : cafmaker::Loggable("TruthMatcher"),
+      fContNuGTrees(contGTrees), fLastFoundContTree(0),
+      fUncontNuGTrees(uncontGTrees), fLastFoundUncontTree(0),
+      fGEvt(gEvt)
   {}
 
   // --------------------------------------------------------------
@@ -317,19 +320,45 @@ namespace cafmaker
       LOG.VERBOSE() << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
 
       // todo: when we finally have interaction IDs that conform to the edep-sim vertexID convention,
-      //       we can use those to only search the correct GENIE true (contained or uncontained).
-      //       for now, though, we need to look at both.
+      //       we can use those to only search the correct GENIE tree.
+      //       for now, though, we need to look through them all. :(
       bool foundEv = false;
       int wrappedIdx = -1;
       LOG.VERBOSE() << "     examining GENIE records...\n ";
-      for (TTree * tree: {fContNuGTree, fUncontNuGTree})
-      {
-        if (!tree)
-          continue;
 
-        // if we already found the event in the first tree
+      std::size_t offset = 2 * std::min(fLastFoundContTree, fLastFoundUncontTree)
+                           + int(fLastFoundUncontTree < fLastFoundContTree); // if uncont is the smaller one, we want to start there
+      for (std::size_t treeIdx = offset; treeIdx < fContNuGTrees.size() + fUncontNuGTrees.size() + offset; treeIdx++)
+      {
         if (foundEv)
           break;
+
+        std::size_t wrappedTreeIdx = treeIdx % (fContNuGTrees.size() + fUncontNuGTrees.size());
+
+        // we want to alternate between 'contained' and 'uncontained' trees,
+        // because the spills contain elements of each merged together
+        // (more likely that an event not found in current 'contained' file
+        //  will be found in the current 'uncontained' file, rather than
+        //  jumping to the next 'contained' one)
+        TTree * tree = nullptr;
+        bool contTree = true;
+        int foundTreeIdx = -1;
+        if (wrappedTreeIdx < 2 * std::min(fContNuGTrees.size(), fUncontNuGTrees.size()))
+        {
+          foundTreeIdx = wrappedTreeIdx / 2;
+          contTree = wrappedTreeIdx % 2 == 0;
+          tree = contTree ? fContNuGTrees[foundTreeIdx] : fUncontNuGTrees[foundTreeIdx];
+        }
+        else
+        {
+          foundTreeIdx = wrappedTreeIdx - std::min(fContNuGTrees.size(), fUncontNuGTrees.size());
+          contTree = fContNuGTrees.size() > fUncontNuGTrees.size();
+          tree = contTree ? fContNuGTrees[foundTreeIdx] : fUncontNuGTrees[foundTreeIdx];
+        }
+        LOG.VERBOSE() << "     looking at " << (contTree ? " CONTAINED " : " UNCONTAINED") << " tree index " << foundTreeIdx << "\n";
+
+        if (!tree)
+          continue;
 
         long int lastReadEvt = tree->GetReadEvent();
         if (tree->GetReadEvent() < 0)
@@ -340,11 +369,12 @@ namespace cafmaker
 
         // the most likely place to find the matching event is just beyond wherever we currently are,
         // so look there first, then loop back around to consider events previous to where we were
-        LOG.VERBOSE() << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries() << "\n";
+        LOG.VERBOSE() << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries()
+                      << "\n";
         for (long int evtIdx = lastReadEvt + 1; evtIdx % tree->GetEntries() != lastReadEvt; evtIdx++)
         {
           wrappedIdx = evtIdx % tree->GetEntries();
-//          std::cout << " " << wrappedIdx;
+//          std::cout << "  " << wrappedIdx;
           tree->GetEntry(wrappedIdx);
 
           if (lastReadEvt < 0)
@@ -352,12 +382,18 @@ namespace cafmaker
 
           if (genieCmp(fGEvt))
           {
+            LOG.VERBOSE() << "       --> found GENIE event (index=" << wrappedIdx << ")\n";
             foundEv = true;
+            if (contTree)
+              fLastFoundContTree = foundTreeIdx;
+            else
+              fLastFoundUncontTree = foundTreeIdx;
+
             break;
           }
         }
         LOG.VERBOSE() << "\n";
-      } // for (tree)
+      } // for (treeIdx)
 
       if (HaveGENIE() && !foundEv)
         throw std::runtime_error("Could not locate GENIE event record!");
@@ -416,6 +452,14 @@ namespace cafmaker
       // just re-throw with a nicer error message
       throw std::runtime_error("Could not locate GENIE event record with ID = " + std::to_string(ixnID));
     }
+  }
+
+  // ------------------------------------------------------------
+  bool TruthMatcher::HaveGENIE() const
+  {
+    static auto isNull = [](const TTree* t) { return !t; };
+    return !std::all_of(fContNuGTrees.begin(), fContNuGTrees.end(), isNull)
+           || !std::all_of(fUncontNuGTrees.begin(), fUncontNuGTrees.end(), isNull);
   }
 
 }
