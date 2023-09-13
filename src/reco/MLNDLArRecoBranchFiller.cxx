@@ -535,8 +535,20 @@ namespace cafmaker
       if(part.is_primary) reco_particle.primary = true;
       reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
-      reco_particle.E = part.calo_ke/1000.;
-      reco_particle.E_method = caf::PartEMethod::kCalorimetry;
+      if(part.semantic_type == types::dlp::SemanticType::kTrack){
+	if(reco_particle.contained){
+           reco_particle.E = part.csda_ke/1000.;
+           reco_particle.E_method = caf::PartEMethod::kRange;
+	}
+	else{
+      	   reco_particle.E = part.mcs_ke/1000.;
+    	   reco_particle.E_method = caf::PartEMethod::kMCS;
+	}
+      }
+      else{
+        reco_particle.E = part.calo_ke/1000.;
+        reco_particle.E_method = caf::PartEMethod::kCalorimetry;
+      }
       reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
       if(part.is_contained) reco_particle.tgtA = 40;
       reco_particle.pdg = part.pdg_code;
@@ -677,10 +689,11 @@ namespace cafmaker
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       track.enddir = caf::SRVector3D(part.end_dir[0], part.end_dir[1], part.end_dir[2]);
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
-      track.truth.ixn = part.interaction_id;
+      //to do: Fix this after TrueParticleID fix in duneanaobj
+      /*track.truth.ixn = part.interaction_id;
       if(part.is_primary)track.truth.type = caf::TrueParticleID::kPrimary;
       track.truth.part = part.id;
-
+      */
       // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
       // (some interaction IDs are filtered out as they're not beam triggers etc.)
       auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
@@ -709,10 +722,11 @@ namespace cafmaker
       shower.Evis = part.calo_ke/1000.;
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
-      shower.truth.ixn = part.interaction_id;
+      //to do: Fix this after TrueParticleID fix in duneanaobj
+     /* shower.truth.ixn = part.interaction_id;
       if(part.is_primary)shower.truth.type = caf::TrueParticleID::kPrimary;
       shower.truth.part = part.id;
-
+     */
       // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
       // (some interaction IDs are filtered out as they're not beam triggers etc.)
       auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
