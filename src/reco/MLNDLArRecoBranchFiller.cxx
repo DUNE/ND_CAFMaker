@@ -419,7 +419,7 @@ namespace cafmaker
                                                  const TruthMatcher * truthMatch,
                                                  caf::StandardRecord &sr) const
   {
-    sr.common.ixn.dlp.resize(ixns.size());
+    sr.common.ixn.dlp.reserve(ixns.size());
     sr.common.ixn.ndlp = ixns.size();
 
     // note: used in hack below
@@ -508,7 +508,6 @@ namespace cafmaker
       }
 
       sr.common.ixn.dlp.push_back(std::move(interaction));
-      sr.common.ixn.ndlp++;
     }
   }
 
