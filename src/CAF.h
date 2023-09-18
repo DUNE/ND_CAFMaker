@@ -31,9 +31,6 @@ public:
   caf::StandardRecord sr;
   caf::SRGlobal srglobal;
 
-  // store the GENIE record as a branch
-  genie::NtpMCEventRecord * mcrec;
-
   // Event-by-event geometric efficiency throw results
   std::vector< std::vector < std::vector < uint64_t > > > * geoEffThrowResults;
 
@@ -47,7 +44,17 @@ public:
   TTree * cafSRGlobal;
   TTree * cafMVA;
   TTree * cafPOT;
-  TTree * genie;
+
+  // store the GENIE record as a branch, if requested
+  genie::NtpMCEventRecord * mcrec = nullptr;
+  TTree                   * genie = nullptr;
+
+  /// Callback function that can be used to store a GENIE event in the GENIE tree,
+  /// if client can't manipulate the `genie` tree above directly
+  ///
+  /// \param   evtIn  Memory location where the GENIE record to be copied is
+  /// \return         Index in the TTree of the output where the record was copied
+  int StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn);
 
   TFile * flatCAFFile                             = nullptr;
   TTree * flatCAFTree                             = nullptr;

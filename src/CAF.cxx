@@ -69,7 +69,7 @@ void CAF::fill()
 {
   if(cafSR) cafSR->Fill();
   cafMVA->Fill();
-  genie->Fill();
+
 
   if(flatCAFFile){
     flatCAFRecord->Clear();
@@ -131,4 +131,34 @@ void CAF::setToBS()
   // use default constructors to reset
   sr = caf::StandardRecord();
   srglobal = caf::SRGlobal();
+}
+
+int CAF::StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn)
+{
+  // if the GENIE tree is not already pointing to the given address, we can make it happen,
+  // but it will slow things down
+  if (evtIn != mcrec)
+  {
+    // might be better to throw an exception or something,
+    // since the *user* can't do anything about this,
+    // but all the throw-ing and catch-ing will slow us down even more
+    static bool warned = false;
+    if (!warned)
+    {
+      std::cerr << "WARNING: repeatedly reassigning the target pointer for output GENIE tree will result in significant performance penalty\n";
+      warned = true;
+    }
+
+    genie->SetBranchAddress("genie_record", &evtIn);
+  }
+
+  genie->Fill();
+
+  // now reset the tree
+  if (evtIn != mcrec)
+  {
+    genie->SetBranchAddress("genie_record", &mcrec);
+  }
+
+  return genie->GetEntries()-1;
 }
