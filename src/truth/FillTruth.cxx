@@ -109,13 +109,13 @@ namespace cafmaker
 
 
 // ------------------------------------------------------------
-  TruthMatcher::TruthMatcher(std::vector<TTree *> &contGTrees,
-                             std::vector<TTree *> &uncontGTrees,
-                             const genie::NtpMCEventRecord *gEvt)
+  TruthMatcher::TruthMatcher(std::vector<TTree *> &contGTrees, std::vector<TTree *> &uncontGTrees,
+                             const genie::NtpMCEventRecord *gEvt,
+                             std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback)
     : cafmaker::Loggable("TruthMatcher"),
       fContNuGTrees(contGTrees), fLastFoundContTree(0),
       fUncontNuGTrees(uncontGTrees), fLastFoundUncontTree(0),
-      fGEvt(gEvt)
+      fGENIEWriterCallback(std::move(genieFillerCallback)), fGEvt(gEvt)
   {}
 
   // --------------------------------------------------------------
@@ -405,8 +405,8 @@ namespace cafmaker
       if (HaveGENIE())
       {
         LOG.VERBOSE() << "      --> GENIE record found.  copying...\n";
-        ixn->genieIdx = wrappedIdx;
-        FillInteraction(*ixn, fGEvt);
+        ixn->genieIdx = fGENIEWriterCallback(fGEvt);  // copy the GENIE event into the CAF output GENIE tree
+        FillInteraction(*ixn, fGEvt);  // copy values from the GENIE event into the StandardRecord
       }
       else
         LOG.VERBOSE() << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
