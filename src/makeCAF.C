@@ -284,7 +284,8 @@ void loop(CAF &caf,
   // if this is a data file, there won't be any truth, of course,
   // but the TruthMatching knows not to try to do anything with a null gtree
   cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
-  cafmaker::TruthMatcher truthMatcher(contGTrees, uncontGTrees, caf.mcrec);
+  cafmaker::TruthMatcher truthMatcher(contGTrees, uncontGTrees, caf.mcrec,
+                                      [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); });
   truthMatcher.SetLogThrehsold(thresh);
 
   // figure out which triggers we need to loop over between the various reco fillers
