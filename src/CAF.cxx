@@ -7,7 +7,7 @@
 // fixme: once DIRT-II is done with its work, this will be re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 
-CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF)
+CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE)
   : pot(std::numeric_limits<decltype(pot)>::signaling_NaN()),  rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
@@ -15,7 +15,9 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
   cafSRGlobal = new TTree("globalTree", "globalTree");
   cafMVA = new TTree("mvaTree", "mvaTree");
   cafPOT = new TTree( "meta", "meta" );
-  genie = new TTree( "genieEvt", "genieEvt" );
+
+  if (storeGENIE)
+    genie = new TTree( "genieEvt", "genieEvt" );
 
   if (makeFlatCAF)
   {
@@ -37,8 +39,8 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
   cafMVA->Branch("geoEffThrowResults", &geoEffThrowResults);
 
   // initialize the GENIE record
-  mcrec = nullptr;
-  genie->Branch( "genie_record", &mcrec );
+  if (genie)
+    genie->Branch( "genie_record", &mcrec );
 
   cafPOT->Branch( "pot", &pot, "pot/D" );
   cafPOT->Branch( "run", &meta_run, "run/I" );
@@ -97,6 +99,9 @@ void CAF::write()
 
     for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
     {
+      if (!tree)
+        continue;
+
       tree->Write();
 
       // don't let it get stuck attached to only this file in case we need it again below
@@ -112,7 +117,10 @@ void CAF::write()
     cafSRGlobal->Write();
     cafMVA->Write();
     cafPOT->Write();
-    genie->Write();
+
+    if (genie)
+      genie->Write();
+
     flatCAFFile->Close();
   }
 }
