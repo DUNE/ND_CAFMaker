@@ -355,8 +355,6 @@ int main( int argc, char const *argv[] )
   cafmaker::Logger::THRESHOLD logThresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::LOG_S().SetThreshold(logThresh);
 
-  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF());
-
   std::map<std::string, std::vector<GENIETree>> treeBundles;
   std::vector<std::string> contNuGHEPFiles;
   treeBundles["contained"], treeBundles["uncontained"]; // just make sure these vectors exist
@@ -365,6 +363,8 @@ int main( int argc, char const *argv[] )
   std::vector<std::string> uncontNuGHEPFiles;
   for (const std::string & fname : (par().cafmaker().uncontNuGHEPFiles(uncontNuGHEPFiles) ? uncontNuGHEPFiles : std::vector<std::string>{}))
     treeBundles["uncontained"].emplace_back(fname);
+
+  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !(treeBundles["contained"].empty() && treeBundles["uncontained"].empty()));
 
   loop(caf, par,
        convertToBareTrees(treeBundles.at("contained")),
