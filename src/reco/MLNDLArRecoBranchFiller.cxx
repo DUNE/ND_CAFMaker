@@ -671,6 +671,7 @@ namespace cafmaker
                                            caf::StandardRecord &sr) const
   {
     sr.nd.lar.dlp.resize(sr.common.ixn.dlp.size());
+    sr.nd.lar.ndlp = sr.common.ixn.dlp.size();
 
     for (const auto & part : particles)
     {
