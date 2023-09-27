@@ -16,6 +16,7 @@ numpy_to_hdf5 = {
     "i": "STD_I",
     "l": "STD_I",
     "B": "STD_U",
+    "L": "STD_I",
     "f": "IEEE_F",
     "d": "IEEE_F",
 }
@@ -332,6 +333,7 @@ class TypeSerializer:
             assert len(cpp_name) > 0, "Couldn't understand type name: '{0}'".format(typ.name)
 
         else:
+            print("typ.char =", typ.char)
             raise TypeError("Don't know how to handle type: " + str(typ))
 
         h5_name = h5_name.replace("H5T_", "")
