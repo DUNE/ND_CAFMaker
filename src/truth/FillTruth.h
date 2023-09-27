@@ -12,9 +12,12 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <map>
+#include <memory>
 
 #include "fwd.h"
 #include "util/Loggable.h"
+
 
 // fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
 #include <string>
@@ -24,6 +27,9 @@ namespace nusyst
 }
 
 // forward declarations
+class TTree;
+class TFile;
+
 namespace caf
 {
   class StandardRecord;
@@ -106,7 +112,7 @@ namespace cafmaker
   class TruthMatcher : public cafmaker::Loggable
   {
     public:
-      TruthMatcher(std::vector<TTree *> &contGTrees, std::vector<TTree *> &uncontGTrees,
+      TruthMatcher(const std::vector<std::string> & ghepFilenames,
                    const genie::NtpMCEventRecord *gEvt,
                    std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback);
 
@@ -153,28 +159,33 @@ namespace cafmaker
       /// \param ixnID      Interaction ID (should match the one coming from upstream, i.e., edep-sim)
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
-      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, int ixnID, bool createNew = true) const;
-
-      /// Find a TrueInteraction within  a given StandardRecord, or, if it doesn't exist, optionally make a new one.
-      /// Use the 'interaction ID' variant of GetTrueInteraction() if at all possible.
-      /// This version just exists to supply necessary hacks when interaction IDs from upstream are broken...
-      ///
-      /// \param sr           The caf::StandardRecord in question
-      /// \param srTrueIxnCmp Function used to decide whether a SRTrueInteraction already in the StandardRecord matches desired criteria
-      /// \param genieCmp     Function used to match a GENIE record to desired criteria
-      /// \param createNew    Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
-      /// \return             The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
-      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord &sr,
-                                                  std::function<bool(const caf::SRTrueInteraction&)> srTrueIxnCmp,
-                                                  std::function<bool(const genie::NtpMCEventRecord*)> genieCmp,
-                                                  bool createNew = true) const;
+      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, unsigned long ixnID, bool createNew = true) const;
 
       bool HaveGENIE() const;
 
     private:
       static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt);
 
+      /// Internal class organizing the GENIE trees by run to make them more easily accessible
+      class GTreeContainer
+      {
+        public:
+          GTreeContainer(const std::vector<std::string> & filenames, const genie::NtpMCEventRecord * gEvt=nullptr);
 
+          /// Select the GENIE event in the known trees corresponding to a particular run and entry number.
+          /// If no such event is found, throws an exception.
+          void SelectEvent(unsigned long int runNum, unsigned int evtNum) const;
+
+          const genie::NtpMCEventRecord * GEvt() const;
+          void SetGEvtAddr(const genie::NtpMCEventRecord * evt);
+
+        private:
+          const genie::NtpMCEventRecord * fGEvt;
+          std::map<unsigned long int, const TTree*> fGTrees;
+          std::vector<std::unique_ptr<TFile>> fGFiles;
+      };
+
+      mutable GTreeContainer fGTrees;
 
       mutable std::vector<TTree*>    fContNuGTrees;         ///< GENIE tree(s) for 'contained' neutrinos (near/inside the detector volumes)
       mutable int                    fLastFoundContTree;    ///< Index of tree in fContNuGTrees where last event was found
@@ -182,7 +193,6 @@ namespace cafmaker
       mutable int                    fLastFoundUncontTree;  ///< Index of tree in fUncontNuGTrees where last event was found
 
       std::function<int(const genie::NtpMCEventRecord *)> fGENIEWriterCallback;  ///< Callback function that'll write a copy of a GENIE event out to storage
-      const genie::NtpMCEventRecord * fGEvt;
   };
 }
 #endif //ND_CAFMAKER_FILLTRUTH_H
