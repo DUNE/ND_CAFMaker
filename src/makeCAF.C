@@ -99,8 +99,7 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
     provisional.put("nd_cafmaker.CAFMakerSettings.NumEvts", vm["numevts"].as<int>());
 
   // now that we've updated it, convert to actual ParameterSet
-  fhicl::ParameterSet pset;
-  fhicl::make_ParameterSet(provisional, pset);
+  fhicl::ParameterSet pset = fhicl::ParameterSet::make(provisional);
 
   // finally, convert to a table, which does the validation.
   // note that this usage insists the top-level config be named "nd_cafmaker".
