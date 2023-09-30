@@ -119,7 +119,7 @@ namespace cafmaker
                              const genie::NtpMCEventRecord *gEvt,
                              std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback)
     : cafmaker::Loggable("TruthMatcher"),
-      fGTrees(ghepFilenames),
+      fGTrees(ghepFilenames, gEvt),
       fGENIEWriterCallback(std::move(genieFillerCallback))
   {}
 
