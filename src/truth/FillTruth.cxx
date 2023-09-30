@@ -26,6 +26,7 @@
 // ND_CAFMaker
 #include "CAF.h"
 #include "Params.h"
+#include "util/FloatMath.h"
 
 /// duneanaobj not guaranteed to be the same as GENIE scattering types
 caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
@@ -105,7 +106,8 @@ namespace cafmaker
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal)
   {
-    const auto cmp = [](const double & a, const float &b) -> bool { return std::abs(static_cast<float>(a) - b) < 1e-6; };
+    const auto cmp = [](const double & a, const float &b) -> bool { return util::AreEqual(a, b); };
+
     const auto assgn = [](const double & a, float & b) {  b = a; };
     return ValidateOrCopy<double, float>(input, target, unsetVal, cmp, assgn);
   }
