@@ -172,6 +172,10 @@ namespace cafmaker
         public:
           GTreeContainer(const std::vector<std::string> & filenames, const genie::NtpMCEventRecord * gEvt=nullptr);
 
+          // container interface
+          const auto begin()  { return fGTrees.begin(); }
+          const auto end()    { return fGTrees.end(); }
+
           /// Select the GENIE event in the known trees corresponding to a particular run and entry number.
           /// If no such event is found, throws an exception.
           void SelectEvent(unsigned long int runNum, unsigned int evtNum) const;
