@@ -130,7 +130,8 @@ namespace cafmaker
     genie::EventRecord * event = gEvt->event;
     genie::Interaction * in = event->Summary();
 
-    nu.id = gEvt->hdr.ievent;  //todo: need to make sure this ID is the one we get all the way out the other end from det sim
+    // note that the nu.id and nu.genieIdx are filled in the calling function,
+    // because that info is not stored inside the GENIE event proper
 
     // todo: GENIE doesn't know about the detector geometry.  do we just leave these for the passthrough from G4?
 //    TLorentzVector vtx = *(event->Vertex());
@@ -347,8 +348,13 @@ namespace cafmaker
       ixn = &sr.mc.nu.back();
       if (HaveGENIE())
       {
-        LOG.VERBOSE() << "      --> GENIE record found.  copying...\n";
+        LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << ").  copying...\n";
+
+        // these two bits of info can't be extracted directly from the GENIE record,
+        // so we do them here
         ixn->genieIdx = fGENIEWriterCallback(fGTrees.GEvt());  // copy the GENIE event into the CAF output GENIE tree
+        ixn->id = ixnID;
+
         FillInteraction(*ixn, fGTrees.GEvt());  // copy values from the GENIE event into the StandardRecord
       }
       else
