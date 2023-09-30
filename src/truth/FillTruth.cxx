@@ -403,7 +403,7 @@ namespace cafmaker
       }
       if (!tree || !hdr)
       {
-        cafmaker::LOG_S("main()").FATAL() << "Could not load TTree 'gtree' or associated header from supplied .ghep file: " << fname
+        LOG.FATAL() << "Could not load TTree 'gtree' or associated header from supplied .ghep file: " << fname
                                           << "\n";
         abort();
       }
@@ -412,7 +412,7 @@ namespace cafmaker
       if (run == 0)
       {
         // workaround for GENIE files where run number wasn't set
-        std::regex pattern(R"([rock|nu])\.(\d+)");
+        std::regex pattern("(rock|nu)\\.(\\d+)");
         std::smatch matches;
         std::regex_search(fname, matches, pattern);
         if (matches.size() == 3)
@@ -435,7 +435,10 @@ namespace cafmaker
         }
       }
 
-      tree->SetBranchAddress("evt", &fGEvt);
+      fGTrees[run] = tree;
+      tree->SetBranchAddress("gmcrec", &fGEvt);
+
+      LOG.INFO() << "Loaded TTree for run " << run << " from file: " << fname << "\n";
     }
   }
 
