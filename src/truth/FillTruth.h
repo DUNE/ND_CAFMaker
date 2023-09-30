@@ -192,12 +192,6 @@ namespace cafmaker
       };
 
       mutable GTreeContainer fGTrees;
-
-      mutable std::vector<TTree*>    fContNuGTrees;         ///< GENIE tree(s) for 'contained' neutrinos (near/inside the detector volumes)
-      mutable int                    fLastFoundContTree;    ///< Index of tree in fContNuGTrees where last event was found
-      mutable std::vector<TTree*>    fUncontNuGTrees;       ///< GENIE tree(s) for 'uncontained' neutrinos (rock and/or ND hall interactions)
-      mutable int                    fLastFoundUncontTree;  ///< Index of tree in fUncontNuGTrees where last event was found
-
       std::function<int(const genie::NtpMCEventRecord *)> fGENIEWriterCallback;  ///< Callback function that'll write a copy of a GENIE event out to storage
   };
 }

@@ -7,6 +7,7 @@
 
 #include "FillTruth.h"
 
+#include <map>
 #include <regex>
 
 // ROOT
@@ -365,9 +366,8 @@ namespace cafmaker
   // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
-    static auto isNull = [](const TTree* t) { return !t; };
-    return !std::all_of(fContNuGTrees.begin(), fContNuGTrees.end(), isNull)
-           || !std::all_of(fUncontNuGTrees.begin(), fUncontNuGTrees.end(), isNull);
+    static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
+    return !std::all_of(fGTrees.begin(), fGTrees.end(), isNull);
   }
 
   // ------------------------------------------------------------
