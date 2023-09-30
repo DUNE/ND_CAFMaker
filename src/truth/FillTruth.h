@@ -163,11 +163,13 @@ namespace cafmaker
 
       bool HaveGENIE() const;
 
+      void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
+
     private:
       static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt);
 
       /// Internal class organizing the GENIE trees by run to make them more easily accessible
-      class GTreeContainer
+      class GTreeContainer : public cafmaker::Loggable
       {
         public:
           GTreeContainer(const std::vector<std::string> & filenames, const genie::NtpMCEventRecord * gEvt=nullptr);

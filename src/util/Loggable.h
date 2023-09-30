@@ -23,7 +23,7 @@ namespace cafmaker
         : LOG(std::move(name), defaultThresh)
       {}
 
-      void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) { LOG.SetThreshold(thresh); }
+      virtual void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) { LOG.SetThreshold(thresh); }
 
       virtual ~Loggable() = default;
 

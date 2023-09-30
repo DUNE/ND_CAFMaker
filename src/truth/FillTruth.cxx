@@ -371,8 +371,15 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  void TruthMatcher::SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh)
+  {
+    Loggable::SetLogThrehsold(thresh);
+    fGTrees.SetLogThrehsold(thresh);
+  }
+
+  // ------------------------------------------------------------
   TruthMatcher::GTreeContainer::GTreeContainer(const vector<std::string> &filenames, const genie::NtpMCEventRecord * gEvt)
-    : fGEvt(gEvt)
+    : cafmaker::Loggable("GTreeContainer"), fGEvt(gEvt)
   {
     for (const auto & fname : filenames)
     {
