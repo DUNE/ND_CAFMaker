@@ -180,14 +180,14 @@ namespace cafmaker
 
           /// Select the GENIE event in the known trees corresponding to a particular run and entry number.
           /// If no such event is found, throws an exception.
-          void SelectEvent(unsigned long int runNum, unsigned int evtNum) const;
+          void SelectEvent(unsigned long int runNum, unsigned int evtNum);
 
           const genie::NtpMCEventRecord * GEvt() const;
           void SetGEvtAddr(const genie::NtpMCEventRecord * evt);
 
         private:
           const genie::NtpMCEventRecord * fGEvt;
-          std::map<unsigned long int, const TTree*> fGTrees;
+          std::map<unsigned long int, TTree*> fGTrees;
           std::vector<std::unique_ptr<TFile>> fGFiles;
       };
 

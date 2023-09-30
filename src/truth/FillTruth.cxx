@@ -416,5 +416,32 @@ namespace cafmaker
       tree->SetBranchAddress("evt", &fGEvt);
     }
   }
+
+  // ------------------------------------------------------------
+  const genie::NtpMCEventRecord * TruthMatcher::GTreeContainer::GEvt() const
+  {
+    return fGEvt;
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::GTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
+  {
+    auto it_tree = fGTrees.find(runNum);
+    if (it_tree == fGTrees.end())
+    {
+      std::stringstream ss;
+      ss << "Run number " << runNum << " was not found in this collection of .ghep files\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    it_tree->second->GetEntry(evtNum);
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::GTreeContainer::SetGEvtAddr(const genie::NtpMCEventRecord *evt)
+  {
+    fGEvt = evt;
+  }
 }
 
