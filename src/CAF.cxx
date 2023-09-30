@@ -147,7 +147,7 @@ int CAF::StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn)
     static bool warned = false;
     if (!warned)
     {
-      cafmaker::LOG_S().WARNING("CAF::StoreGENIEEvent()") << "Repeatedly reassigning the target pointer for output GENIE tree will result in significant performance degredation\n";
+      cafmaker::LOG_S("CAF::StoreGENIEEvent()").WARNING() << "Repeatedly reassigning the target pointer for output GENIE tree will result in significant performance degredation\n";
       warned = true;
     }
 
