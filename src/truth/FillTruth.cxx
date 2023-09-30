@@ -326,8 +326,8 @@ namespace cafmaker
       LOG.VERBOSE() << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
 
       // todo: should this logic live somewhere else?
-      unsigned int evtNum = itIxn->id % 1000000;
-      unsigned long runNum = itIxn->id - evtNum;
+      unsigned int evtNum = ixnID % 1000000;
+      unsigned long runNum = (ixnID - evtNum) / 1000000;
       if (HaveGENIE())
       {
         try
@@ -415,8 +415,24 @@ namespace cafmaker
         std::regex pattern(R"([rock|nu])\.(\d+)");
         std::smatch matches;
         std::regex_search(fname, matches, pattern);
-        if (matches.size() == 2)
-          run = 1000000 * ((matches[0] == "rock" ? 1000000000 : 0) + std::stoull(matches[1]));
+        if (matches.size() == 3)
+          // this pattern from https://github.com/DUNE/2x2_sim/wiki/Production-changes-and-validation-findings#file-format-differences
+          run = ((matches[1] == "rock" ? static_cast<int>(1e9) : 0) + std::stoull(matches[2]));
+        else
+        {
+          LOG.ERROR() << "Got " << matches.size() << " pattern matches from this filename (expected: 2):\n";
+
+          std::stringstream msg;
+          msg << "   ";
+          for (const auto & match : matches)
+            msg << match << "\n   ";
+          LOG.ERROR() << msg.str();
+
+          msg.str("");
+          msg << "Couldn't determine run number for events in GENIE file: '" << fname << "'\n";
+          LOG.FATAL() << msg.str();
+          throw std::runtime_error(msg.str());
+        }
       }
 
       tree->SetBranchAddress("evt", &fGEvt);
