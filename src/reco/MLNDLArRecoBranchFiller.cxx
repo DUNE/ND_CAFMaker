@@ -328,15 +328,22 @@ namespace cafmaker
 
   namespace
   {
+    struct DLPIxnComp
+    {
+      long int ixnID;
+      bool operator()(const cafmaker::types::dlp::TrueInteraction & ixn)
+      {
+        return ixn.id == ixnID;
+      }
+    };
+
     struct SRPartCmp
     {
-      float E;
       int trkid;
       bool operator()(const caf::SRTrueParticle & part) const
       {
-        LOG_S("SRPartCmp").VERBOSE() << "       SRPartCmp::operator()():  looking for E = " << E << "; this particle E = " << part.p.E << ","
-                                     << "trk ID = " << trkid << ", this particle trkID = " << part.G4ID << "\n";
-        return part.p.E == E && (trkid < 0 || part.G4ID < 0 || trkid == part.G4ID);
+        LOG_S("SRPartCmp").VERBOSE() << "       SRPartCmp::operator()():  looking for trk ID = " << trkid << ", this particle trkID = " << part.G4ID << "\n";
+        return trkid == part.G4ID;
       }
     };
   }
@@ -363,11 +370,25 @@ namespace cafmaker
       // if we *have* truth matches, we need to connect them now
       if (ixn.matched)
       {
+        LOG.VERBOSE() << "  There are " << ixn.match.size() << " matched true interactions:\n";
         for (std::size_t idx = 0; idx < ixn.match.size(); idx++)
         {
-          cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = trueIxns[ixn.match[idx]];
+          LOG.VERBOSE() << "  ** Match index " << idx << " --> truth ID " << ixn.match[idx] << "\n";
+          // here we need to search through the truth interactions and find the one with this ID (since it's no longer an index)
+          static DLPIxnComp ixnCmp;
+          ixnCmp.ixnID = ixn.match[idx];
+          auto itIxn = std::find_if(trueIxns.begin(), trueIxns.end(), ixnCmp);
+          if (itIxn == trueIxns.end())
+          {
+            std::stringstream msg;
+            msg << "Reco interaction claims to match to true interaction with ID " << ixnCmp.ixnID
+                << ", but that interaction was not found in the list of true interactions\n";
+            LOG.FATAL() << msg.str();
+            throw std::out_of_range(msg.str());
+          }
+          cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = *itIxn;
 
-          LOG.VERBOSE() << "  ** Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id << "\n";
+          LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id << "\n";
 
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);  // or 'track_id'? need to verify
 
@@ -465,7 +486,18 @@ namespace cafmaker
 
           // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
-          const cafmaker::types::dlp::TrueInteraction & trueIxn = trueInxns[truePartPassThrough.interaction_id];
+          static DLPIxnComp ixnCmp;
+          ixnCmp.ixnID = truePartPassThrough.interaction_id;
+          auto it_ixn = std::find_if(trueInxns.begin(), trueInxns.end(), ixnCmp);
+          if (it_ixn == trueInxns.end())
+          {
+            std::stringstream ss;
+            ss << "True particle ID " << truePartPassThrough.id << " claims to be associated with true interaction ID " << truePartPassThrough.interaction_id
+               << " but no such interaction could be found!\n";
+            LOG.FATAL() << ss.str();
+            throw std::out_of_range(ss.str());
+          }
+          const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
 
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
 
@@ -475,15 +507,9 @@ namespace cafmaker
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
-          // find the true particle this reco particle goes with.
-          // if we had GENIE info and it was a primary, it should already be filled in.
-          // we use the comparison version because the G4ID from the pass-through
-          // counts up monotonically from 0 across the whole FILE,
-          // whereas the GENIE events start over at every interaction.
-          // moreover, the cafmaker::types::dlp::TrueParticle::is_primary flag
+          // the cafmaker::types::dlp::TrueParticle::is_primary flag
           // is currently broken (upstream info from Supera is screwed up)
           // so we need to try both collections :(
-          srPartCmp.E = truePartPassThrough.energy_init / 1000.;
           srPartCmp.trkid = truePartPassThrough.track_id;
           bool isPrim = false;
           caf::SRTrueParticle * srTruePart = nullptr;
