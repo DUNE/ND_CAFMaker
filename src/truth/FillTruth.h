@@ -22,6 +22,8 @@
 
 // fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
 #include <string>
+#include <map>
+
 namespace nusyst
 {
   using response_helper = std::string;
@@ -117,7 +119,11 @@ namespace cafmaker
   class TruthMatcher : public cafmaker::Loggable
   {
     public:
+<<<<<<< HEAD
       TruthMatcher(const std::vector<std::string> & ghepFilenames,
+=======
+      TruthMatcher(std::map<long, TTree *> &contGTrees, std::map<long, TTree *> &uncontGTrees,
+>>>>>>> 1f77794 (Modified the truth matching to use both Genie runnu & event ID to match the vertexID from MINERvA (or ML reco))
                    const genie::NtpMCEventRecord *gEvt,
                    std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback);
 
@@ -164,14 +170,32 @@ namespace cafmaker
       /// \param ixnID      Interaction ID (should match the one coming from upstream, i.e., edep-sim)
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
+<<<<<<< HEAD
       caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, unsigned long ixnID, bool createNew = true) const;
+=======
+      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, long ixnID, bool createNew = true) const;
+
+      /// Find a TrueInteraction within  a given StandardRecord, or, if it doesn't exist, optionally make a new one.
+      /// Use the 'interaction ID' variant of GetTrueInteraction() if at all possible.
+      /// This version just exists to supply necessary hacks when interaction IDs from upstream are broken...
+      ///
+      /// \param sr           The caf::StandardRecord in question
+      /// \param srTrueIxnCmp Function used to decide whether a SRTrueInteraction already in the StandardRecord matches desired criteria
+      /// \param genieCmp     Function used to match a GENIE record to desired criteria
+      /// \param createNew    Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
+      /// \return             The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
+      caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord &sr, long ixnID,
+                                                  std::function<bool(const caf::SRTrueInteraction&)> srTrueIxnCmp,
+                                                  std::function<bool(const genie::NtpMCEventRecord*)> genieCmp,
+                                                  bool createNew = true) const;
+>>>>>>> 1f77794 (Modified the truth matching to use both Genie runnu & event ID to match the vertexID from MINERvA (or ML reco))
 
       bool HaveGENIE() const;
 
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
 
     private:
-      static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt);
+      static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, long genie_runnum);
 
       /// Internal class organizing the GENIE trees by run to make them more easily accessible
       class GTreeContainer : public cafmaker::Loggable
@@ -183,9 +207,16 @@ namespace cafmaker
           const auto begin()  { return fGTrees.begin(); }
           const auto end()    { return fGTrees.end(); }
 
+<<<<<<< HEAD
           /// Select the GENIE event in the known trees corresponding to a particular run and entry number.
           /// If no such event is found, throws an exception.
           void SelectEvent(unsigned long int runNum, unsigned int evtNum);
+=======
+      mutable std::map<long, TTree*>    fContNuGTrees;         ///< GENIE tree(s) for 'contained' neutrinos (near/inside the detector volumes)
+      mutable int                    fLastFoundContTree;    ///< Index of tree in fContNuGTrees where last event was found
+      mutable std::map<long, TTree*>    fUncontNuGTrees;       ///< GENIE tree(s) for 'uncontained' neutrinos (rock and/or ND hall interactions)
+      mutable int                    fLastFoundUncontTree;  ///< Index of tree in fUncontNuGTrees where last event was found
+>>>>>>> 1f77794 (Modified the truth matching to use both Genie runnu & event ID to match the vertexID from MINERvA (or ML reco))
 
           const genie::NtpMCEventRecord * GEvt() const;
           void SetGEvtAddr(const genie::NtpMCEventRecord * evt);
