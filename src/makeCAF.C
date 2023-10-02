@@ -9,6 +9,7 @@
 #include "TFile.h"
 #include "TInterpreter.h"
 #include "TTree.h"
+#include <map>
 
 #include "cetlib/filepath_maker.h"
 #include "fhiclcpp/intermediate_table.h"
@@ -24,6 +25,7 @@
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
+#include "reco/MINERvARecoBranchFiller.h"
 #include "truth/FillTruth.h"
 #include "util/Logger.h"
 #include "util/Progress.h"
@@ -140,6 +142,14 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   TMS\n";
   }
 
+  // next: did we do the MINERvA reco?
+  std::string minervaFile;
+  if (par().cafmaker().minervaRecoFile(minervaFile))
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::MINERvARecoBranchFiller>(minervaFile));
+    std::cout<< "   MINERVA\n";
+  }
+
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
   {
@@ -230,6 +240,8 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
     const cafmaker::Trigger & trigSeed = trigGroup.front().second;
     for (auto & fillerTrigPair : triggersByFiller)
     {
+
+      if (triggersByFiller.size() == 0) break;
       // we don't want to consider the stream we're already working with.
       // (but don't continue, because we want to remove this stream from the
       //  map if it's empty, per below)
@@ -269,10 +281,10 @@ void loop(CAF &caf,
   cafmaker::TruthMatcher truthMatcher(ghepFilenames, caf.mcrec,
                                       [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); });
   truthMatcher.SetLogThrehsold(thresh);
-
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+  {
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
@@ -285,7 +297,6 @@ void loop(CAF &caf,
               << "Do nothing ...\n";
     return;
   }
-
   int start = par().cafmaker().first();
   int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : static_cast<int>(groupedTriggers.size()) - par().cafmaker().first();
   if (N < 1)
@@ -293,7 +304,6 @@ void loop(CAF &caf,
     std::cerr << "Requested number of events (" << N << ") is non-positive!  Abort.\n";
     abort();
   }
-
 
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
