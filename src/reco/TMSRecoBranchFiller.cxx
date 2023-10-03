@@ -54,12 +54,10 @@ namespace cafmaker
 
     // Fill in the track info 
     for (int i = 0; i < _nLines; ++i) {
-    /* TODO :)
-     * Currently StandardRecord has events split by 'triggers' and 'interactions', with potentially
-     * multiple interactions per trigger. TMS simulation only has 'events', where we define one event == one trigger,
-     * which obviously removes any of the bunching that would be expressed by this change.
-     * Think about this interplay sometime.
-     *   - Liam, late Aug 2023   */
+      /* Currently we only really care about catching (anti-)muons from LAr,
+       * so we assume that each track is probably a(n) (anti-)muon originating
+       * from a single interaction upstream in LAr.
+       *     Liam     */
 
       sr.nd.tms.ixn[i].ntracks = 1; // One reco track per interaction (ixn)
       sr.nd.tms.ixn[i].tracks.resize(sr.nd.tms.ixn[i].ntracks);
@@ -71,7 +69,9 @@ namespace cafmaker
         double z = _TrackHitPos[i][j][0];
 
         // Should all be ordered in z, check this
+        // TODO: Clarence says something further down the chain needs z ordering, investigate
         if (z < prevz - 81) { // TODO: There was previously no -81 here, but allow one layer missmatch. Trackfinding a bit wonky?
+          // TODO: Flag these tracks somehow?
           std::cerr << "hits in z not ordered " << (prevz - z) << std::endl;
           throw;
         }
