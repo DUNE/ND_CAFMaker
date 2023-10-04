@@ -208,9 +208,6 @@ namespace cafmaker
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    // todo: once cafmaker::types::dlp::TrueInteraction::track_id actually has the unique neutrino ID in it, re-enable this
-//    ValidateOrCopy(ptTrueInt.track_id, srTrueInt.id, -1);
-
     ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN);
     ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN);
     ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN);

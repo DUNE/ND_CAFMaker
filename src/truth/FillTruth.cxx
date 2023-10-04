@@ -179,7 +179,7 @@ namespace cafmaker
     nu.genweight = event->Weight();
 
     // loop truth particles
-
+    int stablePartIdx=0;
     for (int j=0; j< event->GetEntries(); j++)
     {
       auto p = dynamic_cast<const genie::GHepParticle *>((*event)[j]);
@@ -188,6 +188,7 @@ namespace cafmaker
           && p->Status() != genie::EGHepStatus::kIStHadronInTheNucleus) continue;
 
       caf::SRTrueParticle part;
+      part.G4ID = (p->Status() == genie::EGHepStatus::kIStStableFinalState) ? stablePartIdx++ : -1;
       part.pdg = p->Pdg();
       part.interaction_id = nu.id;
       part.p = *p->P4();
