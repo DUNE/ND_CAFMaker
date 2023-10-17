@@ -144,7 +144,10 @@ namespace cafmaker
     //todo: get this from Hugh G or somebody who will get it right
     // nu.removalE =
 
-    TLorentzVector lepP4;
+    TLorentzVector lepP4; //defaults to 0
+    genie::GHepParticle* finallepton = event->FinalStatePrimaryLepton();
+    if(finallepton)
+      lepP4 = *(finallepton->P4());
     TLorentzVector nuP4nuc = *(in->InitState().GetProbeP4(genie::kRfHitNucRest));
     TLorentzVector nuP4 = *(in->InitState().GetProbeP4(genie::kRfLab));
     nu.E = in->InitState().ProbeE(genie::kRfLab);
