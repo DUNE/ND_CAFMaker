@@ -4,7 +4,10 @@
 /// \date    Apr. 2022
 ///
 
+#include <iostream>
+
 #include "SANDRecoBranchFiller.h"
+#include "truth/FillTruth.h"
 
 #ifdef ENABLE_SAND
 #warning Including SANDRecoBranchFiller in build
@@ -21,6 +24,7 @@ namespace cafmaker
 {
   
   SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename)
+    : IRecoBranchFiller("SAND")
   {  
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
     fTree = (TTree*) fSANDRecoFile->Get("tEvent");
@@ -32,7 +36,7 @@ namespace cafmaker
       SetConfigured(true);
   }
 
-  void SANDRecoBranchFiller::_FillRecoBranches(std::size_t ii, 
+  void SANDRecoBranchFiller::_FillRecoBranches(std::size_t N, std::size_t ii, 
 					       caf::StandardRecord &sr,
 					       const cafmaker::Params &par) const
   {
@@ -80,18 +84,38 @@ namespace cafmaker
 
 #warning Not configured to build SANDRecoBranchFiller. Must set SANDRECO_INC and SANDRECO_LIB environment variables
 
-cafmaker::SANDRecoBranchFiller::
-SANDRecoBranchFiller(const std::string&)
-{
-  abort();
+namespace {
+  void error_msg()
+  {
+    std::cerr << "\n\nSAND Reco support was not enabled in your build. \n"
+              << " Either avoid setting `nd_cafmaker.CAFMakerSettings.SANDRecoFile` in your FCL\n"
+              << " or set $SANDRECO_INC and $SANDRECO_LIB in your environment and do a clean rebuild of ND_CAFMaker...\n";
+
+  }
 }
 
-void cafmaker::SANDRecoBranchFiller::
-_FillRecoBranches(std::size_t,
-                  caf::StandardRecord&,
-                  const cafmaker::Params&) const
+namespace cafmaker
 {
-  abort();
+  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
+    : IRecoBranchFiller("SAND")
+  {
+    error_msg();
+    abort();
+  }
+
+  void SANDRecoBranchFiller::
+  _FillRecoBranches(const Trigger &, caf::StandardRecord &, const cafmaker::Params &,
+                    const TruthMatcher *truthMatcher) const
+  {
+    error_msg();
+    abort();
+  }
+
+  // todo: this is a placeholder
+  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    return std::deque<Trigger>();
+  }
 }
 
 #endif // ENABLE_SAND

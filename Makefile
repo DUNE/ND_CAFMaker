@@ -9,7 +9,8 @@ INCLUDE += -I$(BOOST_INC)
 INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
-INCLUDE += -I$(DUNEANAOBJ_INC) -lduneanaobj_StandardRecord
+INCLUDE += -I$(DUNEANAOBJ_INC)
+INCLUDE += -I$src
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L$(TBB_LIB) -ltbb
@@ -19,7 +20,7 @@ LDLIBS += -L$(PYTHIA6) -lPythia6
 
 #LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders
 #LDLIBS += -L$(NUSYST)/build/nusystematics/artless -lnusystematics_systproviders
-LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord
+LDLIBS += -L$(DUNEANAOBJ_LIB) -lduneanaobj_StandardRecord -lduneanaobj_StandardRecordFlat
 
 LDLIBS += -L$(GSL_LIB) -lgsl -lgslcblas
 LDLIBS += -L$(LHAPDF_LIB) -lLHAPDF

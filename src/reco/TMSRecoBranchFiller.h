@@ -7,6 +7,7 @@
 #define ND_CAFMAKER_TMSRECOBRANCHFILLER_H
 
 #include <iostream>
+#include <deque>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -33,10 +34,13 @@ namespace cafmaker
         fTMSRecoFile = NULL;
       }
 
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
+
     private:
-      void _FillRecoBranches(std::size_t evtIdx,
+      void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
-                             const cafmaker::Params &par) const override;
+                             const cafmaker::Params &par,
+                             const TruthMatcher *truthMatcher) const override;
 
       TFile *fTMSRecoFile;
       TTree *TMSRecoTree;

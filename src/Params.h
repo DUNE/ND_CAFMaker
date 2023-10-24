@@ -8,6 +8,7 @@
 
 #include "fhiclcpp/types/Atom.h"
 #include "fhiclcpp/types/OptionalAtom.h"
+#include "fhiclcpp/types/OptionalSequence.h"
 #include "fhiclcpp/types/Table.h"
 
 namespace cafmaker
@@ -27,23 +28,32 @@ namespace cafmaker
   struct ControlConfig
   {
     // these are mandatory and have no default values
-    fhicl::Atom<std::string> ghepFile   { fhicl::Name{"InputGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file") };
-    fhicl::Atom<std::string> outputFile { fhicl::Name{"OutputFile"}, fhicl::Comment("Filename for output CAF") };
+    fhicl::OptionalSequence<std::string> contNuGHEPFiles     { fhicl::Name{"ContainedNuGHEPFiles"},   fhicl::Comment("Input .ghep (GENIE) file(s) for in-detector neutrinos") };
+//    fhicl::OptionalAtom<std::string> contNuGHEPFile     {fhicl::Name{"ContainedNuGHEPFile"},   fhicl::Comment("Input .ghep (GENIE) file for in-detector neutrinos") };
+    fhicl::OptionalSequence<std::string> uncontNuGHEPFiles   {fhicl::Name{"UncontainedNuGHEPFiles"}, fhicl::Comment("Input .ghep (GENIE) file(s) for rock/hall neutrinos") };
+//    fhicl::OptionalAtom<std::string> uncontNuGHEPFile   {fhicl::Name{"UncontainedNuGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file for rock/hall neutrinos") };
+    fhicl::Atom<std::string> outputFile                      { fhicl::Name{"OutputFile"},           fhicl::Comment("Filename for output CAF") };
 
     // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
     // fixme: this file is currently not used for anything, but will be once DIRT-II is done and re-enables the interaction systematics
     fhicl::Atom<std::string> nusystsFcl   { fhicl::Name{"NuSystsFCLFile"}, fhicl::Comment(".fcl configuration file for nusystematics"), "fhicl.fcl" };
 
-    // these are optional, but will change the contents of the output FCL if supplied
+    // these are optional, but will change the contents of the output CAF if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> ndgarRecoFile  { fhicl::Name{"NDGArRecoFile"}, fhicl::Comment("Input ND-GAr reco .root file") };
 
+    // this is optional by way of the default value. Will result in an extra output file if enabled
+    fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
+
     // these are optional and have defaults
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
     fhicl::Atom<int>  numevts { fhicl::Name("NumEvts"), fhicl::Comment("Number of events to process (-1 means 'all')"), -1 };
     fhicl::Atom<int>  seed    { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
+
+    // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
+    fhicl::Atom<std::string> verbosity { fhicl::Name("Verbosity"), fhicl::Comment("Verbosity level of output"), "WARNING" };
   };
 
   struct PseudoRecoParams
