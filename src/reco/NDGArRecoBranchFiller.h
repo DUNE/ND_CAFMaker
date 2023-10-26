@@ -15,27 +15,59 @@
 class TFile;
 class TTree;
 
+namespace caf
+{
+  class SRTrueInteraction;
+  class SRTrueParticle;
+}
+
 namespace cafmaker
 {
   class NDGArRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
       NDGArRecoBranchFiller(const std::string &NDGArRecoFilename);
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
 
     private:
-      void _FillRecoBranches(std::size_t evtIdx,
-			     caf::StandardRecord &sr,
-			     const cafmaker::Params &par) const override;
+      void _FillRecoBranches(const Trigger &trigger,
+           caf::StandardRecord &sr,
+           const cafmaker::Params &par,
+           const TruthMatcher *truthMatcher) const override;
+
+      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt) const;
+
+      void FillInteractions(const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr) const;
+      
+      void FillTruth(caf::SRTrueParticle & srTruePart,
+           size_t iTrack) const;
+
+      void FillTracks(const TruthMatcher * truthMatch,
+                      caf::StandardRecord &sr) const;
+
+      void FillClusters(caf::StandardRecord &sr) const;
+
+      mutable std::vector<cafmaker::Trigger> fTriggers;
+      mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
 
       TFile* fNDGArRecoFile;
       TTree* NDGArRecoTree;
       
+      //int                fRun;
+      //int                fSubRun;
       int                fEvent;
+
+      std::vector<int> *      fGPartIdx=0;
 
       std::vector<int> *      fMCNuPDG=0;
       std::vector<float_t> *  fMCNuPX=0;
       std::vector<float_t> *  fMCNuPY=0;
       std::vector<float_t> *  fMCNuPZ=0;
+
+      std::vector<float_t> *  fMCVertX=0;
+      std::vector<float_t> *  fMCVertY=0;
+      std::vector<float_t> *  fMCVertZ=0;
 
       std::vector<int> * fMCTrkID=0;
       std::vector<int> * fMCPDG=0;
@@ -48,6 +80,13 @@ namespace cafmaker
       std::vector<float_t> * fMCStartPX=0;
       std::vector<float_t> * fMCStartPY=0;
       std::vector<float_t> * fMCStartPZ=0;
+
+      //std::vector<float_t> * fMCEndX=0;
+      //std::vector<float_t> * fMCEndY=0;
+      //std::vector<float_t> * fMCEndZ=0;
+      //std::vector<float_t> * fMCEndPX=0;
+      //std::vector<float_t> * fMCEndPY=0;
+      //std::vector<float_t> * fMCEndPZ=0;
 
       std::vector<float_t> * fTrackStartX=0;
       std::vector<float_t> * fTrackStartY=0;

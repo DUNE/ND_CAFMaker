@@ -20,6 +20,8 @@ nd_cafmaker: @local::standard_nd_cafmaker
 #nd_cafmaker.CAFMakerSettings.OutputFile: "/pnfs/dune/scratch/users/mvicenzi/test_SAND_CAF.root"
 
 # ND-GAr test setup
-nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/dune/app/users/abooth/Postdoc/NDGArSim/Output/input_file.ghep.root"
-nd_cafmaker.CAFMakerSettings.NDGArRecoFile: "/dune/app/users/fmlopez/garsoft/work/anatree.root"
-nd_cafmaker.CAFMakerSettings.OutputFile: "/dune/app/users/fmlopez/ND_CAFMaker/out_caf.root"
+#nd_cafmaker.CAFMakerSettings.Verbosity:               VERBOSE
+
+nd_cafmaker.CAFMakerSettings.ContainedNuGHEPFiles:    ["/dune/data/users/fmlopez/ND_GAr/edep_test/neutrino_gar_volGArTPC.10000.ghep.root"]
+nd_cafmaker.CAFMakerSettings.NDGArRecoFile:           "/dune/data/users/fmlopez/ND_GAr/edep_test/anatree_edepsim.root"
+nd_cafmaker.CAFMakerSettings.OutputFile:              "/dune/app/users/fmlopez/ndgar_tests/ND_CAFMaker/out_caf_new.root"
