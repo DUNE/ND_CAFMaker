@@ -36,7 +36,7 @@ all: $(BINS)
 test: $(BINDIR)/testHDF
 
 # make an object for any .cxx requested
-%.o : %.cxx %.h
+%.o : %.cxx $(if $(wildcard %.h),%.h,)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -fPIC $(SAND_OPT) -o $@ -c $< #compile
 
 # should *really* make a .d rule for the objects

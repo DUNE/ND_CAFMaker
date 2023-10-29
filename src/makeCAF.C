@@ -15,6 +15,9 @@
 #include "fhiclcpp/make_ParameterSet.h"
 #include "fhiclcpp/parse.h"
 
+// GENIE
+#include "Framework/Ntuple/NtpMCEventRecord.h"
+
 #include "CAF.h"
 #include "Params.h"
 #include "reco/MLNDLArRecoBranchFiller.h"
@@ -96,8 +99,7 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
     provisional.put("nd_cafmaker.CAFMakerSettings.NumEvts", vm["numevts"].as<int>());
 
   // now that we've updated it, convert to actual ParameterSet
-  fhicl::ParameterSet pset;
-  fhicl::make_ParameterSet(provisional, pset);
+  fhicl::ParameterSet pset = fhicl::ParameterSet::make(provisional);
 
   // finally, convert to a table, which does the validation.
   // note that this usage insists the top-level config be named "nd_cafmaker".
@@ -234,57 +236,16 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 }
 
 // -------------------------------------------------
-
-struct GENIETree
-{
-  GENIETree(const std::string& fname)
-  : f(fname.empty() ? nullptr : std::make_unique<TFile>(fname.c_str())), tree(f ? dynamic_cast<TTree*>(f->Get("gtree")) : nullptr)
-  {
-    if (!fname.empty() && !tree)
-    {
-      cafmaker::LOG_S("main()").FATAL() << "Could not load TTree 'gtree' from supplied .ghep file: " << fname << "\n";
-      abort();
-    }
-  }
-
-  std::unique_ptr<TFile> f;
-  TTree * tree;
-
-};
-
-std::vector<TTree*> convertToBareTrees(const std::vector<GENIETree>& gtrees)
-{
-  std::vector<TTree*> ret;
-  std::transform(gtrees.begin(), gtrees.end(), std::back_inserter(ret), [](const GENIETree & gt) { return gt.tree; });
-  return ret;
-}
-
-// -------------------------------------------------
 // main loop function
 void loop(CAF &caf,
           cafmaker::Params &par,
-          std::vector<TTree *> && contGTrees,
-          std::vector<TTree *> && uncontGTrees,
+          const std::vector<std::string> & ghepFilenames,
           const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> &recoFillers)
 {
-
-  for (std::vector<TTree*>& treeCollection : std::vector<std::vector<TTree *>>{contGTrees, uncontGTrees})
-  {
-    for (TTree * tree : treeCollection)
-    {
-      if (!tree)
-        continue;
-
-      // yes, we're attaching all the trees to the same record.
-      // we'll never be using them at the same time, so it should be ok.
-      tree->SetBranchAddress("gmcrec", &caf.mcrec);
-    }
-  }
-
   // if this is a data file, there won't be any truth, of course,
   // but the TruthMatching knows not to try to do anything with a null gtree
   cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
-  cafmaker::TruthMatcher truthMatcher(contGTrees, uncontGTrees, caf.mcrec,
+  cafmaker::TruthMatcher truthMatcher(ghepFilenames, caf.mcrec,
                                       [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); });
   truthMatcher.SetLogThrehsold(thresh);
 
@@ -356,21 +317,12 @@ int main( int argc, char const *argv[] )
   cafmaker::Logger::THRESHOLD logThresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::LOG_S().SetThreshold(logThresh);
 
-  std::map<std::string, std::vector<GENIETree>> treeBundles;
-  std::vector<std::string> contNuGHEPFiles;
-  treeBundles["contained"], treeBundles["uncontained"]; // just make sure these vectors exist
-  for (const std::string & fname : (par().cafmaker().contNuGHEPFiles(contNuGHEPFiles) ? contNuGHEPFiles : std::vector<std::string>{}))
-    treeBundles["contained"].emplace_back(fname);
-  std::vector<std::string> uncontNuGHEPFiles;
-  for (const std::string & fname : (par().cafmaker().uncontNuGHEPFiles(uncontNuGHEPFiles) ? uncontNuGHEPFiles : std::vector<std::string>{}))
-    treeBundles["uncontained"].emplace_back(fname);
+  std::vector<std::string> GHEPFiles;
+  par().cafmaker().GHEPFiles(GHEPFiles);  // fills the vector in if the key is found
 
-  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !(treeBundles["contained"].empty() && treeBundles["uncontained"].empty()));
+  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !GHEPFiles.empty());
 
-  loop(caf, par,
-       convertToBareTrees(treeBundles.at("contained")),
-       convertToBareTrees(treeBundles.at("uncontained")),
-       getRecoFillers(par, logThresh));
+  loop(caf, par, GHEPFiles, getRecoFillers(par, logThresh));
 
   caf.version = 5;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );

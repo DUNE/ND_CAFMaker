@@ -7,6 +7,9 @@
 
 #include "FillTruth.h"
 
+#include <map>
+#include <regex>
+
 // ROOT
 #include "TLorentzVector.h"
 #include "TVector3.h"
@@ -15,6 +18,7 @@
 // GENIE
 #include "Framework/EventGen/EventRecord.h"
 #include "Framework/Ntuple/NtpMCEventRecord.h"
+#include "Framework/Ntuple/NtpMCTreeHeader.h"
 #include "Framework/GHEP/GHepParticle.h"
 
 // Standard Record format
@@ -23,6 +27,7 @@
 // ND_CAFMaker
 #include "CAF.h"
 #include "Params.h"
+#include "util/FloatMath.h"
 
 /// duneanaobj not guaranteed to be the same as GENIE scattering types
 caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
@@ -102,20 +107,20 @@ namespace cafmaker
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal)
   {
-    const auto cmp = [](const double & a, const float &b) -> bool { return std::abs(static_cast<float>(a) - b) < 1e-6; };
+    const auto cmp = [](const double & a, const float &b) -> bool { return util::AreEqual(a, b); };
+
     const auto assgn = [](const double & a, float & b) {  b = a; };
     return ValidateOrCopy<double, float>(input, target, unsetVal, cmp, assgn);
   }
 
 
 // ------------------------------------------------------------
-  TruthMatcher::TruthMatcher(std::vector<TTree *> &contGTrees, std::vector<TTree *> &uncontGTrees,
+  TruthMatcher::TruthMatcher(const std::vector<std::string> & ghepFilenames,
                              const genie::NtpMCEventRecord *gEvt,
                              std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback)
     : cafmaker::Loggable("TruthMatcher"),
-      fContNuGTrees(contGTrees), fLastFoundContTree(0),
-      fUncontNuGTrees(uncontGTrees), fLastFoundUncontTree(0),
-      fGENIEWriterCallback(std::move(genieFillerCallback)), fGEvt(gEvt)
+      fGTrees(ghepFilenames, gEvt),
+      fGENIEWriterCallback(std::move(genieFillerCallback))
   {}
 
   // --------------------------------------------------------------
@@ -125,7 +130,8 @@ namespace cafmaker
     genie::EventRecord * event = gEvt->event;
     genie::Interaction * in = event->Summary();
 
-    nu.id = gEvt->hdr.ievent;  //todo: need to make sure this ID is the one we get all the way out the other end from det sim
+    // note that the nu.id and nu.genieIdx are filled in the calling function,
+    // because that info is not stored inside the GENIE event proper
 
     // todo: GENIE doesn't know about the detector geometry.  do we just leave these for the passthrough from G4?
 //    TLorentzVector vtx = *(event->Vertex());
@@ -173,7 +179,7 @@ namespace cafmaker
     nu.genweight = event->Weight();
 
     // loop truth particles
-
+    int stablePartIdx=0;
     for (int j=0; j< event->GetEntries(); j++)
     {
       auto p = dynamic_cast<const genie::GHepParticle *>((*event)[j]);
@@ -182,6 +188,7 @@ namespace cafmaker
           && p->Status() != genie::EGHepStatus::kIStHadronInTheNucleus) continue;
 
       caf::SRTrueParticle part;
+      part.G4ID = (p->Status() == genie::EGHepStatus::kIStStableFinalState) ? stablePartIdx++ : -1;
       part.pdg = p->Pdg();
       part.interaction_id = nu.id;
       part.p = *p->P4();
@@ -290,7 +297,7 @@ namespace cafmaker
       counter++;
 
       part = &collection.back();
-      part->interaction_id = ixn.id;  // todo: eventually this should be ixn.track_id
+      part->interaction_id = ixn.id;
     }
     else
     {
@@ -302,101 +309,39 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  caf::SRTrueInteraction &
-  TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr,
-                                   std::function<bool(const caf::SRTrueInteraction &)> srTrueIxnCmp,
-                                   std::function<bool(const genie::NtpMCEventRecord*)> genieCmp,
-                                   bool createNew) const
+  caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, unsigned long ixnID, bool createNew) const
   {
     caf::SRTrueInteraction * ixn = nullptr;
 
     // if we can't find a SRTrueInteraction with matching ID, we may need to make a new one
-    if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), srTrueIxnCmp);
+    if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
+                                   [ixnID](const caf::SRTrueInteraction & ixn) { return static_cast<unsigned long>(ixn.id) == ixnID; });
          itIxn == sr.mc.nu.end() )
     {
       if (!createNew)
-        throw std::runtime_error("True interaction not found in this StandardRecord");
+      {
+        LOG.FATAL() << "Could not find a true interaction with ID " << ixnID << " already in this StandardRecord, and you asked me not to make a new one\n";
+        throw std::runtime_error("True interaction with interaction ID = " + std::to_string(ixnID) + " not found in this StandardRecord");
+      }
 
       LOG.VERBOSE() << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
 
-      // todo: when we finally have interaction IDs that conform to the edep-sim vertexID convention,
-      //       we can use those to only search the correct GENIE tree.
-      //       for now, though, we need to look through them all. :(
-      bool foundEv = false;
-      int wrappedIdx = -1;
-      LOG.VERBOSE() << "     examining GENIE records...\n ";
-
-      std::size_t offset = 2 * std::min(fLastFoundContTree, fLastFoundUncontTree)
-                           + int(fLastFoundUncontTree < fLastFoundContTree); // if uncont is the smaller one, we want to start there
-      for (std::size_t treeIdx = offset; treeIdx < fContNuGTrees.size() + fUncontNuGTrees.size() + offset; treeIdx++)
+      // todo: should this logic live somewhere else?
+      unsigned int evtNum = ixnID % 1000000;
+      unsigned long runNum = (ixnID - evtNum) / 1000000;
+      if (HaveGENIE())
       {
-        if (foundEv)
-          break;
-
-        std::size_t wrappedTreeIdx = treeIdx % (fContNuGTrees.size() + fUncontNuGTrees.size());
-
-        // we want to alternate between 'contained' and 'uncontained' trees,
-        // because the spills contain elements of each merged together
-        // (more likely that an event not found in current 'contained' file
-        //  will be found in the current 'uncontained' file, rather than
-        //  jumping to the next 'contained' one)
-        TTree * tree = nullptr;
-        bool contTree = true;
-        int foundTreeIdx = -1;
-        if (wrappedTreeIdx < 2 * std::min(fContNuGTrees.size(), fUncontNuGTrees.size()))
+        try
         {
-          foundTreeIdx = wrappedTreeIdx / 2;
-          contTree = wrappedTreeIdx % 2 == 0;
-          tree = contTree ? fContNuGTrees[foundTreeIdx] : fUncontNuGTrees[foundTreeIdx];
+          fGTrees.SelectEvent(runNum, evtNum);
         }
-        else
+        catch (std::out_of_range & exc)
         {
-          foundTreeIdx = wrappedTreeIdx - std::min(fContNuGTrees.size(), fUncontNuGTrees.size());
-          contTree = fContNuGTrees.size() > fUncontNuGTrees.size();
-          tree = contTree ? fContNuGTrees[foundTreeIdx] : fUncontNuGTrees[foundTreeIdx];
+          // intercept briefly to add a log message
+          LOG.FATAL() << "Could not find GENIE tree for interaction with run number: " << runNum << "!  Abort.\n";
+          throw exc;
         }
-        LOG.VERBOSE() << "     looking at " << (contTree ? " CONTAINED " : " UNCONTAINED") << " tree index " << foundTreeIdx << "\n";
-
-        if (!tree)
-          continue;
-
-        long int lastReadEvt = tree->GetReadEvent();
-        if (tree->GetReadEvent() < 0)
-        {
-          tree->GetEntry(0);
-          lastReadEvt = -1;
-        }
-
-        // the most likely place to find the matching event is just beyond wherever we currently are,
-        // so look there first, then loop back around to consider events previous to where we were
-        LOG.VERBOSE() << "       last read evt = " << lastReadEvt << ", total entries = " << tree->GetEntries()
-                      << "\n";
-        for (long int evtIdx = lastReadEvt + 1; evtIdx % tree->GetEntries() != lastReadEvt; evtIdx++)
-        {
-          wrappedIdx = evtIdx % tree->GetEntries();
-//          std::cout << "  " << wrappedIdx;
-          tree->GetEntry(wrappedIdx);
-
-          if (lastReadEvt < 0)
-            lastReadEvt = evtIdx;
-
-          if (genieCmp(fGEvt))
-          {
-            LOG.VERBOSE() << "       --> found GENIE event (index=" << wrappedIdx << ")\n";
-            foundEv = true;
-            if (contTree)
-              fLastFoundContTree = foundTreeIdx;
-            else
-              fLastFoundUncontTree = foundTreeIdx;
-
-            break;
-          }
-        }
-        LOG.VERBOSE() << "\n";
-      } // for (treeIdx)
-
-      if (HaveGENIE() && !foundEv)
-        throw std::runtime_error("Could not locate GENIE event record!");
+      }
 
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
@@ -404,9 +349,14 @@ namespace cafmaker
       ixn = &sr.mc.nu.back();
       if (HaveGENIE())
       {
-        LOG.VERBOSE() << "      --> GENIE record found.  copying...\n";
-        ixn->genieIdx = fGENIEWriterCallback(fGEvt);  // copy the GENIE event into the CAF output GENIE tree
-        FillInteraction(*ixn, fGEvt);  // copy values from the GENIE event into the StandardRecord
+        LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << ").  copying...\n";
+
+        // these two bits of info can't be extracted directly from the GENIE record,
+        // so we do them here
+        ixn->genieIdx = fGENIEWriterCallback(fGTrees.GEvt());  // copy the GENIE event into the CAF output GENIE tree
+        ixn->id = ixnID;
+
+        FillInteraction(*ixn, fGTrees.GEvt());  // copy values from the GENIE event into the StandardRecord
       }
       else
         LOG.VERBOSE() << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
@@ -421,45 +371,103 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  // helper classes used only to avoid building and tearing down a new lambda every iteration
-  namespace
-  {
-    struct SRCmp
-    {
-      int ixnID;
-      bool operator()(const caf::SRTrueInteraction & ixn) const { return ixn.id == ixnID; }
-    };
-
-    struct GENIECmp
-    {
-      int ixnID;
-      bool operator()(const genie::NtpMCEventRecord * gEvt) const { return static_cast<int>(gEvt->hdr.ievent) == ixnID; }
-    };
-  }
-
-  // ------------------------------------------------------------
-  caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, int ixnID, bool createNew) const
-  {
-    static SRCmp srCmp;
-    static GENIECmp genieCmp;
-    try
-    {
-      srCmp.ixnID = genieCmp.ixnID = ixnID;
-      return GetTrueInteraction(sr, srCmp, genieCmp, createNew);
-    }
-    catch (std::runtime_error & err)
-    {
-      // just re-throw with a nicer error message
-      throw std::runtime_error("Could not locate GENIE event record with ID = " + std::to_string(ixnID));
-    }
-  }
-
-  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
-    static auto isNull = [](const TTree* t) { return !t; };
-    return !std::all_of(fContNuGTrees.begin(), fContNuGTrees.end(), isNull)
-           || !std::all_of(fUncontNuGTrees.begin(), fUncontNuGTrees.end(), isNull);
+    static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
+    return !std::all_of(fGTrees.begin(), fGTrees.end(), isNull);
   }
 
+  // ------------------------------------------------------------
+  void TruthMatcher::SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh)
+  {
+    Loggable::SetLogThrehsold(thresh);
+    fGTrees.SetLogThrehsold(thresh);
+  }
+
+  // ------------------------------------------------------------
+  TruthMatcher::GTreeContainer::GTreeContainer(const vector<std::string> &filenames, const genie::NtpMCEventRecord * gEvt)
+    : cafmaker::Loggable("GTreeContainer"), fGEvt(gEvt)
+  {
+    for (const auto & fname : filenames)
+    {
+      if (fname.empty())
+        continue;
+
+      TTree * tree = nullptr;
+      genie::NtpMCTreeHeader * hdr = nullptr;
+      unsigned long run = 0;
+      auto & f = fGFiles.emplace_back(std::make_unique<TFile>(fname.c_str()));  // the file goes into the list here so the TTree we pull out of it never disappears
+      if (f && !f->IsZombie())
+      {
+        tree = dynamic_cast<TTree *>(f->Get("gtree"));
+        hdr = dynamic_cast<genie::NtpMCTreeHeader *>(f->Get("header"));
+      }
+      if (!tree || !hdr)
+      {
+        LOG.FATAL() << "Could not load TTree 'gtree' or associated header from supplied .ghep file: " << fname
+                                          << "\n";
+        abort();
+      }
+
+      run = hdr->runnu;
+      if (run == 0)
+      {
+        // workaround for GENIE files where run number wasn't set
+        std::regex pattern("(rock|nu)\\.(\\d+)");
+        std::smatch matches;
+        std::regex_search(fname, matches, pattern);
+        if (matches.size() == 3)
+          // this pattern from https://github.com/DUNE/2x2_sim/wiki/Production-changes-and-validation-findings#file-format-differences
+          run = ((matches[1] == "rock" ? static_cast<int>(1e9) : 0) + std::stoull(matches[2]));
+        else
+        {
+          LOG.ERROR() << "Got " << matches.size() << " pattern matches from this filename (expected: 2):\n";
+
+          std::stringstream msg;
+          msg << "   ";
+          for (const auto & match : matches)
+            msg << match << "\n   ";
+          LOG.ERROR() << msg.str();
+
+          msg.str("");
+          msg << "Couldn't determine run number for events in GENIE file: '" << fname << "'\n";
+          LOG.FATAL() << msg.str();
+          throw std::runtime_error(msg.str());
+        }
+      }
+
+      fGTrees[run] = tree;
+      tree->SetBranchAddress("gmcrec", &fGEvt);
+
+      LOG.INFO() << "Loaded TTree for run " << run << " from file: " << fname << "\n";
+    }
+  }
+
+  // ------------------------------------------------------------
+  const genie::NtpMCEventRecord * TruthMatcher::GTreeContainer::GEvt() const
+  {
+    return fGEvt;
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::GTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
+  {
+    auto it_tree = fGTrees.find(runNum);
+    if (it_tree == fGTrees.end())
+    {
+      std::stringstream ss;
+      ss << "Run number " << runNum << " was not found in this collection of .ghep files\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    it_tree->second->GetEntry(evtNum);
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::GTreeContainer::SetGEvtAddr(const genie::NtpMCEventRecord *evt)
+  {
+    fGEvt = evt;
+  }
 }
+

@@ -37,6 +37,7 @@ namespace cafmaker
                       THRESHOLD thresh = THRESHOLD::INFO,
                       std::ostream& stream = std::cout);
 
+      const std::string & GetPreamble() const  { return fPreamble; }
       void SetPreamble(std::string preamble)   { fPreamble = std::move(preamble); }
 
       THRESHOLD GetThreshold() const           { return fThresh; }
