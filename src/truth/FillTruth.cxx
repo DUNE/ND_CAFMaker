@@ -396,7 +396,7 @@ namespace cafmaker
       TTree * tree = nullptr;
       genie::NtpMCTreeHeader * hdr = nullptr;
       unsigned long run = 0;
-      auto & f = fGFiles.emplace_back(std::make_unique<TFile>(fname.c_str()));  // the file goes into the list here so the TTree we pull out of it never disappears
+      auto & f = fGFiles.emplace_back(std::unique_ptr<TFile>(TFile::Open(fname.c_str())));  // the file goes into the list here so the TTree we pull out of it never disappears
       if (f && !f->IsZombie())
       {
         tree = dynamic_cast<TTree *>(f->Get("gtree"));
