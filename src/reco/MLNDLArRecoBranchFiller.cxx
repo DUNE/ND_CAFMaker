@@ -122,12 +122,13 @@ namespace cafmaker
   MLNDLArRecoBranchFiller::MLNDLArRecoBranchFiller(const std::string &h5filename)
     : IRecoBranchFiller("LArML"),
       fDSReader(h5filename,
-                {{std::type_index(typeid(Particle)),         "particles"},
-                 {std::type_index(typeid(Interaction)),      "interactions"},
-                 {std::type_index(typeid(TrueParticle)),     "truth_particles"},
-                 {std::type_index(typeid(TrueInteraction)),  "truth_interactions"},
-                 {std::type_index(typeid(Event)),            "events"},
-                 {std::type_index(typeid(RunInfo)), "run_info"}}),
+                {{std::type_index(typeid(Particle)),                      "particles"},
+                 {std::type_index(typeid(Interaction)),                   "interactions"},
+                 {std::type_index(typeid(TrueParticle)),                  "truth_particles"},
+                 {std::type_index(typeid(TrueInteraction)),               "truth_interactions"},
+                 {std::type_index(typeid(Event)),                         "events"},
+                 {std::type_index(typeid(RunInfo)),                       "run_info"},
+                 {std::type_index(typeid(cafmaker::types::dlp::Trigger)), "trigger"}}),  // needs to be disambiguated from CAFMaker's internal Trigger
       fTriggers(),
       fLastTriggerReqd(fTriggers.end())
   {
@@ -637,31 +638,31 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
   {
-    auto runInfos = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(-1); // get ALL the RunInfo products
+    auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
 
     std::deque<Trigger> triggers;
     if (fTriggers.empty())
     {
-      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << runInfos.size() << " ND-LAr RunInfo products:\n";
-      fTriggers.reserve(runInfos.size());
-      for (const cafmaker::types::dlp::RunInfo &runInfo: runInfos)
+      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << triggersIn.size() << " ND-LAr RunInfo products:\n";
+      fTriggers.reserve(triggers.size());
+      for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
         const int placeholderTriggerType = 0;
         // fixme: this check needs to be fixed when we have trigger type info
         if (triggerType >= 0 && triggerType != placeholderTriggerType)
         {
-          LOG.VERBOSE() << "    skipping runinfo with event=" << runInfo.event << "\n";
+          LOG.VERBOSE() << "    skipping trigger ID=" << trigger.id << "\n";
           continue;
         }
 
         fTriggers.emplace_back();
         Trigger & trig = fTriggers.back();
-        trig.evtID = runInfo.event;
+        trig.evtID = trigger.id;
 
         // todo: these are placeholder values until we can propagate enough info through the reco files
-        trig.triggerType = 0;
-        trig.triggerTime_s = runInfo.event;
-        trig.triggerTime_ns = 0.;
+        trig.triggerType = trigger.type;
+        trig.triggerTime_s = trigger.time_s;
+        trig.triggerTime_ns = trigger.time_ns;
 
         triggers.push_back(trig);
 
