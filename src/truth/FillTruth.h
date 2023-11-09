@@ -47,12 +47,12 @@ namespace cafmaker
   /// \param target    The destination value
   /// \param unsetVal  The default value expected
   template <typename InputType, typename OutputType>
-  void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal)
+  void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal, const std::string & fieldName="")
   {
     const auto defaultComp = [](const decltype(input) & a,
                                 const decltype(target) &b) -> bool { return static_cast<OutputType>(a) == b; };
     const auto defaultAssgn = [](const decltype(input) & a, decltype(target) &b) {  b = a; };
-    return ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn);
+    return ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn, fieldName);
   }
 
  // --------------------------------------------------------------
@@ -68,9 +68,11 @@ namespace cafmaker
   template <typename InputType, typename OutputType>
   void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal,
                       std::function<bool(const decltype(input) &, const decltype(target) &)> compFn,
-                      std::function<void(const decltype(input) &, decltype(target) &)> assgnFn)
+                      std::function<void(const decltype(input) &, decltype(target) &)> assgnFn,
+                      const std::string & fieldName="")
   {
-    LOG_S("ValidateOrCopy()").VERBOSE() << "     supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+    LOG_S("ValidateOrCopy()").VERBOSE() << "     " << (!fieldName.empty() ? "field='" + fieldName + "';" : "")
+                                        << " supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
 
     // vals match?  nothing more to do
     if (compFn(input, target))
@@ -105,7 +107,7 @@ namespace cafmaker
   // specialize the template for double-> float conversions, which we do a lot,
   // and which have roundoff problems in the comparison operator otherwise
   template <>
-  void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal);
+  void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string& fieldName);
 
   // --------------------------------------------------------------
 
