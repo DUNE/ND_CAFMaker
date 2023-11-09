@@ -14,6 +14,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <sstream>
 
 #include "fwd.h"
 #include "util/Loggable.h"
@@ -99,8 +100,10 @@ namespace cafmaker
 
     // if neither of the above conditions were met,
     // we have a discrepancy.  bail loudly
-    LOG_S("ValidateOrCopy()").FATAL() << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
-    abort();
+    std::stringstream ss;
+    ss << (!fieldName.empty() ? "For field name '" + fieldName + "': " : "")
+       << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
+    throw std::runtime_error(ss.str());
   }
 
   // --------------------------------------------------------------
