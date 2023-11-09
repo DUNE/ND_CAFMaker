@@ -244,8 +244,8 @@ namespace cafmaker
       my_track.len_cm  = sqrt(pow(trk_node_X[i][trk_nodes[i] -1] - trk_node_X[i][0],2)+pow(trk_node_Y[i][trk_nodes[i] -1] - trk_node_Y[i][0],2)+pow(trk_node_Z[i][trk_nodes[i] -1] - trk_node_Z[i][0],2))/10.;
       my_track.qual      = trk_chi2perDof[i];
       //We don't have different track energy definition so we fill both E and Evis for now in case only one of the two is used
-      my_track.Evis       = trk_vis_energy[i];
-      my_track.E       = trk_vis_energy[i];
+      my_track.Evis    = trk_vis_energy[i]/1000.; //In GeV
+      my_track.E       = trk_vis_energy[i]/1000.; //In GeV
 
 
       // Get the directions
@@ -274,16 +274,25 @@ namespace cafmaker
       // MINERvA Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
       my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10. - offsetX/10.,blob_id_startpoint_y[i]/10. - offsetY/10., blob_id_startpoint_z[i]/10. - offsetZ/10.);
       
-      double x_dir = (blob_id_centroid_x[i] - blob_id_startpoint_x[i]);
-      double y_dir = (blob_id_centroid_y[i] - blob_id_startpoint_y[i]);
-      double z_dir = (blob_id_centroid_z[i] - blob_id_startpoint_z[i]);
-      double norm_dir = sqrt(x_dir*x_dir + y_dir*y_dir + z_dir*z_dir);
-      x_dir /= norm_dir;
-      y_dir /= norm_dir;
-      z_dir /= norm_dir;
+
+      //Actual direction but Centroid makes more sense 
+//      double x_dir = (blob_id_centroid_x[i] - blob_id_startpoint_x[i]);
+//      double y_dir = (blob_id_centroid_y[i] - blob_id_startpoint_y[i]);
+//      double z_dir = (blob_id_centroid_z[i] - blob_id_startpoint_z[i]);
+      
+//      double norm_dir = sqrt(x_dir*x_dir + y_dir*y_dir + z_dir*z_dir);
+//      x_dir /= norm_dir;
+//      y_dir /= norm_dir;
+//      z_dir /= norm_dir;
+
+
+      //Use centroid as blob direction
+      double x_dir = blob_id_centroid_x[i]/10. - offsetX/10.;
+      double y_dir = blob_id_centroid_y[i]/10. - offsetY/10.;
+      double z_dir = blob_id_centroid_z[i]/10. - offsetZ/10.;
 
       my_shower.direction = caf::SRVector3D(x_dir, y_dir, z_dir);
-      my_shower.Evis = blob_id_e[i];
+      my_shower.Evis = blob_id_e[i]/1000.; //Energy in GeV
 
       //Associates the truth particle to the shower
       find_truth_shower(sr, my_shower,i, truthMatch);
@@ -400,7 +409,7 @@ namespace cafmaker
     }
 
 
-
+    
 
     // if (truthVecIdx == sr.mc.nu.size())
     // {
