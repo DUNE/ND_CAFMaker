@@ -272,8 +272,11 @@ namespace cafmaker
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
-    ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0);
-    ValidateOrCopy(truePartPassthrough.track_id, srTruePart.G4ID, -1);
+    ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
+    ValidateOrCopy(truePartPassthrough.gen_id < 1000000000 ? truePartPassthrough.gen_id : truePartPassthrough.track_id,
+                   srTruePart.G4ID,
+                   -1,
+                   "SRTrueParticle::track_id");
 
     // note: cafmaker::types::dlp::TrueParticle::interaction_id refers to the id in the MLReco stack.
     //        it does NOT give the GENIE interaction ID, which is what SRTrueParticle wants
@@ -500,6 +503,7 @@ namespace cafmaker
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
+                    << "gen ID = " << truePartPassThrough.gen_id << "; "
                     << "is primary = " << truePartPassThrough.is_primary << "; "
                     << "pdg = " << truePartPassThrough.pdg_code << "; "
                     << "energy = " << truePartPassThrough.energy_init
@@ -528,31 +532,21 @@ namespace cafmaker
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
-          // the cafmaker::types::dlp::TrueParticle::is_primary flag
-          // is currently broken (upstream info from Supera is screwed up)
-          // so we need to try both collections :(
-          srPartCmp.trkid = truePartPassThrough.track_id;
-          bool isPrim = false;
-          caf::SRTrueParticle * srTruePart = nullptr;
-          try
-          {
-            srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
-            isPrim = true;
-          }
-          catch ( std::runtime_error& err )
-          {
-            // guess if it wasn't a primary, it must be a secondary :(
-            srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
-          }
+          bool is_primary = truePartPassThrough.gen_id < 100000000;
+          srPartCmp.trkid = is_primary
+                            ? truePartPassThrough.gen_id
+                            : truePartPassThrough.track_id;
+          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false)
+                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
-          // however this will fill in any other fields that weren't copied from a GENIE record
+          //  this will fill in any other fields that weren't copied from a GENIE record
           // (which also handles the case where this particle is a secondary)
-          FillTrueParticle(*srTruePart, truePartPassThrough);
+          FillTrueParticle(srTruePart, truePartPassThrough);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
-          LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
-          std::vector<caf::SRTrueParticle> & collection = (isPrim)
+          LOG.VERBOSE() << "      this particle is " << (is_primary ? "PRIMARY" : "SECONDARY") << "\n";
+          std::vector<caf::SRTrueParticle> & collection = is_primary
                                                           ? srTrueInt.prim
                                                           : srTrueInt.sec;
           std::size_t truthVecIdx = std::distance(collection.begin(),
@@ -561,7 +555,8 @@ namespace cafmaker
                                                                srPartCmp));
 
           reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
-                                                            (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
+                                                            is_primary ? caf::TrueParticleID::PartType::kPrimary
+                                                                       :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
           reco_particle.truthOverlap.push_back(part.match_overlap[idx]);
         }
