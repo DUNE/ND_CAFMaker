@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f /home/jeremy/data/dune/data/users/jwolcott/nd/nd-lar-reco/reco-out/PicoRun4.1_1E17_RHC.larnd.00000.reco.summary.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo -d trigger -cn Trigger
+//       ./h5_to_cpp.py -f /dune/data/users/jwolcott/nd/nd-lar-reco/reco-out/PicoRun4.1_1E17_RHC.larnd.00000.reco.summary.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
@@ -200,13 +200,13 @@ namespace cafmaker::types::dlp
   
   struct Event
   {
-    hdset_reg_ref_t index;
-    hdset_reg_ref_t run_info;
     hdset_reg_ref_t meta;
+    hdset_reg_ref_t index;
     hdset_reg_ref_t trigger;
-    hdset_reg_ref_t truth_interactions;
-    hdset_reg_ref_t truth_particles;
+    hdset_reg_ref_t run_info;
     hdset_reg_ref_t interactions;
+    hdset_reg_ref_t truth_particles;
+    hdset_reg_ref_t truth_interactions;
     hdset_reg_ref_t particles;
     
     void SyncVectors();
@@ -214,11 +214,11 @@ namespace cafmaker::types::dlp
     template <typename T>
     const hdset_reg_ref_t& GetRef() const
     {
-      if constexpr(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, Trigger>) return trigger;
-      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
-      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
+      if constexpr(std::is_same_v<T, Trigger>) return trigger;
+      else if(std::is_same_v<T, RunInfo>) return run_info;
       else if(std::is_same_v<T, Interaction>) return interactions;
+      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
+      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
       else if(std::is_same_v<T, Particle>) return particles;
     }
     
@@ -423,6 +423,7 @@ namespace cafmaker::types::dlp
     double calo_ke;
     double calo_ke_tng;
     BufferView<int64_t> children_counts;
+    BufferView<uint64_t> children_id;
     double coffset;
     char * creation_process;
     double csda_ke;
@@ -436,6 +437,7 @@ namespace cafmaker::types::dlp
     double energy_init;
     BufferView<float> first_step;
     BufferView<int64_t> fragment_ids;
+    int64_t gen_id;
     int64_t group_id;
     int64_t id;
     int64_t image_id;
@@ -483,6 +485,7 @@ namespace cafmaker::types::dlp
     int64_t track_id;
     float truth_depositions_MeV_sum;
     double truth_depositions_sum;
+    int64_t truth_id;
     BufferView<int64_t> truth_index;
     std::array<double, 3> truth_momentum;
     int64_t truth_size;
@@ -502,6 +505,7 @@ namespace cafmaker::types::dlp
     
     hvl_t ancestor_position_handle;
     hvl_t children_counts_handle;
+    hvl_t children_id_handle;
     hvl_t first_step_handle;
     hvl_t fragment_ids_handle;
     hvl_t index_handle;

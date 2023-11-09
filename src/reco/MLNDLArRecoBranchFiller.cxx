@@ -209,9 +209,9 @@ namespace cafmaker
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN);
-    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN);
-    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN);
+    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
     const std::function<bool(const NuCurrentType &, const bool &)> nuCurrComp =
     [](const NuCurrentType & inCurr, const bool & outCurr)
@@ -278,7 +278,7 @@ namespace cafmaker
     // note: cafmaker::types::dlp::TrueParticle::interaction_id refers to the id in the MLReco stack.
     //        it does NOT give the GENIE interaction ID, which is what SRTrueParticle wants
 //    ValidateOrCopy(truePartPassthrough.interaction_id, srTruePart.interaction_id, -1);
-    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1);
+    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
 
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
@@ -297,29 +297,52 @@ namespace cafmaker
         outType = caf::TrueParticleID::kSecondary;
     };
     ValidateOrCopy(truePartPassthrough.ancestor_creation_process, srTruePart.ancestor_id.type, caf::TrueParticleID::kUnknown,
-                   ancestorTypeComp, ancestorTypeAssgn);
+                   ancestorTypeComp, ancestorTypeAssgn, "SRTrueParticle::ancestor_id.type");
 
     // fixme: this is incorrect; the track_id (what we have) won't be the same as the index of the ancestor SRParticle (what we want).
     //       to fix this I think we need access to the SRTrueInteraction for this particle too, so we can dig around in its particle vectors
-    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.part, -1);
+    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
 
-    ValidateOrCopy(truePartPassthrough.parent_track_id, srTruePart.parent, -1);
+    ValidateOrCopy(truePartPassthrough.parent_track_id, srTruePart.parent, -1, "SRTrueParticle::parent");
 
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
 
-    ValidateOrCopy(truePartPassthrough.start_point[0], srTruePart.start_pos.x, NaN);
-    ValidateOrCopy(truePartPassthrough.start_point[1], srTruePart.start_pos.y, NaN);
-    ValidateOrCopy(truePartPassthrough.start_point[2], srTruePart.start_pos.z, NaN);
+    ValidateOrCopy(truePartPassthrough.start_point[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
+    ValidateOrCopy(truePartPassthrough.start_point[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
+    ValidateOrCopy(truePartPassthrough.start_point[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.end_point[0], srTruePart.end_pos.x, NaN);
-    ValidateOrCopy(truePartPassthrough.end_point[1], srTruePart.end_pos.y, NaN);
-    ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN);
+    ValidateOrCopy(truePartPassthrough.end_point[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(truePartPassthrough.end_point[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.momentum[0]/1000., srTruePart.p.px, NaN);
-    ValidateOrCopy(truePartPassthrough.momentum[1]/1000., srTruePart.p.py, NaN);
-    ValidateOrCopy(truePartPassthrough.momentum[2]/1000., srTruePart.p.pz, NaN);
-    ValidateOrCopy(truePartPassthrough.energy_init/1000., srTruePart.p.E, NaN);
+    // sadly GENIE's px, py, pz are in a different coordinate system, so they won't match.
+    // we just overwrite them (when they came through correctly, at least)
+//    ValidateOrCopy(truePartPassthrough.momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
+//    ValidateOrCopy(truePartPassthrough.momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+//    ValidateOrCopy(truePartPassthrough.momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
+    if (!std::isnan(truePartPassthrough.momentum[0]) && !std::isinf(truePartPassthrough.momentum[0]))
+    {
+      srTruePart.p.px = truePartPassthrough.momentum[0] / 1000.;
+      srTruePart.p.py = truePartPassthrough.momentum[1] / 1000.;
+      srTruePart.p.pz = truePartPassthrough.momentum[2] / 1000.;
+    }
+
+    try
+    {
+      ValidateOrCopy(truePartPassthrough.energy_init / 1000., srTruePart.p.E, NaN, "SRTrueParticle::p.E");
+    }
+    catch (std::runtime_error & e)
+    {
+      auto diff = (truePartPassthrough.energy_init / 1000. - srTruePart.p.E);
+      if (diff < 1) // < 1 MeV
+      {
+        LOG.WARNING() << "True particle energy (track id=" << srTruePart.G4ID << ", pdg=" << srTruePart.pdg << ", stored E=" << srTruePart.p.E << ")"
+                      << " differs by " << diff << " MeV between stored (GENIE?) and ML-reco pass-through values";
+      }
+      else
+        throw e;
+    }
 
 
   }
@@ -392,11 +415,11 @@ namespace cafmaker
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
-            LOG.VERBOSE() << "    (prim) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+            LOG.VERBOSE() << "    (prim) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prefsi)
-            LOG.VERBOSE() << "    (prefsi) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+            LOG.VERBOSE() << "    (prefsi) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
           for (const caf::SRTrueParticle & part : srTrueInt.sec)
-            LOG.VERBOSE() << "    (sec) pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+            LOG.VERBOSE() << "    (sec) id = " << part.G4ID  << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
 
           // here we need to fill in any additional info
           // that GENIE didn't know about: e.g., secondary particles made by GEANT4
