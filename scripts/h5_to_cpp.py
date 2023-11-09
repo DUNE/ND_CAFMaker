@@ -511,7 +511,7 @@ if __name__ == "__main__":
         datasets = []
         for ds in args.dataset:
             if ds not in f or not hasattr(f[ds], "dtype"):
-                print("Dataset '{0}' not found in file: {1}".format(ds, args.filename), file=sys.stderr)
+                print("Dataset '{0}' not found in file: {1}".format(ds, args.hdf5), file=sys.stderr)
                 sys.exit(1)
             datasets.append(f[ds])
 
