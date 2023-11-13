@@ -107,74 +107,6 @@ namespace cafmaker
 
   }
   // ---------------------------------------------------------------------------
-//Workaround to just use MINERvA passthrough true information
-  void MINERvARecoBranchFiller::fillTrueInteraction(caf::StandardRecord &sr) const
-  {
-    std::map<long int, std::vector<caf::SRTrueParticle>> particle_map;
-    for (int i = 0; i<n_mc_trajectories; i++)
-    {
-      //Get the true particles in the event;
-      caf::SRTrueParticle part;
-      part.pdg = mc_traj_pdg[i];
-      part.G4ID = mc_traj_edepsim_trkid[i]; // Track id of Geant. reset for every interaction
-      part.interaction_id = mc_traj_edepsim_eventid[i]; // Vector ID of edepsim Unique number for all interactionss
-      part.time = mc_traj_pdg[i];
-      
-      part.time = mc_traj_point_t[i][0];
-      part.parent = mc_traj_parentid[i];
-
-      part.start_pos = caf::SRVector3D(mc_traj_point_x[i][0],mc_traj_point_y[i][0],mc_traj_point_z[i][0]);
-      part.end_pos = caf::SRVector3D(mc_traj_point_x[i][1],mc_traj_point_y[i][1],mc_traj_point_z[i][1]);
-      particle_map[mc_traj_edepsim_eventid[i]].push_back(part);
-    }
-    for (auto const& it : particle_map)
-    {
-      caf::SRTrueInteraction * ixn = nullptr;
-      //Check if the id already exist in the interaction vector.
-      Long_t neutrino_event_id = it.first;
-
-      auto int_it = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
-                  [neutrino_event_id](const caf::SRTrueInteraction& nu)
-                  {
-                    return nu.id == neutrino_event_id;
-                  });
-      if (int_it == sr.mc.nu.end()) // No matching neutrino in the record already
-      {
-        sr.mc.nu.emplace_back();
-        sr.mc.nnu++;
-
-        ixn = &sr.mc.nu.back();
-        ixn->id = it.first;
-        for (std::size_t k = 0; k< it.second.size(); k++)
-        {
-
-          ixn->sec.push_back(std::move(it.second[k]));
-          ixn->nsec ++;
-        }
-      }
-      else // Found a matching neutrino 
-      {
-        //Look in the primaries if the true particle was already stored by other detectors
-        for (std::size_t k = 0; k< it.second.size(); k++)
-        {
-          Int_t edepsim_track_id = it.second[k].G4ID;
-          
-          auto part_it = std::find_if((*int_it).prim.begin(), (*int_it).prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; });
-          if (part_it != (*int_it).prim.end()) break; // Particle already filled so no need to fill it
-          
-          part_it = std::find_if((*int_it).prefsi.begin(), (*int_it).prefsi.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; });
-          if (part_it != (*int_it).prefsi.end()) break; // Particle already filled so no need to fill it
-          
-          part_it = std::find_if((*int_it).sec.begin(), (*int_it).sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; });
-          if (part_it != (*int_it).sec.end()) break; // Particle already filled so no need to fill it
-          
-          //Not found the true particle in the list of true particle, I'm adding it as a secondary particle (primary particle should have been filled by LAr CAFs)
-          (*int_it).sec.push_back(std::move(it.second[k]));
-          (*int_it).nsec ++;              
-        }
-      }  
-    }
-  }
 
   // here we copy all the MINERvA reco into the SRMINERvA branch of the StandardRecord object.
   void MINERvARecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
@@ -199,9 +131,6 @@ namespace cafmaker
 
     // Get nth entry from tree
     MnvRecoTree->GetEntry(idx);  
-    //Hack for the true interaction
-    // fillTrueInteraction(sr);
-
 
     int max_slice = 0;
     // Fill in the track info 
@@ -408,66 +337,6 @@ namespace cafmaker
       }
     }
 
-
-    
-
-    // if (truthVecIdx == sr.mc.nu.size())
-    // {
-    //   caf::SRTrueInteraction * ixn = nullptr;
-
-    //   sr.mc.nu.emplace_back();
-    //   sr.mc.nnu++;
-    //   //NOE newly added
-    //   ixn = &sr.mc.nu.back();
-    //   ixn->id = neutrino_event_id;
-    //   ixn->sec.push_back(std::move(part));
-    //   ixn->nsec ++;
-
-    //   sh.truth.ixn = truthVecIdx;
-    //   sh.truth.part = ixn->nsec -1;
-    //   sh.truth.type = caf::TrueParticleID::kSecondary;
-    // }
-    // else
-    // {
-    //   sh.truth.ixn = truthVecIdx;
-    //   Int_t edepsim_track_id = mc_traj_edepsim_trkid[max_trkid];
-      
-    //   std::size_t truthPartIdx = std::distance(sr.mc.nu[truthVecIdx].prim.begin(), std::find_if(sr.mc.nu[truthVecIdx].prim.begin(), sr.mc.nu[truthVecIdx].prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-    //   if (truthPartIdx != sr.mc.nu[truthVecIdx].prim.size()) 
-    //   {
-    //     sh.truth.type = caf::TrueParticleID::kPrimary;
-    //     sh.truth.part = truthPartIdx;
-    //   }
-    //   else {
-    //     truthPartIdx = std::distance(sr.mc.nu[truthVecIdx].prefsi.begin(), std::find_if(sr.mc.nu[truthVecIdx].prefsi.begin(), sr.mc.nu[truthVecIdx].prefsi.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-    //     if (truthPartIdx != sr.mc.nu[truthVecIdx].prefsi.size())
-    //     {
-    //       sh.truth.type = caf::TrueParticleID::kPrimaryBeforeFSI;
-    //       sh.truth.part = truthPartIdx;
-    //     }
-    //     else 
-    //     {
-    //       truthPartIdx = std::distance(sr.mc.nu[truthVecIdx].sec.begin(), std::find_if(sr.mc.nu[truthVecIdx].sec.begin(), sr.mc.nu[truthVecIdx].sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-    //       if (truthPartIdx != sr.mc.nu[truthVecIdx].sec.size())
-    //       {
-    //         sh.truth.type = caf::TrueParticleID::kSecondary;
-    //         sh.truth.part = truthPartIdx;
-    //       } 
-          
-    //       else
-    //       {
-    //         sr.mc.nu[truthVecIdx].sec.push_back(std::move(part));
-    //         sr.mc.nu[truthVecIdx].nsec ++;
-            
-
-    //         sh.truth.ixn = truthVecIdx;
-    //         sh.truth.part = sr.mc.nu[truthVecIdx].nsec -1;
-    //         sh.truth.type = caf::TrueParticleID::kSecondary;
-    //       }
-    //     }
-    //   }
-    // }
-
   }
 
   void MINERvARecoBranchFiller::find_truth_track(caf::StandardRecord &sr, caf::SRTrack &t, int track_id, const TruthMatcher *truthMatch) const
@@ -577,71 +446,6 @@ namespace cafmaker
       }
     }
 
-
-    //Hack before the new GENIE event ID
-    /*
-    std::size_t truthVecIdx = std::distance(sr.mc.nu.begin(),
-                                                  std::find_if(sr.mc.nu.begin(),
-                                                               sr.mc.nu.end(),
-                                                               [neutrino_event_id](const caf::SRTrueInteraction& nu)
-                                                               {
-                                                                 return nu.id == neutrino_event_id;
-                                                               }));
-
-    if (truthVecIdx == sr.mc.nu.size())
-    {
-      caf::SRTrueInteraction * ixn = nullptr;
-      sr.mc.nu.emplace_back();
-      sr.mc.nnu++;
-      ixn = &sr.mc.nu.back();
-      ixn->id = neutrino_event_id;
-      ixn->sec.push_back(std::move(part));
-      ixn->nsec ++;
-
-      sh.truth.ixn = truthVecIdx;
-      sh.truth.part = ixn->nsec -1;
-      sh.truth.type = caf::TrueParticleID::kSecondary;
-    }
-    else
-    {
-      sh.truth.ixn = truthVecIdx;
-      Int_t edepsim_track_id = mc_traj_edepsim_trkid[max_trkid];
-      
-      std::size_t truthPartIdx = std::distance(sr.mc.nu[truthVecIdx].prim.begin(), std::find_if(sr.mc.nu[truthVecIdx].prim.begin(), sr.mc.nu[truthVecIdx].prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-      if (truthPartIdx != sr.mc.nu[truthVecIdx].prim.size()) 
-      {
-        sh.truth.type = caf::TrueParticleID::kPrimary;
-        sh.truth.part = truthPartIdx;
-      }
-      else {
-        truthPartIdx = std::distance(sr.mc.nu[truthVecIdx].prefsi.begin(), std::find_if(sr.mc.nu[truthVecIdx].prefsi.begin(), sr.mc.nu[truthVecIdx].prefsi.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-        if (truthPartIdx != sr.mc.nu[truthVecIdx].prefsi.size())
-        {
-          sh.truth.type = caf::TrueParticleID::kPrimaryBeforeFSI;
-          sh.truth.part = truthPartIdx;
-        }
-        else 
-        {
-          truthPartIdx = std::distance(sr.mc.nu[truthVecIdx].sec.begin(), std::find_if(sr.mc.nu[truthVecIdx].sec.begin(), sr.mc.nu[truthVecIdx].sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-          if (truthPartIdx != sr.mc.nu[truthVecIdx].sec.size())
-          {
-            sh.truth.type = caf::TrueParticleID::kSecondary;
-            sh.truth.part = truthPartIdx;
-          } 
-          
-          else
-          {
-            sr.mc.nu[truthVecIdx].sec.push_back(std::move(part));
-            sr.mc.nu[truthVecIdx].nsec ++;
-            
-
-            sh.truth.ixn = truthVecIdx;
-            sh.truth.part = sr.mc.nu[truthVecIdx].nsec -1;
-            sh.truth.type = caf::TrueParticleID::kSecondary;
-          }
-        }
-      }
-    }*/
   }
 
   // ------------------------------------------------------------------------------
@@ -654,12 +458,13 @@ namespace cafmaker
     {
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << MnvRecoTree->GetEntries() << " MINERvA Tree:\n";
       fTriggers.reserve(MnvRecoTree->GetEntries());
+      unsigned long int t0_minerva;
       for (int entry = 0; entry < MnvRecoTree->GetEntries(); entry++)
       {
 
 
         MnvRecoTree->GetEntry(entry);
-
+        if (entry == 0) t0_minerva = ev_gps_time_sec;
 
 
         fTriggers.emplace_back();
@@ -672,6 +477,10 @@ namespace cafmaker
         trig.triggerType = ev_trigger_type;
         trig.triggerTime_s = ev_gps_time_sec;
         trig.triggerTime_ns = ev_gps_time_usec * 1000.;
+
+
+        //Initialize first trigger at 0 while we don't have a global time strategy
+        trig.triggerTime_s -= t0_minerva;
 
 
         triggers.push_back(trig);
