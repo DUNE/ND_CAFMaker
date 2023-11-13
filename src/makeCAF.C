@@ -200,6 +200,13 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
   auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildTriggerList()"); };
 
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
+<<<<<<< HEAD
+=======
+  uto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
+  {
+    return t1.triggerTime_s < t2.triggerTime_s || (t1.triggerTime_s  == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
+  };
+>>>>>>> remove bug fixing tool
 
   // don't assume input comes in sorted
   LOG().DEBUG() << "Considering triggers from the following reco branch fillers: \n";
