@@ -113,21 +113,21 @@ namespace cafmaker
 
       //Trajectories (Truth variables)
       Int_t           n_mc_trajectories;
-      Int_t           mc_traj_trkid[180];   //[n_mc_trajectories]
-      Int_t           mc_traj_parentid[180];   //[n_mc_trajectories]
-      Int_t           mc_traj_pdg[180];   //[n_mc_trajectories]
-      Double_t        mc_traj_hit_e[180];   //[n_mc_trajectories]
-      Int_t           mc_traj_npoints[180];   //[n_mc_trajectories]
-      Int_t           mc_traj_edepsim_trkid[180];   //[n_mc_trajectories]
-      Long64_t        mc_traj_edepsim_eventid[180];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_x[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_y[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_z[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_t[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_px[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_py[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_pz[180][5];   //[n_mc_trajectories]
-      Double_t        mc_traj_point_E[180][5];   //[n_mc_trajectories]
+      Int_t           mc_traj_trkid[10000];   //[n_mc_trajectories]
+      Int_t           mc_traj_parentid[10000];   //[n_mc_trajectories]
+      Int_t           mc_traj_pdg[10000];   //[n_mc_trajectories]
+      Double_t        mc_traj_hit_e[10000];   //[n_mc_trajectories]
+      Int_t           mc_traj_npoints[10000];   //[n_mc_trajectories]
+      Int_t           mc_traj_edepsim_trkid[10000];   //[n_mc_trajectories]
+      Long64_t        mc_traj_edepsim_eventid[10000];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_x[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_y[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_z[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_t[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_px[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_py[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_pz[10000][5];   //[n_mc_trajectories]
+      Double_t        mc_traj_point_E[10000][5];   //[n_mc_trajectories]
    
 
       //Cluster list & hit list for Trajectory matching
