@@ -201,8 +201,12 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   uto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
+=======
+  auto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
+>>>>>>> fixed last differences with MASTER
   {
     return t1.triggerTime_s < t2.triggerTime_s || (t1.triggerTime_s  == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
   };
@@ -290,11 +294,15 @@ void loop(CAF &caf,
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
-  {
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+<<<<<<< HEAD
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
 
+=======
+  
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> groupedTriggers = buildTriggerList(triggersByRBF);
+>>>>>>> fixed last differences with MASTER
   // sanity checks
   if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
   {
