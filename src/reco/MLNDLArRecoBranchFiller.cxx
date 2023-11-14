@@ -414,7 +414,7 @@ namespace cafmaker
 
           LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id << "\n";
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);  // or 'track_id'? need to verify
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id, !truthMatch->HaveGENIE());
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
