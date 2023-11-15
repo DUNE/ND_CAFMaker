@@ -677,16 +677,9 @@ namespace cafmaker
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
 
-        // todo: these are placeholder values until we can propagate enough info through the reco files
         trig.triggerType = trigger.type;
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
-
-	//HACK to fix the definition of trigger time trigger.time_s seems to be the absolute time in microsecond.
- 	trig.triggerType = trigger.type;
-        trig.triggerTime_s = (trigger.time_s*1000)/1e9;
-        trig.triggerTime_ns = (trigger.time_s*1000)%1000000000;
-        triggers.push_back(trig);
 
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
                       << ", triggerType=" << trig.triggerType
