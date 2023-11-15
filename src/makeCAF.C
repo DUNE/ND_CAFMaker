@@ -157,18 +157,15 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 }
 
 // -------------------------------------------------
-// todo: implement the logic
-// This is a basic trigger logic just to see if that works, it seem to does the job for Miniruns but will need to be refined 
-bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2)
+bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
 {
-  if (t1.triggerTime_s == t2.triggerTime_s && abs(int(t1.triggerTime_ns - t2.triggerTime_ns)) < 1e5) return true;
-
-  return false;
+  return (t1.triggerTime_s == t2.triggerTime_s && abs(int(t1.triggerTime_ns - t2.triggerTime_ns)) < dT);
 }
 // -------------------------------------------------
 // return type: each element of outer vector corresponds to one group of matched triggers
 std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
-buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByFiller)
+buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByFiller,
+                 unsigned int trigMatchMaxDT)
 {
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
 
@@ -226,7 +223,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
         // we will only take at most one trigger from each of the other streams.
         // since the seed was the earliest one out of all the triggers,
         // we only need to check the first one in each other stream
-        if (doTriggersMatch( trigSeed, fillerTrigPair.second.front()))
+        if (doTriggersMatch( trigSeed, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
             trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
             fillerTrigPair.second.pop_front();
@@ -262,7 +259,8 @@ void loop(CAF &caf,
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
-  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> groupedTriggers = buildTriggerList(triggersByRBF);
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+    groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
 
   // sanity checks
   if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
