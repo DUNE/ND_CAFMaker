@@ -158,11 +158,13 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
 // -------------------------------------------------
 // todo: implement the logic
-bool doTriggersMatch(const cafmaker::Trigger&, const cafmaker::Trigger&)
+// This is a basic trigger logic just to see if that works, it seem to does the job for Miniruns but will need to be refined 
+bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2)
 {
+  if (t1.triggerTime_s == t2.triggerTime_s && abs(int(t1.triggerTime_ns - t2.triggerTime_ns)) < 1e5) return true;
+
   return false;
 }
-
 // -------------------------------------------------
 // return type: each element of outer vector corresponds to one group of matched triggers
 std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
@@ -183,12 +185,19 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
   {
     // look at the first element of each reco filler stream.
     std::vector<const cafmaker::Trigger*> firstTrigs;
-    std::transform(triggersByFiller.begin(), triggersByFiller.end(), std::back_inserter(firstTrigs),
+    /*std::transform(triggersByFiller.begin(), triggersByFiller.end(), std::back_inserter(firstTrigs),
                    [](const std::pair<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> & pair)
                    {
                      return &pair.second[0];
                    });
-
+     */
+    //No Idea why specifically this thing work and not std::transform.
+    //For some reason std::transform started to pick twice the same address instead of one in every reco branch.
+    //Because of that, the whole trigger comparison in the end was flawed.
+    for (const auto &it: triggersByFiller)
+    {
+      firstTrigs.push_back(&it.second[0]);
+    }
     // the earliest one will be our next group seed.
     auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(),
                                         [](const cafmaker::Trigger * t1, const cafmaker::Trigger * t2)
