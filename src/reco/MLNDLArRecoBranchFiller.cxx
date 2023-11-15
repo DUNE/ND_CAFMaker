@@ -412,7 +412,9 @@ namespace cafmaker
           }
           cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = *itIxn;
 
-          LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id << "\n";
+          LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id
+                        << " and interaction ID = " << trueIxnPassThrough.truth_id
+                        << "\n";
 
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id, !truthMatch->HaveGENIE());
 
@@ -504,6 +506,7 @@ namespace cafmaker
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
                     << "gen ID = " << truePartPassThrough.gen_id << "; "
+                    << "interaction ID = " << truePartPassThrough.interaction_id << "; "
                     << "is primary = " << truePartPassThrough.is_primary << "; "
                     << "pdg = " << truePartPassThrough.pdg_code << "; "
                     << "energy = " << truePartPassThrough.energy_init
@@ -536,7 +539,7 @@ namespace cafmaker
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
-          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false)
+          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
           //  this will fill in any other fields that weren't copied from a GENIE record
