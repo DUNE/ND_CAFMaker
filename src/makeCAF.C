@@ -182,19 +182,9 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
   {
     // look at the first element of each reco filler stream.
     std::vector<const cafmaker::Trigger*> firstTrigs;
-    /*std::transform(triggersByFiller.begin(), triggersByFiller.end(), std::back_inserter(firstTrigs),
-                   [](const std::pair<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> & pair)
-                   {
-                     return &pair.second[0];
-                   });
-     */
-    //No Idea why specifically this thing work and not std::transform.
-    //For some reason std::transform started to pick twice the same address instead of one in every reco branch.
-    //Because of that, the whole trigger comparison in the end was flawed.
     for (const auto &it: triggersByFiller)
-    {
       firstTrigs.push_back(&it.second[0]);
-    }
+
     // the earliest one will be our next group seed.
     auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(),
                                         [](const cafmaker::Trigger * t1, const cafmaker::Trigger * t2)
