@@ -161,37 +161,62 @@ bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, u
 {
   return (t1.triggerTime_s == t2.triggerTime_s && abs(int(t1.triggerTime_ns - t2.triggerTime_ns)) < dT);
 }
+
+struct triggerTimeCmp
+{
+  bool operator()(const cafmaker::Trigger &t1, const cafmaker::Trigger &t2)
+  {
+    return t1.triggerTime_s < t2.triggerTime_s ||
+           (t1.triggerTime_s == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
+  }
+};
+
+struct triggerTimePtrCmp
+{
+  triggerTimeCmp cmp;
+  bool operator()(const cafmaker::Trigger *t1, const cafmaker::Trigger *t2)
+  {
+    return cmp(*t1, *t2);
+  }
+};
+
 // -------------------------------------------------
 // return type: each element of outer vector corresponds to one group of matched triggers
 std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
 buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByFiller,
                  unsigned int trigMatchMaxDT)
 {
+  // I don't want to keep typing `cafmaker::LOG_S("buildTriggerList()")` every time,
+  // and the preamble to the logger resets after the first use
+  auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildTriggerList()"); };
+
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
 
-  auto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
-  {
-    return t1.triggerTime_s < t2.triggerTime_s || (t1.triggerTime_s  == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
-  };
-
   // don't assume input comes in sorted
+  LOG().DEBUG() << "Considering triggers from the following reco branch fillers: \n";
   for (auto & fillerTrigPair : triggersByFiller)
-    std::sort(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), triggerTimeCmp);
+  {
+    std::sort(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), triggerTimeCmp());
+    LOG().DEBUG() << "   " << fillerTrigPair.first->GetName() << "\n";
+  }
 
   while (!triggersByFiller.empty())
   {
     // look at the first element of each reco filler stream.
+    LOG().VERBOSE() << "   Considering the earliest triggers in each stream:\n";
     std::vector<const cafmaker::Trigger*> firstTrigs;
     for (const auto &it: triggersByFiller)
+    {
+      LOG().VERBOSE() << "     " << it.first->GetName() << " --> (id = " << it.second[0].evtID
+                    << ", time = " << (it.second[0].triggerTime_s + it.second[0].triggerTime_ns/1e9) << " s)\n";
       firstTrigs.push_back(&it.second[0]);
+    }
 
     // the earliest one will be our next group seed.
-    auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(),
-                                        [](const cafmaker::Trigger * t1, const cafmaker::Trigger * t2)
-                                        {
-                                          return t1->triggerTime_s < t2->triggerTime_s || (t1->triggerTime_s  == t2->triggerTime_s && t1->triggerTime_ns < t2->triggerTime_ns);
-                                        }
-    );
+    auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(), triggerTimePtrCmp());
+    LOG().VERBOSE() << "    Next trigger group seed: (" << (*groupSeedIt)->evtID << ", "
+                  << (*groupSeedIt)->triggerTime_s +(*groupSeedIt)->triggerTime_ns/1e9
+                  << ")\n";
 
     // pull that one out of its original container so we don't reconsider it in the next loop iteration
     auto seedFillerIt = triggersByFiller.begin();
