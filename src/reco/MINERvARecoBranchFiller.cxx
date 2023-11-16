@@ -2,6 +2,16 @@
 
 namespace cafmaker
 {
+
+  MINERvARecoBranchFiller::~MINERvARecoBranchFiller() {
+  delete MnvRecoTree;
+  fMnvRecoFile->Close();
+  delete fMnvRecoFile;
+  MnvRecoTree = NULL;
+  fMnvRecoFile = NULL;
+  }
+
+
   MINERvARecoBranchFiller::MINERvARecoBranchFiller(const std::string &minervaRecoFilename)
   : IRecoBranchFiller("MINERvA"),
     fTriggers(),
@@ -28,6 +38,10 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("ev_gl_gate", &ev_gl_gate);
       MnvRecoTree->SetBranchAddress("ev_gps_time_sec", &ev_gps_time_sec);
       MnvRecoTree->SetBranchAddress("ev_gps_time_usec", &ev_gps_time_usec);
+
+      MnvRecoTree->SetBranchAddress("ev_run", &ev_run);
+      MnvRecoTree->SetBranchAddress("ev_sub_run", &ev_sub_run);
+      MnvRecoTree->SetBranchAddress("ev_gate", &ev_gate);
 
       //tracks branches 
       MnvRecoTree->SetBranchAddress("n_tracks", &n_tracks);
@@ -108,6 +122,37 @@ namespace cafmaker
   }
   // ---------------------------------------------------------------------------
 
+
+    void MINERvARecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
+                                                 int max_trkid) const
+  {
+    //const auto NaN = std::numeric_limits<float>::signaling_NaN();
+    ValidateOrCopy(mc_traj_pdg[max_trkid], srTruePart.pdg, 0, "pdg_code");
+
+    ValidateOrCopy(mc_traj_edepsim_trkid[max_trkid], srTruePart.G4ID, -1, "SRTrueParticle::track_id");
+    ValidateOrCopy(mc_traj_parentid[max_trkid], srTruePart.parent, -1, "SRTrueParticle::parent");
+
+    // todo: Things do not match yet the exact Genie output, need to work on the Minerva reconstruction output. 
+    // For now will assume that if it's a primary and we gor the eventID and trackid right, Genie will have fill it properly
+    // And if it's an important secondary shared by both detectors, MLReco will have filled it.
+    /*
+    ValidateOrCopy(mc_traj_point_x[max_trkid][0]/10. - offsetX/10., srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
+    ValidateOrCopy(mc_traj_point_y[max_trkid][0]/10. - offsetY/10., srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
+    ValidateOrCopy(mc_traj_point_z[max_trkid][0]/10. - offsetZ/10., srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
+
+    ValidateOrCopy(mc_traj_point_x[max_trkid][1]/10. - offsetX/10., srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(mc_traj_point_y[max_trkid][1]/10. - offsetY/10., srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(mc_traj_point_z[max_trkid][1]/10. - offsetZ/10., srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
+
+
+    ValidateOrCopy(mc_traj_point_px[max_trkid][0], srTruePart.p.px, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(mc_traj_point_py[max_trkid][0], srTruePart.p.py, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(mc_traj_point_pz[max_trkid][0], srTruePart.p.pz, NaN, "SRTrueParticle::end_pos.z");
+
+    */
+  }
+
+
   // here we copy all the MINERvA reco into the SRMINERvA branch of the StandardRecord object.
   void MINERvARecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                 caf::StandardRecord &sr,
@@ -131,6 +176,14 @@ namespace cafmaker
 
     // Get nth entry from tree
     MnvRecoTree->GetEntry(idx);  
+
+    //Fill MINERvA specific info in the meta branch
+    sr.meta.minerva.enabled = true;
+    sr.meta.minerva.run = ev_run;
+    sr.meta.minerva.subrun = ev_sub_run;
+    sr.meta.minerva.event = ev_gate;
+
+
 
     int max_slice = 0;
     // Fill in the track info 
@@ -165,7 +218,8 @@ namespace cafmaker
       caf::SRTrack my_track;
 
       // Save first and last hit in track
-      // MINERvA Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
+      // MINERvA Reco info is saved in mm whereas CAFs use cm as default -> do conversion here
+      // We offset positions in MINERvA reconstruction so we reofset them here.
       my_track.start = caf::SRVector3D(trk_node_X[i][0]/10.  - offsetX/10. ,trk_node_Y[i][0]/10. - offsetY/10., trk_node_Z[i][0]/10. - offsetZ/10.);
       my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10.  - offsetX/10. ,trk_node_Y[i][trk_nodes[i] -1]/10. - offsetY/10., trk_node_Z[i][trk_nodes[i] -1]/10. - offsetZ/10.);
 
@@ -269,18 +323,6 @@ namespace cafmaker
     }
 
     //Create the possible SRTrueParticle that correspond to the shower
-    caf::SRTrueParticle part;
-    part.pdg = mc_traj_pdg[max_trkid];
-    part.G4ID = mc_traj_edepsim_trkid[max_trkid]; // Track id of Geant. reset for every interaction
-    part.interaction_id = mc_traj_edepsim_eventid[max_trkid]; // Vector ID of edepsim Unique number for all interactionss
-    part.time = mc_traj_pdg[max_trkid];
-    
-    part.time = mc_traj_point_t[max_trkid][0];
-    part.parent = mc_traj_parentid[max_trkid];
-
-    part.start_pos = caf::SRVector3D(mc_traj_point_x[max_trkid][0],mc_traj_point_y[max_trkid][0],mc_traj_point_z[max_trkid][0]);
-    part.end_pos = caf::SRVector3D(mc_traj_point_x[max_trkid][1],mc_traj_point_y[max_trkid][1],mc_traj_point_z[max_trkid][1]);
-
     
     Long_t neutrino_event_id = mc_traj_edepsim_eventid[max_trkid];
     std::size_t truthVecIdx = std::distance(sr.mc.nu.begin(),
@@ -290,52 +332,28 @@ namespace cafmaker
                                                                {
                                                                  return nu.id == neutrino_event_id;
                                                                }));
-//Once the true particle has been found, loop over the truthBranch to find the corresponding truth interraction
+    
+    //Once the true particle has been found, loop over the truthBranch to find the corresponding truth interraction
     caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id, true);
     //Find the position of the interaction corresponding to the track in the interaction vector
 
-    sh.truth.ixn = truthVecIdx;
+    
     Int_t edepsim_track_id = mc_traj_edepsim_trkid[max_trkid];
-
-    //Look in the primaries if the particle wasn't filled already
+    
+    //We don't store the status of the particle (primary or not) inside MNV reco, first look in the list of primaries ID if we're around 
     std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-    if (truthPartIdx != srTrueInt.prim.size()) 
-    {
-      sh.truth.type = caf::TrueParticleID::kPrimary;
-      sh.truth.part = truthPartIdx;
-    }
-    else {
-      
-      //Pre fsi trajectory?
-      truthPartIdx = std::distance(srTrueInt.prefsi.begin(), std::find_if(srTrueInt.prefsi.begin(), srTrueInt.prefsi.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-      if (truthPartIdx != srTrueInt.prefsi.size())
-      {
-        sh.truth.type = caf::TrueParticleID::kPrimaryBeforeFSI;
-        sh.truth.part = truthPartIdx;
-      }
-      else 
-      {
-        //If nothing else it's a secondary
-        truthPartIdx = std::distance(srTrueInt.sec.begin(), std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-        if (truthPartIdx != srTrueInt.sec.size())
-        {
-          sh.truth.type = caf::TrueParticleID::kSecondary;
-          sh.truth.part = truthPartIdx;
-        } 
-        
-        else
-        {
-          //If not found before, add in in the secondary
-          srTrueInt.sec.push_back(std::move(part));
-          srTrueInt.nsec ++;
-          
+    bool is_primary = truthPartIdx != srTrueInt.prim.size();
 
-          sh.truth.ixn = truthVecIdx;
-          sh.truth.part = srTrueInt.nsec -1;
-          sh.truth.type = caf::TrueParticleID::kSecondary;
-        }
-      }
-    }
+    sh.truth.ixn = truthVecIdx;
+    if (is_primary) sh.truth.type = caf::TrueParticleID::kPrimary;
+    else sh.truth.type = caf::TrueParticleID::kSecondary;
+    sh.truth.part = edepsim_track_id;
+  
+    caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, true, false)
+                                                    : truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, false, true);
+
+
+    FillTrueParticle(srTruePart, max_trkid);
 
   }
 
@@ -364,8 +382,6 @@ namespace cafmaker
     double max_trkid_stat = 0;
     int max_trkid = 0;
 
-    
-
     for (auto const& tkid : most_trkid) 
     {
         if (tkid.second > max_trkid_stat) 
@@ -375,26 +391,10 @@ namespace cafmaker
         }
     }
 
-    //find the true particle associated to this track
-
-    caf::SRTrueParticle part;
-    part.pdg = mc_traj_pdg[max_trkid];
-    part.G4ID = mc_traj_edepsim_trkid[max_trkid]; // Track id of Geant. reset for every interaction
-    part.interaction_id = mc_traj_edepsim_eventid[max_trkid]; // Vector ID of edepsim Unique number for all interactionss
-    
-    part.time = mc_traj_point_t[max_trkid][0];
-    part.parent = mc_traj_parentid[max_trkid];
-
-    part.start_pos = caf::SRVector3D(mc_traj_point_x[max_trkid][0],mc_traj_point_y[max_trkid][0],mc_traj_point_z[max_trkid][0]);
-    part.end_pos = caf::SRVector3D(mc_traj_point_x[max_trkid][1],mc_traj_point_y[max_trkid][1],mc_traj_point_z[max_trkid][1]);
-
-
     //Once the true particle has been found, loop over the truthBranch to find the corresponding truth interraction
     Long_t neutrino_event_id = mc_traj_edepsim_eventid[max_trkid];
     caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id, true);
     //Find the position of the interaction corresponding to the track in the interaction vector
-
-
 
     std::size_t truthVecIdx = std::distance(sr.mc.nu.begin(),
                                                   std::find_if(sr.mc.nu.begin(),
@@ -407,44 +407,20 @@ namespace cafmaker
     Int_t edepsim_track_id = mc_traj_edepsim_trkid[max_trkid];
 
     //Look in the primaries if the particle wasn't filled already
-    std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-    if (truthPartIdx != srTrueInt.prim.size()) 
-    {
-      t.truth.type = caf::TrueParticleID::kPrimary;
-      t.truth.part = truthPartIdx;
-    }
-    else {
-      
-      //Pre fsi trajectory?
-      truthPartIdx = std::distance(srTrueInt.prefsi.begin(), std::find_if(srTrueInt.prefsi.begin(), srTrueInt.prefsi.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-      if (truthPartIdx != srTrueInt.prefsi.size())
-      {
-        t.truth.type = caf::TrueParticleID::kPrimaryBeforeFSI;
-        t.truth.part = truthPartIdx;
-      }
-      else 
-      {
-        //If nothing else it's a secondary
-        truthPartIdx = std::distance(srTrueInt.sec.begin(), std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
-        if (truthPartIdx != srTrueInt.sec.size())
-        {
-          t.truth.type = caf::TrueParticleID::kSecondary;
-          t.truth.part = truthPartIdx;
-        } 
-        
-        else
-        {
-          //If not found before, add in in the secondary
-          srTrueInt.sec.push_back(std::move(part));
-          srTrueInt.nsec ++;
-          
 
-          t.truth.ixn = truthVecIdx;
-          t.truth.part = srTrueInt.nsec -1;
-          t.truth.type = caf::TrueParticleID::kSecondary;
-        }
-      }
-    }
+    std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
+    bool is_primary = truthPartIdx != srTrueInt.prim.size();
+  
+    caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, true, false)
+                                                    : truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, false, true);
+
+
+    t.truth.ixn = truthVecIdx;
+    if (is_primary) t.truth.type = caf::TrueParticleID::kPrimary;
+    else t.truth.type = caf::TrueParticleID::kSecondary;
+    t.truth.part = edepsim_track_id;
+    std::cout<<"NOE "<<t.truth.type<<std::endl;
+    FillTrueParticle(srTruePart,max_trkid);
 
   }
 

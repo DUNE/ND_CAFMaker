@@ -37,14 +37,7 @@ namespace cafmaker
 
       std::deque<Trigger> GetTriggers(int triggerType) const  override;
 
-
-      ~MINERvARecoBranchFiller() {
-        delete MnvRecoTree;
-        fMnvRecoFile->Close();
-        delete fMnvRecoFile;
-        MnvRecoTree = NULL;
-        fMnvRecoFile = NULL;
-      }
+      ~MINERvARecoBranchFiller();
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
@@ -58,6 +51,7 @@ namespace cafmaker
       void find_truth_shower(caf::StandardRecord &sr, caf::SRShower & sh, int shower_id, const TruthMatcher *truthMatch) const;
       void find_truth_track(caf::StandardRecord &sr, caf::SRTrack & t, int track_id, const TruthMatcher *truthMatch) const;
       void fillTrueInteraction(caf::StandardRecord &sr) const;
+      void FillTrueParticle(caf::SRTrueParticle & srTruePart, int max_trkid) const;
       TFile *fMnvRecoFile;
       TTree *MnvRecoTree;
       
@@ -69,6 +63,10 @@ namespace cafmaker
       Int_t           ev_gl_gate;
       Int_t           ev_gps_time_sec;
       Int_t           ev_gps_time_usec;
+
+      Int_t           ev_run;
+      Int_t           ev_sub_run;
+      Int_t           ev_gate;
 
       //Tracks variables
       Int_t           n_tracks;
@@ -128,7 +126,6 @@ namespace cafmaker
       Double_t        mc_traj_point_py[10000][5];   //[n_mc_trajectories]
       Double_t        mc_traj_point_pz[10000][5];   //[n_mc_trajectories]
       Double_t        mc_traj_point_E[10000][5];   //[n_mc_trajectories]
-   
 
       //Cluster list & hit list for Trajectory matching
       Int_t           clus_id_size[7500];   //[n_clusters_id]
