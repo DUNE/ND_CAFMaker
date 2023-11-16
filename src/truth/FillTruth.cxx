@@ -350,14 +350,14 @@ namespace cafmaker
       sr.mc.nnu++;
 
       ixn = &sr.mc.nu.back();
+      ixn->id = ixnID;
       if (HaveGENIE())
       {
         LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << ").  copying...\n";
 
-        // these two bits of info can't be extracted directly from the GENIE record,
-        // so we do them here
+        // this bit of info can't be extracted directly from the GENIE record,
+        // so we do it here
         ixn->genieIdx = fGENIEWriterCallback(fGTrees.GEvt());  // copy the GENIE event into the CAF output GENIE tree
-        ixn->id = ixnID;
 
         FillInteraction(*ixn, fGTrees.GEvt());  // copy values from the GENIE event into the StandardRecord
       }
