@@ -416,7 +416,7 @@ namespace cafmaker
                         << " and interaction ID = " << trueIxnPassThrough.truth_id
                         << "\n";
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id, !truthMatch->HaveGENIE());
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
