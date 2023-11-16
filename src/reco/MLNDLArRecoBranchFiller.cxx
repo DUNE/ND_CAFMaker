@@ -659,13 +659,11 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
   {
-    auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
-
-    std::deque<Trigger> triggers;
     if (fTriggers.empty())
     {
+      auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << triggersIn.size() << " ND-LAr RunInfo products:\n";
-      fTriggers.reserve(triggers.size());
+      fTriggers.reserve(triggersIn.size());
       for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
         const int placeholderTriggerType = 0;
@@ -692,13 +690,12 @@ namespace cafmaker
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
-    else
+
+    std::deque<Trigger> triggers;
+    for (const Trigger & trigger : fTriggers)
     {
-      for (const Trigger & trigger : fTriggers)
-      {
-        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
-          triggers.push_back(trigger);
-      }
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
     }
 
     return triggers;
