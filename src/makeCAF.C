@@ -251,7 +251,6 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
     for (auto & fillerTrigPair : triggersByFiller)
     {
 
-      //if (triggersByFiller.size() == 0) break;
       // we don't want to consider the stream we're already working with.
       // (but don't continue, because we want to remove this stream from the
       //  map if it's empty, per below)
