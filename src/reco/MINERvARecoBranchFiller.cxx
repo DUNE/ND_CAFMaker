@@ -187,8 +187,8 @@ namespace cafmaker
 
     int max_slice = 0;
     // Fill in the track info 
-    std::map<int,std::vector<caf::SRTrack>> track_map = fill_track(sr, max_slice, truthMatch);
-    std::map<int,std::vector<caf::SRShower>> shower_map = fill_shower(sr, max_slice, truthMatch);
+    std::map<int,std::vector<caf::SRTrack>> track_map = FillTrack(sr, max_slice, truthMatch);
+    std::map<int,std::vector<caf::SRShower>> shower_map = FillShower(sr, max_slice, truthMatch);
 
     for (int i_slice = 1; i_slice <= max_slice; i_slice++)
     {
@@ -208,7 +208,7 @@ namespace cafmaker
 
   }
 
-  std::map<int, std::vector<caf::SRTrack>> MINERvARecoBranchFiller::fill_track(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const
+  std::map<int, std::vector<caf::SRTrack>> MINERvARecoBranchFiller::FillTrack(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const
   {
     std::map<int,std::vector<caf::SRTrack>> track_map;
 
@@ -236,7 +236,7 @@ namespace cafmaker
       my_track.enddir  = caf::SRVector3D(sin(trk_theta[i])*cos(trk_phi[i]),sin(trk_theta[i])*sin(trk_phi[i]),cos(trk_theta[i]));
 
       //Associates the truth particle to the track
-      find_truth_track(sr, my_track,i, truthMatch);
+      FindTruthTrack(sr, my_track,i, truthMatch);
       track_map[my_slice].push_back(my_track);
       //Find the largest reconstructed time slice
       if (max_slice < my_slice) max_slice = my_slice;
@@ -244,7 +244,7 @@ namespace cafmaker
     return track_map;
   }
 
-  std::map<int,std::vector<caf::SRShower>> MINERvARecoBranchFiller::fill_shower(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const
+  std::map<int,std::vector<caf::SRShower>> MINERvARecoBranchFiller::FillShower(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const
   {
     std::map<int,std::vector<caf::SRShower>> shower_map;
 
@@ -278,7 +278,7 @@ namespace cafmaker
       my_shower.Evis = blob_id_e[i]/1000.; //Energy in GeV
 
       //Associates the truth particle to the shower
-      find_truth_shower(sr, my_shower,i, truthMatch);
+      FindTruthShower(sr, my_shower,i, truthMatch);
       //Fill the shower map
       shower_map[my_slice].push_back(my_shower);
       //Find the largest reconstructed time slice
@@ -288,7 +288,7 @@ namespace cafmaker
     return shower_map;
   }
 
-  void MINERvARecoBranchFiller::find_truth_shower(caf::StandardRecord &sr, caf::SRShower &sh, int shower_id, const TruthMatcher *truthMatch ) const
+  void MINERvARecoBranchFiller::FindTruthShower(caf::StandardRecord &sr, caf::SRShower &sh, int shower_id, const TruthMatcher *truthMatch ) const
   {
     std::map<int, double> most_trkid;
     for (int j = 0; j<blob_id_size[shower_id]; j++)
@@ -344,20 +344,19 @@ namespace cafmaker
     std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
     bool is_primary = truthPartIdx != srTrueInt.prim.size();
 
-    sh.truth.ixn = truthVecIdx;
-    if (is_primary) sh.truth.type = caf::TrueParticleID::kPrimary;
-    else sh.truth.type = caf::TrueParticleID::kSecondary;
-    sh.truth.part = edepsim_track_id;
-  
     caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, true, false)
                                                     : truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, false, true);
 
+    sh.truth.ixn = truthVecIdx;
+    sh.truth.type = is_primary ? caf::TrueParticleID::kPrimary
+   				 : caf::TrueParticleID::kSecondary;
+    sh.truth.part = edepsim_track_id;
 
     FillTrueParticle(srTruePart, max_trkid);
 
   }
 
-  void MINERvARecoBranchFiller::find_truth_track(caf::StandardRecord &sr, caf::SRTrack &t, int track_id, const TruthMatcher *truthMatch) const
+  void MINERvARecoBranchFiller::FindTruthTrack(caf::StandardRecord &sr, caf::SRTrack &t, int track_id, const TruthMatcher *truthMatch) const
   {
     std::map<int, double> most_trkid;
     for (int j = 0; j<trk_nodes[track_id]; j++)
@@ -403,11 +402,9 @@ namespace cafmaker
                                                                {
                                                                  return nu.id == neutrino_event_id;
                                                                }));
-    t.truth.ixn = truthVecIdx;
     Int_t edepsim_track_id = mc_traj_edepsim_trkid[max_trkid];
 
-    //Look in the primaries if the particle wasn't filled already
-
+    //We don't store the status of the particle (primary or not) inside MNV reco, first look in the list of primaries ID if we're around
     std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; }));
     bool is_primary = truthPartIdx != srTrueInt.prim.size();
   
@@ -416,9 +413,10 @@ namespace cafmaker
 
 
     t.truth.ixn = truthVecIdx;
-    if (is_primary) t.truth.type = caf::TrueParticleID::kPrimary;
-    else t.truth.type = caf::TrueParticleID::kSecondary;
+    t.truth.type = is_primary ? caf::TrueParticleID::kPrimary
+                                 : caf::TrueParticleID::kSecondary;
     t.truth.part = edepsim_track_id;
+
     FillTrueParticle(srTruePart,max_trkid);
 
   }

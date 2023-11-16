@@ -45,12 +45,12 @@ namespace cafmaker
                               const cafmaker::Params &par,
                               const TruthMatcher *truthMatch= nullptr) const override;
 
-      std::map<int, std::vector<caf::SRTrack>> fill_track(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const;
-      std::map<int, std::vector<caf::SRShower>> fill_shower(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const;
+      std::map<int, std::vector<caf::SRTrack>> FillTrack(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const;
+      std::map<int, std::vector<caf::SRShower>> FillShower(caf::StandardRecord &sr, int & max_slice, const TruthMatcher *truthMatch) const;
 
-      void find_truth_shower(caf::StandardRecord &sr, caf::SRShower & sh, int shower_id, const TruthMatcher *truthMatch) const;
-      void find_truth_track(caf::StandardRecord &sr, caf::SRTrack & t, int track_id, const TruthMatcher *truthMatch) const;
-      void fillTrueInteraction(caf::StandardRecord &sr) const;
+      void FindTruthShower(caf::StandardRecord &sr, caf::SRShower & sh, int shower_id, const TruthMatcher *truthMatch) const;
+      void FindTruthTrack(caf::StandardRecord &sr, caf::SRTrack & t, int track_id, const TruthMatcher *truthMatch) const;
+      void FillTrueInteraction(caf::StandardRecord &sr) const;
       void FillTrueParticle(caf::SRTrueParticle & srTruePart, int max_trkid) const;
       TFile *fMnvRecoFile;
       TTree *MnvRecoTree;
