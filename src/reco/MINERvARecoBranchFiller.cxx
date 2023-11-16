@@ -419,7 +419,6 @@ namespace cafmaker
     if (is_primary) t.truth.type = caf::TrueParticleID::kPrimary;
     else t.truth.type = caf::TrueParticleID::kSecondary;
     t.truth.part = edepsim_track_id;
-    std::cout<<"NOE "<<t.truth.type<<std::endl;
     FillTrueParticle(srTruePart,max_trkid);
 
   }
