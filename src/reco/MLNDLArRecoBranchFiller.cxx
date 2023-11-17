@@ -416,7 +416,7 @@ namespace cafmaker
                         << " and interaction ID = " << trueIxnPassThrough.truth_id
                         << "\n";
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id, !truthMatch->HaveGENIE());
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
@@ -659,13 +659,11 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
   {
-    auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
-
-    std::deque<Trigger> triggers;
     if (fTriggers.empty())
     {
+      auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << triggersIn.size() << " ND-LAr RunInfo products:\n";
-      fTriggers.reserve(triggers.size());
+      fTriggers.reserve(triggersIn.size());
       for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
         const int placeholderTriggerType = 0;
@@ -680,12 +678,9 @@ namespace cafmaker
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
 
-        // todo: these are placeholder values until we can propagate enough info through the reco files
         trig.triggerType = trigger.type;
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
-
-        triggers.push_back(trig);
 
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
                       << ", triggerType=" << trig.triggerType
@@ -695,13 +690,12 @@ namespace cafmaker
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
-    else
+
+    std::deque<Trigger> triggers;
+    for (const Trigger & trigger : fTriggers)
     {
-      for (const Trigger & trigger : fTriggers)
-      {
-        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
-          triggers.push_back(trigger);
-      }
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
     }
 
     return triggers;
