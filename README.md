@@ -84,6 +84,8 @@ Consult the README for more details.
 * Noë Roy (noe.roylamoureux@gmail.com)
 * Sindhujha Kumaran (s.kumaran@uci.edu)
 
+---------------------------------
+
 # Licensing
 Copyright © 2023 FERMI NATIONAL ACCELERATOR LABORATORY for the benefit
 of the DUNE Collaboration.
@@ -92,8 +94,8 @@ This repository, and all software contained within, is licensed under
 the Apache License, Version 2.0 (the "License"); you may not use its code
 except in compliance with the License. You may obtain a copy of
 the License at
-     [http://www.apache.org/licenses/LICENSE-2.0];
-The license is also available in the LICENSE.md file in this repository.
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0);
+the license is also available in the LICENSE.md file in this repository.
 
 Copyright is granted to FERMI NATIONAL ACCELERATOR LABORATORY on behalf
 of the Deep Underground Neutrino Experiment (DUNE). Unless required by
