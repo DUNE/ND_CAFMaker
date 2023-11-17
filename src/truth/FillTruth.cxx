@@ -314,6 +314,7 @@ namespace cafmaker
   // ------------------------------------------------------------
   caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, unsigned long ixnID, bool createNew) const
   {
+
     caf::SRTrueInteraction * ixn = nullptr;
 
     // if we can't find a SRTrueInteraction with matching ID, we may need to make a new one
@@ -348,7 +349,6 @@ namespace cafmaker
 
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
-
       ixn = &sr.mc.nu.back();
       ixn->id = ixnID;
       if (HaveGENIE())
@@ -369,7 +369,6 @@ namespace cafmaker
       LOG.VERBOSE() << "   Found previously created SRTrueInteraction.  Returning that.\n";
       ixn = &(*itIxn);
     }
-
     return *ixn;
   }
 

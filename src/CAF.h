@@ -6,7 +6,6 @@
 #include "Framework/Ntuple/NtpMCEventRecord.h"
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRGlobal.h"
-
 #include "duneanaobj/StandardRecord/Flat/FwdDeclare.h"
 
 // fixme: this is a do-nothing replacement for nusystematics stuff until it's re-enabled
