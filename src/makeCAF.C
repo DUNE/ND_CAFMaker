@@ -200,17 +200,6 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
   auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildTriggerList()"); };
 
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  uto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
-=======
-  auto triggerTimeCmp = [](const cafmaker::Trigger & t1, const cafmaker::Trigger & t2)
->>>>>>> fixed last differences with MASTER
-  {
-    return t1.triggerTime_s < t2.triggerTime_s || (t1.triggerTime_s  == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
-  };
->>>>>>> remove bug fixing tool
 
   // don't assume input comes in sorted
   LOG().DEBUG() << "Considering triggers from the following reco branch fillers: \n";
@@ -250,7 +239,6 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
     const cafmaker::Trigger & trigSeed = trigGroup.front().second;
     for (auto & fillerTrigPair : triggersByFiller)
     {
-
       // we don't want to consider the stream we're already working with.
       // (but don't continue, because we want to remove this stream from the
       //  map if it's empty, per below)
