@@ -190,6 +190,12 @@ namespace cafmaker
       if( p->Status() != genie::EGHepStatus::kIStStableFinalState
           && p->Status() != genie::EGHepStatus::kIStHadronInTheNucleus) continue;
 
+      if ( p->Pdg() == 2000000101 )
+      {
+        LOG_S("TruthMatcher::FillInteraction").VERBOSE() << "      Skipping GENIE 'bindino' at GENIE index " << j << "\n";
+        continue;
+      }
+
       caf::SRTrueParticle part;
       part.G4ID = (p->Status() == genie::EGHepStatus::kIStStableFinalState) ? stablePartIdx++ : -1;
       part.pdg = p->Pdg();
