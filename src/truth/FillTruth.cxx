@@ -190,6 +190,12 @@ namespace cafmaker
       if( p->Status() != genie::EGHepStatus::kIStStableFinalState
           && p->Status() != genie::EGHepStatus::kIStHadronInTheNucleus) continue;
 
+      if ( p->Pdg() == 2000000101 )
+      {
+        LOG_S("TruthMatcher::FillInteraction").VERBOSE() << "      Skipping GENIE 'bindino' at GENIE index " << j << "\n";
+        continue;
+      }
+
       caf::SRTrueParticle part;
       part.G4ID = (p->Status() == genie::EGHepStatus::kIStStableFinalState) ? stablePartIdx++ : -1;
       part.pdg = p->Pdg();
@@ -202,6 +208,7 @@ namespace cafmaker
 
       // remaining fields need to be filled in with post-G4 info
 
+      std::string process;
       if( p->Status() == genie::EGHepStatus::kIStStableFinalState )
       {
         // note: we leave part.id unset since it won't match with the G4 values
@@ -216,13 +223,19 @@ namespace cafmaker
         else if( p->Pdg() ==  211 ) nu.npip++;
         else if( p->Pdg() == -211 ) nu.npim++;
         else if( p->Pdg() ==  111 ) nu.npi0++;
+
+        process = "PRIMARY";
       }
       else // kIStHadronInTheNucleus
       {
-        LOG_S("TruthMatcher::FillInteraction").DEBUG() << "  particle " << j << " with pdg = " << p->Pdg() << " and energy = " << p->E() << " has GENIE status " << p->Status() << "\n";
         nu.prefsi.push_back(std::move(part));
         nu.nprefsi++;
+
+        process = "PRE-FSI HADRON";
       }
+      LOG_S("TruthMatcher::FillInteraction").DEBUG() << "  " << process << " particle "
+                                                     << " (idx in GENIE vec = " << j << ", trk id = " << part.G4ID << ", pdg = " << p->Pdg() << ", energy = " << p->E() << ")"
+                                                     << " has GENIE status " << p->Status() << "\n";
 
     }
 
@@ -284,6 +297,8 @@ namespace cafmaker
                                                      bool isPrimary,
                                                      bool createNew) const
   {
+    LOG.VERBOSE() << "  Searching for true particle within interaction ID = " << ixn.id << "\n";
+
     caf::SRTrueParticle * part = nullptr;
     std::vector<caf::SRTrueParticle> & collection = (isPrimary) ? ixn.prim : ixn.sec;
     int & counter = (isPrimary) ? ixn.nprim : ixn.nsec;
@@ -291,7 +306,7 @@ namespace cafmaker
          itPart == collection.end() )
     {
       if (!createNew)
-        throw std::runtime_error("True particle with interaction ID " + std::to_string(ixn.id)
+        throw std::runtime_error("True particle from interaction ID " + std::to_string(ixn.id)
                                  + " was not found in the " + std::string(isPrimary ? "primary" : "secondary") + " true particle collection");
       else
         LOG.VERBOSE() << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
@@ -304,7 +319,7 @@ namespace cafmaker
     }
     else
     {
-      LOG.VERBOSE() << "    --> found previously created SRTrueParticle.  Returning that.\n";
+      LOG.VERBOSE() << "    --> found previously created SRTrueParticle (interaction id = " << itPart->interaction_id << ", trk id = " << itPart->G4ID <<  ") .  Returning that.\n";
       part = &(*itPart);
     }
 
@@ -316,6 +331,8 @@ namespace cafmaker
   {
 
     caf::SRTrueInteraction * ixn = nullptr;
+
+    LOG.VERBOSE() << "   Searching for true interaction with interaction ID = " << ixnID << " (allowed to create new one: " << createNew << ")\n";
 
     // if we can't find a SRTrueInteraction with matching ID, we may need to make a new one
     if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
