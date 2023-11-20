@@ -216,14 +216,14 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
     std::vector<const cafmaker::Trigger*> firstTrigs;
     for (const auto &it: triggersByFiller)
     {
-      LOG().VERBOSE() << "     " << it.first->GetName() << " --> (id = " << it.second[0].evtID
+      LOG().VERBOSE() << "       " << it.first->GetName() << " --> (id = " << it.second[0].evtID
                     << ", time = " << (it.second[0].triggerTime_s + it.second[0].triggerTime_ns/1e9) << " s)\n";
       firstTrigs.push_back(&it.second[0]);
     }
 
     // the earliest one will be our next group seed.
     auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(), triggerTimePtrCmp());
-    LOG().VERBOSE() << "    Next trigger group seed: (" << (*groupSeedIt)->evtID << ", "
+    LOG().VERBOSE() << "    --> Building trigger group with seed: (" << (*groupSeedIt)->evtID << ", "
                   << (*groupSeedIt)->triggerTime_s +(*groupSeedIt)->triggerTime_ns/1e9
                   << ")\n";
 
@@ -237,22 +237,32 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
     // do they have any events in them that should go in this group?
     std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> & trigGroup = ret.back();
     const cafmaker::Trigger & trigSeed = trigGroup.front().second;
+    LOG().VERBOSE() << "    Considering other triggers:\n";
     for (auto & fillerTrigPair : triggersByFiller)
     {
+      std::stringstream ss;
+
       // we don't want to consider the stream we're already working with.
       // (but don't continue, because we want to remove this stream from the
       //  map if it's empty, per below)
       if (fillerTrigPair.first != seedFillerIt->first)
       {
+        const auto & trig = fillerTrigPair.second.front();
+        ss << "       " << fillerTrigPair.first->GetName() << ", " << trig.evtID;
+
         // we will only take at most one trigger from each of the other streams.
         // since the seed was the earliest one out of all the triggers,
         // we only need to check the first one in each other stream
         if (doTriggersMatch( trigSeed, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
-            trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
+          ss << " -->  MATCHES\n";
+          trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
             fillerTrigPair.second.pop_front();
         }
+        else
+          ss << " --> does NOT MATCH\n";
       }
+      LOG().VERBOSE() << ss.str();
 
       // if there are no more elements in this reco filler stream,
       // remove them from consideration
@@ -282,14 +292,9 @@ void loop(CAF &caf,
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
-<<<<<<< HEAD
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
 
-=======
-  
-  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> groupedTriggers = buildTriggerList(triggersByRBF);
->>>>>>> fixed last differences with MASTER
   // sanity checks
   if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
   {
