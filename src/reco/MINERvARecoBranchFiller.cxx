@@ -347,10 +347,12 @@ namespace cafmaker
     caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, true, false)
                                                     : truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, false, true);
 
-    sh.truth.ixn = truthVecIdx;
-    sh.truth.type = is_primary ? caf::TrueParticleID::kPrimary
-   				 : caf::TrueParticleID::kSecondary;
-    sh.truth.part = edepsim_track_id;
+    caf::TrueParticleID truePartID;
+    truePartID.ixn = truthVecIdx;
+    truePartID.type = is_primary ? caf::TrueParticleID::kPrimary
+                                 : caf::TrueParticleID::kSecondary;
+    truePartID.part = edepsim_track_id;
+    sh.truth.push_back(std::move(truePartID));
 
     FillTrueParticle(srTruePart, max_trkid);
 
@@ -412,10 +414,13 @@ namespace cafmaker
                                                     : truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, false, true);
 
 
-    t.truth.ixn = truthVecIdx;
-    t.truth.type = is_primary ? caf::TrueParticleID::kPrimary
+    caf::TrueParticleID truePartID;
+    truePartID.ixn = truthVecIdx;
+    truePartID.type = is_primary ? caf::TrueParticleID::kPrimary
                                  : caf::TrueParticleID::kSecondary;
-    t.truth.part = edepsim_track_id;
+    truePartID.part = edepsim_track_id;
+    t.truth.push_back(std::move(truePartID));
+
 
     FillTrueParticle(srTruePart,max_trkid);
 
