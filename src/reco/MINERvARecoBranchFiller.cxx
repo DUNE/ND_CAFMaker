@@ -80,6 +80,9 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("blob_id_startpoint_x", blob_id_startpoint_x);
       MnvRecoTree->SetBranchAddress("blob_id_startpoint_y", blob_id_startpoint_y);
       MnvRecoTree->SetBranchAddress("blob_id_startpoint_z", blob_id_startpoint_z);
+      MnvRecoTree->SetBranchAddress("blob_id_centroid_x", blob_id_centroid_x);
+      MnvRecoTree->SetBranchAddress("blob_id_centroid_y", blob_id_centroid_y);
+      MnvRecoTree->SetBranchAddress("blob_id_centroid_z", blob_id_centroid_z);
       MnvRecoTree->SetBranchAddress("blob_id_clus_idx", blob_id_clus_idx);
 
 
