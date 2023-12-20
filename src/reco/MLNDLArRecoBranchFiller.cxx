@@ -587,6 +587,8 @@ namespace cafmaker
                                            const TruthMatcher * truthMatch,
                                            caf::StandardRecord &sr) const
   {
+    sr.nd.lar.dlp.resize(sr.common.ixn.dlp.size());
+    sr.nd.lar.ndlp = sr.common.ixn.dlp.size();
     // note: used in the hack further below
     static SRPartCmp srPartCmp;
 
@@ -652,9 +654,6 @@ namespace cafmaker
           caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
-          //  this will fill in any other fields that weren't copied from a GENIE record
-          // (which also handles the case where this particle is a secondary)
-          FillTrueParticle(srTruePart, truePartPassThrough);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
@@ -754,9 +753,6 @@ namespace cafmaker
           caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
-          //  this will fill in any other fields that weren't copied from a GENIE record
-          // (which also handles the case where this particle is a secondary)
-          FillTrueParticle(srTruePart, truePartPassThrough);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
