@@ -175,8 +175,8 @@ namespace cafmaker
     H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(idx);
     FillParticles(particles, trueInteractions, trueParticles, truthMatcher, sr);
 
-    FillTracks(particles, sr);
-    FillShowers(particles, sr);
+    FillTracks(particles, trueInteractions, trueParticles, truthMatcher, sr);
+    FillShowers(particles, trueInteractions, trueParticles, truthMatcher, sr);
 
     // todo: now do some sanity checks:
     //       - compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
@@ -582,10 +582,15 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+                                           const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
+                                           const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                                           const TruthMatcher * truthMatch,
                                            caf::StandardRecord &sr) const
   {
     sr.nd.lar.dlp.resize(sr.common.ixn.dlp.size());
     sr.nd.lar.ndlp = sr.common.ixn.dlp.size();
+    // note: used in the hack further below
+    static SRPartCmp srPartCmp;
 
     for (const auto & part : particles)
     {
@@ -603,11 +608,71 @@ namespace cafmaker
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       track.enddir = caf::SRVector3D(part.end_dir[0], part.end_dir[1], part.end_dir[2]);
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
-      //to do: Fix this after TrueParticleID fix in duneanaobj
-      /*track.truth.ixn = part.interaction_id;
-      if(part.is_primary)track.truth.type = caf::TrueParticleID::kPrimary;
-      track.truth.part = part.id;
-      */
+      if (part.matched)
+      {
+        for (std::size_t idx = 0; idx < part.match.size(); idx++)
+        {
+          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
+          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+
+          LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
+                    << "track id = " << truePartPassThrough.track_id << "; "
+                    << "gen ID = " << truePartPassThrough.gen_id << "; "
+                    << "interaction ID = " << truePartPassThrough.interaction_id << "; "
+                    << "is primary = " << truePartPassThrough.is_primary << "; "
+                    << "pdg = " << truePartPassThrough.pdg_code << "; "
+                    << "energy = " << truePartPassThrough.energy_init
+                    << "\n";
+
+          // first ask for the right truth match from the matcher.
+          // if we have GENIE info it'll come pre-filled with all its info & sub-particles
+          static DLPIxnComp ixnCmp;
+          ixnCmp.ixnID = truePartPassThrough.interaction_id;
+          auto it_ixn = std::find_if(trueInxns.begin(), trueInxns.end(), ixnCmp);
+          if (it_ixn == trueInxns.end())
+          {
+            std::stringstream ss;
+            ss << "True particle ID " << truePartPassThrough.id << " claims to be associated with true interaction ID " << truePartPassThrough.interaction_id
+               << " but no such interaction could be found!\n";
+            LOG.FATAL() << ss.str();
+            throw std::out_of_range(ss.str());
+          }
+          const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
+
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
+
+          // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+          int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                           std::find_if(sr.mc.nu.begin(),
+                                                        sr.mc.nu.end(),
+                                                        [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+
+          bool is_primary = truePartPassThrough.gen_id < 100000000;
+          srPartCmp.trkid = is_primary
+                            ? truePartPassThrough.gen_id
+                            : truePartPassThrough.track_id;
+          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
+                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+
+
+          // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
+          // first find the interaction that it goes with
+          LOG.VERBOSE() << "      this particle is " << (is_primary ? "PRIMARY" : "SECONDARY") << "\n";
+          std::vector<caf::SRTrueParticle> & collection = is_primary
+                                                          ? srTrueInt.prim
+                                                          : srTrueInt.sec;
+          std::size_t truthVecIdx = std::distance(collection.begin(),
+                                                  std::find_if(collection.begin(),
+                                                               collection.end(),
+                                                               srPartCmp));
+
+          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                                            is_primary ? caf::TrueParticleID::PartType::kPrimary
+                                                                       :  caf::TrueParticleID::PartType::kSecondary,
+                                                            static_cast<int>(truthVecIdx)});
+          track.truthOverlap.push_back(part.match_overlap[idx]);
+        }
+      }
       // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
       // (some interaction IDs are filtered out as they're not beam triggers etc.)
       auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
@@ -624,8 +689,14 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+                                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
+                                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                                            const TruthMatcher * truthMatch,
                                             caf::StandardRecord &sr) const
   {
+    // note: used in the hack further below
+    static SRPartCmp srPartCmp;
+
     for (const auto & part : particles)
     {
       if (part.semantic_type != types::dlp::SemanticType::kShower)
@@ -636,11 +707,71 @@ namespace cafmaker
       shower.Evis = part.calo_ke/1000.;
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
-      //to do: Fix this after TrueParticleID fix in duneanaobj
-     /* shower.truth.ixn = part.interaction_id;
-      if(part.is_primary)shower.truth.type = caf::TrueParticleID::kPrimary;
-      shower.truth.part = part.id;
-     */
+      if (part.matched)
+      {
+        for (std::size_t idx = 0; idx < part.match.size(); idx++)
+        {
+          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
+          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+
+          LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
+                    << "track id = " << truePartPassThrough.track_id << "; "
+                    << "gen ID = " << truePartPassThrough.gen_id << "; "
+                    << "interaction ID = " << truePartPassThrough.interaction_id << "; "
+                    << "is primary = " << truePartPassThrough.is_primary << "; "
+                    << "pdg = " << truePartPassThrough.pdg_code << "; "
+                    << "energy = " << truePartPassThrough.energy_init
+                    << "\n";
+
+          // first ask for the right truth match from the matcher.
+          // if we have GENIE info it'll come pre-filled with all its info & sub-particles
+          static DLPIxnComp ixnCmp;
+          ixnCmp.ixnID = truePartPassThrough.interaction_id;
+          auto it_ixn = std::find_if(trueInxns.begin(), trueInxns.end(), ixnCmp);
+          if (it_ixn == trueInxns.end())
+          {
+            std::stringstream ss;
+            ss << "True particle ID " << truePartPassThrough.id << " claims to be associated with true interaction ID " << truePartPassThrough.interaction_id
+               << " but no such interaction could be found!\n";
+            LOG.FATAL() << ss.str();
+            throw std::out_of_range(ss.str());
+          }
+          const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
+
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
+
+          // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+          int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                           std::find_if(sr.mc.nu.begin(),
+                                                        sr.mc.nu.end(),
+                                                        [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+
+          bool is_primary = truePartPassThrough.gen_id < 100000000;
+          srPartCmp.trkid = is_primary
+                            ? truePartPassThrough.gen_id
+                            : truePartPassThrough.track_id;
+          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
+                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+
+
+          // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
+          // first find the interaction that it goes with
+          LOG.VERBOSE() << "      this particle is " << (is_primary ? "PRIMARY" : "SECONDARY") << "\n";
+          std::vector<caf::SRTrueParticle> & collection = is_primary
+                                                          ? srTrueInt.prim
+                                                          : srTrueInt.sec;
+          std::size_t truthVecIdx = std::distance(collection.begin(),
+                                                  std::find_if(collection.begin(),
+                                                               collection.end(),
+                                                               srPartCmp));
+
+          shower.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                                            is_primary ? caf::TrueParticleID::PartType::kPrimary
+                                                                       :  caf::TrueParticleID::PartType::kSecondary,
+                                                            static_cast<int>(truthVecIdx)});
+          shower.truthOverlap.push_back(part.match_overlap[idx]);
+        }
+      }
       // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
       // (some interaction IDs are filtered out as they're not beam triggers etc.)
       auto itIxn = std::find_if(sr.common.ixn.dlp.begin(), sr.common.ixn.dlp.end(),
