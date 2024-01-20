@@ -6,6 +6,7 @@ standard_nd_cafmaker: {
    RunParams: {
      Run: 1
      Subrun: 0
+     POTPerSpill: 5  # e13
 
      IsFHC: true
      IsGasTPC: false

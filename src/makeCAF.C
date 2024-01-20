@@ -324,6 +324,12 @@ void loop(CAF &caf,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
+    double pot = par().runInfo().POTPerSpill() * 1e13;
+    if (std::isnan(caf.pot))
+      caf.pot = 0;
+    caf.pot += pot;
+    caf.sr.beam.pulsepot = pot;
+    caf.sr.beam.ismc = true;  // when we have data, we won't be able to use this "POT from config" approach anyway
 
     // hand off to the correct reco filler(s).
     for (const auto & fillerTrigPair : groupedTriggers[ii])

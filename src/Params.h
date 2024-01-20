@@ -18,6 +18,9 @@ namespace cafmaker
     fhicl::Atom<int> run    { fhicl::Name("Run"),    fhicl::Comment("Run number"), 1 };    // CAFAna doesn't like run number 0
     fhicl::Atom<int> subrun { fhicl::Name("Subrun"), fhicl::Comment("Subrun number"), 0 };
 
+    // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
+    fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
+
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
