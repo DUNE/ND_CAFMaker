@@ -133,10 +133,17 @@ namespace cafmaker
     // note that the nu.id and nu.genieIdx are filled in the calling function,
     // because that info is not stored inside the GENIE event proper
 
-    // todo: GENIE doesn't know about the detector geometry.  do we just leave these for the passthrough from G4?
-//    TLorentzVector vtx = *(event->Vertex());
-//    nu.vtx = vtx.Vect();
-//      nu.isvtxcont =
+    // coordinates in GENIE sim are in different units from edep-sim... :-|
+    TLorentzVector vtx = *(event->Vertex());
+    TVector3 nu_vtx = vtx.Vect();
+    const float m_to_cm = 100;
+    nu_vtx *= m_to_cm;
+    LOG_S("TruthMatcher::FillInteraction").VERBOSE() << "Modifying GENIE vertex from (" << vtx.X() << "," << vtx.Y() << "," << vtx.Z() << ")"
+                                                     << " to (" << nu_vtx.X() << "," << nu_vtx.Y() << "," << nu_vtx.Z() << ")"
+                                                     << " to account for change in units from m to cm\n";
+//    nu.vtx = nu_vtx;
+
+    // we can't fill the time, however, because that's changed by spill building
 //    nu.time = vtx.T();
 
     nu.pdg = in->InitState().ProbePdg();
@@ -370,7 +377,8 @@ namespace cafmaker
       ixn->id = ixnID;
       if (HaveGENIE())
       {
-        LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << ").  copying...\n";
+        LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << "; dump follows).  copying...\n";
+        fGTrees.GEvt()->PrintToStream(const_cast<ostream&>(LOG.VERBOSE().GetStream()));
 
         // this bit of info can't be extracted directly from the GENIE record,
         // so we do it here
