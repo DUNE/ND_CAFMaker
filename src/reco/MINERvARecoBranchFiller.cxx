@@ -111,6 +111,8 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("mc_id_mchit_dE", mc_id_mchit_dE);
 
       MnvRecoTree->SetBranchAddress("mc_int_vtx", mc_int_vtx);
+      MnvRecoTree->SetBranchAddress("n_interactions", &n_interactions);
+      MnvRecoTree->SetBranchAddress("mc_int_edepsimId", mc_int_edepsimId);
 
 
       MnvRecoTree->GetEntry(0);
