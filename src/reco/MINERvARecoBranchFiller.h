@@ -50,7 +50,10 @@ namespace cafmaker
 
       void FindTruthShower(caf::StandardRecord &sr, caf::SRShower & sh, int shower_id, const TruthMatcher *truthMatch) const;
       void FindTruthTrack(caf::StandardRecord &sr, caf::SRTrack & t, int track_id, const TruthMatcher *truthMatch) const;
-      void FillTrueInteraction(caf::StandardRecord &sr) const;
+
+      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt, int int_id) const;
+      void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
+      
       void FillTrueParticle(caf::SRTrueParticle & srTruePart, int max_trkid) const;
       TFile *fMnvRecoFile;
       TTree *MnvRecoTree;
@@ -133,6 +136,12 @@ namespace cafmaker
       Int_t           mc_id_mchit_trkid[50000][2];   //[n_mc_id_digits]
       Double_t        mc_id_mchit_dE[50000][2];   //[n_mc_id_digits]
 
+      Double_t        mc_int_vtx[200][4];   //[n_interactions]
+      Long64_t        mc_int_edepsimId[200];   //[n_interactions]
+      int             n_interactions;
+
+
+      bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
   };

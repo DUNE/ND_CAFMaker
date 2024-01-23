@@ -110,7 +110,11 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("mc_id_mchit_trkid", mc_id_mchit_trkid);
       MnvRecoTree->SetBranchAddress("mc_id_mchit_dE", mc_id_mchit_dE);
 
-      
+      MnvRecoTree->SetBranchAddress("mc_int_vtx", mc_int_vtx);
+
+
+      MnvRecoTree->GetEntry(0);
+      is_data =  ev_gps_time_sec>1.5e9; 
 
 
     } else {
@@ -124,7 +128,6 @@ namespace cafmaker
 
   }
   // ---------------------------------------------------------------------------
-
 
     void MINERvARecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
                                                  int max_trkid) const
@@ -153,6 +156,8 @@ namespace cafmaker
       else
         throw e;
     }
+
+
  
     // todo: Things do not match yet the exact Genie output, need to work on the Minerva reconstruction output. 
     // For now will assume that if it's a primary and we gor the eventID and trackid right, Genie will have fill it properly
@@ -174,6 +179,19 @@ namespace cafmaker
     */
   }
 
+  void MINERvARecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
+                                                    int int_id) const
+  {
+    LOG.DEBUG() << "    now copying truth info from Mnv TrueInteraction to SRTrueInteraction...\n";
+
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+
+    ValidateOrCopy(mc_int_vtx[int_id][0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    ValidateOrCopy(mc_int_vtx[int_id][1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    ValidateOrCopy(mc_int_vtx[int_id][2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+
+
+  }
 
   // here we copy all the MINERvA reco into the SRMINERvA branch of the StandardRecord object.
   void MINERvARecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
@@ -198,12 +216,15 @@ namespace cafmaker
 
     // Get nth entry from tree
     MnvRecoTree->GetEntry(idx);  
-
+    
     //Fill MINERvA specific info in the meta branch
     sr.meta.minerva.enabled = true;
     sr.meta.minerva.run = ev_run;
     sr.meta.minerva.subrun = ev_sub_run;
     sr.meta.minerva.event = ev_gate;
+
+
+    FillInteractions(truthMatch, sr);
 
 
 
@@ -244,7 +265,11 @@ namespace cafmaker
       // We offset positions in MINERvA reconstruction so we reofset them here.
       my_track.start = caf::SRVector3D(trk_node_X[i][0]/10.  - offsetX/10. ,trk_node_Y[i][0]/10. - offsetY/10., trk_node_Z[i][0]/10. - offsetZ/10.);
       my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10.  - offsetX/10. ,trk_node_Y[i][trk_nodes[i] -1]/10. - offsetY/10., trk_node_Z[i][trk_nodes[i] -1]/10. - offsetZ/10.);
-
+      if (is_data)
+      {
+        my_track.start = caf::SRVector3D(trk_node_X[i][0]/10., trk_node_Y[i][0]/10., trk_node_Z[i][0]/10.);
+        my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10., trk_node_Y[i][trk_nodes[i] -1]/10., trk_node_Z[i][trk_nodes[i] -1]/10.);
+      }
       // Track info
       my_track.len_cm  = sqrt(pow(trk_node_X[i][trk_nodes[i] -1] - trk_node_X[i][0],2)+pow(trk_node_Y[i][trk_nodes[i] -1] - trk_node_Y[i][0],2)+pow(trk_node_Z[i][trk_nodes[i] -1] - trk_node_Z[i][0],2))/10.;
       my_track.qual      = trk_chi2perDof[i];
@@ -278,8 +303,8 @@ namespace cafmaker
       // Save first and last hit in track
       // MINERvA Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
       my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10. - offsetX/10.,blob_id_startpoint_y[i]/10. - offsetY/10., blob_id_startpoint_z[i]/10. - offsetZ/10.);
-      
-
+      if (is_data) my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10., blob_id_startpoint_y[i]/10., blob_id_startpoint_z[i]/10.);     
+ 
       //Actual direction but Centroid makes more sense 
 //      double x_dir = (blob_id_centroid_x[i] - blob_id_startpoint_x[i]);
 //      double y_dir = (blob_id_centroid_y[i] - blob_id_startpoint_y[i]);
@@ -295,7 +320,12 @@ namespace cafmaker
       double x_dir = blob_id_centroid_x[i]/10. - offsetX/10.;
       double y_dir = blob_id_centroid_y[i]/10. - offsetY/10.;
       double z_dir = blob_id_centroid_z[i]/10. - offsetZ/10.;
-
+      if (is_data)
+      {
+        x_dir = blob_id_centroid_x[i]/10.;
+        y_dir = blob_id_centroid_y[i]/10.;
+        z_dir = blob_id_centroid_z[i]/10.;
+      }
       my_shower.direction = caf::SRVector3D(x_dir, y_dir, z_dir);
       my_shower.Evis = blob_id_e[i]/1000.; //Energy in GeV
 
@@ -308,6 +338,26 @@ namespace cafmaker
     }
 
     return shower_map;
+  }
+
+  void MINERvARecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const
+  {
+    for (int i_int = 0; i_int<n_interactions; i_int++)
+    {
+      Long_t neutrino_event_id = mc_int_edepsimId[i_int];
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
+      LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
+          for (const caf::SRTrueParticle & part : srTrueInt.prim)
+            LOG.VERBOSE() << "    (prim) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+          for (const caf::SRTrueParticle & part : srTrueInt.prefsi)
+            LOG.VERBOSE() << "    (prefsi) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+          for (const caf::SRTrueParticle & part : srTrueInt.sec)
+            LOG.VERBOSE() << "    (sec) id = " << part.G4ID  << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+
+          // here we need to fill in any additional info
+          // that GENIE didn't know about: e.g., secondary particles made by GEANT4
+        FillTrueInteraction(srTrueInt, i_int);
+    }
   }
 
   void MINERvARecoBranchFiller::FindTruthShower(caf::StandardRecord &sr, caf::SRShower &sh, int shower_id, const TruthMatcher *truthMatch ) const
