@@ -209,9 +209,11 @@ namespace cafmaker
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
-    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
-    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+    // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
+    // if they originate from outside it, so we can't use them
+//    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+//    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+//    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
     const std::function<bool(const NuCurrentType &, const bool &)> nuCurrComp =
     [](const NuCurrentType & inCurr, const bool & outCurr)

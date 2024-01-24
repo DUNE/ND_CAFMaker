@@ -43,6 +43,9 @@ namespace cafmaker
       THRESHOLD GetThreshold() const           { return fThresh; }
       void      SetThreshold(THRESHOLD thresh) { fThresh = thresh; }
 
+      std::ostream & GetStream()             { return fStream; }
+      const std::ostream & GetStream() const { return fStream; }
+
       /// Force a write to the output.
       template <typename T>
       const Logger & operator<<(const T & obj) const
