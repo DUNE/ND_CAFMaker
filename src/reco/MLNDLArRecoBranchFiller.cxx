@@ -653,9 +653,13 @@ namespace cafmaker
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
-          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
-                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
+          // we want to make sure the particle is created, if it isn't there,
+          // but we won't do anything further with it, so we throw the return value away
+          if (is_primary)
+            truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE());
+          else
+            truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
