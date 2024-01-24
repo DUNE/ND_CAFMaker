@@ -188,9 +188,9 @@ namespace cafmaker
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    ValidateOrCopy(mc_int_vtx[int_id][0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
-    ValidateOrCopy(mc_int_vtx[int_id][1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
-    ValidateOrCopy(mc_int_vtx[int_id][2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+    ValidateOrCopy(mc_int_vtx[int_id][0]/10., srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x"); //in cm
+    ValidateOrCopy(mc_int_vtx[int_id][1]/10., srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y"); //in cm
+    ValidateOrCopy(mc_int_vtx[int_id][2]/10., srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z"); //in cm
 
 
   }
@@ -535,8 +535,6 @@ namespace cafmaker
         trig.triggerTime_s -= t0_minerva;
 
 
-        triggers.push_back(trig);
-
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
                       << ", triggerType=" << trig.triggerType
                       << ", triggerTime_s=" << trig.triggerTime_s
@@ -546,14 +544,13 @@ namespace cafmaker
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
-    else
+
+    for (const Trigger & trigger : fTriggers)
     {
-      for (const Trigger & trigger : fTriggers)
-      {
-        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
-          triggers.push_back(trigger);
-      }
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
     }
+
     return triggers;
   }
 
