@@ -188,9 +188,10 @@ namespace cafmaker
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    ValidateOrCopy(mc_int_vtx[int_id][0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
-    ValidateOrCopy(mc_int_vtx[int_id][1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
-    ValidateOrCopy(mc_int_vtx[int_id][2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+    // here we are converting from mm (units from MINERvA) to cm
+    ValidateOrCopy(mc_int_vtx[int_id][0]/10., srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    ValidateOrCopy(mc_int_vtx[int_id][1]/10., srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    ValidateOrCopy(mc_int_vtx[int_id][2]/10., srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
 
   }
