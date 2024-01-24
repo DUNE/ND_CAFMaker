@@ -51,10 +51,10 @@ namespace cafmaker
   template <typename InputType, typename OutputType>
   void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal, const std::string & fieldName="")
   {
-    const auto defaultComp = [](const decltype(input) & a,
-                                const decltype(target) &b) -> bool { return static_cast<OutputType>(a) == b; };
-    const auto defaultAssgn = [](const decltype(input) & a, decltype(target) &b) {  b = a; };
-    return ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn, fieldName);
+    const auto defaultComp = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a,
+                                std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return static_cast<OutputType>(a) == b; };
+    const auto defaultAssgn = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a, decltype(target) &b) {  b = a; };
+    ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn, fieldName);
   }
 
  // --------------------------------------------------------------
@@ -69,8 +69,10 @@ namespace cafmaker
   /// \param assgnFn   Function that assigns the value of input to target
   template <typename InputType, typename OutputType>
   void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal,
-                      std::function<bool(const decltype(input) &, const decltype(target) &)> compFn,
-                      std::function<void(const decltype(input) &, decltype(target) &)> assgnFn,
+                      std::function<bool(std::add_const_t<std::remove_reference_t<decltype(input)>> &,
+                                         std::add_const_t<std::remove_reference_t<decltype(target)>> &)> compFn,
+                      std::function<void(std::add_const_t<std::remove_reference_t<decltype(input)>> &,
+                                         decltype(target) &)> assgnFn,
                       const std::string & fieldName="")
   {
     LOG_S("ValidateOrCopy()").VERBOSE() << "     " << (!fieldName.empty() ? "field='" + fieldName + "';" : "")
