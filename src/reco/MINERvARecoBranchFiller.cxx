@@ -536,8 +536,6 @@ namespace cafmaker
         trig.triggerTime_s -= t0_minerva;
 
 
-        triggers.push_back(trig);
-
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
                       << ", triggerType=" << trig.triggerType
                       << ", triggerTime_s=" << trig.triggerTime_s
@@ -547,14 +545,13 @@ namespace cafmaker
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
-    else
+
+    for (const Trigger & trigger : fTriggers)
     {
-      for (const Trigger & trigger : fTriggers)
-      {
-        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
-          triggers.push_back(trigger);
-      }
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
     }
+
     return triggers;
   }
 
