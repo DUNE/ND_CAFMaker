@@ -378,7 +378,8 @@ namespace cafmaker
       if (HaveGENIE())
       {
         LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << "; dump follows).  copying...\n";
-        fGTrees.GEvt()->PrintToStream(const_cast<ostream&>(LOG.VERBOSE().GetStream()));
+        if (LOG.GetThreshold() <= Logger::THRESHOLD::VERBOSE)
+          fGTrees.GEvt()->PrintToStream(const_cast<ostream&>(LOG.VERBOSE().GetStream()));
 
         // this bit of info can't be extracted directly from the GENIE record,
         // so we do it here
