@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <numeric>
 
 #include "boost/program_options/options_description.hpp"
 #include "boost/program_options/parsers.hpp"
@@ -199,14 +200,20 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
   // and the preamble to the logger resets after the first use
   auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildTriggerList()"); };
 
+  // triggersByFiller will be progressively emptied, so we need to store this
+  std::size_t nFillers = triggersByFiller.size();
+  std::vector<std::size_t> nTriggersByFiller;
+  std::transform(triggersByFiller.begin(), triggersByFiller.end(), std::back_inserter(nTriggersByFiller),
+                 [](const auto & trigGroup){ return trigGroup.second.size(); });
+
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
 
   // don't assume input comes in sorted
-  LOG().DEBUG() << "Considering triggers from the following reco branch fillers: \n";
+  LOG().INFO() << "Incoming counts of triggers from upstream:\n";
   for (auto & fillerTrigPair : triggersByFiller)
   {
     std::sort(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), triggerTimeCmp());
-    LOG().DEBUG() << "   " << fillerTrigPair.first->GetName() << "\n";
+    LOG().INFO() << "   " << fillerTrigPair.first->GetName() << " --> " << fillerTrigPair.second.size() << "\n";
   }
 
   while (!triggersByFiller.empty())
@@ -257,7 +264,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
         {
           ss << " -->  MATCHES\n";
           trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
-            fillerTrigPair.second.pop_front();
+          fillerTrigPair.second.pop_front();
         }
         else
           ss << " --> does NOT MATCH\n";
@@ -265,10 +272,48 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
       LOG().VERBOSE() << ss.str();
 
       // if there are no more elements in this reco filler stream,
-      // remove them from consideration
+      // remove it from consideration
       if (fillerTrigPair.second.empty())
         triggersByFiller.erase(fillerTrigPair.first);
 
+    } // for (fillerTrigPair)
+  } // while (!triggersByFiller.empty())
+
+  LOG().DEBUG() << "Final trigger list\n";
+  if (LOG().GetThreshold() <= cafmaker::Logger::THRESHOLD::DEBUG)
+  {
+    for (std::size_t trigIdx = 0; trigIdx < ret.size(); trigIdx++)
+    {
+      LOG().DEBUG() << "Trigger #" << trigIdx << ":\n";
+      for (const auto & trig : ret[trigIdx])
+      {
+        LOG().DEBUG() << "   " << trig.first->GetName() << " trigger " << trig.second.evtID
+                      << " at time " << trig.second.triggerTime_s + 1e-9*trig.second.triggerTime_ns << "\n";
+      }
+    }
+  }
+
+  // check for unmatched triggers
+  if (nFillers > 1)
+  {
+    std::size_t nUnmatchedTriggers = std::accumulate(ret.begin(), ret.end(), 0,
+                                                     [](std::size_t runningSum,
+                                                        const std::vector<std::pair<const cafmaker::IRecoBranchFiller *, cafmaker::Trigger>> &trigGroup)
+                                                     {
+                                                       std::size_t unmatched = (trigGroup.size() == 1) ? 1 : 0;
+                                                       return runningSum + unmatched;
+                                                     });
+    if (nUnmatchedTriggers)
+    {
+      std::stringstream ss;
+      for (std::size_t trigByFillerIdx = 0; trigByFillerIdx < nTriggersByFiller.size(); trigByFillerIdx++)
+      {
+        ss << nTriggersByFiller[trigByFillerIdx];
+        if (trigByFillerIdx < nTriggersByFiller.size() - 1)
+          ss << " + ";
+      }
+      LOG().WARNING() << "There were " << nUnmatchedTriggers << " triggers (of the " << ss.str()
+                      << " I was given) that did not match across fillers.  Is that consistent with your expectations?\n";
     }
   }
 
