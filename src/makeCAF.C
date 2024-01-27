@@ -27,6 +27,7 @@
 #include "reco/SANDRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "util/GENIEQuiet.h"
 #include "util/Logger.h"
 #include "util/Progress.h"
 
@@ -397,14 +398,13 @@ void loop(CAF &caf,
 
 int main( int argc, char const *argv[] )
 {
-
-
   progopt::variables_map vars = parseCmdLine(argc, argv);
 
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
   cafmaker::Logger::THRESHOLD logThresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::LOG_S().SetThreshold(logThresh);
+  cafmaker::QuietGENIE();  // the GENIE events were already made earlier, we don't need more warnings about them
 
   std::vector<std::string> GHEPFiles;
   par().cafmaker().GHEPFiles(GHEPFiles);  // fills the vector in if the key is found
