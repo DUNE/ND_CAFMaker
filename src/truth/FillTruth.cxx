@@ -241,7 +241,8 @@ namespace cafmaker
         process = "PRE-FSI HADRON";
       }
       LOG_S("TruthMatcher::FillInteraction").DEBUG() << "  " << process << " particle "
-                                                     << " (idx in GENIE vec = " << j << ", trk id = " << part.G4ID << ", pdg = " << p->Pdg() << ", energy = " << p->E() << ")"
+                                                     << " (idx in GENIE vec = " << j << ", trk id = " << part.G4ID << ", pdg = " << p->Pdg()
+                                                     << ", (E, p) = (" << p->E() << "," << p->Px() << "," << p->Py() << "," << p->Pz() << "))"
                                                      << " has GENIE status " << p->Status() << "\n";
 
     }
