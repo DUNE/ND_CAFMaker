@@ -209,9 +209,11 @@ namespace cafmaker
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
-    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
-    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
-    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+    // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
+    // if they originate from outside it, so we can't use them
+//    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+//    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+//    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
     const std::function<bool(const NuCurrentType &, const bool &)> nuCurrComp =
     [](const NuCurrentType & inCurr, const bool & outCurr)
@@ -320,16 +322,12 @@ namespace cafmaker
     ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
 
     // sadly GENIE's px, py, pz are in a different coordinate system, so they won't match.
-    // we just overwrite them (when they came through correctly, at least)
+    // we will rely on TruthMatcher to set all the primary particle momenta.
+    // todo: what about secondary particles?
+    //       MINERvA passes them through correctly but that won't catch all secondaries
 //    ValidateOrCopy(truePartPassthrough.momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
 //    ValidateOrCopy(truePartPassthrough.momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
 //    ValidateOrCopy(truePartPassthrough.momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
-    if (!std::isnan(truePartPassthrough.momentum[0]) && !std::isinf(truePartPassthrough.momentum[0]))
-    {
-      srTruePart.p.px = truePartPassthrough.momentum[0] / 1000.;
-      srTruePart.p.py = truePartPassthrough.momentum[1] / 1000.;
-      srTruePart.p.pz = truePartPassthrough.momentum[2] / 1000.;
-    }
 
     try
     {
@@ -651,9 +649,13 @@ namespace cafmaker
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
-          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
-                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
+          // we want to make sure the particle is created, if it isn't there,
+          // but we won't do anything further with it, so we throw the return value away
+          if (is_primary)
+            truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE());
+          else
+            truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
@@ -750,8 +752,10 @@ namespace cafmaker
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
-          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
-                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+          // we don't actually need the return value here for anything,
+          // but we do want the TruthMatcher to *create* a new particle when that's appropriate
+          is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
+                     : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
 
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here

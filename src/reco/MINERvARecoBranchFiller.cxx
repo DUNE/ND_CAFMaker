@@ -80,6 +80,9 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("blob_id_startpoint_x", blob_id_startpoint_x);
       MnvRecoTree->SetBranchAddress("blob_id_startpoint_y", blob_id_startpoint_y);
       MnvRecoTree->SetBranchAddress("blob_id_startpoint_z", blob_id_startpoint_z);
+      MnvRecoTree->SetBranchAddress("blob_id_centroid_x", blob_id_centroid_x);
+      MnvRecoTree->SetBranchAddress("blob_id_centroid_y", blob_id_centroid_y);
+      MnvRecoTree->SetBranchAddress("blob_id_centroid_z", blob_id_centroid_z);
       MnvRecoTree->SetBranchAddress("blob_id_clus_idx", blob_id_clus_idx);
 
 
@@ -107,7 +110,13 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("mc_id_mchit_trkid", mc_id_mchit_trkid);
       MnvRecoTree->SetBranchAddress("mc_id_mchit_dE", mc_id_mchit_dE);
 
-      
+      MnvRecoTree->SetBranchAddress("mc_int_vtx", mc_int_vtx);
+      MnvRecoTree->SetBranchAddress("n_interactions", &n_interactions);
+      MnvRecoTree->SetBranchAddress("mc_int_edepsimId", mc_int_edepsimId);
+
+
+      MnvRecoTree->GetEntry(0);
+      is_data =  ev_gps_time_sec>1.5e9; 
 
 
     } else {
@@ -122,16 +131,36 @@ namespace cafmaker
   }
   // ---------------------------------------------------------------------------
 
-
     void MINERvARecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
                                                  int max_trkid) const
   {
-    //const auto NaN = std::numeric_limits<float>::signaling_NaN();
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(mc_traj_pdg[max_trkid], srTruePart.pdg, 0, "pdg_code");
 
     ValidateOrCopy(mc_traj_edepsim_trkid[max_trkid], srTruePart.G4ID, -1, "SRTrueParticle::track_id");
     ValidateOrCopy(mc_traj_parentid[max_trkid], srTruePart.parent, -1, "SRTrueParticle::parent");
+    ValidateOrCopy(mc_traj_point_px[max_trkid][0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px"); 
+    ValidateOrCopy(mc_traj_point_py[max_trkid][0]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+    ValidateOrCopy(mc_traj_point_pz[max_trkid][0]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
 
+    try
+    {
+      ValidateOrCopy(mc_traj_point_E[max_trkid][0] / 1000., srTruePart.p.E, NaN, "SRTrueParticle::p.E");
+    }
+    catch (std::runtime_error & e)
+    {
+      auto diff = (mc_traj_point_E[max_trkid][0] / 1000. - srTruePart.p.E);
+      if (diff < 1) // < 1 MeV
+      {
+        LOG.WARNING() << "True particle energy (track id=" << srTruePart.G4ID << ", pdg=" << srTruePart.pdg << ", stored E=" << srTruePart.p.E << ")"
+                      << " differs by " << diff << " MeV between stored (GENIE?) and ML-reco pass-through values";
+      }
+      else
+        throw e;
+    }
+
+
+ 
     // todo: Things do not match yet the exact Genie output, need to work on the Minerva reconstruction output. 
     // For now will assume that if it's a primary and we gor the eventID and trackid right, Genie will have fill it properly
     // And if it's an important secondary shared by both detectors, MLReco will have filled it.
@@ -152,6 +181,20 @@ namespace cafmaker
     */
   }
 
+  void MINERvARecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
+                                                    int int_id) const
+  {
+    LOG.DEBUG() << "    now copying truth info from Mnv TrueInteraction to SRTrueInteraction...\n";
+
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+
+    // here we are converting from mm (units from MINERvA) to cm
+    ValidateOrCopy(mc_int_vtx[int_id][0]/10., srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    ValidateOrCopy(mc_int_vtx[int_id][1]/10., srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    ValidateOrCopy(mc_int_vtx[int_id][2]/10., srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+
+
+  }
 
   // here we copy all the MINERvA reco into the SRMINERvA branch of the StandardRecord object.
   void MINERvARecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
@@ -176,12 +219,15 @@ namespace cafmaker
 
     // Get nth entry from tree
     MnvRecoTree->GetEntry(idx);  
-
+    
     //Fill MINERvA specific info in the meta branch
     sr.meta.minerva.enabled = true;
     sr.meta.minerva.run = ev_run;
     sr.meta.minerva.subrun = ev_sub_run;
     sr.meta.minerva.event = ev_gate;
+
+
+    FillInteractions(truthMatch, sr);
 
 
 
@@ -222,7 +268,11 @@ namespace cafmaker
       // We offset positions in MINERvA reconstruction so we reofset them here.
       my_track.start = caf::SRVector3D(trk_node_X[i][0]/10.  - offsetX/10. ,trk_node_Y[i][0]/10. - offsetY/10., trk_node_Z[i][0]/10. - offsetZ/10.);
       my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10.  - offsetX/10. ,trk_node_Y[i][trk_nodes[i] -1]/10. - offsetY/10., trk_node_Z[i][trk_nodes[i] -1]/10. - offsetZ/10.);
-
+      if (is_data)
+      {
+        my_track.start = caf::SRVector3D(trk_node_X[i][0]/10., trk_node_Y[i][0]/10., trk_node_Z[i][0]/10.);
+        my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10., trk_node_Y[i][trk_nodes[i] -1]/10., trk_node_Z[i][trk_nodes[i] -1]/10.);
+      }
       // Track info
       my_track.len_cm  = sqrt(pow(trk_node_X[i][trk_nodes[i] -1] - trk_node_X[i][0],2)+pow(trk_node_Y[i][trk_nodes[i] -1] - trk_node_Y[i][0],2)+pow(trk_node_Z[i][trk_nodes[i] -1] - trk_node_Z[i][0],2))/10.;
       my_track.qual      = trk_chi2perDof[i];
@@ -256,8 +306,8 @@ namespace cafmaker
       // Save first and last hit in track
       // MINERvA Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
       my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10. - offsetX/10.,blob_id_startpoint_y[i]/10. - offsetY/10., blob_id_startpoint_z[i]/10. - offsetZ/10.);
-      
-
+      if (is_data) my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10., blob_id_startpoint_y[i]/10., blob_id_startpoint_z[i]/10.);     
+ 
       //Actual direction but Centroid makes more sense 
 //      double x_dir = (blob_id_centroid_x[i] - blob_id_startpoint_x[i]);
 //      double y_dir = (blob_id_centroid_y[i] - blob_id_startpoint_y[i]);
@@ -273,7 +323,12 @@ namespace cafmaker
       double x_dir = blob_id_centroid_x[i]/10. - offsetX/10.;
       double y_dir = blob_id_centroid_y[i]/10. - offsetY/10.;
       double z_dir = blob_id_centroid_z[i]/10. - offsetZ/10.;
-
+      if (is_data)
+      {
+        x_dir = blob_id_centroid_x[i]/10.;
+        y_dir = blob_id_centroid_y[i]/10.;
+        z_dir = blob_id_centroid_z[i]/10.;
+      }
       my_shower.direction = caf::SRVector3D(x_dir, y_dir, z_dir);
       my_shower.Evis = blob_id_e[i]/1000.; //Energy in GeV
 
@@ -286,6 +341,26 @@ namespace cafmaker
     }
 
     return shower_map;
+  }
+
+  void MINERvARecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const
+  {
+    for (int i_int = 0; i_int<n_interactions; i_int++)
+    {
+      Long_t neutrino_event_id = mc_int_edepsimId[i_int];
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
+      LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
+          for (const caf::SRTrueParticle & part : srTrueInt.prim)
+            LOG.VERBOSE() << "    (prim) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+          for (const caf::SRTrueParticle & part : srTrueInt.prefsi)
+            LOG.VERBOSE() << "    (prefsi) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+          for (const caf::SRTrueParticle & part : srTrueInt.sec)
+            LOG.VERBOSE() << "    (sec) id = " << part.G4ID  << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+
+          // here we need to fill in any additional info
+          // that GENIE didn't know about: e.g., secondary particles made by GEANT4
+        FillTrueInteraction(srTrueInt, i_int);
+    }
   }
 
   void MINERvARecoBranchFiller::FindTruthShower(caf::StandardRecord &sr, caf::SRShower &sh, int shower_id, const TruthMatcher *truthMatch ) const
@@ -461,8 +536,6 @@ namespace cafmaker
         trig.triggerTime_s -= t0_minerva;
 
 
-        triggers.push_back(trig);
-
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
                       << ", triggerType=" << trig.triggerType
                       << ", triggerTime_s=" << trig.triggerTime_s
@@ -472,14 +545,13 @@ namespace cafmaker
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
-    else
+
+    for (const Trigger & trigger : fTriggers)
     {
-      for (const Trigger & trigger : fTriggers)
-      {
-        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
-          triggers.push_back(trigger);
-      }
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
     }
+
     return triggers;
   }
 
