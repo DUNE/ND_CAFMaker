@@ -141,7 +141,7 @@ namespace cafmaker
     LOG_S("TruthMatcher::FillInteraction").VERBOSE() << "Modifying GENIE vertex from (" << vtx.X() << "," << vtx.Y() << "," << vtx.Z() << ")"
                                                      << " to (" << nu_vtx.X() << "," << nu_vtx.Y() << "," << nu_vtx.Z() << ")"
                                                      << " to account for change in units from m to cm\n";
-//    nu.vtx = nu_vtx;
+   nu.vtx = nu_vtx;
 
     // we can't fill the time, however, because that's changed by spill building
 //    nu.time = vtx.T();
