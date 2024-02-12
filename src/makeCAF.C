@@ -243,6 +243,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 
     // now consider the other reco filler streams.
     // do they have any events in them that should go in this group?
+    std::vector<decltype(triggersByFiller)::key_type> trigStreamsToRemove;  // since we can't edit the `triggersByFiller` group without invalidating its iterators
     std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> & trigGroup = ret.back();
     const cafmaker::Trigger & trigSeed = trigGroup.front().second;
     LOG().VERBOSE() << "    Considering other triggers:\n";
@@ -275,9 +276,11 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
       // if there are no more elements in this reco filler stream,
       // remove it from consideration
       if (fillerTrigPair.second.empty())
-        triggersByFiller.erase(fillerTrigPair.first);
-
+        trigStreamsToRemove.push_back(fillerTrigPair.first);
     } // for (fillerTrigPair)
+
+    // Erase the marked reco filler(s) from the map
+    for (const auto & trigStream : trigStreamsToRemove) triggersByFiller.erase(trigStream);
   } // while (!triggersByFiller.empty())
 
   LOG().DEBUG() << "Final trigger list\n";
