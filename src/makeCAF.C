@@ -278,8 +278,9 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
       if (fillerTrigPair.second.empty())
         trigStreamsToRemove.push_back(fillerTrigPair.first);
     } // for (fillerTrigPair)
-  // Erase the marked keys from the map
-  for (const auto &key : keysToRemove) triggersByFiller.erase(key);
+
+    // Erase the marked reco filler(s) from the map
+    for (const auto & trigStream : trigStreamsToRemove) triggersByFiller.erase(trigStream);
   } // while (!triggersByFiller.empty())
 
   LOG().DEBUG() << "Final trigger list\n";
