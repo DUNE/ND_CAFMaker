@@ -3,6 +3,10 @@
 
 ##### current
 
+##### [v4.6.1] -- 2024-02-13
+* Fix: actually use GENIE true vertex info as intended ([PR #56](https://github.com/DUNE/ND_CAFMaker/pull/56))
+* Fix: don't use invalidated iterators in trigger group loop ([PR #57](https://github.com/DUNE/ND_CAFMaker/pull/57))
+
 ##### [v4.6.0] -- 2024-01-29
 * Stop using ML-reco passthrough truth to set locations ([PR #55](https://github.com/DUNE/ND_CAFMaker/pull/55))
 
