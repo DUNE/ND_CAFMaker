@@ -398,7 +398,16 @@ namespace cafmaker
     }
 
     //Create the possible SRTrueParticle that correspond to the shower
-    
+    if (max_trkid >= n_mc_trajectories) // We want to access a trajectory that was not stored, set particle to kUnknown, will not be able to match the true particle
+		{
+			caf::TrueParticleID truePartID;
+			truePartID.ixn = -1; //Should be the default for a new TrueParticleID but wanna make sure of it
+			truePartID.type = caf::TrueParticleID::kUnknown;
+			truePartID.part = -1;
+			sh.truth.push_back(std::move(truePartID));
+		  return;	
+		}
+
     Long_t neutrino_event_id = mc_traj_edepsim_eventid[max_trkid];
     std::size_t truthVecIdx = std::distance(sr.mc.nu.begin(),
                                                   std::find_if(sr.mc.nu.begin(),
@@ -430,7 +439,6 @@ namespace cafmaker
     sh.truth.push_back(std::move(truePartID));
 
     FillTrueParticle(srTruePart, max_trkid);
-
   }
 
   void MINERvARecoBranchFiller::FindTruthTrack(caf::StandardRecord &sr, caf::SRTrack &t, int track_id, const TruthMatcher *truthMatch) const
@@ -468,6 +476,16 @@ namespace cafmaker
     }
 
     //Once the true particle has been found, loop over the truthBranch to find the corresponding truth interraction
+    if (max_trkid >= n_mc_trajectories) // We want to access a trajectory that was not stored, set particle to kUnknown, will not be able to match the true particle
+    {
+      caf::TrueParticleID truePartID;
+      truePartID.ixn = -1; //Should be the default for a new TrueParticleID but wanna make sure of it
+      truePartID.type = caf::TrueParticleID::kUnknown;
+      truePartID.part = -1;
+      t.truth.push_back(std::move(truePartID));
+      return;
+    }
+
     Long_t neutrino_event_id = mc_traj_edepsim_eventid[max_trkid];
     caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id, true);
     //Find the position of the interaction corresponding to the track in the interaction vector
