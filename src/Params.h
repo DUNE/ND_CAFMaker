@@ -18,6 +18,9 @@ namespace cafmaker
     fhicl::Atom<int> run    { fhicl::Name("Run"),    fhicl::Comment("Run number"), 1 };    // CAFAna doesn't like run number 0
     fhicl::Atom<int> subrun { fhicl::Name("Subrun"), fhicl::Comment("Subrun number"), 0 };
 
+    // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
+    fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
+
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
@@ -28,11 +31,8 @@ namespace cafmaker
   struct ControlConfig
   {
     // these are mandatory and have no default values
-    fhicl::OptionalSequence<std::string> contNuGHEPFiles     { fhicl::Name{"ContainedNuGHEPFiles"},   fhicl::Comment("Input .ghep (GENIE) file(s) for in-detector neutrinos") };
-//    fhicl::OptionalAtom<std::string> contNuGHEPFile     {fhicl::Name{"ContainedNuGHEPFile"},   fhicl::Comment("Input .ghep (GENIE) file for in-detector neutrinos") };
-    fhicl::OptionalSequence<std::string> uncontNuGHEPFiles   {fhicl::Name{"UncontainedNuGHEPFiles"}, fhicl::Comment("Input .ghep (GENIE) file(s) for rock/hall neutrinos") };
-//    fhicl::OptionalAtom<std::string> uncontNuGHEPFile   {fhicl::Name{"UncontainedNuGHEPFile"}, fhicl::Comment("Input .ghep (GENIE) file for rock/hall neutrinos") };
-    fhicl::Atom<std::string> outputFile                      { fhicl::Name{"OutputFile"},           fhicl::Comment("Filename for output CAF") };
+    fhicl::OptionalSequence<std::string> GHEPFiles     { fhicl::Name{"GHEPFiles"},   fhicl::Comment("Input .ghep (GENIE) file(s) for truth matching") };
+    fhicl::Atom<std::string>             outputFile    { fhicl::Name{"OutputFile"},  fhicl::Comment("Filename for output CAF") };
 
     // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
     // fixme: this file is currently not used for anything, but will be once DIRT-II is done and re-enables the interaction systematics
@@ -42,6 +42,7 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
+    fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> ndgarRecoFile  { fhicl::Name{"NDGArRecoFile"}, fhicl::Comment("Input ND-GAr reco .root file") };
 
     // this is optional by way of the default value. Will result in an extra output file if enabled
@@ -51,6 +52,9 @@ namespace cafmaker
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
     fhicl::Atom<int>  numevts { fhicl::Name("NumEvts"), fhicl::Comment("Number of events to process (-1 means 'all')"), -1 };
     fhicl::Atom<int>  seed    { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
+
+    // 100 us is default
+    fhicl::Atom<unsigned int>  trigMatchDT { fhicl::Name("TriggerMatchDeltaT"), fhicl::Comment("Maximum time difference, in ns, between triggers to be considered a match"), 100000 };
 
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
     fhicl::Atom<std::string> verbosity { fhicl::Name("Verbosity"), fhicl::Comment("Verbosity level of output"), "WARNING" };

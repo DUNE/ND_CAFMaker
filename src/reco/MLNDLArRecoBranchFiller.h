@@ -40,9 +40,15 @@ namespace cafmaker
 
     private:
       void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+                      const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
+                      const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                      const TruthMatcher * truthMatch,
                       caf::StandardRecord & sr) const;
 
       void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
+                       const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
+                       const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                       const TruthMatcher * truthMatch,
                        caf::StandardRecord & sr) const;
 
       void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,

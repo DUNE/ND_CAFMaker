@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f /dune/data/users/skumara/Datafiles_2x2/MLreco_h5files/test_minirun4.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo
+//       ./h5_to_cpp.py -f /dune/data/users/jwolcott/nd/nd-lar-reco/reco-out/PicoRun4.1_1E17_RHC.larnd.00000.reco.summary.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
@@ -196,27 +196,30 @@ namespace cafmaker::types::dlp
   struct TrueInteraction;
   struct TrueParticle;
   struct RunInfo;
+  struct Trigger;
   
   struct Event
   {
-    hdset_reg_ref_t run_info;
-    hdset_reg_ref_t index;
     hdset_reg_ref_t meta;
-    hdset_reg_ref_t truth_particles;
-    hdset_reg_ref_t particles;
+    hdset_reg_ref_t index;
+    hdset_reg_ref_t trigger;
+    hdset_reg_ref_t run_info;
     hdset_reg_ref_t interactions;
+    hdset_reg_ref_t truth_particles;
     hdset_reg_ref_t truth_interactions;
+    hdset_reg_ref_t particles;
     
     void SyncVectors();
     
     template <typename T>
     const hdset_reg_ref_t& GetRef() const
     {
-      if constexpr(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
-      else if(std::is_same_v<T, Particle>) return particles;
+      if constexpr(std::is_same_v<T, Trigger>) return trigger;
+      else if(std::is_same_v<T, RunInfo>) return run_info;
       else if(std::is_same_v<T, Interaction>) return interactions;
+      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
       else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
+      else if(std::is_same_v<T, Particle>) return particles;
     }
     
   };
@@ -224,17 +227,20 @@ namespace cafmaker::types::dlp
   
   struct Interaction
   {
+    double coffset;
     int64_t crthit_id;
     uint8_t crthit_matched;
     int64_t crthit_matched_particle_id;
-    int64_t flash_hypothesis;
+    double flash_hypothesis;
     int64_t flash_id;
     double flash_time;
-    int64_t flash_total_pE;
+    double flash_total_pE;
     uint8_t fmatched;
     int64_t id;
     int64_t image_id;
+    bool is_ccrosser;
     bool is_contained;
+    bool is_fiducial;
     bool is_neutrino;
     bool is_principal_match;
     BufferView<int64_t> match;
@@ -243,9 +249,9 @@ namespace cafmaker::types::dlp
     int64_t nu_id;
     int64_t num_particles;
     int64_t num_primaries;
-    std::array<int64_t, 6> particle_counts;
+    std::array<int64_t, 7> particle_counts;
     BufferView<int64_t> particle_ids;
-    std::array<int64_t, 6> primary_counts;
+    std::array<int64_t, 7> primary_counts;
     int64_t size;
     char * topology;
     char * units;
@@ -272,34 +278,38 @@ namespace cafmaker::types::dlp
   struct Particle
   {
     double calo_ke;
+    double coffset;
     double csda_ke;
     double depositions_sum;
-    std::array<double, 3> end_dir;
-    std::array<double, 3> end_point;
+    std::array<float, 3> end_dir;
+    std::array<float, 3> end_point;
     BufferView<int64_t> fragment_ids;
     int64_t id;
     int64_t image_id;
     BufferView<int64_t> index;
     int64_t interaction_id;
+    bool is_ccrosser;
     bool is_contained;
     bool is_primary;
     bool is_principal_match;
+    bool is_valid;
+    double ke;
     double length;
     BufferView<int64_t> match;
     BufferView<float> match_overlap;
     uint8_t matched;
     double mcs_ke;
-    std::array<double, 3> momentum;
+    std::array<float, 3> momentum;
     int64_t nu_id;
     int64_t num_fragments;
     int64_t pdg_code;
     Pid pid;
-    std::array<float, 5> pid_scores;
+    std::array<float, 6> pid_scores;
     std::array<float, 2> primary_scores;
     SemanticType semantic_type;
     int64_t size;
-    std::array<double, 3> start_dir;
-    std::array<double, 3> start_point;
+    std::array<float, 3> start_dir;
+    std::array<float, 3> start_point;
     char * units;
     int64_t volume_id;
     
@@ -322,40 +332,63 @@ namespace cafmaker::types::dlp
   
   struct TrueInteraction
   {
+    double coffset;
     int64_t crthit_id;
     uint8_t crthit_matched;
     int64_t crthit_matched_particle_id;
-    int64_t flash_hypothesis;
+    double flash_hypothesis;
     int64_t flash_id;
     double flash_time;
-    int64_t flash_total_pE;
+    double flash_total_pE;
     uint8_t fmatched;
     int64_t id;
     int64_t image_id;
+    bool is_ccrosser;
     bool is_contained;
+    bool is_fiducial;
     bool is_neutrino;
     bool is_principal_match;
     BufferView<int64_t> match;
     BufferView<float> match_overlap;
     uint8_t matched;
+    double nu_bjorken_x;
+    char * nu_creation_process;
     NuCurrentType nu_current_type;
+    double nu_distance_travel;
+    double nu_energy_deposit;
     double nu_energy_init;
+    double nu_hadronic_invariant_mass;
     int64_t nu_id;
+    double nu_inelasticity;
     NuInteractionMode nu_interaction_mode;
     NuInteractionType nu_interaction_type;
+    int64_t nu_lepton_track_id;
+    int64_t nu_mcst_index;
+    int64_t nu_mct_index;
+    double nu_momentum_transfer;
+    int64_t nu_nucleon;
+    int64_t nu_num_voxels;
+    double nu_p;
     int64_t nu_pdg_code;
+    BufferView<float> nu_position;
+    int64_t nu_quark;
+    double nu_t;
+    int64_t nu_target;
+    double nu_theta;
+    int64_t nu_track_id;
+    int64_t nu_truth_id;
     int64_t num_particles;
     int64_t num_primaries;
-    std::array<int64_t, 6> particle_counts;
+    std::array<int64_t, 7> particle_counts;
     BufferView<int64_t> particle_ids;
-    std::array<int64_t, 6> primary_counts;
+    std::array<int64_t, 7> primary_counts;
     int64_t size;
     char * topology;
     int64_t truth_id;
     BufferView<int64_t> truth_particle_counts;
     BufferView<int64_t> truth_primary_counts;
     char * truth_topology;
-    std::array<double, 3> truth_vertex;
+    std::array<float, 3> truth_vertex;
     char * units;
     std::array<float, 3> vertex;
     char * vertex_mode;
@@ -373,6 +406,7 @@ namespace cafmaker::types::dlp
     
     hvl_t match_handle;
     hvl_t match_overlap_handle;
+    hvl_t nu_position_handle;
     hvl_t particle_ids_handle;
     hvl_t truth_particle_counts_handle;
     hvl_t truth_primary_counts_handle;
@@ -383,35 +417,39 @@ namespace cafmaker::types::dlp
   {
     char * ancestor_creation_process;
     int64_t ancestor_pdg_code;
-    BufferView<double> ancestor_position;
+    BufferView<float> ancestor_position;
     double ancestor_t;
     int64_t ancestor_track_id;
     double calo_ke;
     double calo_ke_tng;
     BufferView<int64_t> children_counts;
-    BufferView<double> children_id;
+    BufferView<uint64_t> children_id;
+    double coffset;
     char * creation_process;
     double csda_ke;
     double csda_ke_tng;
     double depositions_sum;
-    BufferView<double> direction;
     double distance_travel;
-    std::array<double, 3> end_dir;
-    std::array<double, 3> end_point;
-    std::array<double, 3> end_position;
+    std::array<float, 3> end_dir;
+    std::array<float, 3> end_point;
+    std::array<float, 3> end_position;
     double energy_deposit;
     double energy_init;
-    BufferView<double> first_step;
+    BufferView<float> first_step;
     BufferView<int64_t> fragment_ids;
+    int64_t gen_id;
     int64_t group_id;
     int64_t id;
     int64_t image_id;
     BufferView<int64_t> index;
     int64_t interaction_id;
+    bool is_ccrosser;
     bool is_contained;
     bool is_primary;
     bool is_principal_match;
-    BufferView<double> last_step;
+    bool is_valid;
+    double ke;
+    BufferView<float> last_step;
     double length;
     double length_tng;
     BufferView<int64_t> match;
@@ -421,7 +459,7 @@ namespace cafmaker::types::dlp
     double mcs_ke_tng;
     int64_t mcst_index;
     int64_t mct_index;
-    std::array<double, 3> momentum;
+    std::array<float, 3> momentum;
     int64_t nu_id;
     int64_t num_fragments;
     int64_t num_voxels;
@@ -429,29 +467,29 @@ namespace cafmaker::types::dlp
     char * parent_creation_process;
     int64_t parent_id;
     int64_t parent_pdg_code;
-    BufferView<double> parent_position;
+    BufferView<float> parent_position;
     double parent_t;
     int64_t parent_track_id;
     int64_t pdg_code;
     Pid pid;
-    BufferView<double> position;
+    BufferView<float> position;
     float sed_depositions_MeV_sum;
     BufferView<int64_t> sed_index;
     int64_t sed_size;
     SemanticType semantic_type;
     int64_t shape;
     int64_t size;
-    std::array<double, 3> start_dir;
-    std::array<double, 3> start_point;
+    std::array<float, 3> start_dir;
+    std::array<float, 3> start_point;
     double t;
     int64_t track_id;
     float truth_depositions_MeV_sum;
     double truth_depositions_sum;
-    BufferView<double> truth_end_dir;
     int64_t truth_id;
     BufferView<int64_t> truth_index;
+    std::array<double, 3> truth_momentum;
     int64_t truth_size;
-    BufferView<double> truth_start_dir;
+    std::array<double, 3> truth_start_dir;
     char * units;
     int64_t volume_id;
     
@@ -468,7 +506,6 @@ namespace cafmaker::types::dlp
     hvl_t ancestor_position_handle;
     hvl_t children_counts_handle;
     hvl_t children_id_handle;
-    hvl_t direction_handle;
     hvl_t first_step_handle;
     hvl_t fragment_ids_handle;
     hvl_t index_handle;
@@ -478,9 +515,7 @@ namespace cafmaker::types::dlp
     hvl_t parent_position_handle;
     hvl_t position_handle;
     hvl_t sed_index_handle;
-    hvl_t truth_end_dir_handle;
     hvl_t truth_index_handle;
-    hvl_t truth_start_dir_handle;
   };
   
   
@@ -489,6 +524,17 @@ namespace cafmaker::types::dlp
     int64_t run;
     int64_t subrun;
     int64_t event;
+    
+    void SyncVectors();
+  };
+  
+  
+  struct Trigger
+  {
+    int64_t id;
+    int64_t time_ns;
+    int64_t time_s;
+    int64_t type;
     
     void SyncVectors();
   };
@@ -516,6 +562,10 @@ namespace cafmaker::types::dlp
   
   template <>
   H5::CompType BuildCompType<RunInfo>();
+  
+  
+  template <>
+  H5::CompType BuildCompType<Trigger>();
   
 
 }

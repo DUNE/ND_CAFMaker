@@ -16,6 +16,7 @@ numpy_to_hdf5 = {
     "i": "STD_I",
     "l": "STD_I",
     "B": "STD_U",
+    "L": "STD_I",
     "f": "IEEE_F",
     "d": "IEEE_F",
 }
@@ -332,6 +333,7 @@ class TypeSerializer:
             assert len(cpp_name) > 0, "Couldn't understand type name: '{0}'".format(typ.name)
 
         else:
+            print("typ.char =", typ.char)
             raise TypeError("Don't know how to handle type: " + str(typ))
 
         h5_name = h5_name.replace("H5T_", "")
@@ -509,7 +511,7 @@ if __name__ == "__main__":
         datasets = []
         for ds in args.dataset:
             if ds not in f or not hasattr(f[ds], "dtype"):
-                print("Dataset '{0}' not found in file: {1}".format(ds, args.filename), file=sys.stderr)
+                print("Dataset '{0}' not found in file: {1}".format(ds, args.hdf5), file=sys.stderr)
                 sys.exit(1)
             datasets.append(f[ds])
 
