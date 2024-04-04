@@ -4,40 +4,58 @@
 
 namespace cafmaker
 {
+
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename)
-    : IRecoBranchFiller("TMS")
+    : IRecoBranchFiller("TMS"),
+    fTriggers(),
+    fLastTriggerReqd(fTriggers.end())
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
+
     if (!fTMSRecoFile->IsZombie()) {
       SetConfigured(true);
+
       // Save pointer to input tree
-      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
+      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Reco_Tree"));
       if (!TMSRecoTree) {
         std::cerr << "Did not find TMS reco tree Line_Candidates in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
-      TMSRecoTree->SetBranchAddress("nLines", &_nLines);
-      TMSRecoTree->SetBranchAddress("nHitsInTrack", _nHitsInTrack);
-      TMSRecoTree->SetBranchAddress("TrackLength", _TrackLength);
-      TMSRecoTree->SetBranchAddress("TotalTrackEnergy", _TotalTrackEnergy);
-      TMSRecoTree->SetBranchAddress("Occupancy", _Occupancy);
 
-      TMSRecoTree->SetBranchAddress("DirectionX_Upstream", _DirectionX_Upstream);
-      TMSRecoTree->SetBranchAddress("DirectionZ_Upstream", _DirectionZ_Upstream);
+      TMSRecoTree->SetBranchAddress("EventNo",               &_EventNo);
+      TMSRecoTree->SetBranchAddress("SliceNo",               &_SliceNo);
+      TMSRecoTree->SetBranchAddress("SpillNo",               &_SpillNo);
+      TMSRecoTree->SetBranchAddress("nTracks",               &_nTracks);
+      TMSRecoTree->SetBranchAddress("nHits",                 _nHitsInTrack);
+      TMSRecoTree->SetBranchAddress("Length",                _TrackLength);
+      TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
+      TMSRecoTree->SetBranchAddress("Energy",                _TrackTotalEnergy);
+      TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
+      TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
 
-      TMSRecoTree->SetBranchAddress("DirectionX_Downstream", _DirectionX_Downstream);
-      TMSRecoTree->SetBranchAddress("DirectionZ_Downstream", _DirectionZ_Downstream);
-
-      TMSRecoTree->SetBranchAddress("TrackHitPos", _TrackHitPos);
+      //TMSRecoTree->SetBranchAddress("HitPos",           _TrackHitPos); // TODO: how get hits from da vectur??
+      //TMSRecoTree->SetBranchAddress("RecoHitPos",       _TrackRecoHitPos);
+      TMSRecoTree->SetBranchAddress("StartPos",              _TrackStartPos);
+      TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
+      TMSRecoTree->SetBranchAddress("Direction",             _TrackDirection);
     } else {
       fTMSRecoFile = NULL;
-      TMSRecoTree = NULL;
-      std::cerr << "Did not find input TMS reco file you provided: " << tmsRecoFilename << std::endl;
-      std::cerr << "Are you sure it exists?" << std::endl;
+      TMSRecoTree  = NULL;
+      std::cerr << "The TMS reco file you provided: " << tmsRecoFilename 
+                << " appears to be a Zombie 🧟" << std::endl;
       throw;
     }
+  }
+
+
+  TMSRecoBranchFiller::~TMSRecoBranchFiller() {
+    delete TMSRecoTree;
+    fTMSRecoFile->Close();
+    delete fTMSRecoFile;
+    TMSRecoTree = NULL;
+    fTMSRecoFile = NULL;
   }
 
   // ---------------------------------------------------------------------------
@@ -50,51 +68,98 @@ namespace cafmaker
   {
 #ifndef DISABLE_TMS
 
+    sr.meta.tms.enabled = true;
+
+    // Nicked from the MINVERvA example:
+    // figure out where in our list of triggers this event index is.
+    // we should always be looking forwards, since we expect to be traversing in that direction
+//    auto it_start = (fLastTriggerReqd == fTriggers.end()) ? fTriggers.cbegin() : fLastTriggerReqd;
+//    auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
+//    if (itTrig == fTriggers.end())
+//    {
+//      LOG.FATAL() << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
+//      abort();
+//    }
+//    std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
+//    LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
+
+
     // Get nth entry from tree
-    TMSRecoTree->GetEntry(evtIdx);
+    TMSRecoTree->GetEntry(trigger.evtID);
 
     // First set number of tracks
-    sr.nd.tms.ntracks = _nLines;
-    sr.nd.tms.tracks.resize(_nLines);
+    sr.nd.tms.nixn = _nTracks;
+    sr.nd.tms.ixn.resize(sr.nd.tms.nixn);
 
-    // Fill in the track info
-    for (int i = 0; i < _nLines; ++i) {
-      double prevz = -9E10;
-      // Hit info
-      // Loop might be unnecessary if you really want optimisation...
-      for (int j = 0; j < _nHitsInTrack[i]; ++j) {
-        double z = _TrackHitPos[i][j][0];
+    //sr.nd.tms.nixn = _nLines;
+    //sr.SRTMSInt.ntracks= _nLines;
 
-        // Should all be ordered in z, check this
-        if (z < prevz) {
-          std::cerr << "hits in z not ordered" << std::endl;
-          throw;
-        }
-        prevz = z;
-      }
+    // Fill in the track info 
+    for (int i = 0; i < _nTracks; ++i) {
+      /* Currently we only really care about catching (anti-)muons from LAr,
+       * so we assume that each track is probably a(n) (anti-)muon originating
+       * from a single interaction upstream in LAr.
+       *     Liam     */
+
+      sr.nd.tms.ixn[i].ntracks = 1; // One reco track per interaction (ixn)
+      sr.nd.tms.ixn[i].tracks.resize(sr.nd.tms.ixn[i].ntracks);
 
       // Save first and last hit in track
       // TMS Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
-      sr.nd.tms.tracks[i].start = caf::SRVector3D(_TrackHitPos[i][0][1]/10., -999, _TrackHitPos[i][0][0]/10.);
-      sr.nd.tms.tracks[i].end   = caf::SRVector3D(_TrackHitPos[i][_nHitsInTrack[i]-1][1]/10., -999, _TrackHitPos[i][_nHitsInTrack[i]-1][0]/10.);
+      sr.nd.tms.ixn[i].tracks[0].start = caf::SRVector3D(_TrackStartPos[i][0]/10., _TrackStartPos[i][1]/10., _TrackStartPos[i][1]/10.);
+      sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackEndPos[i][0]/10., _TrackEndPos[i][1]/10., _TrackEndPos[i][1]/10.);
 
       // Track info
-      sr.nd.tms.tracks[i].len_gcm2  = _TrackLength[i];
-      sr.nd.tms.tracks[i].qual      = _Occupancy[i];
-      sr.nd.tms.tracks[i].E         = _TotalTrackEnergy[i];
+      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i]/10.;
+      sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i];
+      sr.nd.tms.ixn[i].tracks[0].E         = _TrackTotalEnergy[i];
 
       // Get the directions
-      sr.nd.tms.tracks[i].dir     = caf::SRVector3D(_DirectionX_Upstream[i], -999, _DirectionZ_Upstream[i]);
-      sr.nd.tms.tracks[i].enddir  = caf::SRVector3D(_DirectionX_Downstream[i], -999, _DirectionZ_Downstream[i]);
+      // TODO: At present tracks are completely straight objects, so dir is the same here for both
+      sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
+      sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
     }
-
-#endif  // DISABLE_TMS
   }
 
-  // todo: this is a placeholder
+
+
   std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType) const
   {
-    return std::deque<Trigger>();
+    std::deque<Trigger> triggers;
+    if (fTriggers.empty())
+    {
+      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << TMSRecoTree->GetEntries() << " MINERvA Tree:\n";
+      fTriggers.reserve(TMSRecoTree->GetEntries());
+
+      for (int entry = 0; entry < TMSRecoTree->GetEntries(); entry++)
+      {
+        // TODO: BIIIIIIG TODO
+
+        TMSRecoTree->GetEntry(entry);
+
+        fTriggers.emplace_back();
+        Trigger & trig = fTriggers.back();
+
+        trig.evtID = Long_t(_EventNo);
+
+
+        // todo: these are placeholder values until we can propagate enough info through the reco files
+        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                      << "\n";
+
+      }
+      fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
+    }
+
+    for (const Trigger & trigger : fTriggers)
+    {
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
+    }
+
+    return triggers;
   }
+
+#endif  // DISABLE_TMS
 
 } // end namespace
