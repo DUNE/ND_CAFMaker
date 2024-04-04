@@ -4,6 +4,8 @@
 
 #include "duneanaobj/StandardRecord/Flat/FlatRecord.h"
 
+#include "util/Logger.h"
+
 // fixme: once DIRT-II is done with its work, this will be re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 
@@ -145,7 +147,7 @@ int CAF::StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn)
     static bool warned = false;
     if (!warned)
     {
-      std::cerr << "WARNING: repeatedly reassigning the target pointer for output GENIE tree will result in significant performance penalty\n";
+      cafmaker::LOG_S("CAF::StoreGENIEEvent()").WARNING() << "Repeatedly reassigning the target pointer for output GENIE tree will result in significant performance degredation\n";
       warned = true;
     }
 

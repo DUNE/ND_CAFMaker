@@ -4,8 +4,11 @@
 
 namespace cafmaker
 {
+
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename)
-    : IRecoBranchFiller("TMS")
+    : IRecoBranchFiller("TMS"),
+    fTriggers(),
+    fLastTriggerReqd(fTriggers.end())
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
@@ -27,7 +30,7 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("nTracks",               &_nTracks);
       TMSRecoTree->SetBranchAddress("nHits",                 _nHitsInTrack);
       TMSRecoTree->SetBranchAddress("Length",                _TrackLength);
-      TMSRecoTree->SetBranchAddress("kCharge",               _TrackCharge);
+      TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
       TMSRecoTree->SetBranchAddress("Energy",                _TrackTotalEnergy);
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
       TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
@@ -46,6 +49,15 @@ namespace cafmaker
     }
   }
 
+
+  TMSRecoBranchFiller::~TMSRecoBranchFiller() {
+    delete TMSRecoTree;
+    fTMSRecoFile->Close();
+    delete fTMSRecoFile;
+    TMSRecoTree = NULL;
+    fTMSRecoFile = NULL;
+  }
+
   // ---------------------------------------------------------------------------
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
@@ -55,6 +67,23 @@ namespace cafmaker
                                               const TruthMatcher *truthMatcher) const
   {
 #ifndef DISABLE_TMS
+
+    sr.meta.tms.enabled = true;
+
+    // Nicked from the MINVERvA example:
+    // figure out where in our list of triggers this event index is.
+    // we should always be looking forwards, since we expect to be traversing in that direction
+//    auto it_start = (fLastTriggerReqd == fTriggers.end()) ? fTriggers.cbegin() : fLastTriggerReqd;
+//    auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
+//    if (itTrig == fTriggers.end())
+//    {
+//      LOG.FATAL() << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
+//      abort();
+//    }
+//    std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
+//    LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
+
+
     // Get nth entry from tree
     TMSRecoTree->GetEntry(trigger.evtID);
 
@@ -90,6 +119,45 @@ namespace cafmaker
       sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
       sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
     }
+  }
+
+
+
+  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    std::deque<Trigger> triggers;
+    if (fTriggers.empty())
+    {
+      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << TMSRecoTree->GetEntries() << " MINERvA Tree:\n";
+      fTriggers.reserve(TMSRecoTree->GetEntries());
+
+      for (int entry = 0; entry < TMSRecoTree->GetEntries(); entry++)
+      {
+        // TODO: BIIIIIIG TODO
+
+        TMSRecoTree->GetEntry(entry);
+
+        fTriggers.emplace_back();
+        Trigger & trig = fTriggers.back();
+
+        trig.evtID = Long_t(_EventNo);
+
+
+        // todo: these are placeholder values until we can propagate enough info through the reco files
+        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                      << "\n";
+
+      }
+      fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
+    }
+
+    for (const Trigger & trigger : fTriggers)
+    {
+      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        triggers.push_back(trigger);
+    }
+
+    return triggers;
   }
 
 #endif  // DISABLE_TMS
