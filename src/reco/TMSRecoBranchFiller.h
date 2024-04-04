@@ -43,17 +43,29 @@ namespace cafmaker
 
       // Save the branches that we're reading in
       int _nLines;
-      // [10] should match TMS reco output
+      int _EventNo;
+      int _SliceNo;
+      int _SpillNo;
+
+      int _nTracks;
       int _nHitsInTrack[10];
       float _TrackLength[10];
+      float _TrackCharge[10];
       float _TotalTrackEnergy[10];
+      float _TrackEnergyDeposit[10];
+      float _TrackStartPos[10][3];
+      float _TrackEndPos[10][3];
+      float _TrackDirection[10][3];
       float _Occupancy[10];
+
       float _DirectionX_Downstream[10];
       float _DirectionZ_Downstream[10];
       float _DirectionX_Upstream[10];
       float _DirectionZ_Upstream[10];
+
       // [10][200][2] needs to match TMS reco output (check file if in doubt)
       float _TrackHitPos[10][200][2];
+      float _TrackRecoHitPos[10][200][2];
   };
 
 }
