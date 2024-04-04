@@ -3,15 +3,17 @@
 namespace cafmaker
 {
   NDLArTMSMatchRecoFiller::NDLArTMSMatchRecoFiller()
+    : IRecoBranchFiller("LArTMSMatcher")
   {
     // nothing to do
     SetConfigured(true);
-    name = "LArTMSMatcher";
   }
 
-  void NDLArTMSMatchRecoFiller::_FillRecoBranches(std::size_t evtIdx,
-                                                  caf::StandardRecord &sr,
-                                                  const cafmaker::Params &par) const
+  void
+  NDLArTMSMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
+                                             caf::StandardRecord &sr,
+                                             const cafmaker::Params &par,
+                                             const TruthMatcher *truthMatcher) const
   {
 //    // match tracks using the info that should have been filled by the ND-LAr and TMS reco fillers
 //    unsigned int n_TMS_tracks = sr.nd.tms.ntracks;  //# tracks in TMS in evtIdx
@@ -76,4 +78,11 @@ namespace cafmaker
 //      }
 //    }
   }
+
+  // todo: this is a placeholder
+  std::deque<Trigger> NDLArTMSMatchRecoFiller::GetTriggers(int triggerType) const
+  {
+    return std::deque<Trigger>();
+  }
+
 }

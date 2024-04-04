@@ -56,7 +56,7 @@ namespace cafmaker
   {
 #ifndef DISABLE_TMS
     // Get nth entry from tree
-    TMSRecoTree->GetEntry(evtIdx);
+    TMSRecoTree->GetEntry(trigger.evtID);
 
     // First set number of tracks
     sr.nd.tms.nixn = _nTracks;
@@ -83,7 +83,7 @@ namespace cafmaker
       // Track info
       sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i]/10.;
       sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i];
-      sr.nd.tms.ixn[i].tracks[0].E         = _TrackEnergy[i];
+      sr.nd.tms.ixn[i].tracks[0].E         = _TrackTotalEnergy[i];
 
       // Get the directions
       // TODO: At present tracks are completely straight objects, so dir is the same here for both

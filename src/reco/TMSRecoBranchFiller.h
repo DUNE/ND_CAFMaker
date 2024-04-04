@@ -7,6 +7,7 @@
 #define ND_CAFMAKER_TMSRECOBRANCHFILLER_H
 
 #include <iostream>
+#include <deque>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -25,18 +26,21 @@ namespace cafmaker
   {
     public:
       TMSRecoBranchFiller(const std::string & tmsRecoFilename);
-      ~TMSRecoBranchFiller() {
-        delete TMSRecoTree;
-        fTMSRecoFile->Close();
-        delete fTMSRecoFile;
-        TMSRecoTree = NULL;
-        fTMSRecoFile = NULL;
-      }
+      virtual ~TMSRecoBranchFiller() {};
+//        delete TMSRecoTree;
+//        fTMSRecoFile->Close();
+//        delete fTMSRecoFile;
+//        TMSRecoTree = NULL;
+//        fTMSRecoFile = NULL;
+//      };
+
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
 
     private:
-      void _FillRecoBranches(std::size_t evtIdx,
+      void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
-                             const cafmaker::Params &par) const override;
+                             const cafmaker::Params &par,
+                             const TruthMatcher *truthMatcher) const override;
 
       TFile *fTMSRecoFile;
       TTree *TMSRecoTree;
@@ -51,7 +55,7 @@ namespace cafmaker
       int _nHitsInTrack[10];
       float _TrackLength[10];
       float _TrackCharge[10];
-      float _TotalTrackEnergy[10];
+      float _TrackTotalEnergy[10];
       float _TrackEnergyDeposit[10];
       float _TrackStartPos[10][3];
       float _TrackEndPos[10][3];

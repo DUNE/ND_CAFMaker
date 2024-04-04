@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "SANDRecoBranchFiller.h"
+#include "truth/FillTruth.h"
 
 #ifdef ENABLE_SAND
 #warning Including SANDRecoBranchFiller in build
@@ -23,6 +24,7 @@ namespace cafmaker
 {
   
   SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename)
+    : IRecoBranchFiller("SAND")
   {  
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
     fTree = (TTree*) fSANDRecoFile->Get("tEvent");
@@ -92,20 +94,28 @@ namespace {
   }
 }
 
-cafmaker::SANDRecoBranchFiller::
-SANDRecoBranchFiller(const std::string&)
+namespace cafmaker
 {
-  error_msg();
-  abort();
-}
+  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
+    : IRecoBranchFiller("SAND")
+  {
+    error_msg();
+    abort();
+  }
 
-void cafmaker::SANDRecoBranchFiller::
-_FillRecoBranches(std::size_t,
-                  caf::StandardRecord&,
-                  const cafmaker::Params&) const
-{
-  error_msg();
-  abort();
+  void SANDRecoBranchFiller::
+  _FillRecoBranches(const Trigger &, caf::StandardRecord &, const cafmaker::Params &,
+                    const TruthMatcher *truthMatcher) const
+  {
+    error_msg();
+    abort();
+  }
+
+  // todo: this is a placeholder
+  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType) const
+  {
+    return std::deque<Trigger>();
+  }
 }
 
 #endif // ENABLE_SAND
