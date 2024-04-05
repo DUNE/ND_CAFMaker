@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ./h5_to_cpp.py -f /dune/data/users/jwolcott/nd/nd-lar-reco/reco-out/PicoRun4.1_1E17_RHC.larnd.00000.reco.summary.h5 -o ../src/reco/DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo -d trigger -cn Trigger
+//       h5_to_cpp.py -f MiniRun5_1E19_RHC.mlreco_analysis.0001023.MLRECO_ANA.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d interactions -cn Interaction -d particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
@@ -205,8 +205,8 @@ namespace cafmaker::types::dlp
     hdset_reg_ref_t trigger;
     hdset_reg_ref_t run_info;
     hdset_reg_ref_t interactions;
-    hdset_reg_ref_t truth_particles;
     hdset_reg_ref_t truth_interactions;
+    hdset_reg_ref_t truth_particles;
     hdset_reg_ref_t particles;
     
     void SyncVectors();
@@ -217,8 +217,8 @@ namespace cafmaker::types::dlp
       if constexpr(std::is_same_v<T, Trigger>) return trigger;
       else if(std::is_same_v<T, RunInfo>) return run_info;
       else if(std::is_same_v<T, Interaction>) return interactions;
-      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
       else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
+      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
       else if(std::is_same_v<T, Particle>) return particles;
     }
     
@@ -370,7 +370,7 @@ namespace cafmaker::types::dlp
     int64_t nu_num_voxels;
     double nu_p;
     int64_t nu_pdg_code;
-    BufferView<float> nu_position;
+    BufferView<double> nu_position;
     int64_t nu_quark;
     double nu_t;
     int64_t nu_target;
@@ -449,6 +449,7 @@ namespace cafmaker::types::dlp
     bool is_principal_match;
     bool is_valid;
     double ke;
+    double ke_init;
     BufferView<float> last_step;
     double length;
     double length_tng;
@@ -485,8 +486,10 @@ namespace cafmaker::types::dlp
     int64_t track_id;
     float truth_depositions_MeV_sum;
     double truth_depositions_sum;
+    std::array<double, 3> truth_end_momentum;
     int64_t truth_id;
     BufferView<int64_t> truth_index;
+    int64_t truth_interaction_id;
     std::array<double, 3> truth_momentum;
     int64_t truth_size;
     std::array<double, 3> truth_start_dir;
