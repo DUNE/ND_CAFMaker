@@ -37,7 +37,7 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("nHits",                 _nHitsInTrack);
       TMSRecoTree->SetBranchAddress("Length",                _TrackLength);
       TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
-      TMSRecoTree->SetBranchAddress("EnergyRange",                _TrackTotalEnergy);
+      TMSRecoTree->SetBranchAddress("EnergyRange",           _TrackTotalEnergy);
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
       TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
 
