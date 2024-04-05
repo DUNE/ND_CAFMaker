@@ -1,6 +1,12 @@
 #include "TMSRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 
+/*
+ * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Mar 2024
+ * Put together mostly from the previous example and the MINERvA RecoBranchFiller
+ * This code currently assumes one track <-> one interaction; to first order
+ * this is sane, as the primary use of TMS is muon collection for LAr events.
+ */
 
 namespace cafmaker
 {
@@ -101,23 +107,28 @@ namespace cafmaker
        * from a single interaction upstream in LAr.
        *     Liam     */
 
-      sr.nd.tms.ixn[i].ntracks = 1; // One reco track per interaction (ixn)
+      sr.nd.tms.ixn[i].ntracks = 1; // One reco track per interaction (ixn) TODO: allow tracks to have relation in future
       sr.nd.tms.ixn[i].tracks.resize(sr.nd.tms.ixn[i].ntracks);
 
       // Save first and last hit in track
       // TMS Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
       sr.nd.tms.ixn[i].tracks[0].start = caf::SRVector3D(_TrackStartPos[i][0]/10., _TrackStartPos[i][1]/10., _TrackStartPos[i][1]/10.);
       sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackEndPos[i][0]/10., _TrackEndPos[i][1]/10., _TrackEndPos[i][1]/10.);
-
-      // Track info
-      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i]/10.;
-      sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i];
-      sr.nd.tms.ixn[i].tracks[0].E         = _TrackTotalEnergy[i];
-
       // Get the directions
       // TODO: At present tracks are completely straight objects, so dir is the same here for both
       sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
       sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
+
+      TVector3* trackVec = new TVector3( (sr.nd.tms.ixn[i].tracks[0].end - sr.nd.tms.ixn[i].tracks[0].start) );
+
+      // Track info
+      sr.nd.tms.ixn[i].tracks[0].len_cm    = trackVec->Mag();
+      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i]/10.;
+      sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
+      sr.nd.tms.ixn[i].tracks[0].Evis      = _TrackEnergyDeposit[i];
+      sr.nd.tms.ixn[i].tracks[0].E         = _TrackTotalEnergy[i];
+
+      delete trackVec;
     }
   }
 
@@ -128,7 +139,7 @@ namespace cafmaker
     std::deque<Trigger> triggers;
     if (fTriggers.empty())
     {
-      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << TMSRecoTree->GetEntries() << " MINERvA Tree:\n";
+      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << TMSRecoTree->GetEntries() << " TMS Reco_Tree:\n";
       fTriggers.reserve(TMSRecoTree->GetEntries());
 
       for (int entry = 0; entry < TMSRecoTree->GetEntries(); entry++)
