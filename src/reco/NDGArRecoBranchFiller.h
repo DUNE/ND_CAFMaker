@@ -1,6 +1,7 @@
+/// \file NDGArRecoBranchFiller.h
 /// Fill NDGAr reco branches using NDGAr reco data
 ///
-/// \author  F. Martinez Lopez
+/// \author  F. Martinez Lopez <f.martinezlopez@qmul.ac.uk>
 /// \date    Oct. 2022
 ///
 
@@ -31,9 +32,9 @@ namespace cafmaker
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
-           caf::StandardRecord &sr,
-           const cafmaker::Params &par,
-           const TruthMatcher *truthMatcher) const override;
+                             caf::StandardRecord &sr,
+                             const cafmaker::Params &par,
+                             const TruthMatcher *truthMatcher) const override;
 
       void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt) const;
 
@@ -41,7 +42,10 @@ namespace cafmaker
                             caf::StandardRecord &sr) const;
       
       void FillTruth(caf::SRTrueParticle & srTruePart,
-           size_t iTrack) const;
+                     size_t iTrack) const;
+          
+      void FillParticles(const TruthMatcher * truthMatch,
+                         caf::StandardRecord &sr) const;
 
       void FillTracks(const TruthMatcher * truthMatch,
                       caf::StandardRecord &sr) const;
@@ -69,6 +73,7 @@ namespace cafmaker
       std::vector<float_t> *  fMCVertY=0;
       std::vector<float_t> *  fMCVertZ=0;
 
+      // MC Particles info
       std::vector<int> * fMCTrkID=0;
       std::vector<int> * fMCPDG=0;
       std::vector<int> * fMCMotherIndex=0;
@@ -88,6 +93,7 @@ namespace cafmaker
       //std::vector<float_t> * fMCEndPY=0;
       //std::vector<float_t> * fMCEndPZ=0;
 
+      // Track-related info
       std::vector<float_t> * fTrackStartX=0;
       std::vector<float_t> * fTrackStartY=0;
       std::vector<float_t> * fTrackStartZ=0;
@@ -104,8 +110,8 @@ namespace cafmaker
 
       std::vector<float_t> * fTrackLenF=0;
       std::vector<float_t> * fTrackLenB=0;
-      std::vector<float_t> * fTrackPF=0;
-      std::vector<float_t> * fTrackPB=0;
+      //std::vector<float_t> * fTrackPF=0;
+      //std::vector<float_t> * fTrackPB=0;
       std::vector<float_t> * fTrackAvgIonF=0;
       std::vector<float_t> * fTrackAvgIonB=0;
 
@@ -120,6 +126,7 @@ namespace cafmaker
       std::vector<int>     * fTrackMCindex=0;
       std::vector<float_t> * fTrackMCfrac=0;
 
+      // ECAL-related info
       std::vector<float_t> * fECALClusterX=0;
       std::vector<float_t> * fECALClusterY=0;
       std::vector<float_t> * fECALClusterZ=0;
@@ -132,9 +139,36 @@ namespace cafmaker
       std::vector<int>     * fECALClusterMCindex=0;
       std::vector<float_t> * fECALClusterMCfrac=0;
 
+      // ECAL-track associations
       std::vector<int> * fECALAssn_ClusterID=0;
       std::vector<int> * fECALAssn_TrackID=0;
-    
+
+      // MuID-related info
+      std::vector<float_t> * fMuIDClusterX=0;
+      std::vector<float_t> * fMuIDClusterY=0;
+      std::vector<float_t> * fMuIDClusterZ=0;
+
+      std::vector<int> * fMuIDClusterIDNumber=0;
+
+      std::vector<float_t> * fMuIDClusterEnergy=0;
+      std::vector<int>     * fMuIDClusterNhits=0;
+
+      std::vector<int>     * fMuIDClusterMCindex=0;
+      std::vector<float_t> * fMuIDClusterMCfrac=0;
+
+      // MuID-track associations
+      //std::vector<int> * fMuIDAssn_ClusterID=0;
+      //std::vector<int> * fMuIDAssn_TrackID=0;
+
+      // Reco particle info
+      std::vector<float_t> * fRecoParticleMomentum=0;
+      std::vector<int> * fRecoParticleNHitsECAL=0;
+      std::vector<float_t> * fRecoParticleMuonScore=0;
+      std::vector<int> * fRecoParticlePID=0;
+
+      // Reco interaction info
+      std::vector<float_t> * fRecoNuEnergy=0;
+
   };
 
 }

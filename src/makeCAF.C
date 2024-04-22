@@ -392,7 +392,7 @@ void loop(CAF &caf,
       cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
       fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
     }
-
+    cafmaker::LOG_S("loop()").INFO() << "  Filling CAF" << ".\n";
     caf.fill();
   }
   progBar.Done();

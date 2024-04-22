@@ -45,8 +45,8 @@ namespace cafmaker
       NDGArRecoTree->SetBranchAddress("MCVertY", &fMCVertY);
       NDGArRecoTree->SetBranchAddress("MCVertZ", &fMCVertZ);
 
-      ///MC Particles info
-      NDGArRecoTree->SetBranchAddress("MCTrkID", &fMCTrkID);
+      // MC Particles info
+      NDGArRecoTree->SetBranchAddress("MCPTrkID", &fMCTrkID);
       NDGArRecoTree->SetBranchAddress("PDG", &fMCPDG);
       NDGArRecoTree->SetBranchAddress("MotherIndex", &fMCMotherIndex);
       NDGArRecoTree->SetBranchAddress("PDGMother", &fMCPDGMother);
@@ -65,7 +65,7 @@ namespace cafmaker
       //NDGArRecoTree->SetBranchAddress("MCPEndPY", &fMCEndPY);
       //NDGArRecoTree->SetBranchAddress("MCPEndPZ", &fMCEndPZ);
 
-      //Track-related info
+      // Track-related info
       NDGArRecoTree->SetBranchAddress("TrackStartX", &fTrackStartX);
       NDGArRecoTree->SetBranchAddress("TrackStartY", &fTrackStartY);
       NDGArRecoTree->SetBranchAddress("TrackStartZ", &fTrackStartZ);
@@ -82,8 +82,8 @@ namespace cafmaker
 
       NDGArRecoTree->SetBranchAddress("TrackLenF", &fTrackLenF);
       NDGArRecoTree->SetBranchAddress("TrackLenB", &fTrackLenB);
-      NDGArRecoTree->SetBranchAddress("TrackPF", &fTrackPF);
-      NDGArRecoTree->SetBranchAddress("TrackPB", &fTrackPB);
+      //NDGArRecoTree->SetBranchAddress("TrackPF", &fTrackPF);
+      //NDGArRecoTree->SetBranchAddress("TrackPB", &fTrackPB);
       NDGArRecoTree->SetBranchAddress("TrackAvgIonF", &fTrackAvgIonF);
       NDGArRecoTree->SetBranchAddress("TrackAvgIonB", &fTrackAvgIonB);
 
@@ -98,7 +98,7 @@ namespace cafmaker
       NDGArRecoTree->SetBranchAddress("TrackMCindex", &fTrackMCindex);
       NDGArRecoTree->SetBranchAddress("TrackMCfrac", &fTrackMCfrac);
 
-      //ECAL-related info
+      // ECAL-related info
       NDGArRecoTree->SetBranchAddress("ClusterX", &fECALClusterX);
       NDGArRecoTree->SetBranchAddress("ClusterY", &fECALClusterY);
       NDGArRecoTree->SetBranchAddress("ClusterZ", &fECALClusterZ);
@@ -106,14 +106,43 @@ namespace cafmaker
       NDGArRecoTree->SetBranchAddress("ClusterIDNumber", &fECALClusterIDNumber);
 
       NDGArRecoTree->SetBranchAddress("ClusterEnergy", &fECALClusterEnergy);
-      NDGArRecoTree->SetBranchAddress("ClusterNhits", &fECALClusterNhits);
+      NDGArRecoTree->SetBranchAddress("ClusterNhits",  &fECALClusterNhits);
 
       NDGArRecoTree->SetBranchAddress("ClusterMCindex", &fECALClusterMCindex);
-      NDGArRecoTree->SetBranchAddress("ClusterMCfrac", &fECALClusterMCfrac);
+      NDGArRecoTree->SetBranchAddress("ClusterMCfrac",  &fECALClusterMCfrac);
 
-      //ECAL-track associations
+      // ECAL-track associations
       NDGArRecoTree->SetBranchAddress("ECALAssn_ClusIDNumber", &fECALAssn_ClusterID);
       NDGArRecoTree->SetBranchAddress("ECALAssn_TrackIDNumber", &fECALAssn_TrackID);
+
+      // MuID-related info
+      NDGArRecoTree->SetBranchAddress("ClusterX_MuID", &fMuIDClusterX);
+      NDGArRecoTree->SetBranchAddress("ClusterY_MuID", &fMuIDClusterY);
+      NDGArRecoTree->SetBranchAddress("ClusterZ_MuID", &fMuIDClusterZ);
+
+      NDGArRecoTree->SetBranchAddress("ClusterIDNumber_MuID", &fMuIDClusterIDNumber);
+
+      NDGArRecoTree->SetBranchAddress("ClusterEnergy_MuID", &fMuIDClusterEnergy);
+      NDGArRecoTree->SetBranchAddress("ClusterNhits_MuID",  &fMuIDClusterNhits);
+
+      NDGArRecoTree->SetBranchAddress("ClusterMCindex_MuID", &fMuIDClusterMCindex);
+      NDGArRecoTree->SetBranchAddress("ClusterMCfrac_MuID",  &fMuIDClusterMCfrac);
+
+      // MuID-track associations
+      //NDGArRecoTree->SetBranchAddress("MuIDAssn_ClusIDNumber",  &fMuIDAssn_ClusterID);
+      //NDGArRecoTree->SetBranchAddress("MuIDAssn_TrackIDNumber", &fMuIDAssn_TrackID);
+
+      // Reco particle info
+      NDGArRecoTree->SetBranchAddress("RecoParticleMomentum",  &fRecoParticleMomentum);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleNHitsECAL",  &fRecoParticleNHitsECAL);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleMuonScore",  &fRecoParticleMuonScore);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticlePID",  &fRecoParticlePID);
+
+      // Reco interaction info
+      NDGArRecoTree->SetBranchAddress("RecoNuEnergy",  &fRecoNuEnergy);
 
     } else {
       NDGArRecoTree = NULL;
@@ -177,6 +206,9 @@ namespace cafmaker
     FillTracks(truthMatcher, sr);
     FillClusters(sr);
 
+    FillParticles(truthMatcher, sr);
+    LOG.VERBOSE() << "    Done with event: " << fEvent << ".\n";
+
     //legacy variables
     //using forward variables only!
 
@@ -212,6 +244,7 @@ namespace cafmaker
 
   }
 
+  // ------------------------------------------------------------------------------
   void NDGArRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
                                                caf::StandardRecord &sr) const
   {
@@ -219,12 +252,8 @@ namespace cafmaker
     //         per event/trigger (I think we can easily change that?)
     //         so we only need one interaction object in the common
     //         reco branch so far
-    // F says: right now there is no GArSoft-specific branch in the
-    //         common branch (do we really need that?), so we simply
-    //         use the DLP one for now (bit confusing with the names
-    //         but no problems whatsoever)
-    sr.common.ixn.dlp.reserve(1);
-    sr.common.ixn.ndlp = 1;
+    sr.common.ixn.gsft.reserve(1);
+    sr.common.ixn.ngsft = 1;
 
     // F says: again, right now we have one interaction per event/trigger
     //         so we simply need to create an SRInteraction and assign a
@@ -232,8 +261,11 @@ namespace cafmaker
 
     caf::SRInteraction interaction;
     interaction.id  = 1;
+
     // F says: no reco interaction vertex for now, don't fill
     /* interaction.vtx  = caf::SRVector3D(ixn.vertex[0], ixn.vertex[1], ixn.vertex[2]); */
+
+    interaction.Enu.lep_calo = fRecoNuEnergy->at(0); // only one true interaction per trigger, only one reco energy in vector...
 
     // F says: we store all the GENIE PartIdx in our GArSoft tree,
     //         so we can simply take the first one 
@@ -268,19 +300,88 @@ namespace cafmaker
 
     LOG.VERBOSE() << "  ** end matched true interaction search" << ".\n";
 
-    sr.common.ixn.dlp.push_back(std::move(interaction));
+    sr.common.ixn.gsft.push_back(std::move(interaction));
 
   }
 
+  // ------------------------------------------------------------------------------
+  void NDGArRecoBranchFiller::FillParticles(const TruthMatcher * truthMatch,
+                                            caf::StandardRecord &sr) const
+  {
+    LOG.DEBUG() << "Filling reco particles...\n";
+
+    // note: used in the hack further below
+    //static SRPartCmp srPartCmp;
+
+    size_t n_particles = fTrackStartX->size();
+    LOG.VERBOSE() << "    GArSoft number of reco particles: " << n_particles << ".\n";
+    sr.nd.gar.ixn[0].nparticles = n_particles;
+
+    for (size_t iParticle=0; iParticle<n_particles; iParticle++){
+        LOG.VERBOSE() << "        Filling particle " << iParticle << ".\n";
+
+      // F says: we create both a SRRecoParticle (which will go in sr.common.ixn.gsft.part)
+      //         and a SRGArParticle (which will go in sr.nd.gar.ixn.particles) at the same
+      //         time. They both contain almost the same information, but SRGArParticle has
+      //         all the variables required to recompute the PID.
+      caf::SRRecoParticle reco_particle;
+      caf::SRGArParticle  reco_particle_gar;
+
+      // if(part.is_primary) reco_particle.primary = true;
+      //reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
+      //reco_particle.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
+      //reco_particle.contained = part.is_contained; // this is not just the vertex, but all energies are contained
+
+      reco_particle.tgtA = 40;
+
+      reco_particle.pdg = fRecoParticlePID->at(iParticle);
+
+      caf::SRVector3D p(0.0, 0.0, fRecoParticleMomentum->at(iParticle));
+      reco_particle.p = p;
+      reco_particle_gar.p = p;
+      
+      //reco_particle.E = part.csda_ke/1000.;
+      reco_particle.E_method = caf::PartEMethod::kCurvature; // only method available for GAr atm
+
+      // Fill SRGArParticle specific values
+      reco_particle_gar.dEdx_total = fRecoParticleTotalCaloEnergy->at(iParticle);
+      reco_particle_gar.dEdx_mean  = fRecoParticleMeanCaloEnergy->at(iParticle);
+
+      reco_particle_gar.ECAL_total_energy = fRecoParticleTotalECALEnergy->at(iParticle);
+      reco_particle_gar.ECAL_n_hits = fRecoParticleNHitsECAL->at(iParticle);
+      reco_particle_gar.MuID_total_energy = fRecoParticleTotalMuIDEnergy->at(iParticle);
+      reco_particle_gar.MuID_n_hits = fRecoParticleNHitsMuID->at(iParticle);
+
+      reco_particle_gar.ToF_time = fRecoParticleToFTime->at(iParticle);
+      reco_particle_gar.ToF_beta = fRecoParticleToFBeta->at(iParticle);
+
+      reco_particle_gar.charge = fRecoParticleCharge->at(iParticle);
+
+      reco_particle_gar.muon_score        = fRecoParticleMuonScore->at(iParticle);
+      reco_particle_gar.proton_dEdx_score = fRecoParticleProtonCaloScore->at(iParticle);
+      reco_particle_gar.proton_tof_score  = fRecoParticleProtonToFScore->at(iParticle);
+
+      // no truth matching yet :(
+
+      sr.common.ixn.gsft[0].part.gsft.push_back(std::move(reco_particle));
+      sr.common.ixn.gsft[0].part.ngsft++;
+
+      sr.nd.gar.ixn[0].particles.push_back(reco_particle_gar);
+      sr.nd.gar.ixn[0].nparticles++;
+
+    }
+  }
+
+  // ------------------------------------------------------------------------------
   void NDGArRecoBranchFiller::FillTracks(const TruthMatcher * truthMatch,
                                          caf::StandardRecord &sr) const
   {
     // F says: sr.nd.gar.ixn should be resize using the size of
-    //         sr.common.ixn.garsoft (why? isn't sr.common.ixn.ngarsoft
+    //         sr.common.ixn.gsft (why? isn't sr.common.ixn.ngsft
     //         the same?), but because it's empty for now let's use 
-    //         sr.common.ixn.ngarsoft
-    sr.nd.gar.ixn.resize(sr.common.ixn.ndlp);
-    sr.nd.gar.nixn = sr.common.ixn.ndlp;
+    //         sr.common.ixn.ngsft
+    sr.nd.gar.ixn.resize(sr.common.ixn.ngsft);
+    sr.nd.gar.nixn = sr.common.ixn.ngsft;
 
     size_t n_tracks = fTrackStartX->size();
     LOG.VERBOSE() << "    GArSoft number of reco tracks: " << n_tracks << ".\n";
@@ -304,11 +405,11 @@ namespace cafmaker
         track.enddir = enddir.Unit();
 
         track.len_cm_fwd = fTrackLenF->at(iTrack);
-        track.len_cm_bkwd = fTrackLenB->at(iTrack);
-        track.p_fwd = fTrackPF->at(iTrack);
-        track.p_bkwd = fTrackPB->at(iTrack);
-        track.dEdx_fwd = fTrackAvgIonF->at(iTrack);
-        track.dEdx_bkwd = fTrackAvgIonB->at(iTrack);
+        track.len_cm_bak = fTrackLenB->at(iTrack);
+        //track.p_fwd = fTrackPF->at(iTrack);
+        //track.p_bak = fTrackPB->at(iTrack);
+        track.dQdx_fwd = fTrackAvgIonF->at(iTrack);
+        track.dQdx_bak = fTrackAvgIonB->at(iTrack);
 
         track.garsoft_trk_id = fTrackIDNumber->at(iTrack);
         track.clusters_in_track = fTrackNClusters->at(iTrack);
@@ -318,8 +419,8 @@ namespace cafmaker
           LOG.VERBOSE() << "            iPID in loop: " << iPID << ".\n";
           track.pid_fwd.push_back(fTrackPIDF->at(iPID));
           track.pid_prob_fwd.push_back(fTrackPIDProbF->at(iPID));
-          track.pid_bkwd.push_back(fTrackPIDB->at(iPID));
-          track.pid_prob_bkwd.push_back(fTrackPIDProbB->at(iPID));
+          track.pid_bak.push_back(fTrackPIDB->at(iPID));
+          track.pid_prob_bak.push_back(fTrackPIDProbB->at(iPID));
         }
         ++pid_counter;
 
@@ -341,7 +442,7 @@ namespace cafmaker
           // we use the comparison version because the G4ID from the pass-through
           // counts up monotonically from 0 across the whole FILE,
           // whereas the GENIE events start over at every interaction.
-          // moreover, the cafmaker::types::dlp::TrueParticle::is_primary flag
+          // moreover, the cafmaker::types::gsft::TrueParticle::is_primary flag
           // is currently broken (upstream info from Supera is screwed up)
           // so we need to try both collections :(
           static SRPartCmp srPartCmp;
@@ -381,9 +482,12 @@ namespace cafmaker
 
           LOG.VERBOSE() << "      index of SRParticle in the SRInteraction " << truthVecIdx << "\n";
 
-          track.truth = caf::TrueParticleID{srTrueIntIdx,
+          // F says: currently our reco only gives truth matching
+          //         to one MCParticle, but we can change that if
+          //         we need to...
+          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                             (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
-                                            static_cast<int>(truthVecIdx)};
+                                            static_cast<int>(truthVecIdx)});
 
         }
 
@@ -392,6 +496,7 @@ namespace cafmaker
     }
   }
 
+  // ------------------------------------------------------------------------------
   void NDGArRecoBranchFiller::FillTruth(caf::SRTrueParticle & srTruePart, size_t iMCParticleTrack) const
   {
 
@@ -409,6 +514,7 @@ namespace cafmaker
 
   }
 
+  // ------------------------------------------------------------------------------
   void NDGArRecoBranchFiller::FillClusters(caf::StandardRecord &sr) const
   {
    // F says: sr.nd.gar.ixn already has the right size, so
@@ -416,7 +522,7 @@ namespace cafmaker
 
    size_t n_clusters = fECALClusterX->size();
    LOG.VERBOSE() << "    GArSoft number of reco clusters: " << n_clusters << ".\n";
-   sr.nd.gar.ixn[0].nclusters = n_clusters;
+   sr.nd.gar.ixn[0].necalclusters = n_clusters;
 
    size_t n_assns = fECALAssn_ClusterID->size();
    caf::SRGArECAL cluster;
@@ -438,7 +544,7 @@ namespace cafmaker
         }
       }
 
-      sr.nd.gar.ixn[0].clusters.push_back(cluster);
+      sr.nd.gar.ixn[0].ecalclusters.push_back(cluster);
 
    }
 
