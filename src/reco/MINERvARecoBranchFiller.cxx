@@ -431,14 +431,22 @@ namespace cafmaker
     caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, true, false)
                                                     : truthMatch->GetTrueParticle(sr, srTrueInt, edepsim_track_id, false, true);
 
-    caf::TrueParticleID truePartID;
-    truePartID.ixn = truthVecIdx;
+
+    caf::TrueParticleID truePartID;                                                                                                                                                              truePartID.ixn = truthVecIdx;
     truePartID.type = is_primary ? caf::TrueParticleID::kPrimary
                                  : caf::TrueParticleID::kSecondary;
-    truePartID.part = edepsim_track_id;
+
+    FillTrueParticle(srTruePart,max_trkid);
+
+
+    if (truePartID.type == caf::TrueParticleID::kPrimary) truePartID.part = edepsim_track_id;
+    else
+    {
+      truePartID.part = std::distance(srTrueInt.sec.begin(), std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID
+== edepsim_track_id; })); // we just filled it so it should be fine
+    }
     sh.truth.push_back(std::move(truePartID));
 
-    FillTrueParticle(srTruePart, max_trkid);
   }
 
   void MINERvARecoBranchFiller::FindTruthTrack(caf::StandardRecord &sr, caf::SRTrack &t, int track_id, const TruthMatcher *truthMatch) const
@@ -511,11 +519,16 @@ namespace cafmaker
     truePartID.ixn = truthVecIdx;
     truePartID.type = is_primary ? caf::TrueParticleID::kPrimary
                                  : caf::TrueParticleID::kSecondary;
-    truePartID.part = edepsim_track_id;
+
+    FillTrueParticle(srTruePart,max_trkid);                                                                                                                                                  
+
+
+    if (truePartID.type == caf::TrueParticleID::kPrimary) truePartID.part = edepsim_track_id;
+    else
+    {
+      truePartID.part = std::distance(srTrueInt.sec.begin(), std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), [edepsim_track_id](const caf::SRTrueParticle& part) { return part.G4ID == edepsim_track_id; })); // we just filled it so it should be fine
+    }
     t.truth.push_back(std::move(truePartID));
-
-
-    FillTrueParticle(srTruePart,max_trkid);
 
   }
 
