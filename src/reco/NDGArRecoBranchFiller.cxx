@@ -112,7 +112,7 @@ namespace cafmaker
       NDGArRecoTree->SetBranchAddress("ClusterMCfrac",  &fECALClusterMCfrac);
 
       // ECAL-track associations
-      NDGArRecoTree->SetBranchAddress("ECALAssn_ClusIDNumber", &fECALAssn_ClusterID);
+      NDGArRecoTree->SetBranchAddress("ECALAssn_ClusIDNumber",  &fECALAssn_ClusterID);
       NDGArRecoTree->SetBranchAddress("ECALAssn_TrackIDNumber", &fECALAssn_TrackID);
 
       // MuID-related info
@@ -129,17 +129,56 @@ namespace cafmaker
       NDGArRecoTree->SetBranchAddress("ClusterMCfrac_MuID",  &fMuIDClusterMCfrac);
 
       // MuID-track associations
-      //NDGArRecoTree->SetBranchAddress("MuIDAssn_ClusIDNumber",  &fMuIDAssn_ClusterID);
-      //NDGArRecoTree->SetBranchAddress("MuIDAssn_TrackIDNumber", &fMuIDAssn_TrackID);
+      NDGArRecoTree->SetBranchAddress("MuIDAssn_ClusIDNumber",  &fMuIDAssn_ClusterID);
+      NDGArRecoTree->SetBranchAddress("MuIDAssn_TrackIDNumber", &fMuIDAssn_TrackID);
 
       // Reco particle info
-      NDGArRecoTree->SetBranchAddress("RecoParticleMomentum",  &fRecoParticleMomentum);
+      NDGArRecoTree->SetBranchAddress("RecoParticleIDNumber",    &fRecoParticleID);
 
-      NDGArRecoTree->SetBranchAddress("RecoParticleNHitsECAL",  &fRecoParticleNHitsECAL);
+      NDGArRecoTree->SetBranchAddress("RecoParticleMomentum",    &fRecoParticleMomentum);
 
-      NDGArRecoTree->SetBranchAddress("RecoParticleMuonScore",  &fRecoParticleMuonScore);
+      NDGArRecoTree->SetBranchAddress("RecoParticleTotalCaloEnergy",    &fRecoParticleTotalCaloEnergy);
+      NDGArRecoTree->SetBranchAddress("RecoParticleMeanCaloEnergy",     &fRecoParticleMeanCaloEnergy);
 
-      NDGArRecoTree->SetBranchAddress("RecoParticlePID",  &fRecoParticlePID);
+      NDGArRecoTree->SetBranchAddress("RecoParticleTotalECALEnergy",  &fRecoParticleTotalECALEnergy);
+      NDGArRecoTree->SetBranchAddress("RecoParticleNHitsECAL",        &fRecoParticleNHitsECAL);
+      NDGArRecoTree->SetBranchAddress("RecoParticleTotalMuIDEnergy",  &fRecoParticleTotalMuIDEnergy);
+      NDGArRecoTree->SetBranchAddress("RecoParticleNHitsMuID",        &fRecoParticleNHitsMuID);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleECALToFTime",    &fRecoParticleToFTime);
+      NDGArRecoTree->SetBranchAddress("RecoParticleECALToFBeta",    &fRecoParticleToFBeta);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleCharge",      &fRecoParticleCharge);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleStartX",      &fRecoParticleStartX);
+      NDGArRecoTree->SetBranchAddress("RecoParticleStartY",      &fRecoParticleStartY);
+      NDGArRecoTree->SetBranchAddress("RecoParticleStartZ",      &fRecoParticleStartZ);
+      NDGArRecoTree->SetBranchAddress("RecoParticleEndX",        &fRecoParticleEndX);
+      NDGArRecoTree->SetBranchAddress("RecoParticleEndY",        &fRecoParticleEndY);
+      NDGArRecoTree->SetBranchAddress("RecoParticleEndZ",        &fRecoParticleEndZ);
+      NDGArRecoTree->SetBranchAddress("RecoParticleDirectionX",  &fRecoParticleDirectionX);
+      NDGArRecoTree->SetBranchAddress("RecoParticleDirectionY",  &fRecoParticleDirectionY);
+      NDGArRecoTree->SetBranchAddress("RecoParticleDirectionZ",  &fRecoParticleDirectionZ);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleMuonScore",        &fRecoParticleMuonScore);
+      NDGArRecoTree->SetBranchAddress("RecoParticleProtonCaloScore",  &fRecoParticleProtonCaloScore);
+      NDGArRecoTree->SetBranchAddress("RecoParticleProtonToFScore",   &fRecoParticleProtonToFScore);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticlePID",     &fRecoParticlePID);
+      NDGArRecoTree->SetBranchAddress("RecoParticleEnergy",  &fRecoParticleEnergy);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleMCindex", &fRecoParticleMCindex);
+      NDGArRecoTree->SetBranchAddress("RecoParticleMCfrac",  &fRecoParticleMCfrac);
+
+      // Reco particle associations
+      NDGArRecoTree->SetBranchAddress("RecoParticleTrackAssn_RecoPIDNumber",     &fParticleTrackAssn_ParticleID);
+      NDGArRecoTree->SetBranchAddress("RecoParticleTrackAssn_TrackIDNumber",     &fParticleTrackAssn_TrackID);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleECalAssn_RecoPIDNumber",      &fParticleECALAssn_ParticleID);
+      NDGArRecoTree->SetBranchAddress("RecoParticleECalAssn_ClusterIDNumber",    &fParticleECALAssn_ClusterID);
+
+      NDGArRecoTree->SetBranchAddress("RecoParticleMuIDAssn_RecoPIDNumber",      &fParticleMuIDAssn_ParticleID);
+      NDGArRecoTree->SetBranchAddress("RecoParticleMuIDAssn_ClusterIDNumber",    &fParticleMuIDAssn_ClusterID);
 
       // Reco interaction info
       NDGArRecoTree->SetBranchAddress("RecoNuEnergy",  &fRecoNuEnergy);
@@ -196,15 +235,16 @@ namespace cafmaker
 
     //Fill ND-GAr specific info in the meta branch
     sr.meta.nd_gar.enabled = true;
-    //sr.meta.nd_lar.run = fRun;
-    //sr.meta.nd_lar.subrun = fSubRun;
+    //sr.meta.nd_gar.run = fRun;
+    //sr.meta.nd_gar.subrun = fSubRun;
     LOG.VERBOSE() << "    GArSoft event number: " << fEvent << ".\n";
     sr.meta.nd_gar.event = fEvent;
 
     FillInteractions(truthMatcher, sr);
 
     FillTracks(truthMatcher, sr);
-    FillClusters(sr);
+    FillECalClusters(sr);
+    FillMuIDClusters(sr);
 
     FillParticles(truthMatcher, sr);
     LOG.VERBOSE() << "    Done with event: " << fEvent << ".\n";
@@ -315,7 +355,12 @@ namespace cafmaker
 
     size_t n_particles = fTrackStartX->size();
     LOG.VERBOSE() << "    GArSoft number of reco particles: " << n_particles << ".\n";
-    sr.nd.gar.ixn[0].nparticles = n_particles;
+    //sr.nd.gar.ixn[0].nparticles = n_particles;
+
+    // Get the number of associations in the event
+    size_t n_assns_tracks = fParticleTrackAssn_ParticleID->size();
+    size_t n_assns_ecal   = fParticleECALAssn_ParticleID->size();
+    size_t n_assns_muid   = fParticleMuIDAssn_ParticleID->size();
 
     for (size_t iParticle=0; iParticle<n_particles; iParticle++){
         LOG.VERBOSE() << "        Filling particle " << iParticle << ".\n";
@@ -340,17 +385,19 @@ namespace cafmaker
       reco_particle.p = p;
       reco_particle_gar.p = p;
       
-      //reco_particle.E = part.csda_ke/1000.;
+      reco_particle.E = fRecoParticleEnergy->at(iParticle);
       reco_particle.E_method = caf::PartEMethod::kCurvature; // only method available for GAr atm
 
       // Fill SRGArParticle specific values
+      reco_particle_gar.garsoft_part_id = fRecoParticleID->at(iParticle);
+
       reco_particle_gar.dEdx_total = fRecoParticleTotalCaloEnergy->at(iParticle);
       reco_particle_gar.dEdx_mean  = fRecoParticleMeanCaloEnergy->at(iParticle);
 
       reco_particle_gar.ECAL_total_energy = fRecoParticleTotalECALEnergy->at(iParticle);
-      reco_particle_gar.ECAL_n_hits = fRecoParticleNHitsECAL->at(iParticle);
+      reco_particle_gar.ECAL_n_hits       = fRecoParticleNHitsECAL->at(iParticle);
       reco_particle_gar.MuID_total_energy = fRecoParticleTotalMuIDEnergy->at(iParticle);
-      reco_particle_gar.MuID_n_hits = fRecoParticleNHitsMuID->at(iParticle);
+      reco_particle_gar.MuID_n_hits       = fRecoParticleNHitsMuID->at(iParticle);
 
       reco_particle_gar.ToF_time = fRecoParticleToFTime->at(iParticle);
       reco_particle_gar.ToF_beta = fRecoParticleToFBeta->at(iParticle);
@@ -361,7 +408,103 @@ namespace cafmaker
       reco_particle_gar.proton_dEdx_score = fRecoParticleProtonCaloScore->at(iParticle);
       reco_particle_gar.proton_tof_score  = fRecoParticleProtonToFScore->at(iParticle);
 
-      // no truth matching yet :(
+      // Filling associations to other reco objects
+      for (size_t iAssnTrack=0; iAssnTrack<n_assns_tracks; ++iAssnTrack){
+        LOG.VERBOSE() << "            iAssnTrack in loop: " << iAssnTrack
+                      << "            ParticleID:         " << fParticleTrackAssn_ParticleID->at(iAssnTrack)
+                      << "            TrackID:            " << fParticleTrackAssn_TrackID->at(iAssnTrack) << ".\n";
+        if (reco_particle_gar.garsoft_part_id == fParticleTrackAssn_ParticleID->at(iAssnTrack)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          reco_particle_gar.garsoft_trk_assn = fParticleTrackAssn_TrackID->at(iAssnTrack);
+        }
+      }
+
+      for (size_t iAssnECAL=0; iAssnECAL<n_assns_ecal; ++iAssnECAL){
+        LOG.VERBOSE() << "            iAssnECAL in loop:  " << iAssnECAL
+                      << "            ParticleID:         " << fParticleECALAssn_ParticleID->at(iAssnECAL)
+                      << "            ECalID:             " << fParticleECALAssn_ClusterID->at(iAssnECAL) << ".\n";
+        if (reco_particle_gar.garsoft_part_id == fParticleECALAssn_ParticleID->at(iAssnECAL)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          reco_particle_gar.garsoft_ecal_assns.push_back(fParticleECALAssn_ClusterID->at(iAssnECAL));
+        }
+      }
+
+      for (size_t iAssnMuID=0; iAssnMuID<n_assns_muid; ++iAssnMuID){
+        LOG.VERBOSE() << "            iAssnMuID in loop:  " << iAssnMuID
+                      << "            ParticleID:         " << fParticleMuIDAssn_ParticleID->at(iAssnMuID)
+                      << "            MuIDID:             " << fParticleMuIDAssn_ClusterID->at(iAssnMuID) << ".\n";
+        if (reco_particle_gar.garsoft_part_id == fParticleMuIDAssn_ParticleID->at(iAssnMuID)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          reco_particle_gar.garsoft_muid_assns.push_back(fParticleMuIDAssn_ClusterID->at(iAssnMuID));
+        }
+      }
+
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, fEvent-1, false);
+      // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+      int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                       std::find_if(sr.mc.nu.begin(),
+                                                    sr.mc.nu.end(),
+                                                    [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+
+      int iMCParticleRecoP = fRecoParticleMCindex->at(iParticle);
+      if(iMCParticleRecoP >= 0){
+
+        caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleRecoP), fMCStartPY->at(iMCParticleRecoP), fMCStartPZ->at(iMCParticleRecoP));
+
+
+        // find the true particle this reco particle goes with.
+        // if we had GENIE info and it was a primary, it should already be filled in.
+        // we use the comparison version because the G4ID from the pass-through
+        // counts up monotonically from 0 across the whole FILE,
+        // whereas the GENIE events start over at every interaction.
+        // moreover, the cafmaker::types::gsft::TrueParticle::is_primary flag
+        // is currently broken (upstream info from Supera is screwed up)
+        // so we need to try both collections :(
+        static SRPartCmp srPartCmp;
+        srPartCmp.p = mc_p.Mag();
+        srPartCmp.trkid = fMCTrkID->at(iMCParticleRecoP);
+
+        bool isPrim = false;
+        caf::SRTrueParticle * srTruePart = nullptr;
+        try
+        {
+          // F says: our GENIE particles won't have a valid G4ID
+          //         therefore the comparsion will only look at 
+          //         the module of the 3-momentum
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
+          isPrim = true;
+        }
+        catch ( std::runtime_error& err )
+        {
+          // guess if it wasn't a primary, it must be a secondary :(
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+        }
+
+        // however this will fill in any other fields that weren't copied from a GENIE record
+        // (which also handles the case where this particle is a secondary)
+        FillTruth(*srTruePart, iMCParticleRecoP);
+
+        // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
+        // first find the interaction that it goes with
+        LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
+        std::vector<caf::SRTrueParticle> & collection = (isPrim)
+                                                        ? srTrueInt.prim
+                                                        : srTrueInt.sec;
+        std::size_t truthVecIdx = std::distance(collection.begin(),
+                                                std::find_if(collection.begin(),
+                                                              collection.end(),
+                                                              srPartCmp));
+
+        LOG.VERBOSE() << "      index of SRParticle in the SRInteraction " << truthVecIdx << "\n";
+
+        // F says: currently our reco only gives truth matching
+        //         to one MCParticle, but we can change that if
+        //         we need to...
+        reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                                          (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
+                                                          static_cast<int>(truthVecIdx)});
+        reco_particle.truthOverlap.push_back(fRecoParticleMCfrac->at(iParticle));
+      }
 
       sr.common.ixn.gsft[0].part.gsft.push_back(std::move(reco_particle));
       sr.common.ixn.gsft[0].part.ngsft++;
@@ -390,108 +533,108 @@ namespace cafmaker
     size_t pid_counter = 0;
     caf::SRGArTrack track;
     for (size_t iTrack=0; iTrack<n_tracks; iTrack++){
-        LOG.VERBOSE() << "        Filling track " << iTrack << ".\n";
-        
-        caf::SRVector3D start(fTrackStartX->at(iTrack), fTrackStartY->at(iTrack), fTrackStartZ->at(iTrack));
-        track.start = start;
-        
-        caf::SRVector3D end(fTrackEndX->at(iTrack), fTrackEndY->at(iTrack), fTrackEndZ->at(iTrack));
-        track.end = end;
-        
-        caf::SRVector3D dir(fTrackStartPX->at(iTrack), fTrackStartPY->at(iTrack), fTrackStartPZ->at(iTrack));
-        track.dir = dir.Unit();
+      LOG.VERBOSE() << "        Filling track " << iTrack << ".\n";
+      
+      caf::SRVector3D start(fTrackStartX->at(iTrack), fTrackStartY->at(iTrack), fTrackStartZ->at(iTrack));
+      track.start = start;
+      
+      caf::SRVector3D end(fTrackEndX->at(iTrack), fTrackEndY->at(iTrack), fTrackEndZ->at(iTrack));
+      track.end = end;
+      
+      caf::SRVector3D dir(fTrackStartPX->at(iTrack), fTrackStartPY->at(iTrack), fTrackStartPZ->at(iTrack));
+      track.dir = dir.Unit();
 
-        caf::SRVector3D enddir(fTrackEndPX->at(iTrack), fTrackEndPY->at(iTrack), fTrackEndPZ->at(iTrack));
-        track.enddir = enddir.Unit();
+      caf::SRVector3D enddir(fTrackEndPX->at(iTrack), fTrackEndPY->at(iTrack), fTrackEndPZ->at(iTrack));
+      track.enddir = enddir.Unit();
 
-        track.len_cm_fwd = fTrackLenF->at(iTrack);
-        track.len_cm_bak = fTrackLenB->at(iTrack);
-        //track.p_fwd = fTrackPF->at(iTrack);
-        //track.p_bak = fTrackPB->at(iTrack);
-        track.dQdx_fwd = fTrackAvgIonF->at(iTrack);
-        track.dQdx_bak = fTrackAvgIonB->at(iTrack);
+      track.len_cm_fwd = fTrackLenF->at(iTrack);
+      track.len_cm_bak = fTrackLenB->at(iTrack);
+      //track.p_fwd = fTrackPF->at(iTrack);
+      //track.p_bak = fTrackPB->at(iTrack);
+      track.dQdx_fwd = fTrackAvgIonF->at(iTrack);
+      track.dQdx_bak = fTrackAvgIonB->at(iTrack);
 
-        track.garsoft_trk_id = fTrackIDNumber->at(iTrack);
-        track.clusters_in_track = fTrackNClusters->at(iTrack);
+      track.garsoft_trk_id = fTrackIDNumber->at(iTrack);
+      track.clusters_in_track = fTrackNClusters->at(iTrack);
 
-        LOG.VERBOSE() << "        PID counter: " << pid_counter << ".\n";
-        for (size_t iPID=6*pid_counter; iPID<6*(pid_counter+1); ++iPID){
-          LOG.VERBOSE() << "            iPID in loop: " << iPID << ".\n";
-          track.pid_fwd.push_back(fTrackPIDF->at(iPID));
-          track.pid_prob_fwd.push_back(fTrackPIDProbF->at(iPID));
-          track.pid_bak.push_back(fTrackPIDB->at(iPID));
-          track.pid_prob_bak.push_back(fTrackPIDProbB->at(iPID));
+      LOG.VERBOSE() << "        PID counter: " << pid_counter << ".\n";
+      for (size_t iPID=6*pid_counter; iPID<6*(pid_counter+1); ++iPID){
+        LOG.VERBOSE() << "            iPID in loop: " << iPID << ".\n";
+        track.pid_fwd.push_back(fTrackPIDF->at(iPID));
+        track.pid_prob_fwd.push_back(fTrackPIDProbF->at(iPID));
+        track.pid_bak.push_back(fTrackPIDB->at(iPID));
+        track.pid_prob_bak.push_back(fTrackPIDProbB->at(iPID));
+      }
+      ++pid_counter;
+
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, fEvent-1, false);
+      // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+      int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                        std::find_if(sr.mc.nu.begin(),
+                                                    sr.mc.nu.end(),
+                                                    [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+
+      int iMCParticleTrack = fTrackMCindex->at(iTrack);
+      if(iMCParticleTrack >= 0){
+
+        caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleTrack), fMCStartPY->at(iMCParticleTrack), fMCStartPZ->at(iMCParticleTrack));
+
+
+        // find the true particle this reco particle goes with.
+        // if we had GENIE info and it was a primary, it should already be filled in.
+        // we use the comparison version because the G4ID from the pass-through
+        // counts up monotonically from 0 across the whole FILE,
+        // whereas the GENIE events start over at every interaction.
+        // moreover, the cafmaker::types::gsft::TrueParticle::is_primary flag
+        // is currently broken (upstream info from Supera is screwed up)
+        // so we need to try both collections :(
+        static SRPartCmp srPartCmp;
+        srPartCmp.p = mc_p.Mag();
+        srPartCmp.trkid = fMCTrkID->at(iMCParticleTrack);
+
+        bool isPrim = false;
+        caf::SRTrueParticle * srTruePart = nullptr;
+        try
+        {
+          // F says: our GENIE particles won't have a valid G4ID
+          //         therefore the comparsion will only look at 
+          //         the module of the 3-momentum
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
+          isPrim = true;
         }
-        ++pid_counter;
-
-        caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, fEvent-1, false);
-        // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
-        int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
-                                          std::find_if(sr.mc.nu.begin(),
-                                                      sr.mc.nu.end(),
-                                                      [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
-
-        int iMCParticleTrack = fTrackMCindex->at(iTrack);
-        if(iMCParticleTrack >= 0){
-
-          caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleTrack), fMCStartPY->at(iMCParticleTrack), fMCStartPZ->at(iMCParticleTrack));
-
-
-          // find the true particle this reco particle goes with.
-          // if we had GENIE info and it was a primary, it should already be filled in.
-          // we use the comparison version because the G4ID from the pass-through
-          // counts up monotonically from 0 across the whole FILE,
-          // whereas the GENIE events start over at every interaction.
-          // moreover, the cafmaker::types::gsft::TrueParticle::is_primary flag
-          // is currently broken (upstream info from Supera is screwed up)
-          // so we need to try both collections :(
-          static SRPartCmp srPartCmp;
-          srPartCmp.p = mc_p.Mag();
-          srPartCmp.trkid = fMCTrkID->at(iMCParticleTrack);
-
-          bool isPrim = false;
-          caf::SRTrueParticle * srTruePart = nullptr;
-          try
-          {
-            // F says: our GENIE particles won't have a valid G4ID
-            //         therefore the comparsion will only look at 
-            //         the module of the 3-momentum
-            srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
-            isPrim = true;
-          }
-          catch ( std::runtime_error& err )
-          {
-            // guess if it wasn't a primary, it must be a secondary :(
-            srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
-          }
-
-          // however this will fill in any other fields that weren't copied from a GENIE record
-          // (which also handles the case where this particle is a secondary)
-          FillTruth(*srTruePart, iMCParticleTrack);
-
-          // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
-          // first find the interaction that it goes with
-          LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
-          std::vector<caf::SRTrueParticle> & collection = (isPrim)
-                                                          ? srTrueInt.prim
-                                                          : srTrueInt.sec;
-          std::size_t truthVecIdx = std::distance(collection.begin(),
-                                                  std::find_if(collection.begin(),
-                                                               collection.end(),
-                                                               srPartCmp));
-
-          LOG.VERBOSE() << "      index of SRParticle in the SRInteraction " << truthVecIdx << "\n";
-
-          // F says: currently our reco only gives truth matching
-          //         to one MCParticle, but we can change that if
-          //         we need to...
-          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
-                                            (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
-                                            static_cast<int>(truthVecIdx)});
-
+        catch ( std::runtime_error& err )
+        {
+          // guess if it wasn't a primary, it must be a secondary :(
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
         }
 
-        sr.nd.gar.ixn[0].tracks.push_back(track);
+        // however this will fill in any other fields that weren't copied from a GENIE record
+        // (which also handles the case where this particle is a secondary)
+        FillTruth(*srTruePart, iMCParticleTrack);
+
+        // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
+        // first find the interaction that it goes with
+        LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
+        std::vector<caf::SRTrueParticle> & collection = (isPrim)
+                                                        ? srTrueInt.prim
+                                                        : srTrueInt.sec;
+        std::size_t truthVecIdx = std::distance(collection.begin(),
+                                                std::find_if(collection.begin(),
+                                                              collection.end(),
+                                                              srPartCmp));
+
+        LOG.VERBOSE() << "      index of SRParticle in the SRInteraction " << truthVecIdx << "\n";
+
+        // F says: currently our reco only gives truth matching
+        //         to one MCParticle, but we can change that if
+        //         we need to...
+        track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                          (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
+                                          static_cast<int>(truthVecIdx)});
+
+      }
+
+      sr.nd.gar.ixn[0].tracks.push_back(track);
 
     }
   }
@@ -515,13 +658,13 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void NDGArRecoBranchFiller::FillClusters(caf::StandardRecord &sr) const
+  void NDGArRecoBranchFiller::FillECalClusters(caf::StandardRecord &sr) const
   {
    // F says: sr.nd.gar.ixn already has the right size, so
    //         no need to worry about that again here
 
    size_t n_clusters = fECALClusterX->size();
-   LOG.VERBOSE() << "    GArSoft number of reco clusters: " << n_clusters << ".\n";
+   LOG.VERBOSE() << "    GArSoft number of ECal clusters: " << n_clusters << ".\n";
    sr.nd.gar.ixn[0].necalclusters = n_clusters;
 
    size_t n_assns = fECALAssn_ClusterID->size();
@@ -545,6 +688,42 @@ namespace cafmaker
       }
 
       sr.nd.gar.ixn[0].ecalclusters.push_back(cluster);
+
+   }
+
+  }
+
+  // ------------------------------------------------------------------------------
+  void NDGArRecoBranchFiller::FillMuIDClusters(caf::StandardRecord &sr) const
+  {
+   // F says: sr.nd.gar.ixn already has the right size, so
+   //         no need to worry about that again here
+
+   size_t n_clusters = fMuIDClusterX->size();
+   LOG.VERBOSE() << "    GArSoft number of MuID clusters: " << n_clusters << ".\n";
+   sr.nd.gar.ixn[0].nmuidclusters = n_clusters;
+
+   size_t n_assns = fMuIDAssn_ClusterID->size();
+   caf::SRGArECAL cluster;
+   for (size_t iMuID=0; iMuID<n_clusters; iMuID++){
+      LOG.VERBOSE() << "        Filling cluster " << iMuID << ".\n";
+
+      caf::SRVector3D position(fMuIDClusterX->at(iMuID), fMuIDClusterY->at(iMuID), fMuIDClusterZ->at(iMuID));
+      cluster.position = position;
+
+      cluster.E = fMuIDClusterEnergy->at(iMuID);
+      cluster.hits_in_cluster = fMuIDClusterNhits->at(iMuID);
+
+      cluster.garsoft_ecal_id = fMuIDClusterIDNumber->at(iMuID);
+
+      for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
+        LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
+        if (cluster.garsoft_ecal_id == fMuIDAssn_ClusterID->at(iAssn)){
+          cluster.garsoft_trk_assn = fMuIDAssn_TrackID->at(iAssn);
+        }
+      }
+
+      sr.nd.gar.ixn[0].muidclusters.push_back(cluster);
 
    }
 

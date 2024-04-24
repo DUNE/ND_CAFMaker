@@ -50,7 +50,8 @@ namespace cafmaker
       void FillTracks(const TruthMatcher * truthMatch,
                       caf::StandardRecord &sr) const;
 
-      void FillClusters(caf::StandardRecord &sr) const;
+      void FillECalClusters(caf::StandardRecord &sr) const;
+      void FillMuIDClusters(caf::StandardRecord &sr) const;
 
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
@@ -157,14 +158,56 @@ namespace cafmaker
       std::vector<float_t> * fMuIDClusterMCfrac=0;
 
       // MuID-track associations
-      //std::vector<int> * fMuIDAssn_ClusterID=0;
-      //std::vector<int> * fMuIDAssn_TrackID=0;
+      std::vector<int> * fMuIDAssn_ClusterID=0;
+      std::vector<int> * fMuIDAssn_TrackID=0;
 
       // Reco particle info
+      std::vector<int> * fRecoParticleID=0;
+
       std::vector<float_t> * fRecoParticleMomentum=0;
+
+      std::vector<float_t> * fRecoParticleTotalCaloEnergy=0;
+      std::vector<float_t> * fRecoParticleMeanCaloEnergy=0;
+
+      std::vector<float_t> * fRecoParticleTotalECALEnergy=0;
       std::vector<int> * fRecoParticleNHitsECAL=0;
+      std::vector<float_t> * fRecoParticleTotalMuIDEnergy=0;
+      std::vector<int> * fRecoParticleNHitsMuID=0;
+
+      std::vector<float_t> * fRecoParticleToFTime=0;
+      std::vector<float_t> * fRecoParticleToFBeta=0;
+
+      std::vector<int> * fRecoParticleCharge=0;
+
+      std::vector<float_t> * fRecoParticleStartX=0;
+      std::vector<float_t> * fRecoParticleStartY=0;
+      std::vector<float_t> * fRecoParticleStartZ=0;
+      std::vector<float_t> * fRecoParticleEndX=0;
+      std::vector<float_t> * fRecoParticleEndY=0;
+      std::vector<float_t> * fRecoParticleEndZ=0;
+      std::vector<float_t> * fRecoParticleDirectionX=0;
+      std::vector<float_t> * fRecoParticleDirectionY=0;
+      std::vector<float_t> * fRecoParticleDirectionZ=0;
+
       std::vector<float_t> * fRecoParticleMuonScore=0;
-      std::vector<int> * fRecoParticlePID=0;
+      std::vector<float_t> * fRecoParticleProtonCaloScore=0;
+      std::vector<float_t> * fRecoParticleProtonToFScore=0;
+
+      std::vector<int> *     fRecoParticlePID=0;
+      std::vector<float_t> * fRecoParticleEnergy=0;
+
+      std::vector<int> *     fRecoParticleMCindex=0;
+      std::vector<float_t> * fRecoParticleMCfrac=0;
+
+      // Reco particle associations
+      std::vector<int> * fParticleTrackAssn_ParticleID=0;
+      std::vector<int> * fParticleTrackAssn_TrackID=0;
+
+      std::vector<int> * fParticleECALAssn_ParticleID=0;
+      std::vector<int> * fParticleECALAssn_ClusterID=0;
+      
+      std::vector<int> * fParticleMuIDAssn_ParticleID=0;
+      std::vector<int> * fParticleMuIDAssn_ClusterID=0;
 
       // Reco interaction info
       std::vector<float_t> * fRecoNuEnergy=0;
