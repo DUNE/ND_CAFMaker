@@ -309,7 +309,7 @@ namespace cafmaker
 
     // F says: we store all the GENIE PartIdx in our GArSoft tree,
     //         so we can simply take the first one 
-    caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, fEvent-1, true);
+    caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, true);
 
     LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
     for (const caf::SRTrueParticle & part : srTrueInt.prim)
@@ -439,7 +439,7 @@ namespace cafmaker
         }
       }
 
-      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, fEvent-1, false);
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
       // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
       int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
                                        std::find_if(sr.mc.nu.begin(),
@@ -567,7 +567,7 @@ namespace cafmaker
       }
       ++pid_counter;
 
-      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, fEvent-1, false);
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
       // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
       int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
                                         std::find_if(sr.mc.nu.begin(),
