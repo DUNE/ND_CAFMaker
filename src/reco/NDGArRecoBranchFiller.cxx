@@ -370,7 +370,6 @@ namespace cafmaker
       //         time. They both contain almost the same information, but SRGArParticle has
       //         all the variables required to recompute the PID.
       caf::SRRecoParticle reco_particle;
-      caf::SRGArParticle  reco_particle_gar;
 
       // if(part.is_primary) reco_particle.primary = true;
       //reco_particle.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
@@ -383,61 +382,9 @@ namespace cafmaker
 
       caf::SRVector3D p(0.0, 0.0, fRecoParticleMomentum->at(iParticle));
       reco_particle.p = p;
-      reco_particle_gar.p = p;
       
       reco_particle.E = fRecoParticleEnergy->at(iParticle);
       reco_particle.E_method = caf::PartEMethod::kCurvature; // only method available for GAr atm
-
-      // Fill SRGArParticle specific values
-      reco_particle_gar.garsoft_part_id = fRecoParticleID->at(iParticle);
-
-      reco_particle_gar.dEdx_total = fRecoParticleTotalCaloEnergy->at(iParticle);
-      reco_particle_gar.dEdx_mean  = fRecoParticleMeanCaloEnergy->at(iParticle);
-
-      reco_particle_gar.ECAL_total_energy = fRecoParticleTotalECALEnergy->at(iParticle);
-      reco_particle_gar.ECAL_n_hits       = fRecoParticleNHitsECAL->at(iParticle);
-      reco_particle_gar.MuID_total_energy = fRecoParticleTotalMuIDEnergy->at(iParticle);
-      reco_particle_gar.MuID_n_hits       = fRecoParticleNHitsMuID->at(iParticle);
-
-      reco_particle_gar.ToF_time = fRecoParticleToFTime->at(iParticle);
-      reco_particle_gar.ToF_beta = fRecoParticleToFBeta->at(iParticle);
-
-      reco_particle_gar.charge = fRecoParticleCharge->at(iParticle);
-
-      reco_particle_gar.muon_score        = fRecoParticleMuonScore->at(iParticle);
-      reco_particle_gar.proton_dEdx_score = fRecoParticleProtonCaloScore->at(iParticle);
-      reco_particle_gar.proton_tof_score  = fRecoParticleProtonToFScore->at(iParticle);
-
-      // Filling associations to other reco objects
-      for (size_t iAssnTrack=0; iAssnTrack<n_assns_tracks; ++iAssnTrack){
-        LOG.VERBOSE() << "            iAssnTrack in loop: " << iAssnTrack
-                      << "            ParticleID:         " << fParticleTrackAssn_ParticleID->at(iAssnTrack)
-                      << "            TrackID:            " << fParticleTrackAssn_TrackID->at(iAssnTrack) << ".\n";
-        if (reco_particle_gar.garsoft_part_id == fParticleTrackAssn_ParticleID->at(iAssnTrack)){
-          LOG.VERBOSE() << "                association found!" << ".\n";
-          reco_particle_gar.garsoft_trk_assn = fParticleTrackAssn_TrackID->at(iAssnTrack);
-        }
-      }
-
-      for (size_t iAssnECAL=0; iAssnECAL<n_assns_ecal; ++iAssnECAL){
-        LOG.VERBOSE() << "            iAssnECAL in loop:  " << iAssnECAL
-                      << "            ParticleID:         " << fParticleECALAssn_ParticleID->at(iAssnECAL)
-                      << "            ECalID:             " << fParticleECALAssn_ClusterID->at(iAssnECAL) << ".\n";
-        if (reco_particle_gar.garsoft_part_id == fParticleECALAssn_ParticleID->at(iAssnECAL)){
-          LOG.VERBOSE() << "                association found!" << ".\n";
-          reco_particle_gar.garsoft_ecal_assns.push_back(fParticleECALAssn_ClusterID->at(iAssnECAL));
-        }
-      }
-
-      for (size_t iAssnMuID=0; iAssnMuID<n_assns_muid; ++iAssnMuID){
-        LOG.VERBOSE() << "            iAssnMuID in loop:  " << iAssnMuID
-                      << "            ParticleID:         " << fParticleMuIDAssn_ParticleID->at(iAssnMuID)
-                      << "            MuIDID:             " << fParticleMuIDAssn_ClusterID->at(iAssnMuID) << ".\n";
-        if (reco_particle_gar.garsoft_part_id == fParticleMuIDAssn_ParticleID->at(iAssnMuID)){
-          LOG.VERBOSE() << "                association found!" << ".\n";
-          reco_particle_gar.garsoft_muid_assns.push_back(fParticleMuIDAssn_ClusterID->at(iAssnMuID));
-        }
-      }
 
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
       // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
@@ -504,6 +451,59 @@ namespace cafmaker
                                                           (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                                           static_cast<int>(truthVecIdx)});
         reco_particle.truthOverlap.push_back(fRecoParticleMCfrac->at(iParticle));
+      }
+
+      caf::SRGArParticle  reco_particle_gar(reco_particle);
+
+      // Fill SRGArParticle specific values
+      reco_particle_gar.garsoft_part_id = fRecoParticleID->at(iParticle);
+
+      reco_particle_gar.dEdx_total = fRecoParticleTotalCaloEnergy->at(iParticle);
+      reco_particle_gar.dEdx_mean  = fRecoParticleMeanCaloEnergy->at(iParticle);
+
+      reco_particle_gar.ECAL_total_energy = fRecoParticleTotalECALEnergy->at(iParticle);
+      reco_particle_gar.ECAL_n_hits       = fRecoParticleNHitsECAL->at(iParticle);
+      reco_particle_gar.MuID_total_energy = fRecoParticleTotalMuIDEnergy->at(iParticle);
+      reco_particle_gar.MuID_n_hits       = fRecoParticleNHitsMuID->at(iParticle);
+
+      reco_particle_gar.ToF_time = fRecoParticleToFTime->at(iParticle);
+      reco_particle_gar.ToF_beta = fRecoParticleToFBeta->at(iParticle);
+
+      reco_particle_gar.charge = fRecoParticleCharge->at(iParticle);
+
+      reco_particle_gar.muon_score        = fRecoParticleMuonScore->at(iParticle);
+      reco_particle_gar.proton_dEdx_score = fRecoParticleProtonCaloScore->at(iParticle);
+      reco_particle_gar.proton_tof_score  = fRecoParticleProtonToFScore->at(iParticle);
+
+      // Filling associations to other reco objects
+      for (size_t iAssnTrack=0; iAssnTrack<n_assns_tracks; ++iAssnTrack){
+        LOG.VERBOSE() << "            iAssnTrack in loop: " << iAssnTrack
+                      << "            ParticleID:         " << fParticleTrackAssn_ParticleID->at(iAssnTrack)
+                      << "            TrackID:            " << fParticleTrackAssn_TrackID->at(iAssnTrack) << ".\n";
+        if (reco_particle_gar.garsoft_part_id == fParticleTrackAssn_ParticleID->at(iAssnTrack)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          reco_particle_gar.garsoft_trk_assn = fParticleTrackAssn_TrackID->at(iAssnTrack);
+        }
+      }
+
+      for (size_t iAssnECAL=0; iAssnECAL<n_assns_ecal; ++iAssnECAL){
+        LOG.VERBOSE() << "            iAssnECAL in loop:  " << iAssnECAL
+                      << "            ParticleID:         " << fParticleECALAssn_ParticleID->at(iAssnECAL)
+                      << "            ECalID:             " << fParticleECALAssn_ClusterID->at(iAssnECAL) << ".\n";
+        if (reco_particle_gar.garsoft_part_id == fParticleECALAssn_ParticleID->at(iAssnECAL)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          reco_particle_gar.garsoft_ecal_assns.push_back(fParticleECALAssn_ClusterID->at(iAssnECAL));
+        }
+      }
+
+      for (size_t iAssnMuID=0; iAssnMuID<n_assns_muid; ++iAssnMuID){
+        LOG.VERBOSE() << "            iAssnMuID in loop:  " << iAssnMuID
+                      << "            ParticleID:         " << fParticleMuIDAssn_ParticleID->at(iAssnMuID)
+                      << "            MuIDID:             " << fParticleMuIDAssn_ClusterID->at(iAssnMuID) << ".\n";
+        if (reco_particle_gar.garsoft_part_id == fParticleMuIDAssn_ParticleID->at(iAssnMuID)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          reco_particle_gar.garsoft_muid_assns.push_back(fParticleMuIDAssn_ClusterID->at(iAssnMuID));
+        }
       }
 
       sr.common.ixn.gsft[0].part.gsft.push_back(std::move(reco_particle));
