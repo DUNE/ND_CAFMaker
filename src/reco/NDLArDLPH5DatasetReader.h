@@ -14,6 +14,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
+#include <iostream>
 
 #include "H5Cpp.h"
 
@@ -66,6 +67,7 @@ namespace cafmaker
             datasetExists = true;
           }
           catch (const H5::FileIException&) {
+            std::cout << "WARNING: no dataset named: " << datasetName << ". This is normal if you are using a data input without truth datasets." <<  std::endl;
             datasetExists = false;
           }
   
@@ -80,9 +82,9 @@ namespace cafmaker
       H5DataView<T> GetProducts(long int evtIdx=-1) const
       {
         // todo: implement a caching mechanism so repeated requests for the same evtIdx don't cause re-reads from the file
+        
         bool datasetExists = DoesDatasetExist<T>();
         if(!datasetExists) { //return an empty H5 view if the dataset does not exist
-          if(evtIdx < 0) std::cout << "WARNING: no dataset named: " << GetDatasetName<T>() << ". This is normal if you are using a data input without truth datasets." <<  std::endl;
           return H5DataView<T>::CreateEmptyView();
         }
 
