@@ -20,6 +20,7 @@ namespace cafmaker
   class H5DataViewBase
   {
     public:
+      H5DataViewBase() : fValid(false), fViewer(nullptr) {}
       H5DataViewBase(const IH5Viewer * viewer);
 
       // the IH5Viewer needs to find out about the new object when copying
@@ -55,6 +56,12 @@ namespace cafmaker
         throw std::runtime_error("H5DataView is invalid");
       }
 
+      //An empty view definition to handle non-existent datasets. For eg. when truth datasets are expected in data files
+      static H5DataView<T> CreateEmptyView()
+      {
+        return H5DataView<T>(nullptr, nullptr);
+      }
+   
       // enable use with range-based for
       const auto begin() const { return fBuffer->begin(); }
       const auto end()   const { return fBuffer->end(); }

@@ -14,7 +14,7 @@ namespace cafmaker
   H5DataViewBase::~H5DataViewBase()
   {
     // notify our parent reader object that we're not around any longer
-    if (fValid)
+    if (fValid && fViewer != nullptr)
       fViewer->RemoveView(this);
   }
 
