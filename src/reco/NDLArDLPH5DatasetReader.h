@@ -51,11 +51,40 @@ namespace cafmaker
         return it->second;
       }
 
+      //Checks if a dataset exists 
+      template <typename T>
+      bool DoesDatasetExist() const
+      {
+        std::string datasetName = GetDatasetName<T>();
+        auto it = datasetExistsMap.find(datasetName);
+        if (it != datasetExistsMap.end()) 
+	  return it->second;
+        else{
+          bool datasetExists;
+          try {
+            H5::DataSet dataset = fInputFile.openDataSet(GetDatasetName<T>());
+            datasetExists = true;
+          }
+          catch (const H5::FileIException&) {
+            datasetExists = false;
+          }
+  
+          datasetExistsMap.insert({datasetName, datasetExists});
+          return datasetExists;
+        }
+      }
+
+
       /// Retrieve all of the products for a given event index (or all events if given -1)
       template <typename T>
       H5DataView<T> GetProducts(long int evtIdx=-1) const
       {
         // todo: implement a caching mechanism so repeated requests for the same evtIdx don't cause re-reads from the file
+        bool datasetExists = DoesDatasetExist<T>();
+        if(!datasetExists) { //return an empty H5 view if the dataset does not exist
+          if(evtIdx < 0) std::cout << "WARNING: no dataset named: " << GetDatasetName<T>() << ". This is normal if you are using a data input without truth datasets." <<  std::endl;
+          return H5DataView<T>::CreateEmptyView();
+        }
 
         if (fDatasetBuffers.find(typeid(T)) == fDatasetBuffers.end())
           fDatasetBuffers.emplace(typeid(T), std::make_unique<DatasetBuffer<T>>(fInputFile,
@@ -139,6 +168,8 @@ namespace cafmaker
       H5::H5File  fInputFile;
 
       std::unordered_map<std::type_index, std::string> fDatasetNames;
+
+      mutable std::unordered_map<std::string, bool> datasetExistsMap;
 
       mutable std::unordered_map<std::type_index, std::unique_ptr<DatasetBufferBase>> fDatasetBuffers;
   };
