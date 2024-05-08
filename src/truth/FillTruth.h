@@ -116,6 +116,10 @@ namespace cafmaker
   // and which have roundoff problems in the comparison operator otherwise
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string& fieldName);
+  
+  //same for long int and int (true interaction id)
+  template <>
+  void ValidateOrCopy<int, long int>(const int & input, long int & target, const long int & unsetVal, const std::string & fieldName);
 
   // --------------------------------------------------------------
 

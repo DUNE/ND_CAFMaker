@@ -282,10 +282,7 @@ namespace cafmaker
                    -1,
                    "SRTrueParticle::track_id");
 
-    // note: cafmaker::types::dlp::TrueParticle::interaction_id refers to the id in the MLReco stack.
-    //        it does NOT give the GENIE interaction ID, which is what SRTrueParticle wants
-    //ValidateOrCopy(truePartPassthrough.truth_interaction_id, srTruePart.interaction_id, -1, "SRTrueParticle::interaction_id");
-//    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
+    ValidateOrCopy(truePartPassthrough.truth_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
@@ -310,7 +307,10 @@ namespace cafmaker
     for (const auto & part : trueParticles)
     {
       if(part.track_id == truePartPassthrough.parent_track_id) ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent");
-      if(part.id == truePartPassthrough.ancestor_track_id) ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
+      if(part.id == truePartPassthrough.ancestor_track_id){
+     	 ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
+         ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
+      }
     }
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
