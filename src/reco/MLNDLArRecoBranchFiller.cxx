@@ -325,9 +325,9 @@ namespace cafmaker
     // we will rely on TruthMatcher to set all the primary particle momenta.
     // todo: what about secondary particles?
     //       MINERvA passes them through correctly but that won't catch all secondaries
-//    ValidateOrCopy(truePartPassthrough.momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
-//    ValidateOrCopy(truePartPassthrough.momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
-//    ValidateOrCopy(truePartPassthrough.momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
+    ValidateOrCopy(truePartPassthrough.truth_momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
+    ValidateOrCopy(truePartPassthrough.truth_momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+    ValidateOrCopy(truePartPassthrough.truth_momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
 
     try
     {
