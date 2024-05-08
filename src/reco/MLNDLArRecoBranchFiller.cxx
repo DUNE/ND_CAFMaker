@@ -313,13 +313,13 @@ namespace cafmaker
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
 
-    ValidateOrCopy(truePartPassthrough.start_point[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
-    ValidateOrCopy(truePartPassthrough.start_point[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
-    ValidateOrCopy(truePartPassthrough.start_point[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
+    ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
+    ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
+    ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.end_point[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
-    ValidateOrCopy(truePartPassthrough.end_point[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
-    ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
+    ValidateOrCopy(truePartPassthrough.end_position[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(truePartPassthrough.end_position[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(truePartPassthrough.end_position[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
 
     // sadly GENIE's px, py, pz are in a different coordinate system, so they won't match.
     // we will rely on TruthMatcher to set all the primary particle momenta.
