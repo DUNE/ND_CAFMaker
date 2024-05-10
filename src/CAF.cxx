@@ -13,7 +13,6 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
   : pot(std::numeric_limits<decltype(pot)>::signaling_NaN()),  rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
-  gDirectory->cd("Rint:/");
 
   cafSR = new TTree("cafTree", "cafTree");
   cafSRGlobal = new TTree("globalTree", "globalTree");
@@ -97,6 +96,20 @@ void CAF::fillPOT()
 
 void CAF::write()
 {
+
+  if(flatCAFFile){
+    flatCAFFile->cd();
+
+    for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
+    {
+      if (!tree)
+        continue;
+      auto clone_tree = (TTree*)tree->Clone();
+      clone_tree->Write();
+    }
+    flatCAFFile->Close();
+  }
+
   if(cafFile){
     cafFile->cd();
     cafSR->Write();
@@ -105,9 +118,7 @@ void CAF::write()
     {
       if (!tree)
         continue;
-      auto clone_tree = (TTree*)tree->Clone();  
-      clone_tree->Write();
-
+      tree->Write();
       // don't let it get stuck attached to only this file in case we need it again below
       tree->LoadBaskets();
       tree->SetDirectory(nullptr);
@@ -115,18 +126,6 @@ void CAF::write()
     cafFile->Close();
   }
 
-  if(flatCAFFile){
-    flatCAFFile->cd();
-    flatCAFTree->Write();
-    cafSRGlobal->Write();
-    cafMVA->Write();
-    cafPOT->Write();
-
-    if (genie)
-      genie->Write();
-
-    flatCAFFile->Close();
-  }
 }
 
 
