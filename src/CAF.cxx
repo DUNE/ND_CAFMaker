@@ -99,6 +99,7 @@ void CAF::write()
 
   if(flatCAFFile){
     flatCAFFile->cd();
+    flatCAFTree->Write();
 
     for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
     {
