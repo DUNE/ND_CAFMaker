@@ -228,9 +228,8 @@ namespace cafmaker
     };
 
     // todo: these need us to propagate nu info through Supera.  WIP
-//    ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false,
-//                   nuCurrComp, nuCurrSet);
-//    ValidateOrCopy(ptTrueInt.nu_energy_init, srTrueInt.E, NaN);
+    //ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
+//    ValidateOrCopy(ptTrueInt.nu_energy_init/1000., srTrueInt.E, NaN); //this is currently filled with many -inf
 //    ValidateOrCopy(ptTrueInt.nu_interaction_mode, srTrueInt.mode, caf::ScatteringMode::kUnknownMode,
 //                   [](const NuInteractionMode & inCurr, const caf::ScatteringMode & outCurr)
 //                   {
@@ -304,17 +303,17 @@ namespace cafmaker
                    ancestorTypeComp, ancestorTypeAssgn, "SRTrueParticle::ancestor_id.type");
 
    // The parent track_id is filled with the unique track_id variable and the ancestor track_id is filled with the internal MLreco id variable. So we have to retrive the genid based on these
-    for (const auto & part : trueParticles)
+    /*for (const auto & part : trueParticles)
     {
-      if(part.track_id == truePartPassthrough.parent_track_id) ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent");
+      if(part.track_id == truePartPassthrough.parent_track_id){truePartPassthrough.gen_id < 1000000000 ?  ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent") : ValidateOrCopy(part.track_id, srTruePart.parent, -1, "SRTrueParticle::parent");
       if(part.id == truePartPassthrough.ancestor_track_id){
-     	 ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
+     	 truePartPassthrough.gen_id < 1000000000 ? ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part") : ValidateOrCopy(part.track_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
          ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
       }
     }
+*/
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
-
     ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
     ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
     ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
@@ -530,8 +529,9 @@ namespace cafmaker
                                            std::find_if(sr.mc.nu.begin(),
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+	  std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }));
+          bool is_primary = truthPartIdx != srTrueInt.prim.size();
 
-          bool is_primary = truePartPassThrough.gen_id < 100000000;
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
@@ -642,8 +642,9 @@ namespace cafmaker
                                            std::find_if(sr.mc.nu.begin(),
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+	  std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }));
+          bool is_primary = truthPartIdx != srTrueInt.prim.size();
 
-          bool is_primary = truePartPassThrough.gen_id < 100000000;
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
@@ -746,7 +747,8 @@ namespace cafmaker
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
-          bool is_primary = truePartPassThrough.gen_id < 100000000;
+	  std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }));
+          bool is_primary = truthPartIdx != srTrueInt.prim.size();
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
