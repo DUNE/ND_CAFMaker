@@ -211,9 +211,9 @@ namespace cafmaker
 
     // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
     // if they originate from outside it, so we can't use them
-//    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
-//    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
-  //  ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+    //ValidateOrCopy(ptTrueInt.truth_vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    //ValidateOrCopy(ptTrueInt.truth_vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    //ValidateOrCopy(ptTrueInt.truth_vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
     const std::function<bool(const NuCurrentType &, const bool &)> nuCurrComp =
     [](const NuCurrentType & inCurr, const bool & outCurr)
@@ -275,11 +275,7 @@ namespace cafmaker
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
-   // fixme once is_primary field is propagated correctly 
-    ValidateOrCopy(truePartPassthrough.gen_id < 1000000000 ? truePartPassthrough.gen_id : truePartPassthrough.track_id,
-                   srTruePart.G4ID,
-                   -1,
-                   "SRTrueParticle::track_id");
+    ValidateOrCopy(truePartPassthrough.gen_id, srTruePart.G4ID, -1,"SRTrueParticle::track_id");
 
     ValidateOrCopy(truePartPassthrough.truth_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
@@ -303,15 +299,15 @@ namespace cafmaker
                    ancestorTypeComp, ancestorTypeAssgn, "SRTrueParticle::ancestor_id.type");
 
    // The parent track_id is filled with the unique track_id variable and the ancestor track_id is filled with the internal MLreco id variable. So we have to retrive the genid based on these
-    /*for (const auto & part : trueParticles)
+    for (const auto & part : trueParticles)
     {
-      if(part.track_id == truePartPassthrough.parent_track_id){truePartPassthrough.gen_id < 1000000000 ?  ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent") : ValidateOrCopy(part.track_id, srTruePart.parent, -1, "SRTrueParticle::parent");
+      if(part.track_id == truePartPassthrough.parent_track_id) 
+	ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent");
       if(part.id == truePartPassthrough.ancestor_track_id){
-     	 truePartPassthrough.gen_id < 1000000000 ? ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part") : ValidateOrCopy(part.track_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
-         ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
+     	ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
+        ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
       }
     }
-*/
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
     ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
