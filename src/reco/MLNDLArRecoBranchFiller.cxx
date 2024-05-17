@@ -211,9 +211,9 @@ namespace cafmaker
 
     // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
     // if they originate from outside it, so we can't use them
-//    ValidateOrCopy(ptTrueInt.vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
-//    ValidateOrCopy(ptTrueInt.vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
-//    ValidateOrCopy(ptTrueInt.vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+    //ValidateOrCopy(ptTrueInt.truth_vertex[0], srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    //ValidateOrCopy(ptTrueInt.truth_vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    //ValidateOrCopy(ptTrueInt.truth_vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
     const std::function<bool(const NuCurrentType &, const bool &)> nuCurrComp =
     [](const NuCurrentType & inCurr, const bool & outCurr)
@@ -228,9 +228,8 @@ namespace cafmaker
     };
 
     // todo: these need us to propagate nu info through Supera.  WIP
-//    ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false,
-//                   nuCurrComp, nuCurrSet);
-//    ValidateOrCopy(ptTrueInt.nu_energy_init, srTrueInt.E, NaN);
+    //ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
+//    ValidateOrCopy(ptTrueInt.nu_energy_init/1000., srTrueInt.E, NaN); //this is currently filled with many -inf
 //    ValidateOrCopy(ptTrueInt.nu_interaction_mode, srTrueInt.mode, caf::ScatteringMode::kUnknownMode,
 //                   [](const NuInteractionMode & inCurr, const caf::ScatteringMode & outCurr)
 //                   {
@@ -271,19 +270,14 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
-                                                 const cafmaker::types::dlp::TrueParticle & truePartPassthrough) const
+                                                 const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
-    ValidateOrCopy(truePartPassthrough.gen_id < 1000000000 ? truePartPassthrough.gen_id : truePartPassthrough.track_id,
-                   srTruePart.G4ID,
-                   -1,
-                   "SRTrueParticle::track_id");
+    ValidateOrCopy(truePartPassthrough.gen_id, srTruePart.G4ID, -1,"SRTrueParticle::track_id");
 
-    // note: cafmaker::types::dlp::TrueParticle::interaction_id refers to the id in the MLReco stack.
-    //        it does NOT give the GENIE interaction ID, which is what SRTrueParticle wants
-//    ValidateOrCopy(truePartPassthrough.interaction_id, srTruePart.interaction_id, -1);
-    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
+    ValidateOrCopy(truePartPassthrough.truth_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
@@ -304,30 +298,29 @@ namespace cafmaker
     ValidateOrCopy(truePartPassthrough.ancestor_creation_process, srTruePart.ancestor_id.type, caf::TrueParticleID::kUnknown,
                    ancestorTypeComp, ancestorTypeAssgn, "SRTrueParticle::ancestor_id.type");
 
-    // fixme: this is incorrect; the track_id (what we have) won't be the same as the index of the ancestor SRParticle (what we want).
-    //       to fix this I think we need access to the SRTrueInteraction for this particle too, so we can dig around in its particle vectors
-    ValidateOrCopy(truePartPassthrough.ancestor_track_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
-
-    ValidateOrCopy(truePartPassthrough.parent_track_id, srTruePart.parent, -1, "SRTrueParticle::parent");
-
+   // The parent track_id is filled with the unique track_id variable and the ancestor track_id is filled with the internal MLreco id variable. So we have to retrive the genid based on these
+    for (const auto & part : trueParticles)
+    {
+      if(part.track_id == truePartPassthrough.parent_track_id) 
+	ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent");
+      if(part.id == truePartPassthrough.ancestor_track_id){
+     	ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
+        ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
+      }
+    }
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
+    ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
+    ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
+    ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.start_point[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
-    ValidateOrCopy(truePartPassthrough.start_point[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
-    ValidateOrCopy(truePartPassthrough.start_point[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
+    ValidateOrCopy(truePartPassthrough.end_position[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(truePartPassthrough.end_position[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(truePartPassthrough.end_position[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.end_point[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
-    ValidateOrCopy(truePartPassthrough.end_point[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
-    ValidateOrCopy(truePartPassthrough.end_point[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
-
-    // sadly GENIE's px, py, pz are in a different coordinate system, so they won't match.
-    // we will rely on TruthMatcher to set all the primary particle momenta.
-    // todo: what about secondary particles?
-    //       MINERvA passes them through correctly but that won't catch all secondaries
-//    ValidateOrCopy(truePartPassthrough.momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
-//    ValidateOrCopy(truePartPassthrough.momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
-//    ValidateOrCopy(truePartPassthrough.momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
+    ValidateOrCopy(truePartPassthrough.truth_momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
+    ValidateOrCopy(truePartPassthrough.truth_momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+    ValidateOrCopy(truePartPassthrough.truth_momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
 
     try
     {
@@ -533,7 +526,8 @@ namespace cafmaker
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
-          bool is_primary = truePartPassThrough.gen_id < 100000000;
+          bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
@@ -542,7 +536,7 @@ namespace cafmaker
 
           //  this will fill in any other fields that weren't copied from a GENIE record
           // (which also handles the case where this particle is a secondary)
-          FillTrueParticle(srTruePart, truePartPassThrough);
+          FillTrueParticle(srTruePart, truePartPassThrough, trueParticles);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
@@ -644,8 +638,11 @@ namespace cafmaker
                                            std::find_if(sr.mc.nu.begin(),
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+    	  
+           
+          bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
 
-          bool is_primary = truePartPassThrough.gen_id < 100000000;
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;
@@ -748,7 +745,8 @@ namespace cafmaker
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
-          bool is_primary = truePartPassThrough.gen_id < 100000000;
+    	  bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
                             : truePartPassThrough.track_id;

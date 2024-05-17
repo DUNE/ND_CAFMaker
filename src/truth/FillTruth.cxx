@@ -112,6 +112,14 @@ namespace cafmaker
     const auto assgn = [](const double & a, float & b) {  b = a; };
     return ValidateOrCopy<double, float>(input, target, unsetVal, cmp, assgn, fieldName);
   }
+  template <>
+  void ValidateOrCopy<int, long int>(const int & input, long int & target, const long int & unsetVal, const std::string & fieldName)
+  {
+    const auto cmp = [](const int & a, const long int &b) -> bool { return a == b; };
+
+    const auto assgn = [](const int & a, long int & b) {  b = static_cast<long int>(a); };
+    return ValidateOrCopy<int, long int>(input, target, unsetVal, cmp, assgn, fieldName);
+  }  
 
 
 // ------------------------------------------------------------
