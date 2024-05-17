@@ -638,8 +638,8 @@ namespace cafmaker
                                            std::find_if(sr.mc.nu.begin(),
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
-	  std::size_t truthPartIdx = std::distance(srTrueInt.prim.begin(), std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }));
-          bool is_primary = truthPartIdx != srTrueInt.prim.size();
+    bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) == srTrueInt.prim.end();
 
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
