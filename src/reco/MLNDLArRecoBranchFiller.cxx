@@ -228,17 +228,17 @@ namespace cafmaker
     };
 
     // todo: these need us to propagate nu info through Supera.  WIP
-    //ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
-//    ValidateOrCopy(ptTrueInt.nu_energy_init/1000., srTrueInt.E, NaN); //this is currently filled with many -inf
-//    ValidateOrCopy(ptTrueInt.nu_interaction_mode, srTrueInt.mode, caf::ScatteringMode::kUnknownMode,
-//                   [](const NuInteractionMode & inCurr, const caf::ScatteringMode & outCurr)
-//                   {
-//                     return DLP2CAF(inCurr) == outCurr;
-//                   },
-//                   [](const NuInteractionMode & inCurr, caf::ScatteringMode & outCurr)
-//                   {
-//                     outCurr = DLP2CAF(inCurr);
-//                   });
+    ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false, nuCurrComp, nuCurrSet);
+    ValidateOrCopy(ptTrueInt.nu_energy_init/1000., srTrueInt.E, NaN); 
+  //  ValidateOrCopy(ptTrueInt.nu_interaction_mode, srTrueInt.mode, caf::ScatteringMode::kUnknownMode,
+  //                 [](const NuInteractionMode & inCurr, const caf::ScatteringMode & outCurr)
+  //                 {
+  //                   return DLP2CAF(inCurr) == outCurr;
+  //                 },
+  //                 [](const NuInteractionMode & inCurr, caf::ScatteringMode & outCurr)
+  //                 {
+  //                   outCurr = DLP2CAF(inCurr);
+  //                 });
     // NuInteractionType nu_interaction_type;    // this appears to be identical to nu_interaction_mode
 
     // int64_t image_id;      // ID of event passed to reco within the file.  use the event ID instead.
