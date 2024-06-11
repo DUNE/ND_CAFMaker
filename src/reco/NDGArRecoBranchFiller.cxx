@@ -380,8 +380,18 @@ namespace cafmaker
 
       reco_particle.pdg = fRecoParticlePID->at(iParticle);
 
-      caf::SRVector3D p(0.0, 0.0, fRecoParticleMomentum->at(iParticle));
-      reco_particle.p = p;
+      float momentum = fRecoParticleMomentum->at(iParticle);
+      reco_particle.p.x = momentum*fRecoParticleDirectionX->at(iParticle);
+      reco_particle.p.y = momentum*fRecoParticleDirectionY->at(iParticle);
+      reco_particle.p.z = momentum*fRecoParticleDirectionZ->at(iParticle);
+
+      reco_particle.start = caf::SRVector3D(fRecoParticleStartX->at(iParticle),
+                                            fRecoParticleStartY->at(iParticle),
+                                            fRecoParticleStartZ->at(iParticle));
+
+      reco_particle.end   = caf::SRVector3D(fRecoParticleEndX->at(iParticle),
+                                            fRecoParticleEndY->at(iParticle),
+                                            fRecoParticleEndZ->at(iParticle));
       
       reco_particle.E = fRecoParticleEnergy->at(iParticle);
       reco_particle.E_method = caf::PartEMethod::kCurvature; // only method available for GAr atm
@@ -668,7 +678,8 @@ namespace cafmaker
    sr.nd.gar.ixn[0].necalclusters = n_clusters;
 
    size_t n_assns = fECALAssn_ClusterID->size();
-   caf::SRGArECAL cluster;
+   caf::SRGArCalo cluster;
+   cluster.cluster_type = caf::GArCaloType::kECalCluster;
    for (size_t iECAL=0; iECAL<n_clusters; iECAL++){
       LOG.VERBOSE() << "        Filling cluster " << iECAL << ".\n";
 
@@ -678,11 +689,11 @@ namespace cafmaker
       cluster.E = fECALClusterEnergy->at(iECAL);
       cluster.hits_in_cluster = fECALClusterNhits->at(iECAL);
 
-      cluster.garsoft_ecal_id = fECALClusterIDNumber->at(iECAL);
+      cluster.garsoft_calo_id = fECALClusterIDNumber->at(iECAL);
 
       for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
         LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
-        if (cluster.garsoft_ecal_id == fECALAssn_ClusterID->at(iAssn)){
+        if (cluster.garsoft_calo_id == fECALAssn_ClusterID->at(iAssn)){
           cluster.garsoft_trk_assn = fECALAssn_TrackID->at(iAssn);
         }
       }
@@ -705,6 +716,7 @@ namespace cafmaker
 
    size_t n_assns = fMuIDAssn_ClusterID->size();
    caf::SRGArECAL cluster;
+   cluster.cluster_type = caf::GArCaloType::kMuIDCluster;
    for (size_t iMuID=0; iMuID<n_clusters; iMuID++){
       LOG.VERBOSE() << "        Filling cluster " << iMuID << ".\n";
 
@@ -714,11 +726,11 @@ namespace cafmaker
       cluster.E = fMuIDClusterEnergy->at(iMuID);
       cluster.hits_in_cluster = fMuIDClusterNhits->at(iMuID);
 
-      cluster.garsoft_ecal_id = fMuIDClusterIDNumber->at(iMuID);
+      cluster.garsoft_calo_id = fMuIDClusterIDNumber->at(iMuID);
 
       for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
         LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
-        if (cluster.garsoft_ecal_id == fMuIDAssn_ClusterID->at(iAssn)){
+        if (cluster.garsoft_calo_id == fMuIDAssn_ClusterID->at(iAssn)){
           cluster.garsoft_trk_assn = fMuIDAssn_TrackID->at(iAssn);
         }
       }
