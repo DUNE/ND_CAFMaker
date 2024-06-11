@@ -540,7 +540,7 @@ namespace cafmaker
     LOG.VERBOSE() << "    GArSoft number of reco tracks: " << n_tracks << ".\n";
     sr.nd.gar.ixn[0].ntracks = n_tracks;
 
-    size_t pid_counter = 0;
+    //size_t pid_counter = 0;
     caf::SRGArTrack track;
     for (size_t iTrack=0; iTrack<n_tracks; iTrack++){
       LOG.VERBOSE() << "        Filling track " << iTrack << ".\n";
@@ -567,7 +567,8 @@ namespace cafmaker
       track.garsoft_trk_id = fTrackIDNumber->at(iTrack);
       track.clusters_in_track = fTrackNClusters->at(iTrack);
 
-      LOG.VERBOSE() << "        PID counter: " << pid_counter << ".\n";
+      // Currently not working in reco, will uncomment when solved
+      /* LOG.VERBOSE() << "        PID counter: " << pid_counter << ".\n";
       for (size_t iPID=6*pid_counter; iPID<6*(pid_counter+1); ++iPID){
         LOG.VERBOSE() << "            iPID in loop: " << iPID << ".\n";
         track.pid_fwd.push_back(fTrackPIDF->at(iPID));
@@ -575,7 +576,7 @@ namespace cafmaker
         track.pid_bak.push_back(fTrackPIDB->at(iPID));
         track.pid_prob_bak.push_back(fTrackPIDProbB->at(iPID));
       }
-      ++pid_counter;
+      ++pid_counter; */
 
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
       // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
