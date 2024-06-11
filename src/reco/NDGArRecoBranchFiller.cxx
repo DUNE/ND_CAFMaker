@@ -392,6 +392,10 @@ namespace cafmaker
       reco_particle.E = fRecoParticleEnergy->at(iParticle);
       reco_particle.E_method = caf::PartEMethod::kCurvature; // only method available for GAr atm
 
+      reco_particle.score.gsft_pid.muon_score        = fRecoParticleMuonScore->at(iParticle);
+      reco_particle.score.gsft_pid.proton_dEdx_score = fRecoParticleProtonCaloScore->at(iParticle);
+      reco_particle.score.gsft_pid.proton_tof_score  = fRecoParticleProtonToFScore->at(iParticle);
+
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
       // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
       int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
