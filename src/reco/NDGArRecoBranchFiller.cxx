@@ -740,7 +740,7 @@ namespace cafmaker
     sr.nd.gar.ixn[0].nmuidclusters = n_clusters;
 
     size_t n_assns = fMuIDAssn_ClusterID->size();
-    caf::SRGArECAL cluster;
+    caf::SRGArCalo cluster;
     cluster.cluster_type = caf::GArCaloType::kMuIDCluster;
     for (size_t iMuID=0; iMuID<n_clusters; iMuID++){
         LOG.VERBOSE() << "        Filling cluster " << iMuID << ".\n";
