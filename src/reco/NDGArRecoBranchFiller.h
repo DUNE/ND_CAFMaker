@@ -50,8 +50,13 @@ namespace cafmaker
       void FillTracks(const TruthMatcher * truthMatch,
                       caf::StandardRecord &sr) const;
 
-      void FillECalClusters(caf::StandardRecord &sr) const;
-      void FillMuIDClusters(caf::StandardRecord &sr) const;
+      void FillECalClusters(const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr) const;
+
+      void FillMuIDClusters(const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr) const;
+
+      void FillAssociations(caf::StandardRecord &sr) const;
 
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()

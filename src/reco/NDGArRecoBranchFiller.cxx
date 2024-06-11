@@ -243,8 +243,9 @@ namespace cafmaker
     FillInteractions(truthMatcher, sr);
 
     FillTracks(truthMatcher, sr);
-    FillECalClusters(sr);
-    FillMuIDClusters(sr);
+    FillECalClusters(truthMatcher, sr);
+    FillMuIDClusters(truthMatcher, sr);
+    FillAssociations(sr);
 
     FillParticles(truthMatcher, sr);
     LOG.VERBOSE() << "    Done with event: " << fEvent << ".\n";
@@ -357,11 +358,6 @@ namespace cafmaker
     LOG.VERBOSE() << "    GArSoft number of reco particles: " << n_particles << ".\n";
     //sr.nd.gar.ixn[0].nparticles = n_particles;
 
-    // Get the number of associations in the event
-    size_t n_assns_tracks = fParticleTrackAssn_ParticleID->size();
-    size_t n_assns_ecal   = fParticleECALAssn_ParticleID->size();
-    size_t n_assns_muid   = fParticleMuIDAssn_ParticleID->size();
-
     for (size_t iParticle=0; iParticle<n_particles; iParticle++){
         LOG.VERBOSE() << "        Filling particle " << iParticle << ".\n";
 
@@ -460,67 +456,13 @@ namespace cafmaker
         reco_particle.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                                           (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                                           static_cast<int>(truthVecIdx)});
+
         reco_particle.truthOverlap.push_back(fRecoParticleMCfrac->at(iParticle));
-      }
 
-      caf::SRGArParticle  reco_particle_gar(reco_particle);
-
-      // Fill SRGArParticle specific values
-      reco_particle_gar.garsoft_part_id = fRecoParticleID->at(iParticle);
-
-      reco_particle_gar.dEdx_total = fRecoParticleTotalCaloEnergy->at(iParticle);
-      reco_particle_gar.dEdx_mean  = fRecoParticleMeanCaloEnergy->at(iParticle);
-
-      reco_particle_gar.ECAL_total_energy = fRecoParticleTotalECALEnergy->at(iParticle);
-      reco_particle_gar.ECAL_n_hits       = fRecoParticleNHitsECAL->at(iParticle);
-      reco_particle_gar.MuID_total_energy = fRecoParticleTotalMuIDEnergy->at(iParticle);
-      reco_particle_gar.MuID_n_hits       = fRecoParticleNHitsMuID->at(iParticle);
-
-      reco_particle_gar.ToF_time = fRecoParticleToFTime->at(iParticle);
-      reco_particle_gar.ToF_beta = fRecoParticleToFBeta->at(iParticle);
-
-      reco_particle_gar.charge = fRecoParticleCharge->at(iParticle);
-
-      reco_particle_gar.muon_score        = fRecoParticleMuonScore->at(iParticle);
-      reco_particle_gar.proton_dEdx_score = fRecoParticleProtonCaloScore->at(iParticle);
-      reco_particle_gar.proton_tof_score  = fRecoParticleProtonToFScore->at(iParticle);
-
-      // Filling associations to other reco objects
-      for (size_t iAssnTrack=0; iAssnTrack<n_assns_tracks; ++iAssnTrack){
-        LOG.VERBOSE() << "            iAssnTrack in loop: " << iAssnTrack
-                      << "            ParticleID:         " << fParticleTrackAssn_ParticleID->at(iAssnTrack)
-                      << "            TrackID:            " << fParticleTrackAssn_TrackID->at(iAssnTrack) << ".\n";
-        if (reco_particle_gar.garsoft_part_id == fParticleTrackAssn_ParticleID->at(iAssnTrack)){
-          LOG.VERBOSE() << "                association found!" << ".\n";
-          reco_particle_gar.garsoft_trk_assn = fParticleTrackAssn_TrackID->at(iAssnTrack);
-        }
-      }
-
-      for (size_t iAssnECAL=0; iAssnECAL<n_assns_ecal; ++iAssnECAL){
-        LOG.VERBOSE() << "            iAssnECAL in loop:  " << iAssnECAL
-                      << "            ParticleID:         " << fParticleECALAssn_ParticleID->at(iAssnECAL)
-                      << "            ECalID:             " << fParticleECALAssn_ClusterID->at(iAssnECAL) << ".\n";
-        if (reco_particle_gar.garsoft_part_id == fParticleECALAssn_ParticleID->at(iAssnECAL)){
-          LOG.VERBOSE() << "                association found!" << ".\n";
-          reco_particle_gar.garsoft_ecal_assns.push_back(fParticleECALAssn_ClusterID->at(iAssnECAL));
-        }
-      }
-
-      for (size_t iAssnMuID=0; iAssnMuID<n_assns_muid; ++iAssnMuID){
-        LOG.VERBOSE() << "            iAssnMuID in loop:  " << iAssnMuID
-                      << "            ParticleID:         " << fParticleMuIDAssn_ParticleID->at(iAssnMuID)
-                      << "            MuIDID:             " << fParticleMuIDAssn_ClusterID->at(iAssnMuID) << ".\n";
-        if (reco_particle_gar.garsoft_part_id == fParticleMuIDAssn_ParticleID->at(iAssnMuID)){
-          LOG.VERBOSE() << "                association found!" << ".\n";
-          reco_particle_gar.garsoft_muid_assns.push_back(fParticleMuIDAssn_ClusterID->at(iAssnMuID));
-        }
       }
 
       sr.common.ixn.gsft[0].part.gsft.push_back(std::move(reco_particle));
       sr.common.ixn.gsft[0].part.ngsft++;
-
-      sr.nd.gar.ixn[0].particles.push_back(reco_particle_gar);
-      sr.nd.gar.ixn[0].nparticles++;
 
     }
   }
@@ -563,6 +505,11 @@ namespace cafmaker
       //track.p_bak = fTrackPB->at(iTrack);
       track.dQdx_fwd = fTrackAvgIonF->at(iTrack);
       track.dQdx_bak = fTrackAvgIonB->at(iTrack);
+
+      // F says: Names are a mess, soz...
+      track.dEdx_fwd  = fRecoParticleMeanCaloEnergy->at(iTrack);
+      //track.dEdx_bak = 
+      track.dEdx_total = fRecoParticleTotalCaloEnergy->at(iTrack);
 
       track.garsoft_trk_id = fTrackIDNumber->at(iTrack);
       track.clusters_in_track = fTrackNClusters->at(iTrack);
@@ -642,6 +589,8 @@ namespace cafmaker
         track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                           (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
                                           static_cast<int>(truthVecIdx)});
+        
+        track.truthOverlap.push_back(fTrackMCfrac->at(iTrack));
 
       }
 
@@ -669,76 +618,284 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void NDGArRecoBranchFiller::FillECalClusters(caf::StandardRecord &sr) const
+  void NDGArRecoBranchFiller::FillECalClusters(const TruthMatcher * truthMatch,
+                                               caf::StandardRecord &sr) const
   {
-   // F says: sr.nd.gar.ixn already has the right size, so
-   //         no need to worry about that again here
+    // F says: sr.nd.gar.ixn already has the right size, so
+    //         no need to worry about that again here
 
-   size_t n_clusters = fECALClusterX->size();
-   LOG.VERBOSE() << "    GArSoft number of ECal clusters: " << n_clusters << ".\n";
-   sr.nd.gar.ixn[0].necalclusters = n_clusters;
+    size_t n_clusters = fECALClusterX->size();
+    LOG.VERBOSE() << "    GArSoft number of ECal clusters: " << n_clusters << ".\n";
+    sr.nd.gar.ixn[0].necalclusters = n_clusters;
 
-   size_t n_assns = fECALAssn_ClusterID->size();
-   caf::SRGArCalo cluster;
-   cluster.cluster_type = caf::GArCaloType::kECalCluster;
-   for (size_t iECAL=0; iECAL<n_clusters; iECAL++){
-      LOG.VERBOSE() << "        Filling cluster " << iECAL << ".\n";
+    size_t n_assns = fECALAssn_ClusterID->size();
+    caf::SRGArCalo cluster;
+    cluster.cluster_type = caf::GArCaloType::kECalCluster;
+    for (size_t iECAL=0; iECAL<n_clusters; iECAL++){
+        LOG.VERBOSE() << "        Filling cluster " << iECAL << ".\n";
 
-      caf::SRVector3D position(fECALClusterX->at(iECAL), fECALClusterY->at(iECAL), fECALClusterZ->at(iECAL));
-      cluster.position = position;
+        caf::SRVector3D position(fECALClusterX->at(iECAL), fECALClusterY->at(iECAL), fECALClusterZ->at(iECAL));
+        cluster.position = position;
 
-      cluster.E = fECALClusterEnergy->at(iECAL);
-      cluster.hits_in_cluster = fECALClusterNhits->at(iECAL);
+        cluster.E = fECALClusterEnergy->at(iECAL);
+        cluster.hits_in_cluster = fECALClusterNhits->at(iECAL);
 
-      cluster.garsoft_calo_id = fECALClusterIDNumber->at(iECAL);
+        cluster.garsoft_calo_id = fECALClusterIDNumber->at(iECAL);
 
-      for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
-        LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
-        if (cluster.garsoft_calo_id == fECALAssn_ClusterID->at(iAssn)){
-          cluster.garsoft_trk_assn = fECALAssn_TrackID->at(iAssn);
+        for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
+          LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
+          if (cluster.garsoft_calo_id == fECALAssn_ClusterID->at(iAssn)){
+            cluster.garsoft_trk_assn = fECALAssn_TrackID->at(iAssn);
+          }
         }
+
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
+      // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+      int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                        std::find_if(sr.mc.nu.begin(),
+                                                    sr.mc.nu.end(),
+                                                    [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+
+      int iMCParticleECAL = fECALClusterMCindex->at(iECAL);
+      if(iMCParticleECAL >= 0){
+
+        caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleECAL), fMCStartPY->at(iMCParticleECAL), fMCStartPZ->at(iMCParticleECAL));
+
+
+        // find the true particle this reco particle goes with.
+        // if we had GENIE info and it was a primary, it should already be filled in.
+        // we use the comparison version because the G4ID from the pass-through
+        // counts up monotonically from 0 across the whole FILE,
+        // whereas the GENIE events start over at every interaction.
+        // moreover, the cafmaker::types::gsft::TrueParticle::is_primary flag
+        // is currently broken (upstream info from Supera is screwed up)
+        // so we need to try both collections :(
+        static SRPartCmp srPartCmp;
+        srPartCmp.p = mc_p.Mag();
+        srPartCmp.trkid = fMCTrkID->at(iMCParticleECAL);
+
+        bool isPrim = false;
+        caf::SRTrueParticle * srTruePart = nullptr;
+        try
+        {
+          // F says: our GENIE particles won't have a valid G4ID
+          //         therefore the comparsion will only look at 
+          //         the module of the 3-momentum
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
+          isPrim = true;
+        }
+        catch ( std::runtime_error& err )
+        {
+          // guess if it wasn't a primary, it must be a secondary :(
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+        }
+
+        // however this will fill in any other fields that weren't copied from a GENIE record
+        // (which also handles the case where this particle is a secondary)
+        FillTruth(*srTruePart, iMCParticleECAL);
+
+        // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
+        // first find the interaction that it goes with
+        LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
+        std::vector<caf::SRTrueParticle> & collection = (isPrim)
+                                                        ? srTrueInt.prim
+                                                        : srTrueInt.sec;
+        std::size_t truthVecIdx = std::distance(collection.begin(),
+                                                std::find_if(collection.begin(),
+                                                              collection.end(),
+                                                              srPartCmp));
+
+        LOG.VERBOSE() << "      index of SRParticle in the SRInteraction " << truthVecIdx << "\n";
+
+        // F says: currently our reco only gives truth matching
+        //         to one MCParticle, but we can change that if
+        //         we need to...
+        cluster.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                          (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
+                                          static_cast<int>(truthVecIdx)});
+        
+        cluster.truthOverlap.push_back(fECALClusterMCfrac->at(iECAL));
+
       }
 
-      sr.nd.gar.ixn[0].ecalclusters.push_back(cluster);
+        sr.nd.gar.ixn[0].ecalclusters.push_back(cluster);
 
-   }
+    }
 
   }
 
   // ------------------------------------------------------------------------------
-  void NDGArRecoBranchFiller::FillMuIDClusters(caf::StandardRecord &sr) const
+  void NDGArRecoBranchFiller::FillMuIDClusters(const TruthMatcher * truthMatch,
+                                               caf::StandardRecord &sr) const
   {
-   // F says: sr.nd.gar.ixn already has the right size, so
-   //         no need to worry about that again here
+    // F says: sr.nd.gar.ixn already has the right size, so
+    //         no need to worry about that again here
 
-   size_t n_clusters = fMuIDClusterX->size();
-   LOG.VERBOSE() << "    GArSoft number of MuID clusters: " << n_clusters << ".\n";
-   sr.nd.gar.ixn[0].nmuidclusters = n_clusters;
+    size_t n_clusters = fMuIDClusterX->size();
+    LOG.VERBOSE() << "    GArSoft number of MuID clusters: " << n_clusters << ".\n";
+    sr.nd.gar.ixn[0].nmuidclusters = n_clusters;
 
-   size_t n_assns = fMuIDAssn_ClusterID->size();
-   caf::SRGArECAL cluster;
-   cluster.cluster_type = caf::GArCaloType::kMuIDCluster;
-   for (size_t iMuID=0; iMuID<n_clusters; iMuID++){
-      LOG.VERBOSE() << "        Filling cluster " << iMuID << ".\n";
+    size_t n_assns = fMuIDAssn_ClusterID->size();
+    caf::SRGArECAL cluster;
+    cluster.cluster_type = caf::GArCaloType::kMuIDCluster;
+    for (size_t iMuID=0; iMuID<n_clusters; iMuID++){
+        LOG.VERBOSE() << "        Filling cluster " << iMuID << ".\n";
 
-      caf::SRVector3D position(fMuIDClusterX->at(iMuID), fMuIDClusterY->at(iMuID), fMuIDClusterZ->at(iMuID));
-      cluster.position = position;
+        caf::SRVector3D position(fMuIDClusterX->at(iMuID), fMuIDClusterY->at(iMuID), fMuIDClusterZ->at(iMuID));
+        cluster.position = position;
 
-      cluster.E = fMuIDClusterEnergy->at(iMuID);
-      cluster.hits_in_cluster = fMuIDClusterNhits->at(iMuID);
+        cluster.E = fMuIDClusterEnergy->at(iMuID);
+        cluster.hits_in_cluster = fMuIDClusterNhits->at(iMuID);
 
-      cluster.garsoft_calo_id = fMuIDClusterIDNumber->at(iMuID);
+        cluster.garsoft_calo_id = fMuIDClusterIDNumber->at(iMuID);
 
-      for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
-        LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
-        if (cluster.garsoft_calo_id == fMuIDAssn_ClusterID->at(iAssn)){
-          cluster.garsoft_trk_assn = fMuIDAssn_TrackID->at(iAssn);
+        for (size_t iAssn=0; iAssn<n_assns; ++iAssn){
+          LOG.VERBOSE() << "            iAssn in loop: " << iAssn << ".\n";
+          if (cluster.garsoft_calo_id == fMuIDAssn_ClusterID->at(iAssn)){
+            cluster.garsoft_trk_assn = fMuIDAssn_TrackID->at(iAssn);
+          }
+        }
+
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, 10000000000+fEvent-1, false);
+      // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
+      int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
+                                        std::find_if(sr.mc.nu.begin(),
+                                                    sr.mc.nu.end(),
+                                                    [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
+
+      int iMCParticleMuID = fMuIDClusterMCindex->at(iMuID);
+      if(iMCParticleMuID >= 0){
+
+        caf::SRVector3D mc_p(fMCStartPX->at(iMCParticleMuID), fMCStartPY->at(iMCParticleMuID), fMCStartPZ->at(iMCParticleMuID));
+
+
+        // find the true particle this reco particle goes with.
+        // if we had GENIE info and it was a primary, it should already be filled in.
+        // we use the comparison version because the G4ID from the pass-through
+        // counts up monotonically from 0 across the whole FILE,
+        // whereas the GENIE events start over at every interaction.
+        // moreover, the cafmaker::types::gsft::TrueParticle::is_primary flag
+        // is currently broken (upstream info from Supera is screwed up)
+        // so we need to try both collections :(
+        static SRPartCmp srPartCmp;
+        srPartCmp.p = mc_p.Mag();
+        srPartCmp.trkid = fMCTrkID->at(iMCParticleMuID);
+
+        bool isPrim = false;
+        caf::SRTrueParticle * srTruePart = nullptr;
+        try
+        {
+          // F says: our GENIE particles won't have a valid G4ID
+          //         therefore the comparsion will only look at 
+          //         the module of the 3-momentum
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, false);
+          isPrim = true;
+        }
+        catch ( std::runtime_error& err )
+        {
+          // guess if it wasn't a primary, it must be a secondary :(
+          srTruePart = &truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+        }
+
+        // however this will fill in any other fields that weren't copied from a GENIE record
+        // (which also handles the case where this particle is a secondary)
+        FillTruth(*srTruePart, iMCParticleMuID);
+
+        // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
+        // first find the interaction that it goes with
+        LOG.VERBOSE() << "      this particle is " << (isPrim ? "PRIMARY" : "SECONDARY") << "\n";
+        std::vector<caf::SRTrueParticle> & collection = (isPrim)
+                                                        ? srTrueInt.prim
+                                                        : srTrueInt.sec;
+        std::size_t truthVecIdx = std::distance(collection.begin(),
+                                                std::find_if(collection.begin(),
+                                                              collection.end(),
+                                                              srPartCmp));
+
+        LOG.VERBOSE() << "      index of SRParticle in the SRInteraction " << truthVecIdx << "\n";
+
+        // F says: currently our reco only gives truth matching
+        //         to one MCParticle, but we can change that if
+        //         we need to...
+        cluster.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                          (isPrim) ? caf::TrueParticleID::PartType::kPrimary :  caf::TrueParticleID::PartType::kSecondary,
+                                          static_cast<int>(truthVecIdx)});
+        
+        cluster.truthOverlap.push_back(fMuIDClusterMCfrac->at(iMuID));
+
+      }
+
+        sr.nd.gar.ixn[0].muidclusters.push_back(cluster);
+
+    }
+
+  }
+
+  // ------------------------------------------------------------------------------
+  void NDGArRecoBranchFiller::FillAssociations(caf::StandardRecord &sr) const
+  {
+    // F says: sr.nd.gar.ixn already has the right size, so
+    //         no need to worry about that again here
+
+    size_t n_associations = fRecoParticleID->size();
+    LOG.VERBOSE() << "    GArSoft number of associations: " << n_associations << ".\n";
+    sr.nd.gar.ixn[0].nassociations = n_associations;
+
+    // Get the number of associations in the event
+    size_t n_assns_tracks = fParticleTrackAssn_ParticleID->size();
+    size_t n_assns_ecal   = fParticleECALAssn_ParticleID->size();
+    size_t n_assns_muid   = fParticleMuIDAssn_ParticleID->size();
+
+    caf::SRGArAssociation association;
+
+    for (size_t iAssociation=0; iAssociation<n_associations; iAssociation++){
+
+      association.garsoft_assn_id = fRecoParticleID->at(iAssociation);
+
+      association.ECAL_total_energy = fRecoParticleTotalECALEnergy->at(iAssociation);
+      association.ECAL_n_hits       = fRecoParticleNHitsECAL->at(iAssociation);
+      association.MuID_total_energy = fRecoParticleTotalMuIDEnergy->at(iAssociation);
+      association.MuID_n_hits       = fRecoParticleNHitsMuID->at(iAssociation);
+
+      association.ToF_time = fRecoParticleToFTime->at(iAssociation);
+      association.ToF_beta = fRecoParticleToFBeta->at(iAssociation);
+
+      association.charge = fRecoParticleCharge->at(iAssociation);
+
+      // Filling associations to other reco objects
+      for (size_t iAssnTrack=0; iAssnTrack<n_assns_tracks; ++iAssnTrack){
+        LOG.VERBOSE() << "            iAssnTrack in loop: " << iAssnTrack
+                      << "            ParticleID:         " << fParticleTrackAssn_ParticleID->at(iAssnTrack)
+                      << "            TrackID:            " << fParticleTrackAssn_TrackID->at(iAssnTrack) << ".\n";
+        if (association.garsoft_assn_id == fParticleTrackAssn_ParticleID->at(iAssnTrack)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          association.garsoft_trk_assn = fParticleTrackAssn_TrackID->at(iAssnTrack);
         }
       }
 
-      sr.nd.gar.ixn[0].muidclusters.push_back(cluster);
+      for (size_t iAssnECAL=0; iAssnECAL<n_assns_ecal; ++iAssnECAL){
+        LOG.VERBOSE() << "            iAssnECAL in loop:  " << iAssnECAL
+                      << "            ParticleID:         " << fParticleECALAssn_ParticleID->at(iAssnECAL)
+                      << "            ECalID:             " << fParticleECALAssn_ClusterID->at(iAssnECAL) << ".\n";
+        if (association.garsoft_assn_id == fParticleECALAssn_ParticleID->at(iAssnECAL)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          association.garsoft_ecal_assns.push_back(fParticleECALAssn_ClusterID->at(iAssnECAL));
+        }
+      }
 
-   }
+      for (size_t iAssnMuID=0; iAssnMuID<n_assns_muid; ++iAssnMuID){
+        LOG.VERBOSE() << "            iAssnMuID in loop:  " << iAssnMuID
+                      << "            ParticleID:         " << fParticleMuIDAssn_ParticleID->at(iAssnMuID)
+                      << "            MuIDID:             " << fParticleMuIDAssn_ClusterID->at(iAssnMuID) << ".\n";
+        if (association.garsoft_assn_id == fParticleMuIDAssn_ParticleID->at(iAssnMuID)){
+          LOG.VERBOSE() << "                association found!" << ".\n";
+          association.garsoft_muid_assns.push_back(fParticleMuIDAssn_ClusterID->at(iAssnMuID));
+        }
+      }
+
+      sr.nd.gar.ixn[0].associations.push_back(association);
+
+    }
 
   }
 
