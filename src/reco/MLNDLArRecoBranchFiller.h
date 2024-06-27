@@ -65,7 +65,9 @@ namespace cafmaker
 
       void FillTrueParticle(caf::SRTrueParticle & srTruePart,
                             const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const;
+                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                            const caf::SRTrueInteraction &srTrueInt,
+                            const int srTrueIntIdx) const;
 
       void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
                                const cafmaker::types::dlp::TrueInteraction & trueIntPassthrough) const;
