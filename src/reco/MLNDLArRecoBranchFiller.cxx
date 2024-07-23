@@ -13,100 +13,100 @@
 using namespace cafmaker::types::dlp;
 
 // these overloads needed to make the ValidateOrCopy() templates functional over these types
-std::ostream & operator<<(std::ostream& stream, NuInteractionMode mode)
+std::ostream & operator<<(std::ostream& stream, InteractionMode mode)
 {
-  return stream << static_cast<std::underlying_type<NuInteractionMode>::type>(mode);
+  return stream << static_cast<std::underlying_type<InteractionMode>::type>(mode);
 }
 
-std::ostream & operator<<(std::ostream& stream, NuCurrentType curr)
+std::ostream & operator<<(std::ostream& stream, CurrentType curr)
 {
-  return stream << static_cast<std::underlying_type<NuCurrentType>::type>(curr);
+  return stream << static_cast<std::underlying_type<CurrentType>::type>(curr);
 }
 
 namespace cafmaker
 {
-  caf::ScatteringMode DLP2CAF(cafmaker::types::dlp::NuInteractionMode mode)
+  caf::ScatteringMode DLP2CAF(cafmaker::types::dlp::InteractionMode mode)
   {
-    using cafmaker::types::dlp::NuInteractionMode;
+    using cafmaker::types::dlp::InteractionMode;
 
     switch(mode)
     {
-      case NuInteractionMode::kQE:
+      case InteractionMode::kQE:
         return caf::kQE;
 
-      case NuInteractionMode::kDIS:
+      case InteractionMode::kDIS:
         return caf::kDIS;
 
       // for whatever reason they don't appear to have a catchall RES enumerator,
       // just all the various NUISANCE codes ... :-|
-      case NuInteractionMode::kResCCNuBarDelta0PiMinus:        [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarDeltaMinusPiPlus:     [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarKaon0Lambda0:         [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarNeutronEta:           [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarNeutronPi0Pi0:        [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarNeutronPiMinus:       [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarNeutronPiPlusPiMinus: [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarNeutronRho0:          [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarNeutronRhoMinus:      [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarProtonPi0:            [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarProtonPi0Pi0:         [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarProtonPiMinus:        [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarSigma0Kaon0:          [[fallthrough]];
-      case NuInteractionMode::kResCCNuBarSigmaMinusKaon0:      [[fallthrough]];
-      case NuInteractionMode::kResCCNuDelta2PlusPiMinus:       [[fallthrough]];
-      case NuInteractionMode::kResCCNuDeltaPlusPiPlus:         [[fallthrough]];
-      case NuInteractionMode::kResCCNuKaonPlusLambda0:         [[fallthrough]];
-      case NuInteractionMode::kResCCNuNeutronPi0:              [[fallthrough]];
-      case NuInteractionMode::kResCCNuNeutronPiPlus:           [[fallthrough]];
-      case NuInteractionMode::kResCCNuNeutronRhoPlus:          [[fallthrough]];
-      case NuInteractionMode::kResCCNuProtonEta:               [[fallthrough]];
-      case NuInteractionMode::kResCCNuProtonPi0Pi0:            [[fallthrough]];
-      case NuInteractionMode::kResCCNuProtonPiPlus:            [[fallthrough]];
-      case NuInteractionMode::kResCCNuProtonPiPlusPiMinus:     [[fallthrough]];
-      case NuInteractionMode::kResCCNuProtonRhoPlus:           [[fallthrough]];
-      case NuInteractionMode::kResCCNuSigmaPlusKaon0:          [[fallthrough]];
-      case NuInteractionMode::kResCCNuSigmaPlusKaonPlus:       [[fallthrough]];
-      case NuInteractionMode::kResNCNuBarNeutronPi0:           [[fallthrough]];
-      case NuInteractionMode::kResNCNuBarNeutronPiMinus:       [[fallthrough]];
-      case NuInteractionMode::kResNCNuBarProtonPi0:            [[fallthrough]];
-      case NuInteractionMode::kResNCNuBarProtonPiPlus:         [[fallthrough]];
-      case NuInteractionMode::kResNCNuNeutronPi0:              [[fallthrough]];
-      case NuInteractionMode::kResNCNuNeutronPiMinus:          [[fallthrough]];
-      case NuInteractionMode::kResNCNuProtonPi0:               [[fallthrough]];
-      case NuInteractionMode::kResNCNuProtonPiPlus:
+      case InteractionMode::kResCCNuBarDelta0PiMinus:        [[fallthrough]];
+      case InteractionMode::kResCCNuBarDeltaMinusPiPlus:     [[fallthrough]];
+      case InteractionMode::kResCCNuBarKaon0Lambda0:         [[fallthrough]];
+      case InteractionMode::kResCCNuBarNeutronEta:           [[fallthrough]];
+      case InteractionMode::kResCCNuBarNeutronPi0Pi0:        [[fallthrough]];
+      case InteractionMode::kResCCNuBarNeutronPiMinus:       [[fallthrough]];
+      case InteractionMode::kResCCNuBarNeutronPiPlusPiMinus: [[fallthrough]];
+      case InteractionMode::kResCCNuBarNeutronRho0:          [[fallthrough]];
+      case InteractionMode::kResCCNuBarNeutronRhoMinus:      [[fallthrough]];
+      case InteractionMode::kResCCNuBarProtonPi0:            [[fallthrough]];
+      case InteractionMode::kResCCNuBarProtonPi0Pi0:         [[fallthrough]];
+      case InteractionMode::kResCCNuBarProtonPiMinus:        [[fallthrough]];
+      case InteractionMode::kResCCNuBarSigma0Kaon0:          [[fallthrough]];
+      case InteractionMode::kResCCNuBarSigmaMinusKaon0:      [[fallthrough]];
+      case InteractionMode::kResCCNuDelta2PlusPiMinus:       [[fallthrough]];
+      case InteractionMode::kResCCNuDeltaPlusPiPlus:         [[fallthrough]];
+      case InteractionMode::kResCCNuKaonPlusLambda0:         [[fallthrough]];
+      case InteractionMode::kResCCNuNeutronPi0:              [[fallthrough]];
+      case InteractionMode::kResCCNuNeutronPiPlus:           [[fallthrough]];
+      case InteractionMode::kResCCNuNeutronRhoPlus:          [[fallthrough]];
+      case InteractionMode::kResCCNuProtonEta:               [[fallthrough]];
+      case InteractionMode::kResCCNuProtonPi0Pi0:            [[fallthrough]];
+      case InteractionMode::kResCCNuProtonPiPlus:            [[fallthrough]];
+      case InteractionMode::kResCCNuProtonPiPlusPiMinus:     [[fallthrough]];
+      case InteractionMode::kResCCNuProtonRhoPlus:           [[fallthrough]];
+      case InteractionMode::kResCCNuSigmaPlusKaon0:          [[fallthrough]];
+      case InteractionMode::kResCCNuSigmaPlusKaonPlus:       [[fallthrough]];
+      case InteractionMode::kResNCNuBarNeutronPi0:           [[fallthrough]];
+      case InteractionMode::kResNCNuBarNeutronPiMinus:       [[fallthrough]];
+      case InteractionMode::kResNCNuBarProtonPi0:            [[fallthrough]];
+      case InteractionMode::kResNCNuBarProtonPiPlus:         [[fallthrough]];
+      case InteractionMode::kResNCNuNeutronPi0:              [[fallthrough]];
+      case InteractionMode::kResNCNuNeutronPiMinus:          [[fallthrough]];
+      case InteractionMode::kResNCNuProtonPi0:               [[fallthrough]];
+      case InteractionMode::kResNCNuProtonPiPlus:
         return caf::kRes;
 
-      case NuInteractionMode::kCoh:
+      case InteractionMode::kCoh:
         return caf::kCoh;
 
-      case NuInteractionMode::kDiffractive:
+      case InteractionMode::kDiffractive:
         return caf::kDiffractive;
 
-      case NuInteractionMode::kNuElectronElastic:
+      case InteractionMode::kNuElectronElastic:
         return caf::kNuElectronElastic;
 
-      case NuInteractionMode::kInverseMuDecay:
+      case InteractionMode::kInverseMuDecay:
         return caf::kInvMuonDecay;
 
-      case NuInteractionMode::kAMNuGamma:
+      case InteractionMode::kAMNuGamma:
         return caf::kAMNuGamma;
 
-      case NuInteractionMode::kMEC:
+      case InteractionMode::kMEC:
         return caf::kMEC;
 
-      case NuInteractionMode::kCohElastic:
+      case InteractionMode::kCohElastic:
         return caf::kCohElastic;
 
-      case NuInteractionMode::kInverseBetaDecay:
+      case InteractionMode::kInverseBetaDecay:
         return caf::kInverseBetaDecay;
 
-      case NuInteractionMode::kGlashowResonance:
+      case InteractionMode::kGlashowResonance:
         return caf::kGlashowResonance;
 
-      case NuInteractionMode::kIMDAnnihilation:
+      case InteractionMode::kIMDAnnihilation:
         return caf::kIMDAnnihilation;
 
-      case NuInteractionMode::kUnknownInteraction:
+      case InteractionMode::kUnknownInteraction:
         return caf::kUnknownMode;
 
       default:
@@ -122,8 +122,8 @@ namespace cafmaker
   MLNDLArRecoBranchFiller::MLNDLArRecoBranchFiller(const std::string &h5filename)
     : IRecoBranchFiller("LArML"),
       fDSReader(h5filename,
-                {{std::type_index(typeid(Particle)),                      "particles"},
-                 {std::type_index(typeid(Interaction)),                   "interactions"},
+                {{std::type_index(typeid(Particle)),                      "reco_particles"},
+                 {std::type_index(typeid(Interaction)),                   "reco_interactions"},
                  {std::type_index(typeid(TrueParticle)),                  "truth_particles"},
                  {std::type_index(typeid(TrueInteraction)),               "truth_interactions"},
                  {std::type_index(typeid(Event)),                         "events"},
@@ -215,39 +215,39 @@ namespace cafmaker
     //ValidateOrCopy(ptTrueInt.truth_vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
     //ValidateOrCopy(ptTrueInt.truth_vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
-    const std::function<bool(const NuCurrentType &, const bool &)> nuCurrComp =
-    [](const NuCurrentType & inCurr, const bool & outCurr)
+    const std::function<bool(const CurrentType &, const bool &)> nuCurrComp =
+    [](const CurrentType & inCurr, const bool & outCurr)
     {
-      return (outCurr && inCurr == cafmaker::types::dlp::NuCurrentType::kCC)
-             || (!outCurr && inCurr == cafmaker::types::dlp::NuCurrentType::kNC);
+      return (outCurr && inCurr == cafmaker::types::dlp::CurrentType::kCC)
+             || (!outCurr && inCurr == cafmaker::types::dlp::CurrentType::kNC);
     };
-    const std::function<void(const NuCurrentType & inCurr, bool & outCurr)> nuCurrSet =
-    [](const NuCurrentType & inCurr, bool & outCurr)
+    const std::function<void(const CurrentType & inCurr, bool & outCurr)> nuCurrSet =
+    [](const CurrentType & inCurr, bool & outCurr)
     {
-      outCurr = inCurr == cafmaker::types::dlp::NuCurrentType::kCC;
+      outCurr = inCurr == cafmaker::types::dlp::CurrentType::kCC;
     };
 
     // todo: these need us to propagate nu info through Supera.  WIP
-    //ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
+    //ValidateOrCopy(ptTrueInt.nu_curren.shape, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
 //    ValidateOrCopy(ptTrueInt.nu_energy_init/1000., srTrueInt.E, NaN); //this is currently filled with many -inf
 //    ValidateOrCopy(ptTrueInt.nu_interaction_mode, srTrueInt.mode, caf::ScatteringMode::kUnknownMode,
-//                   [](const NuInteractionMode & inCurr, const caf::ScatteringMode & outCurr)
+//                   [](const InteractionMode & inCurr, const caf::ScatteringMode & outCurr)
 //                   {
 //                     return DLP2CAF(inCurr) == outCurr;
 //                   },
-//                   [](const NuInteractionMode & inCurr, caf::ScatteringMode & outCurr)
+//                   [](const InteractionMode & inCurr, caf::ScatteringMode & outCurr)
 //                   {
 //                     outCurr = DLP2CAF(inCurr);
 //                   });
-    // NuInteractionType nu_interaction_type;    // this appears to be identical to nu_interaction_mode
+    // InteractionType nu_interactio.shape;    // this appears to be identical to nu_interaction_mode
 
     // int64_t image_id;      // ID of event passed to reco within the file.  use the event ID instead.
     // bool is_contained;     // If the whole event is contained.  we don't have a landing spot for this right now
     // bool is_neutrino;      // We really want the initiating PDG instead :-/
-    // bool is_principal_match;          // for now at least we're going to focus on matching from the Reco end first
-    // BufferView<int64_t> match;        //   |
-    // BufferView<float> match_overlap;  //   |
-    // uint8_t matched;                  //   v
+    // bool is_principal_match_ids;          // for now at least we're going to focus on match_idsing from the Reco end first
+    // BufferView<int64_t> match_ids;        //   |
+    // BufferView<float> match_overlaps;  //   |
+    // uint8_t match_ids;                  //   v
 
     // int64_t nu_id;        // this is the index within the overlaid spill.  not really any more useful than just `id`
 
@@ -277,7 +277,7 @@ namespace cafmaker
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
     ValidateOrCopy(truePartPassthrough.gen_id, srTruePart.G4ID, -1,"SRTrueParticle::track_id");
 
-    ValidateOrCopy(truePartPassthrough.truth_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
+    ValidateOrCopy(truePartPassthrough.orig_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
@@ -305,7 +305,7 @@ namespace cafmaker
 	ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent");
       if(part.id == truePartPassthrough.ancestor_track_id){
      	ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
-        ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
+        ValidateOrCopy(part.orig_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
       }
     }
     // todo: need to figure out how to translate "1::91" etc. to the enums...
@@ -318,9 +318,9 @@ namespace cafmaker
     ValidateOrCopy(truePartPassthrough.end_position[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
     ValidateOrCopy(truePartPassthrough.end_position[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.truth_momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
-    ValidateOrCopy(truePartPassthrough.truth_momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
-    ValidateOrCopy(truePartPassthrough.truth_momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
+    ValidateOrCopy(truePartPassthrough.momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
+    ValidateOrCopy(truePartPassthrough.momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+    ValidateOrCopy(truePartPassthrough.momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
 
     try
     {
@@ -382,32 +382,32 @@ namespace cafmaker
       interaction.vtx  = caf::SRVector3D(ixn.vertex[0], ixn.vertex[1], ixn.vertex[2]);  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser unless using a FlatCAF
       LOG.VERBOSE() << " --> interaction id = "  << interaction.id << "\n";
 
-      // if we *have* truth matches, we need to connect them now
-      if (ixn.matched)
+      // if we *have* truth match_idses, we need to connect them now
+      if (ixn.match_ids.size())
       {
-        LOG.VERBOSE() << "  There are " << ixn.match.size() << " matched true interactions:\n";
-        for (std::size_t idx = 0; idx < ixn.match.size(); idx++)
+        LOG.VERBOSE() << "  There are " << ixn.match_ids.size() << " match_ids true interactions:\n";
+        for (std::size_t idx = 0; idx < ixn.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "  ** Match index " << idx << " --> truth ID " << ixn.match[idx] << "\n";
+          LOG.VERBOSE() << "  ** Match index " << idx << " --> truth ID " << ixn.match_ids[idx] << "\n";
           // here we need to search through the truth interactions and find the one with this ID (since it's no longer an index)
           static DLPIxnComp ixnCmp;
-          ixnCmp.ixnID = ixn.match[idx];
+          ixnCmp.ixnID = ixn.match_ids[idx];
           auto itIxn = std::find_if(trueIxns.begin(), trueIxns.end(), ixnCmp);
           if (itIxn == trueIxns.end())
           {
             std::stringstream msg;
-            msg << "Reco interaction claims to match to true interaction with ID " << ixnCmp.ixnID
+            msg << "Reco interaction claims to match_ids to true interaction with ID " << ixnCmp.ixnID
                 << ", but that interaction was not found in the list of true interactions\n";
             LOG.FATAL() << msg.str();
             throw std::out_of_range(msg.str());
           }
           cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = *itIxn;
 
-          LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id
-                        << " and interaction ID = " << trueIxnPassThrough.truth_id
+          LOG.VERBOSE() << "  Finding match_ids true interaction with ML-reco ID = " << trueIxnPassThrough.id
+                        << " and interaction ID = " << trueIxnPassThrough.orig_id
                         << "\n";
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.orig_id);
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
@@ -431,9 +431,9 @@ namespace cafmaker
                                                                }));
 
           interaction.truth.push_back(truthVecIdx);
-          interaction.truthOverlap.push_back(ixn.match_overlap[idx]);
+          interaction.truthOverlap.push_back(ixn.match_overlaps[idx]);
 
-          LOG.VERBOSE() << "  ** end matched true interaction search for ML-reco ID " << trueIxnPassThrough.id << ".\n";
+          LOG.VERBOSE() << "  ** end match_ids true interaction search for ML-reco ID " << trueIxnPassThrough.id << ".\n";
         }
       }
 
@@ -453,7 +453,7 @@ namespace cafmaker
     // note: used in the hack further below
     static SRPartCmp srPartCmp;
 
-    //filling reco particles regardless of semantic type (track/shower)
+    //filling reco particles regardless of  type (track/shower)
     for (const auto & part : particles)
     {
       LOG.VERBOSE() << " --> reco particle id = "  << part.id << "\n";
@@ -468,7 +468,7 @@ namespace cafmaker
       reco_particle.p.x = part.momentum[0]/1000.;
       reco_particle.p.y = part.momentum[1]/1000.;
       reco_particle.p.z = part.momentum[2]/1000.;
-      if(part.semantic_type == types::dlp::SemanticType::kTrack)
+      if(part.shape == types::dlp::Shape::kTrack)
       {
         if(part.is_contained)
         {
@@ -487,12 +487,12 @@ namespace cafmaker
         reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       }
 
-      if (part.matched)
+      if (part.match_ids.size())
       {
-        for (std::size_t idx = 0; idx < part.match.size(); idx++)
+        for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
-          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+          LOG.VERBOSE() << "   searching for match_ids true particle with ML reco index: " << part.match_ids[idx] << "\n";
+          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
@@ -503,7 +503,7 @@ namespace cafmaker
                     << "energy = " << truePartPassThrough.energy_init
                     << "\n";
 
-          // first ask for the right truth match from the matcher.
+          // first ask for the right truth match_ids from the match_idser.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           static DLPIxnComp ixnCmp;
           ixnCmp.ixnID = truePartPassThrough.interaction_id;
@@ -518,7 +518,7 @@ namespace cafmaker
           }
           const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.orig_id, false);
 
           // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
           int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
@@ -553,7 +553,7 @@ namespace cafmaker
                                                             is_primary ? caf::TrueParticleID::PartType::kPrimary
                                                                        :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
-          reco_particle.truthOverlap.push_back(part.match_overlap[idx]);
+          reco_particle.truthOverlap.push_back(part.match_overlaps[idx]);
         }
       }
 
@@ -563,7 +563,7 @@ namespace cafmaker
                                 [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
       if (itIxn == sr.common.ixn.dlp.end())
       {
-        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match_ids any in the DLP set!\n";
         abort();
       }
       sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
@@ -586,8 +586,8 @@ namespace cafmaker
 
     for (const auto & part : particles)
     {
-      // only choose 'particles' that correspond to Track semantic type
-      if (part.semantic_type != types::dlp::SemanticType::kTrack)
+      // only choose 'particles' that correspond to Track  type
+      if (part.shape != types::dlp::Shape::kTrack)
         continue;
 
 
@@ -600,12 +600,12 @@ namespace cafmaker
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       track.enddir = caf::SRVector3D(part.end_dir[0], part.end_dir[1], part.end_dir[2]);
       track.len_cm = sqrt(pow((part.start_point[0]-part.end_point[0]),2) + pow((part.start_point[1]-part.end_point[1]),2) + pow((part.start_point[2]-part.end_point[2]),2));
-      if (part.matched)
+      if (part.match_ids.size())
       {
-        for (std::size_t idx = 0; idx < part.match.size(); idx++)
+        for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
-          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+          LOG.VERBOSE() << "   searching for match_ids true particle with ML reco index: " << part.match_ids[idx] << "\n";
+          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
@@ -616,7 +616,7 @@ namespace cafmaker
                     << "energy = " << truePartPassThrough.energy_init
                     << "\n";
 
-          // first ask for the right truth match from the matcher.
+          // first ask for the right truth match_ids from the match_idser.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           static DLPIxnComp ixnCmp;
           ixnCmp.ixnID = truePartPassThrough.interaction_id;
@@ -631,7 +631,7 @@ namespace cafmaker
           }
           const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.orig_id, false);
 
           // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
           int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
@@ -669,7 +669,7 @@ namespace cafmaker
                                                             is_primary ? caf::TrueParticleID::PartType::kPrimary
                                                                        :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
-          track.truthOverlap.push_back(part.match_overlap[idx]);
+          track.truthOverlap.push_back(part.match_overlaps[idx]);
         }
       }
       // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
@@ -678,7 +678,7 @@ namespace cafmaker
                                 [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
       if (itIxn == sr.common.ixn.dlp.end())
       {
-        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match_ids any in the DLP set!\n";
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
@@ -698,7 +698,7 @@ namespace cafmaker
 
     for (const auto & part : particles)
     {
-      if (part.semantic_type != types::dlp::SemanticType::kShower)
+      if (part.shape != types::dlp::Shape::kShower)
         continue;
 
       caf::SRShower shower;
@@ -706,12 +706,12 @@ namespace cafmaker
       shower.Evis = part.calo_ke/1000.;
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
-      if (part.matched)
+      if (part.match_ids.size())
       {
-        for (std::size_t idx = 0; idx < part.match.size(); idx++)
+        for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match[idx] << "\n";
-          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match[idx]];
+          LOG.VERBOSE() << "   searching for match_ids true particle with ML reco index: " << part.match_ids[idx] << "\n";
+          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
@@ -722,7 +722,7 @@ namespace cafmaker
                     << "energy = " << truePartPassThrough.energy_init
                     << "\n";
 
-          // first ask for the right truth match from the matcher.
+          // first ask for the right truth match_ids from the match_idser.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           static DLPIxnComp ixnCmp;
           ixnCmp.ixnID = truePartPassThrough.interaction_id;
@@ -737,7 +737,7 @@ namespace cafmaker
           }
           const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
 
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
+          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.orig_id, false);
 
           // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
           int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
@@ -771,7 +771,7 @@ namespace cafmaker
                                                             is_primary ? caf::TrueParticleID::PartType::kPrimary
                                                                        :  caf::TrueParticleID::PartType::kSecondary,
                                                             static_cast<int>(truthVecIdx)});
-          shower.truthOverlap.push_back(part.match_overlap[idx]);
+          shower.truthOverlap.push_back(part.match_overlaps[idx]);
         }
       }
       // note that interaction ID is not in general the same as the index within the sr.common.ixn.dlp vector
@@ -780,7 +780,7 @@ namespace cafmaker
                                 [&part](const caf::SRInteraction & ixn){ return ixn.id == part.interaction_id; });
       if (itIxn == sr.common.ixn.dlp.end())
       {
-        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
+        LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match_ids any in the DLP set!\n";
         abort();
       }
       sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
