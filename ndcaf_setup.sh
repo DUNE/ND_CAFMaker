@@ -7,7 +7,6 @@ setup geant4 v4_11_0_p01c -q e20:debug
 setup dk2nugenie   v01_10_01q -q e26:prof
 setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
-#setup genie v3_04_02 -q debug:e26
 setup jobsub_client
 setup eigen v3_3_5
 setup duneanaobj v03_05_00 -q e20:prof
