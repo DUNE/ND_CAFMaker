@@ -4,15 +4,16 @@ setup gcc v9_3_0
 setup pycurl
 setup ifdhc
 setup geant4 v4_11_0_p01c -q e20:debug
-setup dk2nugenie   v01_10_01k -q debug:e20
+setup dk2nugenie   v01_10_01q -q e26:prof
 setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
+#setup genie v3_04_02 -q debug:e26
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v03_02_01 -q e20:prof
+setup duneanaobj v03_05_00 -q e20:prof
 setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_15_03 -q debug:e20
-
+setup log4cpp v1_1_3e -q e26:prof
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib -name 'Geant4Config.cmake'`
