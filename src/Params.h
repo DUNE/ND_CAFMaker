@@ -32,7 +32,8 @@ namespace cafmaker
   {
     // these are mandatory and have no default values
     fhicl::OptionalSequence<std::string> GHEPFiles     { fhicl::Name{"GHEPFiles"},   fhicl::Comment("Input .ghep (GENIE) file(s) for truth matching") };
-    fhicl::Atom<std::string>             outputFile    { fhicl::Name{"OutputFile"},  fhicl::Comment("Filename for output CAF") };
+    fhicl::OptionalAtom<std::string> edepsimFile     { fhicl::Name{"EdepsimFile"},   fhicl::Comment("Input .root (EDPSIM) file for truth matching") };
+    fhicl::Atom<std::string> outputFile    { fhicl::Name{"OutputFile"},  fhicl::Comment("Filename for output CAF") };
 
     // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
     // fixme: this file is currently not used for anything, but will be once DIRT-II is done and re-enables the interaction systematics
