@@ -1,3 +1,4 @@
+
 #include "MLNDLArRecoBranchFiller.h"
 
 #include <limits>
@@ -295,32 +296,20 @@ namespace cafmaker
       else
         outType = caf::TrueParticleID::kSecondary;
     };
-    ValidateOrCopy(truePartPassthrough.ancestor_creation_process, srTruePart.ancestor_id.type, caf::TrueParticleID::kUnknown,
-                   ancestorTypeComp, ancestorTypeAssgn, "SRTrueParticle::ancestor_id.type");
-
-   // The parent track_id is filled with the unique track_id variable and the ancestor track_id is filled with the internal MLreco id variable. So we have to retrive the genid based on these
-    for (const auto & part : trueParticles)
-    {
-      if(part.track_id == truePartPassthrough.parent_track_id) 
-	ValidateOrCopy(part.gen_id, srTruePart.parent, -1, "SRTrueParticle::parent");
-      if(part.id == truePartPassthrough.ancestor_track_id){
-     	ValidateOrCopy(part.gen_id, srTruePart.ancestor_id.part, -1, "SRTrueParticle::ancestor_id.part");
-        ValidateOrCopy(part.truth_interaction_id, srTruePart.ancestor_id.ixn, -1, "SRTrueParticle::ancestor_id.ixn");
-      }
-    }
+    
     // todo: need to figure out how to translate "1::91" etc. to the enums...
 //    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
-    ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
-    ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
-    ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
+     ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
+     ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
+     ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.end_position[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
-    ValidateOrCopy(truePartPassthrough.end_position[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
-    ValidateOrCopy(truePartPassthrough.end_position[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
+     ValidateOrCopy(truePartPassthrough.end_position[0], srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
+     ValidateOrCopy(truePartPassthrough.end_position[1], srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
+     ValidateOrCopy(truePartPassthrough.end_position[2], srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
 
-    ValidateOrCopy(truePartPassthrough.truth_momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
-    ValidateOrCopy(truePartPassthrough.truth_momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
-    ValidateOrCopy(truePartPassthrough.truth_momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
+     ValidateOrCopy(truePartPassthrough.truth_momentum[0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
+     ValidateOrCopy(truePartPassthrough.truth_momentum[1]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+     ValidateOrCopy(truePartPassthrough.truth_momentum[2]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
 
     try
     {
@@ -406,8 +395,8 @@ namespace cafmaker
           LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id
                         << " and interaction ID = " << trueIxnPassThrough.truth_id
                         << "\n";
-
-          caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);
+        //  std::cout<<"a : "<<trueIxnPassThrough.truth_id<<std::endl;
+         caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxnPassThrough.truth_id);
 
           LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
           for (const caf::SRTrueParticle & part : srTrueInt.prim)
@@ -517,8 +506,9 @@ namespace cafmaker
             throw std::out_of_range(ss.str());
           }
           const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
-
+          // std::cout<<"b : "<<trueIxn.truth_id<<std::endl;
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
+
 
           // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
           int srTrueIntIdx = std::distance(sr.mc.nu.begin(),
@@ -530,9 +520,9 @@ namespace cafmaker
                                    [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
-                            : truePartPassThrough.track_id;
-          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
-                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+                            : truePartPassThrough.gen_id;
+          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, !truthMatch->HaveGENIE())
+                                                        : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
           //  this will fill in any other fields that weren't copied from a GENIE record
           // (which also handles the case where this particle is a secondary)
@@ -630,7 +620,7 @@ namespace cafmaker
             throw std::out_of_range(ss.str());
           }
           const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
-
+          // std::cout<<"c : "<<trueIxn.truth_id<<std::endl;
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
 
           // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
@@ -645,14 +635,14 @@ namespace cafmaker
 
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
-                            : truePartPassThrough.track_id;
+                            : truePartPassThrough.gen_id;
 
           // we want to make sure the particle is created, if it isn't there,
           // but we won't do anything further with it, so we throw the return value away
           if (is_primary)
-            truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE());
+            truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, !truthMatch->HaveGENIE());
           else
-            truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+            truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
           // first find the interaction that it goes with
@@ -736,7 +726,7 @@ namespace cafmaker
             throw std::out_of_range(ss.str());
           }
           const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
-
+          // std::cout<<"NOE : "<<trueIxn.truth_id<<std::endl;
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.truth_id, false);
 
           // we need this below because caf::TrueParticleID wants the *index* of the SRTrueInteraction
@@ -749,11 +739,11 @@ namespace cafmaker
                                    [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = is_primary
                             ? truePartPassThrough.gen_id
-                            : truePartPassThrough.track_id;
+                            : truePartPassThrough.gen_id;
           // we don't actually need the return value here for anything,
           // but we do want the TruthMatcher to *create* a new particle when that's appropriate
-          is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, true, !truthMatch->HaveGENIE())
-                     : truthMatch->GetTrueParticle(sr, srTrueInt, srPartCmp, false, true);
+          is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, !truthMatch->HaveGENIE())
+                     : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
 
           // the particle idx is within the GENIE vector, which may not be the same as the index in the vector here
