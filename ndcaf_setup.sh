@@ -1,4 +1,5 @@
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
+setup cmake v3_22_2
 setup gcc v12_1_0
 setup pycurl
 setup ifdhc
