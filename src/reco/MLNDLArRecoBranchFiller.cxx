@@ -228,7 +228,7 @@ namespace cafmaker
     };
 
     // todo: these need us to propagate nu info through Supera.  WIP
-    //ValidateOrCopy(ptTrueInt.nu_curren.shape, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
+    //ValidateOrCopy(ptTrueInt.nu_current_type, srTrueInt.iscc, false, nuCurrComp, nuCurrSet); //this is currently filled with -1 for iscc
 //    ValidateOrCopy(ptTrueInt.nu_energy_init/1000., srTrueInt.E, NaN); //this is currently filled with many -inf
 //    ValidateOrCopy(ptTrueInt.nu_interaction_mode, srTrueInt.mode, caf::ScatteringMode::kUnknownMode,
 //                   [](const InteractionMode & inCurr, const caf::ScatteringMode & outCurr)
@@ -239,12 +239,12 @@ namespace cafmaker
 //                   {
 //                     outCurr = DLP2CAF(inCurr);
 //                   });
-    // InteractionType nu_interactio.shape;    // this appears to be identical to nu_interaction_mode
+    // InteractionType nu_interaction_type;    // this appears to be identical to nu_interaction_mode
 
     // int64_t image_id;      // ID of event passed to reco within the file.  use the event ID instead.
     // bool is_contained;     // If the whole event is contained.  we don't have a landing spot for this right now
     // bool is_neutrino;      // We really want the initiating PDG instead :-/
-    // bool is_principal_match_ids;          // for now at least we're going to focus on match_idsing from the Reco end first
+    // bool is_principal_match;          // for now at least we're going to focus on matching from the Reco end first
     // BufferView<int64_t> match_ids;        //   |
     // BufferView<float> match_overlaps;  //   |
     // uint8_t match_ids;                  //   v
@@ -382,10 +382,10 @@ namespace cafmaker
       interaction.vtx  = caf::SRVector3D(ixn.vertex[0], ixn.vertex[1], ixn.vertex[2]);  // note: this branch suffers from "too many nested vectors" problem.  won't see vals in TBrowser unless using a FlatCAF
       LOG.VERBOSE() << " --> interaction id = "  << interaction.id << "\n";
 
-      // if we *have* truth match_idses, we need to connect them now
+      // if we *have* truth matches, we need to connect them now
       if (ixn.match_ids.size())
       {
-        LOG.VERBOSE() << "  There are " << ixn.match_ids.size() << " match_ids true interactions:\n";
+        LOG.VERBOSE() << "  There are " << ixn.match_ids.size() << " matched true interactions:\n";
         for (std::size_t idx = 0; idx < ixn.match_ids.size(); idx++)
         {
           LOG.VERBOSE() << "  ** Match index " << idx << " --> truth ID " << ixn.match_ids[idx] << "\n";
@@ -396,14 +396,14 @@ namespace cafmaker
           if (itIxn == trueIxns.end())
           {
             std::stringstream msg;
-            msg << "Reco interaction claims to match_ids to true interaction with ID " << ixnCmp.ixnID
+            msg << "Reco interaction claims to match to true interaction with ID " << ixnCmp.ixnID
                 << ", but that interaction was not found in the list of true interactions\n";
             LOG.FATAL() << msg.str();
             throw std::out_of_range(msg.str());
           }
           cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = *itIxn;
 
-          LOG.VERBOSE() << "  Finding match_ids true interaction with ML-reco ID = " << trueIxnPassThrough.id
+          LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id
                         << " and interaction ID = " << trueIxnPassThrough.orig_id
                         << "\n";
 
@@ -433,7 +433,7 @@ namespace cafmaker
           interaction.truth.push_back(truthVecIdx);
           interaction.truthOverlap.push_back(ixn.match_overlaps[idx]);
 
-          LOG.VERBOSE() << "  ** end match_ids true interaction search for ML-reco ID " << trueIxnPassThrough.id << ".\n";
+          LOG.VERBOSE() << "  ** end matched true interaction search for ML-reco ID " << trueIxnPassThrough.id << ".\n";
         }
       }
 
@@ -491,7 +491,7 @@ namespace cafmaker
       {
         for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "   searching for match_ids true particle with ML reco index: " << part.match_ids[idx] << "\n";
+          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match_ids[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
@@ -503,7 +503,7 @@ namespace cafmaker
                     << "energy = " << truePartPassThrough.energy_init
                     << "\n";
 
-          // first ask for the right truth match_ids from the match_idser.
+          // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           static DLPIxnComp ixnCmp;
           ixnCmp.ixnID = truePartPassThrough.interaction_id;
@@ -586,7 +586,7 @@ namespace cafmaker
 
     for (const auto & part : particles)
     {
-      // only choose 'particles' that correspond to Track  type
+      // only choose 'particles' that correspond to Track type
       if (part.shape != types::dlp::Shape::kTrack)
         continue;
 
@@ -604,7 +604,7 @@ namespace cafmaker
       {
         for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "   searching for match_ids true particle with ML reco index: " << part.match_ids[idx] << "\n";
+          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match_ids[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
@@ -616,7 +616,7 @@ namespace cafmaker
                     << "energy = " << truePartPassThrough.energy_init
                     << "\n";
 
-          // first ask for the right truth match_ids from the match_idser.
+          // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           static DLPIxnComp ixnCmp;
           ixnCmp.ixnID = truePartPassThrough.interaction_id;
@@ -710,7 +710,7 @@ namespace cafmaker
       {
         for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
-          LOG.VERBOSE() << "   searching for match_ids true particle with ML reco index: " << part.match_ids[idx] << "\n";
+          LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match_ids[idx] << "\n";
           cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
@@ -722,7 +722,7 @@ namespace cafmaker
                     << "energy = " << truePartPassThrough.energy_init
                     << "\n";
 
-          // first ask for the right truth match_ids from the match_idser.
+          // first ask for the right truth match from the matcher.
           // if we have GENIE info it'll come pre-filled with all its info & sub-particles
           static DLPIxnComp ixnCmp;
           ixnCmp.ixnID = truePartPassThrough.interaction_id;
