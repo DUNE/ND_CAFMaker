@@ -247,7 +247,7 @@ namespace cafmaker
     // bool is_principal_match;          // for now at least we're going to focus on matching from the Reco end first
     // BufferView<int64_t> match_ids;        //   |
     // BufferView<float> match_overlaps;  //   |
-    // uint8_t match_ids;                  //   v
+    // uint8_t matched;                  //   v
 
     // int64_t nu_id;        // this is the index within the overlaid spill.  not really any more useful than just `id`
 
