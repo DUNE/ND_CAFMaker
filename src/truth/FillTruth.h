@@ -18,7 +18,9 @@
 
 #include "fwd.h"
 #include "util/Loggable.h"
-
+#include "util/FloatMath.h"
+//TG4Event
+#include "TG4Event.h"
 
 // fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
 #include <string>
@@ -51,8 +53,10 @@ namespace cafmaker
   template <typename InputType, typename OutputType>
   void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal, const std::string & fieldName="")
   {
+//    const auto defaultComp = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a,
+ //                               std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return static_cast<OutputType>(a) == b; };
     const auto defaultComp = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a,
-                                std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return static_cast<OutputType>(a) == b; };
+                                std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return util::AreEqual(a, b, 1e-4, 1e-4); }; // HACK NEED TO FIX TO NOT USE AS OFFICIAL
     const auto defaultAssgn = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a, decltype(target) &b) {  b = a; };
     ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn, fieldName);
   }
@@ -78,11 +82,13 @@ namespace cafmaker
     LOG_S("ValidateOrCopy()").VERBOSE() << "     " << (!fieldName.empty() ? "field='" + fieldName + "';" : "")
                                         << " supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
 
+    double diff = abs(target - input);
+    double largest = (std::abs(target) > std::abs(input)) ? std::abs(target) : std::abs(input);
+
     // is the target value already the desired value?
     // or was the supplied value the default value (which implies nothing should be set)?
     // then nothing more to do.
-    if (compFn(input, target) || compFn(input, unsetVal))
-     return;
+    if (compFn(input, target) || compFn(input, unsetVal)) return;
 
     // note that NaN and inf aren't equal to anything, even themselves, so we have check that differently
     if constexpr (std::numeric_limits<InputType>::has_signaling_NaN && std::numeric_limits<OutputType>::has_signaling_NaN)
@@ -96,7 +102,6 @@ namespace cafmaker
       isNanInf = (std::isnan(target) && std::isnan(unsetVal));
     if constexpr ( std::numeric_limits<OutputType>::has_infinity )
       isNanInf = isNanInf || (std::isinf(target) && std::isinf(unsetVal));
-
     if (target == unsetVal || isNanInf)
     {
       assgnFn(input, target);
@@ -127,6 +132,7 @@ namespace cafmaker
   {
     public:
       TruthMatcher(const std::vector<std::string> & ghepFilenames,
+                  std::string edepsimFilename,
                    const genie::NtpMCEventRecord *gEvt,
                    std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback);
 
@@ -163,6 +169,7 @@ namespace cafmaker
       caf::SRTrueParticle &
       GetTrueParticle(caf::StandardRecord &sr,
                       caf::SRTrueInteraction& ixn,
+                      int G4ID,
                       std::function<bool(const caf::SRTrueParticle&)> cmp,
                       bool isPrimary,
                       bool createNew = true) const;
@@ -174,13 +181,16 @@ namespace cafmaker
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
       caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, unsigned long ixnID, bool createNew = true) const;
-
       bool HaveGENIE() const;
 
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
 
     private:
-      static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt);
+    static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn);
+    // static void FillParticle(caf::SRTrueParticle * part, std::size_t nixn, const TG4Event * g4event);
+    static  int FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event);
+
+
 
       /// Internal class organizing the GENIE trees by run to make them more easily accessible
       class GTreeContainer : public cafmaker::Loggable
@@ -207,6 +217,26 @@ namespace cafmaker
 
       mutable GTreeContainer fGTrees;
       std::function<int(const genie::NtpMCEventRecord *)> fGENIEWriterCallback;  ///< Callback function that'll write a copy of a GENIE event out to storage
+
+      // Geant4 file (To read secondaries)
+
+      class EdepSimTreeContainer : public cafmaker::Loggable
+      {
+        public:
+
+          EdepSimTreeContainer(std::string filename);
+          void SelectEvent(unsigned long int runNum, unsigned int evtNum);
+          void SelectEvent(unsigned long int vertex_id);
+          const TG4Event * G4Event() const;
+
+        private:
+          TFile * fEdepFile;
+          TTree * fEdepTree;
+          std::map<unsigned long int, int> fEdepEntries;
+          const TG4Event * fG4Event;
+      };
+      mutable EdepSimTreeContainer fEdepSimTree;
+
   };
 }
 #endif //ND_CAFMAKER_FILLTRUTH_H
