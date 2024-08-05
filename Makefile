@@ -4,6 +4,7 @@ export ROOTFLAGS = $(shell root-config --cflags)
 export INCLUDE = -I$(HDF5_INC)
 INCLUDE += -I$(GENIE_INC)/GENIE
 INCLUDE += -I$(LOG4CPP_INC)
+#INCLUDE += -I$(EDEPSIM_INC)/EDepSim
 #INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
 #INCLUDE += -I$(NUSYST)/build/Linux/include/
 INCLUDE += -I$(BOOST_INC)
@@ -12,7 +13,8 @@ INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)
 INCLUDE += -I$src
-
+#INCLUDE += -I$(EDEPSIM_INC)/EDepSim
+INCLUDE += -I$(PWD)/libTG4Event
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L$(TBB_LIB) -ltbb
 LDLIBS += -L$(LIBXML2_FQ_DIR)/lib -lxml2
@@ -32,7 +34,7 @@ LDLIBS += -lGeom -lEGPythia6 -lGenVector
 LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
-
+LDLIBS += -L"/exp/dune/app/users/noeroy/CAFS/bugfix_ancestorId/ND_CAFMaker/libTG4Event" -lTG4Event
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin
 
