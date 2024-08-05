@@ -73,6 +73,10 @@ cd ${TOPDIR}
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${TOPDIR}/DUNE_ND_GeoEff/lib/
 
+pushd libTG4Event
+source setup.sh
+popd
+
 # make tarballs of edep-sim and nusystematics for grid jobs
 tar -zcf edep-sim.tar.gz edep-sim
 #tar -zcf nusystematics.tar.gz nusystematics
