@@ -82,9 +82,6 @@ namespace cafmaker
     LOG_S("ValidateOrCopy()").VERBOSE() << "     " << (!fieldName.empty() ? "field='" + fieldName + "';" : "")
                                         << " supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
 
-    double diff = abs(target - input);
-    double largest = (std::abs(target) > std::abs(input)) ? std::abs(target) : std::abs(input);
-
     // is the target value already the desired value?
     // or was the supplied value the default value (which implies nothing should be set)?
     // then nothing more to do.
