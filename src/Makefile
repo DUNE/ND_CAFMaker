@@ -25,6 +25,7 @@ ifneq ($(origin SANDRECO_LIB), undefined)
 endif
 
 
+LDLIBDS += -LlibTG4Event
 LIBNAME = ND_CAFMaker
 LIBS = $(LIBDIR)/lib$(LIBNAME).so
 BINS = $(BINDIR)/makeCAF
