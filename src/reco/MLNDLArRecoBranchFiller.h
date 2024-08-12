@@ -51,6 +51,9 @@ namespace cafmaker
                        const TruthMatcher * truthMatch,
                        caf::StandardRecord & sr) const;
 
+      void FillFlashes(const H5DataView<cafmaker::types::dlp::Flash> & flashes,
+                       caf::StandardRecord & sr) const;
+      
       void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
                             const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
                             const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
