@@ -377,7 +377,11 @@ namespace cafmaker
     sr.common.ixn.dlp.reserve(ixns.size());
     sr.common.ixn.ndlp = ixns.size();
 
+    sr.nd.lar.dlp.resize(ixns.size());
+    sr.nd.lar.ndlp = ixns.size();
+    
     LOG.DEBUG() << "Filling reco interactions...\n";
+    int ixnidx = 0;
     for (const auto & ixn : ixns)
     {
       caf::SRInteraction interaction;
@@ -441,6 +445,14 @@ namespace cafmaker
       }
 
       sr.common.ixn.dlp.push_back(std::move(interaction));
+      //Fill matched flash info
+      caf::FlashMatch flashMatch;
+      flashMatch.id = ixn.flash_id;
+      flashMatch.time = ixn.flash_time;
+      flashMatch.total_pe = ixn.flash_total_pe;
+      flashMatch.hypothesis_pe = ixn.flash_hypo_pe;
+      sr.nd.lar.dlp[ixnidx].flash.push_back(flashMatch);
+      ixnidx++;
     }
   }
 
@@ -582,8 +594,6 @@ namespace cafmaker
                                            const TruthMatcher * truthMatch,
                                            caf::StandardRecord &sr) const
   {
-    sr.nd.lar.dlp.resize(sr.common.ixn.dlp.size());
-    sr.nd.lar.ndlp = sr.common.ixn.dlp.size();
     // note: used in the hack further below
     static SRPartCmp srPartCmp;
 
@@ -801,20 +811,19 @@ namespace cafmaker
     {
 
       caf::SROpticalFlash opflash;
-      // fill flash variables
+      // fill flash variables for all flashes
+
       opflash.id = flash.id;
       //opflash.tpc_id = flash.tpc; //TODO
-      opflash.on_beam_time = flash.on_beam_time;
       opflash.time = flash.time;
       opflash.time_width = flash.time_width;
       opflash.total_pe = flash.total_pe;
-      for (int pe=0; pe < (int)flash.pe_per_ch.size(); pe++)
-     	 opflash.pe_per_channel.push_back(flash.pe_per_ch[pe]);
 
       sr.nd.lar.flashes.push_back(std::move(opflash));
       sr.nd.lar.nflashes++;
 
     }
+    
   }
   // ------------------------------------------------------------------------------
   std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
