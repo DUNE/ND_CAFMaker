@@ -12,10 +12,11 @@ setup eigen v3_3_5
 setup duneanaobj v03_05_00 -q debug:e26
 setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_18_04 -q debug:e26
-
+setup root v6_28_12 -q e26:p3915:prof
+setup genie v3_04_02 -q e26:prof
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
-G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib -name 'Geant4Config.cmake'`
+G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
 export Geant4_DIR=`dirname $G4_cmake_file`
 
 # edep-sim needs to have the GEANT bin directory in the path

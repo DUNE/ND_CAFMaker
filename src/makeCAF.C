@@ -26,6 +26,7 @@
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
+#include "reco/PandoraLArRecoNDBranchFiller.h"
 #include "truth/FillTruth.h"
 #include "util/GENIEQuiet.h"
 #include "util/Logger.h"
@@ -133,6 +134,13 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
     std::cout << "   SAND\n";
+  }
+  // Pandora LArRecoND
+  std::string pandoraFile;
+  if (par().cafmaker().pandoraLArRecoNDFile(pandoraFile))
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::PandoraLArRecoNDBranchFiller>(pandoraFile));
+    std::cout << "  Pandora LArRecoND\n";
   }
 
   // next: did we do TMS reco?
