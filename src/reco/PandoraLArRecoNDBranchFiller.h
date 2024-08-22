@@ -60,7 +60,6 @@ namespace cafmaker
       std::vector<float> *m_dirZVect = nullptr;
       std::vector<float> *m_energyVect = nullptr;
       std::vector<int> *m_n3DHitsVect = nullptr;
-      std::vector<float> *m_length1Vect = nullptr;
       std::vector<int> *m_mcNuIdVect = nullptr;
       std::vector<int> *m_isPrimaryVect = nullptr;
       std::vector<int> *m_mcIdVect = nullptr;

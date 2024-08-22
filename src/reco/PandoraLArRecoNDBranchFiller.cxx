@@ -47,7 +47,6 @@ namespace cafmaker
 	  m_LArRecoNDTree->SetBranchAddress("dirZ", &m_dirZVect);
 	  m_LArRecoNDTree->SetBranchAddress("energy", &m_energyVect);
 	  m_LArRecoNDTree->SetBranchAddress("n3DHits", &m_n3DHitsVect);
-	  m_LArRecoNDTree->SetBranchAddress("length1", &m_length1Vect);
 	  m_LArRecoNDTree->SetBranchAddress("mcNuId", &m_mcNuIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("isPrimary", &m_isPrimaryVect);
 	  m_LArRecoNDTree->SetBranchAddress("mcId", &m_mcIdVect);
@@ -118,7 +117,7 @@ namespace cafmaker
 	const float startZ = (m_startZVect != nullptr) ? (*m_startZVect)[i] : 0.0;
 	track.start = caf::SRVector3D(startX, startY, startZ);
 
-	// End position (length along principal direction or last hit location)
+	// End position
 	const float endX = (m_endXVect != nullptr) ? (*m_endXVect)[i] : 0.0;
 	const float endY = (m_endYVect != nullptr) ? (*m_endYVect)[i] : 0.0;
 	const float endZ = (m_endZVect != nullptr) ? (*m_endZVect)[i] : 0.0;
@@ -140,12 +139,14 @@ namespace cafmaker
 	const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
 	track.qual = n3DHits*1.0;
 
-	// Cluster length along principal axis direction (cm)
-	const float length1 = (m_length1Vect != nullptr) ? (*m_length1Vect)[i] : 0.0;
-	track.len_cm = length1;
+	// Cluster length from start and end points
+	const float dX = endX - startX;
+	const float dY = endY - startY;
+	const float dZ = endZ - startZ;
+	track.len_cm = sqrt(dX*dX + dY*dY + dZ*dZ);
 
 	// Cluster length multiplied by LAr density (g/cm2)
-	track.len_gcm2 = length1*m_LArRho;
+	track.len_gcm2 = track.len_cm*m_LArRho;
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
 	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
