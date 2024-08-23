@@ -6,7 +6,6 @@
 #include "/uni-mainz.de/homes/losulliv/dune/Genie/build/include/GENIE/Framework/Ntuple/NtpMCEventRecord.h"
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRGlobal.h"
-
 #include "duneanaobj/StandardRecord/Flat/FwdDeclare.h"
 
 // fixme: this is a do-nothing replacement for nusystematics stuff until it's re-enabled
@@ -19,7 +18,7 @@ namespace nusyst
 class CAF {
 
 public:
-  CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF);
+  CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE);
   ~CAF() = default;
   void fill();
   void fillPOT();
@@ -30,9 +29,6 @@ public:
   // Make ntuple variables public so they can be set from other file
   caf::StandardRecord sr;
   caf::SRGlobal srglobal;
-
-  // store the GENIE record as a branch
-  genie::NtpMCEventRecord * mcrec;
 
   // Event-by-event geometric efficiency throw results
   std::vector< std::vector < std::vector < uint64_t > > > * geoEffThrowResults;
@@ -47,7 +43,17 @@ public:
   TTree * cafSRGlobal;
   TTree * cafMVA;
   TTree * cafPOT;
-  TTree * genie;
+
+  // store the GENIE record as a branch, if requested
+  genie::NtpMCEventRecord * mcrec = nullptr;
+  TTree                   * genie = nullptr;
+
+  /// Callback function that can be used to store a GENIE event in the GENIE tree,
+  /// if client can't manipulate the `genie` tree above directly
+  ///
+  /// \param   evtIn  Memory location where the GENIE record to be copied is
+  /// \return         Index in the TTree of the output where the record was copied
+  int StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn);
 
   TFile * flatCAFFile                             = nullptr;
   TTree * flatCAFTree                             = nullptr;

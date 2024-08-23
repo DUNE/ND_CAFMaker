@@ -4,18 +4,23 @@
 
 #include "duneanaobj/StandardRecord/Flat/FlatRecord.h"
 
+#include "util/Logger.h"
+
 // fixme: once DIRT-II is done with its work, this will be re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 
-CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF)
-  : rh(rw_fhicl_filename)
+CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE)
+  : pot(std::numeric_limits<decltype(pot)>::signaling_NaN()),  rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
+
   cafSR = new TTree("cafTree", "cafTree");
   cafSRGlobal = new TTree("globalTree", "globalTree");
   cafMVA = new TTree("mvaTree", "mvaTree");
   cafPOT = new TTree( "meta", "meta" );
-  genie = new TTree( "genieEvt", "genieEvt" );
+
+  if (storeGENIE)
+    genie = new TTree( "genieEvt", "genieEvt" );
 
   if (makeFlatCAF)
   {
@@ -37,8 +42,8 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
   cafMVA->Branch("geoEffThrowResults", &geoEffThrowResults);
 
   // initialize the GENIE record
-  mcrec = nullptr;
-  genie->Branch( "genie_record", &mcrec );
+  if (genie)
+    genie->Branch( "genie_record", &mcrec );
 
   cafPOT->Branch( "pot", &pot, "pot/D" );
   cafPOT->Branch( "run", &meta_run, "run/I" );
@@ -67,7 +72,7 @@ void CAF::fill()
 {
   if(cafSR) cafSR->Fill();
   cafMVA->Fill();
-  genie->Fill();
+
 
   if(flatCAFFile){
     flatCAFRecord->Clear();
@@ -91,14 +96,30 @@ void CAF::fillPOT()
 
 void CAF::write()
 {
+
+  if(flatCAFFile){
+    flatCAFFile->cd();
+    flatCAFTree->Write();
+
+    for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
+    {
+      if (!tree)
+        continue;
+      auto clone_tree = (TTree*)tree->Clone();
+      clone_tree->Write();
+    }
+    flatCAFFile->Close();
+  }
+
   if(cafFile){
     cafFile->cd();
     cafSR->Write();
 
     for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
     {
+      if (!tree)
+        continue;
       tree->Write();
-
       // don't let it get stuck attached to only this file in case we need it again below
       tree->LoadBaskets();
       tree->SetDirectory(nullptr);
@@ -106,15 +127,6 @@ void CAF::write()
     cafFile->Close();
   }
 
-  if(flatCAFFile){
-    flatCAFFile->cd();
-    flatCAFTree->Write();
-    cafSRGlobal->Write();
-    cafMVA->Write();
-    cafPOT->Write();
-    genie->Write();
-    flatCAFFile->Close();
-  }
 }
 
 
@@ -123,4 +135,34 @@ void CAF::setToBS()
   // use default constructors to reset
   sr = caf::StandardRecord();
   srglobal = caf::SRGlobal();
+}
+
+int CAF::StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn)
+{
+  // if the GENIE tree is not already pointing to the given address, we can make it happen,
+  // but it will slow things down
+  if (evtIn != mcrec)
+  {
+    // might be better to throw an exception or something,
+    // since the *user* can't do anything about this,
+    // but all the throw-ing and catch-ing will slow us down even more
+    static bool warned = false;
+    if (!warned)
+    {
+      cafmaker::LOG_S("CAF::StoreGENIEEvent()").WARNING() << "Repeatedly reassigning the target pointer for output GENIE tree will result in significant performance degredation\n";
+      warned = true;
+    }
+
+    genie->SetBranchAddress("genie_record", &evtIn);
+  }
+
+  genie->Fill();
+
+  // now reset the tree
+  if (evtIn != mcrec)
+  {
+    genie->SetBranchAddress("genie_record", &mcrec);
+  }
+
+  return genie->GetEntries()-1;
 }

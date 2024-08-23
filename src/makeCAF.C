@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <numeric>
 
 #include "boost/program_options/options_description.hpp"
 #include "boost/program_options/parsers.hpp"
@@ -15,14 +16,23 @@
 #include "fhiclcpp/make_ParameterSet.h"
 #include "fhiclcpp/parse.h"
 
+// GENIE
+#include "Framework/Ntuple/NtpMCEventRecord.h"
+
 #include "CAF.h"
 #include "Params.h"
 #include "reco/MLNDLArRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
+#include "reco/MINERvARecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "util/GENIEQuiet.h"
+#include "util/Logger.h"
+#include "util/Progress.h"
+
 #include "duneanaobj/StandardRecord/SREnums.h"
+
 
 namespace progopt = boost::program_options;
 
@@ -92,8 +102,7 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
     provisional.put("nd_cafmaker.CAFMakerSettings.NumEvts", vm["numevts"].as<int>());
 
   // now that we've updated it, convert to actual ParameterSet
-  fhicl::ParameterSet pset;
-  fhicl::make_ParameterSet(provisional, pset);
+  fhicl::ParameterSet pset = fhicl::ParameterSet::make(provisional);
 
   // finally, convert to a table, which does the validation.
   // note that this usage insists the top-level config be named "nd_cafmaker".
@@ -106,7 +115,8 @@ fhicl::Table<cafmaker::FhiclConfig> parseConfig(const std::string & configFile, 
 
 // -------------------------------------------------
 // decide which reco fillers we need based on the configuration
-std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const cafmaker::Params &par)
+std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const cafmaker::Params &par,
+                                                                         cafmaker::Logger::THRESHOLD logThresh)
 {
   std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> recoFillers;
 
@@ -133,6 +143,14 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   TMS\n";
   }
 
+  // next: did we do the MINERvA reco?
+  std::string minervaFile;
+  if (par().cafmaker().minervaRecoFile(minervaFile))
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::MINERvARecoBranchFiller>(minervaFile));
+    std::cout<< "   MINERVA\n";
+  }
+
   // if we did both ND-LAr and TMS, we should try to match them, too
   if (!ndlarFile.empty() && !tmsFile.empty())
   {
@@ -140,55 +158,238 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   ND-LAr + TMS matching\n";
   }
 
+  // for now all the fillers get the same threshold.
+  // if we decide we need to do it differently later
+  // we can adjust the FCL params...
+  for (std::unique_ptr<cafmaker::IRecoBranchFiller> & filler : recoFillers)
+    filler->SetLogThrehsold(logThresh);
 
   return recoFillers;
 }
 
 // -------------------------------------------------
-// main loop function
-void loop(CAF& caf,
-          cafmaker::Params &par,
-          TTree * gtree,
-          const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> & recoFillers)
+bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
 {
+  return (t1.triggerTime_s == t2.triggerTime_s && abs(int(t1.triggerTime_ns - t2.triggerTime_ns)) < dT);
+}
 
-  // Enable ND_LAr detector
-  if (gtree)
+struct triggerTimeCmp
+{
+  bool operator()(const cafmaker::Trigger &t1, const cafmaker::Trigger &t2)
   {
-    caf.pot = gtree->GetWeight();
-    gtree->SetBranchAddress("gmcrec", &caf.mcrec);
+    return t1.triggerTime_s < t2.triggerTime_s ||
+           (t1.triggerTime_s == t2.triggerTime_s && t1.triggerTime_ns < t2.triggerTime_ns);
+  }
+};
+
+struct triggerTimePtrCmp
+{
+  triggerTimeCmp cmp;
+  bool operator()(const cafmaker::Trigger *t1, const cafmaker::Trigger *t2)
+  {
+    return cmp(*t1, *t2);
+  }
+};
+
+// -------------------------------------------------
+// return type: each element of outer vector corresponds to one group of matched triggers
+std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByFiller,
+                 unsigned int trigMatchMaxDT)
+{
+  // I don't want to keep typing `cafmaker::LOG_S("buildTriggerList()")` every time,
+  // and the preamble to the logger resets after the first use
+  auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildTriggerList()"); };
+
+  // triggersByFiller will be progressively emptied, so we need to store this
+  std::size_t nFillers = triggersByFiller.size();
+  std::vector<std::size_t> nTriggersByFiller;
+  std::transform(triggersByFiller.begin(), triggersByFiller.end(), std::back_inserter(nTriggersByFiller),
+                 [](const auto & trigGroup){ return trigGroup.second.size(); });
+
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> ret;
+
+  // don't assume input comes in sorted
+  LOG().INFO() << "Incoming counts of triggers from upstream:\n";
+  for (auto & fillerTrigPair : triggersByFiller)
+  {
+    std::sort(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), triggerTimeCmp());
+    LOG().INFO() << "   " << fillerTrigPair.first->GetName() << " --> " << fillerTrigPair.second.size() << "\n";
+  }
+
+  while (!triggersByFiller.empty())
+  {
+    // look at the first element of each reco filler stream.
+    LOG().VERBOSE() << "   Considering the earliest triggers in each stream:\n";
+    std::vector<const cafmaker::Trigger*> firstTrigs;
+    for (const auto &it: triggersByFiller)
+    {
+      LOG().VERBOSE() << "       " << it.first->GetName() << " --> (id = " << it.second[0].evtID
+                    << ", time = " << (it.second[0].triggerTime_s + it.second[0].triggerTime_ns/1e9) << " s)\n";
+      firstTrigs.push_back(&it.second[0]);
+    }
+
+    // the earliest one will be our next group seed.
+    auto groupSeedIt = std::min_element(firstTrigs.begin(), firstTrigs.end(), triggerTimePtrCmp());
+    LOG().VERBOSE() << "    --> Building trigger group with seed: (" << (*groupSeedIt)->evtID << ", "
+                  << (*groupSeedIt)->triggerTime_s +(*groupSeedIt)->triggerTime_ns/1e9
+                  << ")\n";
+
+    // pull that one out of its original container so we don't reconsider it in the next loop iteration
+    auto seedFillerIt = triggersByFiller.begin();
+    std::advance(seedFillerIt, std::distance(firstTrigs.begin(), groupSeedIt));
+    ret.push_back({{seedFillerIt->first, std::move(seedFillerIt->second.front())}});  // note that we're stealing the contents of the element from its deque since we're about to pop it anyway
+    seedFillerIt->second.pop_front();
+
+    // now consider the other reco filler streams.
+    // do they have any events in them that should go in this group?
+    std::vector<decltype(triggersByFiller)::key_type> trigStreamsToRemove;  // since we can't edit the `triggersByFiller` group without invalidating its iterators
+    std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> & trigGroup = ret.back();
+    const cafmaker::Trigger & trigSeed = trigGroup.front().second;
+    LOG().VERBOSE() << "    Considering other triggers:\n";
+    for (auto & fillerTrigPair : triggersByFiller)
+    {
+      std::stringstream ss;
+
+      // we don't want to consider the stream we're already working with.
+      // (but don't continue, because we want to remove this stream from the
+      //  map if it's empty, per below)
+      if (fillerTrigPair.first != seedFillerIt->first)
+      {
+        const auto & trig = fillerTrigPair.second.front();
+        ss << "       " << fillerTrigPair.first->GetName() << ", " << trig.evtID;
+
+        // we will only take at most one trigger from each of the other streams.
+        // since the seed was the earliest one out of all the triggers,
+        // we only need to check the first one in each other stream
+        if (doTriggersMatch( trigSeed, fillerTrigPair.second.front(), trigMatchMaxDT))
+        {
+          ss << " -->  MATCHES\n";
+          trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
+          fillerTrigPair.second.pop_front();
+        }
+        else
+          ss << " --> does NOT MATCH\n";
+      }
+      LOG().VERBOSE() << ss.str();
+
+      // if there are no more elements in this reco filler stream,
+      // remove it from consideration
+      if (fillerTrigPair.second.empty())
+        trigStreamsToRemove.push_back(fillerTrigPair.first);
+    } // for (fillerTrigPair)
+
+    // Erase the marked reco filler(s) from the map
+    for (const auto & trigStream : trigStreamsToRemove) triggersByFiller.erase(trigStream);
+  } // while (!triggersByFiller.empty())
+
+  LOG().DEBUG() << "Final trigger list\n";
+  if (LOG().GetThreshold() <= cafmaker::Logger::THRESHOLD::DEBUG)
+  {
+    for (std::size_t trigIdx = 0; trigIdx < ret.size(); trigIdx++)
+    {
+      LOG().DEBUG() << "Trigger #" << trigIdx << ":\n";
+      for (const auto & trig : ret[trigIdx])
+      {
+        LOG().DEBUG() << "   " << trig.first->GetName() << " trigger " << trig.second.evtID
+                      << " at time " << trig.second.triggerTime_s + 1e-9*trig.second.triggerTime_ns << "\n";
+      }
+    }
+  }
+
+  // check for unmatched triggers
+  if (nFillers > 1)
+  {
+    std::size_t nUnmatchedTriggers = std::accumulate(ret.begin(), ret.end(), 0,
+                                                     [](std::size_t runningSum,
+                                                        const std::vector<std::pair<const cafmaker::IRecoBranchFiller *, cafmaker::Trigger>> &trigGroup)
+                                                     {
+                                                       std::size_t unmatched = (trigGroup.size() == 1) ? 1 : 0;
+                                                       return runningSum + unmatched;
+                                                     });
+    if (nUnmatchedTriggers)
+    {
+      std::stringstream ss;
+      for (std::size_t trigByFillerIdx = 0; trigByFillerIdx < nTriggersByFiller.size(); trigByFillerIdx++)
+      {
+        ss << nTriggersByFiller[trigByFillerIdx];
+        if (trigByFillerIdx < nTriggersByFiller.size() - 1)
+          ss << " + ";
+      }
+      LOG().WARNING() << "There were " << nUnmatchedTriggers << " triggers (of the " << ss.str()
+                      << " I was given) that did not match across fillers.  Is that consistent with your expectations?\n";
+    }
+  }
+
+  return ret;
+}
+
+// -------------------------------------------------
+// main loop function
+void loop(CAF &caf,
+          cafmaker::Params &par,
+          const std::vector<std::string> & ghepFilenames,
+          const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> &recoFillers)
+{
+  // if this is a data file, there won't be any truth, of course,
+  // but the TruthMatching knows not to try to do anything with a null gtree
+  cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
+  cafmaker::TruthMatcher truthMatcher(ghepFilenames, caf.mcrec,
+                                      [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); });
+  truthMatcher.SetLogThrehsold(thresh);
+  // figure out which triggers we need to loop over between the various reco fillers
+  std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
+  for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+    triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+    groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
+
+  // sanity checks
+  if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
+  {
+    std::cerr << "Requested starting event (" << par().cafmaker().first() << ") "
+              << "is larger than total number of triggers (" << groupedTriggers.size() << ".\n"
+              << "Do nothing ...\n";
+    return;
+  }
+  int start = par().cafmaker().first();
+  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : static_cast<int>(groupedTriggers.size()) - par().cafmaker().first();
+  if (N < 1)
+  {
+    std::cerr << "Requested number of events (" << N << ") is non-positive!  Abort.\n";
+    abort();
   }
 
   // Main event loop
-  int N = par().cafmaker().numevts() > 0 ? par().cafmaker().numevts() : gtree->GetEntries() - par().cafmaker().first();
-  int start = par().cafmaker().first();
-
-  for( int ii = start; ii < start + N; ++ii ) {
-
-    if( ii % 1 == 0 )
-      printf( "Event %d (%d of %d)...\n", ii, (ii-start)+1, N );
+  cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
+  for( int ii = start; ii < start + N; ++ii )
+  {
+    // don't bother with updating the prog bar if we're going to be spamming lots of messages
+    if (thresh >= cafmaker::Logger::THRESHOLD::WARNING)
+      progBar.SetProgress( static_cast<double>(ii - start)/N );
+    else
+      cafmaker::LOG_S("loop()").INFO() << "Processing trigger: " << ii << "\n";
 
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-   //old SR variables
+    double pot = par().runInfo().POTPerSpill() * 1e13;
+    if (std::isnan(caf.pot))
+      caf.pot = 0;
+    caf.pot += pot;
+    caf.sr.beam.pulsepot = pot;
+    caf.sr.beam.ismc = true;  // when we have data, we won't be able to use this "POT from config" approach anyway
 
-  //  caf.sr.meta_run = par().runInfo().run();
-   // caf.sr.meta_subrun = par().runInfo().subrun();
- //   caf.sr.isFD = 0;
-  //  caf.sr.isFHC = par().runInfo().fhc();
-    caf.sr.beam.pulsepot = caf.pot;
-
-    // in the future this can be extended to use 'truth fillers'
-    // (like the reco ones) if we find that the truth filling
-    // is getting too complex for one function
-    fillTruth(ii, caf.sr, gtree, caf.mcrec, par, caf.rh);    //filling the true info from genie
     // hand off to the correct reco filler(s).
-    for (const auto & filler : recoFillers)
-      filler->FillRecoBranches(ii, caf.sr, par);
+    for (const auto & fillerTrigPair : groupedTriggers[ii])
+    {
+      cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+      fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+    }
 
     caf.fill();
   }
+  progBar.Done();
 
   // set other metadata
   caf.meta_run = par().runInfo().run();
@@ -200,25 +401,22 @@ void loop(CAF& caf,
 
 int main( int argc, char const *argv[] )
 {
-
-
   progopt::variables_map vars = parseCmdLine(argc, argv);
 
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
-  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF());
+  cafmaker::Logger::THRESHOLD logThresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
+  cafmaker::LOG_S().SetThreshold(logThresh);
+  cafmaker::QuietGENIE();  // the GENIE events were already made earlier, we don't need more warnings about them
 
-  TFile * gf = nullptr;
-  TTree * gtree = nullptr;
-  if (!par().cafmaker().ghepFile().empty())
-  {
-    gf = new TFile(par().cafmaker().ghepFile().c_str());   //reading genie file
-    gtree = (TTree *) gf->Get("gtree");
-  }
+  std::vector<std::string> GHEPFiles;
+  par().cafmaker().GHEPFiles(GHEPFiles);  // fills the vector in if the key is found
 
-  loop( caf, par, gtree, getRecoFillers(par) );
+  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !GHEPFiles.empty());
 
-  caf.version = 4;
+  loop(caf, par, GHEPFiles, getRecoFillers(par, logThresh));
+
+  caf.version = 5;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
   caf.fillPOT();
 
