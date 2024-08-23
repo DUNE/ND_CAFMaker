@@ -33,8 +33,8 @@ LDLIBS += -Lboost -lboost_program_options
 #LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
 
-@echo $(INCLUDE)
-@echo $(LDLIBS)
+@echo "$(INCLUDE)"
+@echo "$(LDLIBS)"
 
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin
