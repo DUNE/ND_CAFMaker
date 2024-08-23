@@ -13,9 +13,9 @@
 #include "TTree.h"
 
 // GENIE
-#include "Framework/EventGen/EventRecord.h"
-#include "Framework/Ntuple/NtpMCEventRecord.h"
-#include "Framework/GHEP/GHepParticle.h"
+#include "/uni-mainz.de/homes/losulliv/dune/Genie/build/include/GENIE/Framework/EventGen/EventRecord.h"
+#include "/uni-mainz.de/homes/losulliv/dune/Genie/build/include/GENIE/Framework/Ntuple/NtpMCEventRecord.h"
+#include "/uni-mainz.de/homes/losulliv/dune/Genie/build/include/GENIE/Framework/GHEP/GHepParticle.h"
 
 // Standard Record format
 #include "duneanaobj/StandardRecord/StandardRecord.h"

@@ -3,12 +3,13 @@ SOURCES = $(shell find $(SRCDIR) -name '*.cxx')
 HEADERS = $(shell find $(SRCDIR) -name '*.h')
 OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 
-INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC)
+INCLUDE += -I/uni-mainz.de/homes/losulliv/dune/ND_CAFMaker/src
+#$(SRCDIR) -I$(SRPROXY_INC)
 
 
 # Automatically enable SAND if SANDRECO_INC or SANDRECO_LIB are set
 ifneq ($(origin SANDRECO_INC), undefined)
-	INCLUDE += -I$(SANDRECO_INC)
+	#INCLUDE += -I$(SANDRECO_INC)
 	SAND_OPT = -DENABLE_SAND
 endif
 
