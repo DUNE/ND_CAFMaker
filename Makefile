@@ -11,6 +11,7 @@ INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)
+INCLUDE += -I$(H5CPP_INC)
 INCLUDE += -I../src
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
@@ -32,9 +33,6 @@ LDLIBS += -lGeom -lEGPythia6 -lGenVector
 LDLIBS += -Lboost -lboost_program_options
 #LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
-
-@echo "$(INCLUDE)"
-@echo "$(LDLIBS)"
 
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin
