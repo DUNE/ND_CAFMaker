@@ -29,9 +29,11 @@
 #include "Params.h"
 #include "reco/MLNDLArRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
-#include "reco/NDLArTMSMatchRecoFiller.h"
-#include "reco/SANDRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
+
+#include "reco/NDLArTMSMatchRecoFiller.h"
+#include "reco/NDLArMINERvAMatchRecoFiller.h"
+#include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 #include "util/GENIEQuiet.h"
 #include "util/Logger.h"
@@ -164,6 +166,11 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   ND-LAr + TMS matching\n";
   }
 
+  if (!ndlarFile.empty() && !minervaFile.empty())
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>());
+    std::cout << "   ND-LAr + MINERvA matching\n";
+  } 
   // for now all the fillers get the same threshold.
   // if we decide we need to do it differently later
   // we can adjust the FCL params...
@@ -486,6 +493,17 @@ void loop(CAF &caf,
       cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
       fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
     }
+
+    // Once all the reco fillers have been called, let's call the matching fillers
+    for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+    {
+      if (filler->GetName() == "LArTMSMatcher" || filler->GetName() == "LArMINERvAMatcher")
+      {
+        std::cout<<filler->GetName()<<std::endl;
+        filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
+      }
+    }
+    
     //Fill POT
     double pot = getPOT(par, groupedTriggers[ii], ii);
     if (std::isnan(caf.pot))
@@ -493,7 +511,6 @@ void loop(CAF &caf,
     caf.pot += pot;
     caf.sr.beam.pulsepot = pot;
     caf.sr.beam.ismc = par().cafmaker().POTFile.hasValue();  // fixme: when we have proper IFDB interface, should use the same mechanism as however we decide when to use that
-
     caf.fill();
   }
   progBar.Done();
