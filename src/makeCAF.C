@@ -1,5 +1,7 @@
 #include <cstdio>
 #include <numeric>
+#include <iostream>
+#include <fstream>
 
 #include "boost/program_options/options_description.hpp"
 #include "boost/program_options/parsers.hpp"
@@ -170,7 +172,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 // -------------------------------------------------
 bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
 {
-  return (t1.triggerTime_s == t2.triggerTime_s && abs(int(t1.triggerTime_ns - t2.triggerTime_ns)) < dT);
+  return (abs(int(t1.triggerTime_s - t2.triggerTime_s)+int(t1.triggerTime_ns - t2.triggerTime_ns)/1.e9) < dT/1.e9);
 }
 
 struct triggerTimeCmp
@@ -325,6 +327,61 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 }
 
 // -------------------------------------------------
+//Temporary hack to fill beam POT info for data
+
+//Get the spills from an input text file
+using BeamSpills = std::vector<std::pair<double, double>>;
+
+bool loadBeamSpills(const std::string& filename, BeamSpills& beam_spills) {
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    std::cerr << "Could not open the file " << filename << "\n";
+    return false;
+  }
+
+  std::string line;
+  while (std::getline(file, line)) {
+    std::istringstream iss(line);
+    double time;
+    double pot;
+    if (iss >> time >> pot)
+      beam_spills.emplace_back(time, pot);
+  }
+  file.close();
+  return true;
+}
+
+//Return pot from text file if all of the trigger times match the beam times within a certain dt, else fill given pot
+double getPOT(const cafmaker::Params& par, const std::vector<double>& trigger_times, int ii) {
+  std::string potFile;
+  BeamSpills beam_spills;
+  double pot = 0.0;
+  if (par().cafmaker().POTFile(potFile) && loadBeamSpills(potFile, beam_spills)) {
+    for (const auto& spill : beam_spills) {
+      if (std::all_of(trigger_times.cbegin(), trigger_times.cend(),
+         [par, spill](double trig_time) {
+         return std::abs(trig_time - spill.first) < par().cafmaker().beamMatchDT();
+      })) {
+         pot = spill.second;
+         break;
+         }
+      }
+    if (pot == 0.0) {
+      auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("Beam spill matching"); };
+      LOG().WARNING() << "WARNING: No matching spill found for trigger " << ii << " with trigger times: ";
+      std::for_each(trigger_times.begin(), trigger_times.end(), [](double tt) { std::cout << std::fixed <<  tt << " "; });
+      std::cout << "\n";
+    }
+ }
+ else {
+   pot = par().runInfo().POTPerSpill() * 1e13;
+ }
+
+ return pot;
+
+}
+
+// -------------------------------------------------
 // main loop function
 void loop(CAF &caf,
           cafmaker::Params &par,
@@ -373,19 +430,22 @@ void loop(CAF &caf,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-    double pot = par().runInfo().POTPerSpill() * 1e13;
-    if (std::isnan(caf.pot))
-      caf.pot = 0;
-    caf.pot += pot;
-    caf.sr.beam.pulsepot = pot;
-    caf.sr.beam.ismc = true;  // when we have data, we won't be able to use this "POT from config" approach anyway
 
+    std::vector<double> trigger_times;
     // hand off to the correct reco filler(s).
     for (const auto & fillerTrigPair : groupedTriggers[ii])
     {
       cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
       fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+      trigger_times.push_back(fillerTrigPair.second.triggerTime_s + 1e-9*fillerTrigPair.second.triggerTime_ns);
     }
+    //Fill POT
+    double pot = getPOT(par, trigger_times, ii);
+    if (std::isnan(caf.pot))
+      caf.pot = 0;
+    caf.pot += pot;
+    caf.sr.beam.pulsepot = pot;
+    caf.sr.beam.ismc = true; //should be handled in a smarter way for data and MC
 
     caf.fill();
   }
