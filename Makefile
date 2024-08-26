@@ -34,7 +34,7 @@ LDLIBS += -lGeom -lEGPythia6 -lGenVector
 LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
-LDLIBS += -L"/exp/dune/app/users/noeroy/CAFS/bugfix_ancestorId/ND_CAFMaker/libTG4Event" -lTG4Event
+LDLIBS += -L$(PWD)/libTG4Event -lTG4Event
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin
 
