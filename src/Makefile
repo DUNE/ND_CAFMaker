@@ -26,8 +26,8 @@ endif
 
 
 LIBNAME = ND_CAFMaker
-LIBS = $(LIBDIR)/lib$(LIBNAME).so
-BINS = $(BINDIR)/makeCAF
+LIBS = ../$(LIBDIR)/lib$(LIBNAME).so
+BINS = ../$(BINDIR)/makeCAF
 
 # build the library and the binaries
 all: $(BINS)
