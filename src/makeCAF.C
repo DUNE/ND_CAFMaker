@@ -6,10 +6,10 @@
 #include "boost/program_options/positional_options.hpp"
 #include "boost/program_options/variables_map.hpp"
 
-#include "TRandom3.h"
-#include "TFile.h"
-#include "TInterpreter.h"
-#include "TTree.h"
+#include <TRandom3.h>
+#include <TFile.h>
+#include <TInterpreter.h>
+#include <TTree.h>
 
 #include "cetlib/filepath_maker.h"
 #include "fhiclcpp/intermediate_table.h"
