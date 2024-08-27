@@ -109,16 +109,22 @@ namespace cafmaker
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string & fieldName)
   {
-    const auto cmp = [](const double & a, const float &b) -> bool { return util::AreEqual(a, b); };
-
+    const auto cmp = [](const double & a, const float &b) -> bool { return util::AreEqual(a, b, 1e-4, 1e-4); };
     const auto assgn = [](const double & a, float & b) { b = a; };
     return ValidateOrCopy<double, float>(input, target, unsetVal, cmp, assgn, fieldName);
   }
   template <>
+  void ValidateOrCopy<float, float>(const float & input, float & target, const float & unsetVal, const std::string & fieldName)
+  {
+    const auto cmp = [](const float & a, const float &b) -> bool { return util::AreEqual(a, b, 1e-4, 1e-4); };
+    const auto assgn = [](const float & a, float & b) { b = a; };
+    return ValidateOrCopy<float, float>(input, target, unsetVal, cmp, assgn, fieldName);
+  }
+  
+  template <>
   void ValidateOrCopy<int, long int>(const int & input, long int & target, const long int & unsetVal, const std::string & fieldName)
   {
     const auto cmp = [](const int & a, const long int &b) -> bool { return a == b; };
-
     const auto assgn = [](const int & a, long int & b) {  b = static_cast<long int>(a); };
     return ValidateOrCopy<int, long int>(input, target, unsetVal, cmp, assgn, fieldName);
   }  
@@ -224,7 +230,6 @@ namespace cafmaker
       //       or bunched in spill time structure yet.  just leave out?
 //      part.time = nu.time;
 //      part.start_pos = p->X4()->Vect();
-      //std::cout<<part.interaction_id<<" "<<part.G4ID<<" "<<part.pdg<<" "<<p->X4()->Vect().X()*m_to_cm<<" "<<p->X4()->Vect().Y()*m_to_cm<<" "<<p->X4()->Vect().Z()*m_to_cm<<std::endl;
       // remaining fields need to be filled in with post-G4 info
 
       std::string process;
@@ -239,7 +244,6 @@ namespace cafmaker
         // note: we leave part.id unset since it won't match with the G4 values
         // (edep-sim numbers them all sequentially from 0 throughout the whole file)
         // and the pass-through value is more useful
-       // std::cout<<part.interaction_id<<" "<<part.G4ID<<" "<<part.pdg<<" "<<p->X4()->Vect().X()*m_to_cm<<" "<<p->X4()->Vect().Y()*m_to_cm<<" "<<p->X4()->Vect().Z()*m_to_cm<<std::endl;
         nu.prim.push_back(std::move(part));
         nu.nprim++;
 
@@ -492,7 +496,6 @@ namespace cafmaker
     (collection.at(part_index)).pdg = traj.PDGCode;
     (collection.at(part_index)).p = traj.InitialMomentum*0.001;
     // part->p = traj.InitialMomentum * 0.;s
-    // std::cout<<part->p.px <<std::endl;
 
     (collection.at(part_index)).parent = traj.ParentId;
 

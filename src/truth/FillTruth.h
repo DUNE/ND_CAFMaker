@@ -1,9 +1,9 @@
-/// \file FillTruth.h
-///
-/// Fill truth branches.
-///
-/// \author  J. Wolcott <jwolcott@fnal.gov>, based on code by C. Marshall <chris.marshall@rochester.edu>
-/// \date    Jan. 2022
+  /// \file FillTruth.h
+  ///
+  /// Fill truth branches.
+  ///
+  /// \author  J. Wolcott <jwolcott@fnal.gov>, based on code by C. Marshall <chris.marshall@rochester.edu>
+  /// \date    Jan. 2022
 
 #ifndef ND_CAFMAKER_FILLTRUTH_H
 #define ND_CAFMAKER_FILLTRUTH_H
@@ -19,106 +19,106 @@
 #include "fwd.h"
 #include "util/Loggable.h"
 #include "util/FloatMath.h"
-//TG4Event
+  //TG4Event
 #include "TG4Event.h"
 
-// fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
+  // fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
 #include <string>
 
-namespace nusyst
-{
-  using response_helper = std::string;
-}
-
-// forward declarations
-class TTree;
-class TFile;
-
-namespace caf
-{
-  class StandardRecord;
-  class SRTrueParticle;
-  class SRTrueInteraction;
-}
-
-namespace cafmaker
-{
-  /// Convenience method for filling truth branches that does two things:
-  ///  - Checks if a value contains the expected default value, and if so, copies the new value in
-  ///  - If value does not contain the default, verifies that the provided new value matches the one already there
-  ///
-  /// \param input     The value that would be copied in if unfilled
-  /// \param target    The destination value
-  /// \param unsetVal  The default value expected
-  template <typename InputType, typename OutputType>
-  void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal, const std::string & fieldName="")
+  namespace nusyst
   {
-//    const auto defaultComp = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a,
- //                               std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return static_cast<OutputType>(a) == b; };
-    const auto defaultComp = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a,
-                                std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return util::AreEqual(a, b, 1e-4, 1e-4); }; // HACK NEED TO FIX TO NOT USE AS OFFICIAL
-    const auto defaultAssgn = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a, decltype(target) &b) {  b = a; };
-    ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn, fieldName);
+    using response_helper = std::string;
   }
 
- // --------------------------------------------------------------
+  // forward declarations
+  class TTree;
+  class TFile;
 
-  /// Similar to the other variant of ValidateOrCopy(),
-  /// but allowing the user to specify a function that determines if input and target are equal
-  ///
-  /// \param input     The value that would be copied in if unfilled
-  /// \param target    The destination value
-  /// \param unsetVal  The default value expected
-  /// \param compFn    Function that returns true if target == input, or false otherwise
-  /// \param assgnFn   Function that assigns the value of input to target
-  template <typename InputType, typename OutputType>
-  void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal,
-                      std::function<bool(std::add_const_t<std::remove_reference_t<decltype(input)>> &,
-                                         std::add_const_t<std::remove_reference_t<decltype(target)>> &)> compFn,
-                      std::function<void(std::add_const_t<std::remove_reference_t<decltype(input)>> &,
-                                         decltype(target) &)> assgnFn,
-                      const std::string & fieldName="")
+  namespace caf
   {
-    LOG_S("ValidateOrCopy()").VERBOSE() << "     " << (!fieldName.empty() ? "field='" + fieldName + "';" : "")
-                                        << " supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+    class StandardRecord;
+    class SRTrueParticle;
+    class SRTrueInteraction;
+  }
 
-    // is the target value already the desired value?
-    // or was the supplied value the default value (which implies nothing should be set)?
-    // then nothing more to do.
-    if (compFn(input, target) || compFn(input, unsetVal)) return;
-
-    // note that NaN and inf aren't equal to anything, even themselves, so we have check that differently
-    if constexpr (std::numeric_limits<InputType>::has_signaling_NaN && std::numeric_limits<OutputType>::has_signaling_NaN)
-      if ( (std::isnan(input) && std::isnan(target)) || (std::isnan(input) && std::isnan(unsetVal)) ) return;
-    if constexpr ( std::numeric_limits<InputType>::has_infinity && std::numeric_limits<OutputType>::has_infinity )
-      if ( (std::isinf(input) && std::isinf(target)) || (std::isinf(input) && std::isinf(unsetVal)) ) return;
-
-    // is this the default val?
-    bool isNanInf = false;
-    if constexpr (std::numeric_limits<OutputType>::has_signaling_NaN)
-      isNanInf = (std::isnan(target) && std::isnan(unsetVal));
-    if constexpr ( std::numeric_limits<OutputType>::has_infinity )
-      isNanInf = isNanInf || (std::isinf(target) && std::isinf(unsetVal));
-    if (target == unsetVal || isNanInf)
+  namespace cafmaker
+  {
+    /// Convenience method for filling truth branches that does two things:
+    ///  - Checks if a value contains the expected default value, and if so, copies the new value in
+    ///  - If value does not contain the default, verifies that the provided new value matches the one already there
+    ///
+    /// \param input     The value that would be copied in if unfilled
+    /// \param target    The destination value
+    /// \param unsetVal  The default value expected
+    template <typename InputType, typename OutputType>
+    void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal, const std::string & fieldName="")
     {
-      assgnFn(input, target);
-      return;
+      const auto defaultComp = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a,
+                                 std::add_const_t<std::remove_reference_t<decltype(target)>> &b) -> bool { return static_cast<OutputType>(a) == b; };
+      const auto defaultAssgn = [](std::add_const_t<std::remove_reference_t<decltype(input)>> & a, decltype(target) &b) {  b = a; };
+      ValidateOrCopy(input, target, unsetVal, defaultComp, defaultAssgn, fieldName);
     }
 
-    // if neither of the above conditions were met,
-    // we have a discrepancy.  bail loudly
-    std::stringstream ss;
-    ss << (!fieldName.empty() ? "For field name '" + fieldName + "': " : "")
-       << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
-    throw std::runtime_error(ss.str());
-  }
+   // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  // specialize the template for double-> float conversions, which we do a lot,
-  // and which have roundoff problems in the comparison operator otherwise
-  template <>
+    /// Similar to the other variant of ValidateOrCopy(),
+    /// but allowing the user to specify a function that determines if input and target are equal
+    ///
+    /// \param input     The value that would be copied in if unfilled
+    /// \param target    The destination value
+    /// \param unsetVal  The default value expected
+    /// \param compFn    Function that returns true if target == input, or false otherwise
+    /// \param assgnFn   Function that assigns the value of input to target
+    template <typename InputType, typename OutputType>
+    void ValidateOrCopy(const InputType & input, OutputType & target, const OutputType & unsetVal,
+                        std::function<bool(std::add_const_t<std::remove_reference_t<decltype(input)>> &,
+                                           std::add_const_t<std::remove_reference_t<decltype(target)>> &)> compFn,
+                        std::function<void(std::add_const_t<std::remove_reference_t<decltype(input)>> &,
+                                           decltype(target) &)> assgnFn,
+                        const std::string & fieldName="")
+    {
+      LOG_S("ValidateOrCopy()").VERBOSE() << "     " << (!fieldName.empty() ? "field='" + fieldName + "';" : "")
+                                          << " supplied val=" << input << "; previous branch val=" << target << "; default=" << unsetVal << "\n";
+
+      // is the target value already the desired value?
+      // or was the supplied value the default value (which implies nothing should be set)?
+      // then nothing more to do.
+      if (compFn(input, target) || compFn(input, unsetVal)) return;
+
+      // note that NaN and inf aren't equal to anything, even themselves, so we have check that differently
+      if constexpr (std::numeric_limits<InputType>::has_signaling_NaN && std::numeric_limits<OutputType>::has_signaling_NaN)
+        if ( (std::isnan(input) && std::isnan(target)) || (std::isnan(input) && std::isnan(unsetVal)) ) return;
+      if constexpr ( std::numeric_limits<InputType>::has_infinity && std::numeric_limits<OutputType>::has_infinity )
+        if ( (std::isinf(input) && std::isinf(target)) || (std::isinf(input) && std::isinf(unsetVal)) ) return;
+
+      // is this the default val?
+      bool isNanInf = false;
+      if constexpr (std::numeric_limits<OutputType>::has_signaling_NaN)
+        isNanInf = (std::isnan(target) && std::isnan(unsetVal));
+      if constexpr ( std::numeric_limits<OutputType>::has_infinity )
+        isNanInf = isNanInf || (std::isinf(target) && std::isinf(unsetVal));
+      if (target == unsetVal || isNanInf)
+      {
+        assgnFn(input, target);
+        return;
+      }
+
+      // if neither of the above conditions were met,
+      // we have a discrepancy.  bail loudly
+      std::stringstream ss;
+      ss << (!fieldName.empty() ? "For field name '" + fieldName + "': " : "")
+         << "Mismatch between branch value (" << target << ") and supplied value (" << input << ")!  Abort.\n";
+      throw std::runtime_error(ss.str());
+    }
+
+    // --------------------------------------------------------------
+    // specialize the template for double-> float conversions, which we do a lot,
+    // and which have roundoff problems in the comparison operator otherwise
+    template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string& fieldName);
-  
+ 
+    template <>
+  void ValidateOrCopy<float, float>(const float & input, float & target, const float & unsetVal, const std::string& fieldName); 
   //same for long int and int (true interaction id)
   template <>
   void ValidateOrCopy<int, long int>(const int & input, long int & target, const long int & unsetVal, const std::string & fieldName);
