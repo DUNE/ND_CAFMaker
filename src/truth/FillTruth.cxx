@@ -354,7 +354,6 @@ namespace cafmaker
                                                                }));
 
       fEdepSimTree.SelectEvent(interaction_id);
-      // const TG4Event * g4event = fEdepSimTree.G4Event()      
       FillParticle(ixn, truthVecIdx, G4ID, collection, counter, fEdepSimTree.G4Event());
       part = &(collection.at(particle_index));
     }
@@ -450,15 +449,11 @@ namespace cafmaker
 
   int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event)
   {
-    // fEdepTree->GetEntry(fEdepEntries[part.interaction_id]);
-    // if(Trajectories[G4ID].ParentId == 0) ;
 
     collection.emplace_back();
     int part_index = counter;
     counter++;
 
-    // parent_part = &collection.back();
-      
 
     auto traj = g4event->Trajectories[G4ID];
     //Get Ancestor
@@ -467,9 +462,6 @@ namespace cafmaker
     if (ancestor_parent_id !=-1)
     {
       
-      // if ( auto itPart = std::find_if(collection.begin(), collection.end(), cmp);
-      //    itPart == collection.end() )
-
       if(auto itPart = std::find_if(collection.begin(),
                                     collection.end(),
                                     [ancestor_id](const caf::SRTrueParticle& mypart)
@@ -477,7 +469,6 @@ namespace cafmaker
                                       return mypart.G4ID == ancestor_id;
                                     }); itPart == collection.end())
       {
-        //  parent_part = nullptr;
         
         ancestor_id = FillParticle(ixn, nixn, ancestor_id, collection, counter, g4event);
       } 
@@ -487,15 +478,11 @@ namespace cafmaker
         // ancestor_id;
       }
     }
-    // part = &(collection.at(part_idx-1));
-    // part->G4ID = G4ID;
-    
 
     (collection.at(part_index)).G4ID = traj.TrackId;
     (collection.at(part_index)).interaction_id = ixn.id;
     (collection.at(part_index)).pdg = traj.PDGCode;
     (collection.at(part_index)).p = traj.InitialMomentum*0.001;
-    // part->p = traj.InitialMomentum * 0.;s
 
     (collection.at(part_index)).parent = traj.ParentId;
 
