@@ -1,4 +1,4 @@
-SRCDIR = $(shell pwd)
+SRCDIR = ./
 SOURCES = $(shell find $(SRCDIR) -name '*.cxx')
 HEADERS = $(shell find $(SRCDIR) -name '*.h')
 OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
