@@ -353,8 +353,13 @@ namespace cafmaker
                                                                  return nu.id == interaction_id;
                                                                }));
 
-      fEdepSimTree.SelectEvent(interaction_id);
-      FillParticle(ixn, truthVecIdx, G4ID, collection, counter, fEdepSimTree.G4Event());
+      if (fEdepSimTree.GetEdepTree())
+      {
+        fEdepSimTree.SelectEvent(interaction_id);
+        FillParticle(ixn, truthVecIdx, G4ID, collection, counter, fEdepSimTree.G4Event());
+      }
+      else
+        LOG.VERBOSE() << "      --> no matching Edepsim Particle found. Truth particle returned won't be full.\n";
       part = &(collection.at(particle_index));
     }
     else
@@ -402,17 +407,31 @@ namespace cafmaker
           throw exc;
         }
       }
+
+      if (fEdepSimTree.GetEdepTree())
+      {
+        try
+        {
+          fEdepSimTree.SelectEvent(runNum, evtNum);
+        }
+        catch (std::out_of_range & exc)
+        {
+          // intercept briefly to add a log message
+          LOG.FATAL() << "Could not find Edepsim tree for interaction with run number: " << runNum << "!  Abort.\n";
+          throw exc;
+        }
+      }
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
       ixn = &sr.mc.nu.back();
       ixn->id = ixnID;
 
-      if (HaveGENIE())
+      if (HaveGENIE() && fEdepSimTree.GetEdepTree() )
       {
         LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << "; dump follows).  copying...\n";
         if (LOG.GetThreshold() <= Logger::THRESHOLD::VERBOSE)
           fGTrees.GEvt()->PrintToStream(const_cast<ostream&>(LOG.VERBOSE().GetStream()));
-        fEdepSimTree.SelectEvent(runNum, evtNum);
+        
 
         // this bit of info can't be extracted directly from the GENIE record,
         // so we do it here
@@ -422,7 +441,7 @@ namespace cafmaker
 
       }
       else
-        LOG.VERBOSE() << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
+        LOG.VERBOSE() << "      --> no matching GENIE or Edepsim interaction found.  New empty SRTrueInteraction will be returned.\n";
       
     } // if ( didn't find a matching SRTrueInteraction )
     else
@@ -571,6 +590,7 @@ namespace cafmaker
     }
   }
 
+  // ------------------------------------------------------------
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
   {
     long int vertex_id = runNum * 1e6 + evtNum;
@@ -578,19 +598,24 @@ namespace cafmaker
     fEdepTree->GetEntry(fEdepEntries[vertex_id]);
   }
 
+  // ------------------------------------------------------------
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long vertex_id)
   {
 
     fEdepTree->GetEntry(fEdepEntries[vertex_id]);
   }
 
-
+  // ------------------------------------------------------------
   const TG4Event *TruthMatcher::EdepSimTreeContainer::G4Event() const
   {
     return fG4Event;
   }
 
-  
+  // ------------------------------------------------------------
+  const TTree * TruthMatcher::EdepSimTreeContainer::GetEdepTree() const
+  {
+    return fEdepTree;
+  }
 
   // ------------------------------------------------------------
   const genie::NtpMCEventRecord * TruthMatcher::GTreeContainer::GEvt() const

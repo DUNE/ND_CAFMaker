@@ -225,6 +225,7 @@
           void SelectEvent(unsigned long int runNum, unsigned int evtNum);
           void SelectEvent(unsigned long int vertex_id);
           const TG4Event * G4Event() const;
+          const TTree * GetEdepTree() const;
 
         private:
           TFile * fEdepFile;
