@@ -29,6 +29,8 @@ LIBNAME = ND_CAFMaker
 LIBS = lib$(LIBNAME).so
 BINS = makeCAF
 
+$(info INCLUDE is $(INCLUDE))
+
 # build the library and the binaries
 all: $(BINS)
 
@@ -45,7 +47,6 @@ $(LIBDIR)/lib$(LIBNAME).so: $(OBJS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -shared -o $@ $(OBJS)
 
 $(BINDIR)/makeCAF: $(LIBS) makeCAF.C
-	$(info    INCLUDE is $(INCLUDE))
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -L$(LIBDIR) -l$(LIBNAME) $(LDLIBS) -o $@ makeCAF.C
 
 $(BINDIR)/testHDF: $(LIBS) testHDF.C
