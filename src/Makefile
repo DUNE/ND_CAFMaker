@@ -3,7 +3,7 @@ SOURCES = $(shell find $(SRCDIR) -name '*.cxx')
 HEADERS = $(shell find $(SRCDIR) -name '*.h')
 OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 
-INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC)
+INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC) -I$(ROOT_INC)
 
 # enable TMS unless otherwise specified
 # (set ENABLE_TMS=0 in the make command line)
