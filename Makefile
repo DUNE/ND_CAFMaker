@@ -7,6 +7,7 @@ INCLUDE += -I$(LOG4CPP_INC)
 #INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
 #INCLUDE += -I$(NUSYST)/build/Linux/include/
 INCLUDE += -I$(BOOST_INC)
+INCLUDE += -I$(ROOT_INC)
 INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)

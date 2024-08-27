@@ -3,7 +3,7 @@ SOURCES = $(shell find $(SRCDIR) -name '*.cxx')
 HEADERS = $(shell find $(SRCDIR) -name '*.h')
 OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 
-INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC) -I$(ROOT_INC)
+INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC)
 
 # enable TMS unless otherwise specified
 # (set ENABLE_TMS=0 in the make command line)
@@ -42,7 +42,7 @@ test: $(BINDIR)/testHDF
 # should *really* make a .d rule for the objects
 # to get their dependencies on the headers right, but ... not now
 $(LIBDIR)/lib$(LIBNAME).so: $(OBJS) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -shared -o $@ $(OBJS)
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -shared -o $@ $(OBJS)
 
 $(BINDIR)/makeCAF: $(LIBS) makeCAF.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -L$(LIBDIR) -l$(LIBNAME) $(LDLIBS) -o $@ makeCAF.C
