@@ -45,6 +45,7 @@ $(LIBDIR)/lib$(LIBNAME).so: $(OBJS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -shared -o $@ $(OBJS)
 
 $(BINDIR)/makeCAF: $(LIBS) makeCAF.C
+	$(info    INCLUDE is $(INCLUDE))
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -L$(LIBDIR) -l$(LIBNAME) $(LDLIBS) -o $@ makeCAF.C
 
 $(BINDIR)/testHDF: $(LIBS) testHDF.C
