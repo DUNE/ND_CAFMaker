@@ -33,8 +33,9 @@ LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
 
-export LIBDIR = $(PWD)/lib
-export BINDIR = $(PWD)/bin
+# Whoever wrote this original makefile better have been high or tripping
+export LIBDIR = lib
+export BINDIR = bin
 
 SUBDIRS = src
 
