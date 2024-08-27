@@ -35,6 +35,7 @@ namespace cafmaker
 	  m_LArRecoNDTree->SetBranchAddress("run", &m_run);
 	  m_LArRecoNDTree->SetBranchAddress("subRun", &m_subRun);
 	  m_LArRecoNDTree->SetBranchAddress("startTime", &m_startTime);
+	  m_LArRecoNDTree->SetBranchAddress("isShower", &m_isShowerVect);
 	  m_LArRecoNDTree->SetBranchAddress("sliceId", &m_sliceIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("startX", &m_startXVect);
 	  m_LArRecoNDTree->SetBranchAddress("startY", &m_startYVect);
@@ -106,6 +107,11 @@ namespace cafmaker
     
     for (int i = 0; i < nClusters; i++)
     {
+	// Check that the PFO is a track and not a shower
+	const int isShower = (*m_isShowerVect)[i];
+	if (isShower == 1)
+	    continue;
+
 	// Slice id of the PFO cluster
 	const int sliceId = (*m_sliceIdVect)[i];
 
@@ -197,6 +203,11 @@ namespace cafmaker
 
     for (int i = 0; i < nClusters; i++)
     {
+	// Check that the PFO is a shower
+	const int isShower = (*m_isShowerVect)[i];
+	if (isShower == 0)
+	    continue;
+
 	// Slice id of the PFO cluster
 	const int sliceId = (*m_sliceIdVect)[i];
 
