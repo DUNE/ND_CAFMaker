@@ -26,6 +26,10 @@ find_package(duneanaobj REQUIRED)
 find_package(hdf5 REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(fhiclcpp REQUIRED)
+if (${fhiclcpp_FOUND})
+  message("found fhiclcpp: ${fhiclcpp_FOUND}")
+endif (${fhiclcpp_FOUND})
+
 #find_package(tbb REQUIRED)
 pkg_check_modules(gsl REQUIRED)
 #find_package(pythia6 REQUIRED)
@@ -42,7 +46,7 @@ add_subdirectory(src)
 # really part of the package.  They are still useful for users to have
 # available as examples.
 
-install(DIRECTORY cfg scripts DESTINATION share/NDCAFMaker
+install(DIRECTORY cfg scripts DESTINATION share/
   FILES_MATCHING
   PATTERN README*
   PATTERN *.fcl
