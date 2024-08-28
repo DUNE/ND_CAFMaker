@@ -17,8 +17,7 @@ include_directories(${GENIE_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/reco ${CMAKE_C
 #add_definitions(-DDETSIM_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
 
 add_executable(makeCAF makeCAF.C)
- 
-target_link_libraries(makeCAF LINK_PUBLIC cafmaker)
+#target_link_libraries(makeCAF LINK_PUBLIC cafmaker)
 install(TARGETS makeCAF RUNTIME DESTINATION bin)
 
 # Build the library.
