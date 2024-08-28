@@ -2,6 +2,9 @@
 #include <numeric>
 #include <iostream>
 #include <fstream>
+#include <map>
+#include <cmath>
+#include <algorithm>
 
 #include "boost/program_options/options_description.hpp"
 #include "boost/program_options/parsers.hpp"
@@ -330,7 +333,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 //Temporary hack to fill beam POT info for data
 
 //Get the spills from an input text file
-using BeamSpills = std::vector<std::pair<double, double>>;
+using BeamSpills = std::map<double, double>;
 
 bool loadBeamSpills(const std::string& filename, BeamSpills& beam_spills) {
   std::ifstream file(filename);
@@ -345,7 +348,7 @@ bool loadBeamSpills(const std::string& filename, BeamSpills& beam_spills) {
     double time;
     double pot;
     if (iss >> time >> pot)
-      beam_spills.emplace_back(time, pot);
+      beam_spills[time] = pot;
   }
   file.close();
   return true;
@@ -355,23 +358,27 @@ bool loadBeamSpills(const std::string& filename, BeamSpills& beam_spills) {
 double getPOT(const cafmaker::Params& par, const std::vector<double>& trigger_times, int ii) {
   std::string potFile;
   BeamSpills beam_spills;
+  
   double pot = 0.0;
+  
   if (par().cafmaker().POTFile(potFile) && loadBeamSpills(potFile, beam_spills)) {
-    for (const auto& spill : beam_spills) {
-      if (std::all_of(trigger_times.cbegin(), trigger_times.cend(),
-         [par, spill](double trig_time) {
-         return std::abs(trig_time - spill.first) < par().cafmaker().beamMatchDT();
-      })) {
-         pot = spill.second;
-         break;
-         }
-      }
-    if (pot == 0.0) {
+    auto it = std::find_if(beam_spills.begin(), beam_spills.end(), 
+                           [par, &trigger_times](const auto& spill) {
+      return std::all_of(trigger_times.cbegin(), trigger_times.cend(),
+                         [par, &spill](double trig_time) {
+        return std::abs(trig_time - spill.first) < par().cafmaker().beamMatchDT();
+        });
+      });
+
+  if (it != beam_spills.end()) {
+      pot = it->second;
+  }
+  else {
       auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("Beam spill matching"); };
-      LOG().WARNING() << "WARNING: No matching spill found for trigger " << ii << " with trigger times: ";
+      LOG().WARNING() << "No matching spill found for trigger " << ii << " with trigger times: ";
       std::for_each(trigger_times.begin(), trigger_times.end(), [](double tt) { std::cout << std::fixed <<  tt << " "; });
       std::cout << "\n";
-    }
+  }
  }
  else {
    pot = par().runInfo().POTPerSpill() * 1e13;
