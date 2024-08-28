@@ -1,11 +1,11 @@
-message("ND_CAFMaker in src/")
+message(STATUS "ND_CAFMaker in src/")
 
 # Suck up all of the .cc files for the source.  This isn't good CMAKE
 # practice, but it makes maintaining this file easier.
 # file(GLOB_RECURSE source *.cc)
 # file(GLOB_RECURSE includes NDCAFMaker*.hh)
 file(GLOB cafmaker_source makeCAF.C)
-file(GLOB cafmaker_includes *.h)
+file(GLOB cafmaker_includes *.h reco/*.h truth/*.h)
 
 set(source ${cafmaker_source})
 set(includes ${cafmaker_includes})
