@@ -12,7 +12,7 @@ set(includes ${cafmaker_includes})
 
 set(GENIE_INCLUDES $ENV{GENIE_INC})
 message("GOONY: ${GENIE_INCLUDES}")
-include_directories(${GENIE_INCLUDES} reco truth util)
+include_directories(${GENIE_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/reco ${CMAKE_CURRENT_SOURCE_DIR}/truth ${CMAKE_CURRENT_SOURCE_DIR}/util)
 
 # Where the macro files can be found.
 #add_definitions(-DDETSIM_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
