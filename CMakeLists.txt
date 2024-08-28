@@ -17,7 +17,7 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif (APPLE)
 
-# Make sure that ROOT is available.  ROOT is absolutely required.
+find_package(PkgConfig REQUIRED)
 find_package(ROOT REQUIRED
   COMPONENTS Geom Physics Matrix MathCore Tree RIO)
 find_package(Geant4 10.0 REQUIRED)
@@ -27,7 +27,7 @@ find_package(hdf5 REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(fhiclcpp REQUIRED)
 #find_package(tbb REQUIRED)
-#find_package(gsl REQUIRED)
+pkg_check_modules(gsl REQUIRED)
 #find_package(pythia6 REQUIRED)
 find_package(libxml2 REQUIRED)
 #find_package(dk2nugenie REQUIRED)
