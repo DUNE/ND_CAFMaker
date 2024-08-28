@@ -17,7 +17,8 @@ include_directories(${GENIE_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR})
 #add_definitions(-DDETSIM_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
 
 add_executable(makeCAF makeCAF.C)
-#target_link_libraries(makeCAF LINK_PUBLIC cafmaker)
+target_link_libraries(makeCAF LINK_PUBLIC cafmaker
+  ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${fhiclcpp_LIBRARIES} ${boost_LIBRARIES})
 install(TARGETS makeCAF RUNTIME DESTINATION bin)
 
 # Build the library.
@@ -28,7 +29,7 @@ target_include_directories(cafmaker PUBLIC
   "$<INSTALL_INTERFACE:include/NDCAFMaker>")
 
 target_link_libraries(cafmaker PUBLIC
-  ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${fhiclcpp_LIBRARIES} ${boost_LIBRARIES})
+  ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 
 # Install the G4 macro files used to control the MC.
 #install(FILES cafmaker-defaults-1.0.mac DESTINATION lib/NDCAFMaker)
