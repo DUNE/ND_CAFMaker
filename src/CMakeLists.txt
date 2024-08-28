@@ -10,7 +10,7 @@ file(GLOB cafmaker_includes *.h)
 set(source ${cafmaker_source})
 set(includes ${cafmaker_includes})
 
-include_directories(${GENIE_INCLUDES})
+include_directories(${GENIE_INCLUDES} reco truth util)
 # Where the macro files can be found.
 #add_definitions(-DDETSIM_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
 
