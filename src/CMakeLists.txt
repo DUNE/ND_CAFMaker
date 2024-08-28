@@ -28,7 +28,7 @@ target_include_directories(cafmaker PUBLIC
   "$<INSTALL_INTERFACE:include/NDCAFMaker>")
 
 target_link_libraries(cafmaker PUBLIC
-  ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
+  ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${fhiclcpp_LIBRARIES})
 
 # Install the G4 macro files used to control the MC.
 #install(FILES cafmaker-defaults-1.0.mac DESTINATION lib/NDCAFMaker)
