@@ -370,15 +370,15 @@ double getPOT(const cafmaker::Params& par, const std::vector<double>& trigger_ti
         });
       });
 
-  if (it != beam_spills.end()) {
+    if (it != beam_spills.end()) {
       pot = it->second;
-  }
-  else {
+    }
+    else {
       auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("Beam spill matching"); };
       LOG().WARNING() << "No matching spill found for trigger " << ii << " with trigger times: ";
       std::for_each(trigger_times.begin(), trigger_times.end(), [](double tt) { std::cout << std::fixed <<  tt << " "; });
       std::cout << "\n";
-  }
+    }
  }
  else {
    pot = par().runInfo().POTPerSpill() * 1e13;
