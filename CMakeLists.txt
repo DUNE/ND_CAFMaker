@@ -22,7 +22,7 @@ find_package(ROOT REQUIRED
   COMPONENTS Geom Physics Matrix MathCore Tree RIO)
 find_package(Geant4 10.0 REQUIRED)
 find_package(duneanaobj REQUIRED)
-find_package(ifdhc REQUIRED)
+#find_package(ifdhc REQUIRED)
 find_package(hdf5 REQUIRED)
 find_package(hf5cpp REQUIRED)
 find_package(fhicl-cpp REQUIRED)
