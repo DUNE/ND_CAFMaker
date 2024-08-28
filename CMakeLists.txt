@@ -28,6 +28,8 @@ find_package(h5cpp REQUIRED)
 find_package(fhiclcpp REQUIRED)
 if (${fhiclcpp_FOUND})
   message("found fhiclcpp: ${fhiclcpp_FOUND}")
+  message("found fhiclcpp lib: ${fhiclcpp_LIBRARIES}")
+  message("found fhiclcpp inc: ${fhiclcpp_INCLUDES}")
 endif (${fhiclcpp_FOUND})
 
 #find_package(tbb REQUIRED)
