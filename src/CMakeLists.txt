@@ -4,19 +4,22 @@ message("ND_CAFMaker in src/")
 # practice, but it makes maintaining this file easier.
 # file(GLOB_RECURSE source *.cc)
 # file(GLOB_RECURSE includes NDCAFMaker*.hh)
-file(GLOB cafmaker_source makeCAF.C)
+#file(GLOB cafmaker_source makeCAF.C)
 file(GLOB cafmaker_includes *.h)
 
-set(source ${cafmaker_source})
+#set(source ${cafmaker_source})
 set(includes ${cafmaker_includes})
 
 #set(GENIE_INCLUDES $ENV{GENIE_INC})
-message("GOONY: ${GENIE_INCLUDES}")
 include_directories(${GENIE_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/reco ${CMAKE_CURRENT_SOURCE_DIR}/truth ${CMAKE_CURRENT_SOURCE_DIR}/util)
 
 # Where the macro files can be found.
 #add_definitions(-DDETSIM_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
 
+add_executable(makeCAF makeCAF.C)
+ 
+target_link_libraries(makeCAF LINK_PUBLIC cafmaker)
+install(TARGETS makeCAF RUNTIME DESTINATION bin)
 
 # Build the library.
 add_library(cafmaker SHARED ${source})
