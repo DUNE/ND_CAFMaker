@@ -17,6 +17,8 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif (APPLE)
 
+set(GENIE_INCLUDE $ENV(${GENIE_INC}))
+
 # Make sure that ROOT is available.  ROOT is absolutely required.
 find_package(ROOT REQUIRED
   COMPONENTS Geom Physics Matrix MathCore Tree RIO)
