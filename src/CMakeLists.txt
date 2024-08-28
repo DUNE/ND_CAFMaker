@@ -4,7 +4,7 @@ message("ND_CAFMaker in src/")
 # practice, but it makes maintaining this file easier.
 # file(GLOB_RECURSE source *.cc)
 # file(GLOB_RECURSE includes NDCAFMaker*.hh)
-file(GLOB cafmaker_source *.C)
+file(GLOB cafmaker_source makeCAF.C)
 file(GLOB cafmaker_includes *.h)
 
 set(source ${cafmaker_source})
