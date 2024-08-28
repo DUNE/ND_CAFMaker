@@ -20,13 +20,21 @@ endif (APPLE)
 # Make sure that ROOT is available.  ROOT is absolutely required.
 find_package(ROOT REQUIRED
   COMPONENTS Geom Physics Matrix MathCore Tree RIO)
-if(ROOT_FOUND)
-  include(${ROOT_USE_FILE})
-endif(ROOT_FOUND)
+find_package(Geant4 10.0 REQUIRED)
+find_package(duneanaobj REQUIRED)
+find_package(ifdhc REQUIRED)
+find_package(hdf5 REQUIRED)
+find_package(hf5cpp REQUIRED)
+find_package(fhicl-cpp REQUIRED)
+#find_package(tbb REQUIRED)
+find_package(gsl REQUIRED)
+find_package(pythia6 REQUIRED)
+find_package(libxml2 REQUIRED)
+#find_package(dk2nugenie REQUIRED)
+find_package(log4cpp REQUIRED)
 
 # Look for GEANT4.  If it's found, then build the simulation.
 # Otherwise, this can be skipped, but only the i/o library is built.
-find_package(Geant4 10.0 REQUIRED)
 
 add_subdirectory(src)
 
