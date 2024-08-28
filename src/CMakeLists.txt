@@ -10,7 +10,7 @@ file(GLOB cafmaker_includes *.h)
 set(source ${cafmaker_source})
 set(includes ${cafmaker_includes})
 
-set(GENIE_INCLUDES $ENV{GENIE_INC})
+#set(GENIE_INCLUDES $ENV{GENIE_INC})
 message("GOONY: ${GENIE_INCLUDES}")
 include_directories(${GENIE_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/reco ${CMAKE_CURRENT_SOURCE_DIR}/truth ${CMAKE_CURRENT_SOURCE_DIR}/util)
 
