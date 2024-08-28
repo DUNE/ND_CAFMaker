@@ -31,7 +31,7 @@ pkg_check_modules(gsl REQUIRED)
 #find_package(pythia6 REQUIRED)
 find_package(libxml2 REQUIRED)
 #find_package(dk2nugenie REQUIRED)
-find_package(log4cpp REQUIRED)
+pkg_check_modules(log4cpp REQUIRED)
 
 # Look for GEANT4.  If it's found, then build the simulation.
 # Otherwise, this can be skipped, but only the i/o library is built.
