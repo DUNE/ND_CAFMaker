@@ -16,6 +16,7 @@ include_directories(${GENIE_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR})
 # Where the macro files can be found.
 #add_definitions(-DDETSIM_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
 
+message("LAMO :  ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${fhiclcpp_LIBRARIES} ${boost_LIBRARIES}")
 add_executable(makeCAF makeCAF.C)
 target_link_libraries(makeCAF LINK_PUBLIC cafmaker
   ${Geant4_LIBRARIES} ${ROOT_LIBRARIES} ${fhiclcpp_LIBRARIES} ${boost_LIBRARIES})
