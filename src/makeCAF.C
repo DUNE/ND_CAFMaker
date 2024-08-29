@@ -2,6 +2,7 @@
 #include <numeric>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <map>
 #include <cmath>
 #include <algorithm>
@@ -354,40 +355,79 @@ bool loadBeamSpills(const std::string& filename, BeamSpills& beam_spills) {
   return true;
 }
 
-//Return pot from text file if all of the trigger times match the beam times within a certain dt, else fill given pot
-double getPOT(const cafmaker::Params& par, const std::vector<double>& trigger_times, int ii) {
-  std::string potFile;
-  BeamSpills beam_spills;
-  
-  double pot = 0.0;
-  
-  if (par().cafmaker().POTFile(potFile) && loadBeamSpills(potFile, beam_spills)) {
-    auto it = std::find_if(beam_spills.begin(), beam_spills.end(), 
-                           [par, &trigger_times](const auto& spill) {
-      return std::all_of(trigger_times.cbegin(), trigger_times.cend(),
-                         [par, &spill](double trig_time) {
-        return std::abs(trig_time - spill.first) < par().cafmaker().beamMatchDT();
-        });
-      });
-
-    if (it != beam_spills.end()) {
-      pot = it->second;
-    }
-    else {
-      auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("Beam spill matching"); };
-      LOG().WARNING() << "No matching spill found for trigger " << ii << " with trigger times: ";
-      std::for_each(trigger_times.begin(), trigger_times.end(), [](double tt) { std::cout << std::fixed <<  tt << " "; });
-      std::cout << "\n";
-    }
- }
- else {
-   pot = par().runInfo().POTPerSpill() * 1e13;
- }
-
- return pot;
-
+double GetTriggerTime(const cafmaker::Trigger& trigger) {
+    return trigger.triggerTime_s + 1e-9 * trigger.triggerTime_ns;
 }
 
+//Return pot from text file if all of the trigger times match the beam times within a certain dt, else fill given pot
+double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger, int ii) {
+  std::string potFile;
+  BeamSpills beam_spills;
+
+  double pot = 0.0;
+
+  if (par().cafmaker().POTFile(potFile) && loadBeamSpills(potFile, beam_spills)) { //If there is a POT file in config that is readable, check if all trigger times match any of the beam times
+    auto it = std::find_if(beam_spills.begin(), beam_spills.end(),                
+                           [par, &groupedTrigger](const auto& spill) {
+      return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
+                         [par, &spill](const auto& groupedTrigger) {
+        return std::abs(GetTriggerTime(groupedTrigger.second) - spill.first) < par().cafmaker().beamMatchDT(); //fixme: shouldn't be abs after 2x2 trigger times are fixed
+        });
+      });
+                                  
+    if (it != beam_spills.end()) {
+      pot = it->second;
+    }     
+    else { //Check if any of the triggers match the beam time if there is no beam time match in the previous search
+      bool any_matched = false;
+      std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> matched_triggers;
+      std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> unmatched_triggers;
+
+      for (auto trig : groupedTrigger) {
+        bool matched = std::any_of(beam_spills.cbegin(), beam_spills.cend(),
+                                   [par, &trig](const auto& spill) {
+          return std::abs(GetTriggerTime(trig.second) - spill.first) < par().cafmaker().beamMatchDT(); //fixme: shouldn't be abs after 2x2 trigger times are fixed
+        });
+
+        if (matched) {
+          any_matched = true;
+          matched_triggers.push_back(trig);
+        } 
+        else {
+          unmatched_triggers.push_back(trig);
+        }
+      }
+
+      auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("Beam spill matching"); };
+      std::stringstream log_message;
+
+      if (any_matched) { //If only some of the trigger times in a grouped trigger match the beam spill, abort!
+         log_message << "Only some triggers match beam spill for trigger group " << ii << ":\n"
+                       << "Matched triggers: \n";
+        for (auto trig : matched_triggers)
+          log_message << std::fixed << trig.first->GetName() << " " << GetTriggerTime(trig.second) << "\n";
+ 
+        log_message << "Unmatched triggers: \n";
+        for (auto trig : unmatched_triggers)
+          log_message << std::fixed << trig.first->GetName() << " " << GetTriggerTime(trig.second) << "\n";
+        
+        LOG().ERROR() << log_message.str() << "\n";
+        std::abort();
+      } 
+      else { //If none of the trigger times match give a warning
+        log_message << "No matching spill found for trigger group " << ii << " with triggers: \n";
+        for (auto trig : groupedTrigger)
+          log_message << std::fixed << trig.first->GetName() << " " << GetTriggerTime(trig.second) << "\n";
+        LOG().WARNING() << log_message.str() << "\n";
+      } 
+    } 
+  } 
+  else { //else get POT from config
+    pot = par().runInfo().POTPerSpill() * 1e13;
+  }
+
+  return pot;
+}
 // -------------------------------------------------
 // main loop function
 void loop(CAF &caf,
@@ -438,16 +478,14 @@ void loop(CAF &caf,
     caf.setToBS();
 
 
-    std::vector<double> trigger_times;
     // hand off to the correct reco filler(s).
     for (const auto & fillerTrigPair : groupedTriggers[ii])
     {
       cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
       fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
-      trigger_times.push_back(fillerTrigPair.second.triggerTime_s + 1e-9*fillerTrigPair.second.triggerTime_ns);
     }
     //Fill POT
-    double pot = getPOT(par, trigger_times, ii);
+    double pot = getPOT(par, groupedTriggers[ii], ii);
     if (std::isnan(caf.pot))
       caf.pot = 0;
     caf.pot += pot;
