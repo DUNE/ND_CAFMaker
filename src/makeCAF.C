@@ -452,7 +452,7 @@ void loop(CAF &caf,
       caf.pot = 0;
     caf.pot += pot;
     caf.sr.beam.pulsepot = pot;
-    caf.sr.beam.ismc = true; //should be handled in a smarter way for data and MC
+    caf.sr.beam.ismc = par().cafmaker().POTFile.hasValue();  // fixme: when we have proper IFDB interface, should use the same mechanism as however we decide when to use that
 
     caf.fill();
   }
