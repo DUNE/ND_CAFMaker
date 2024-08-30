@@ -12,7 +12,7 @@ setup eigen v3_3_5
 setup duneanaobj v03_05_00 -q debug:e26
 setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_18_04 -q debug:e26
-
+setup edepsim v3_2_0e -q debug:e26
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
@@ -38,7 +38,6 @@ export LD_LIBRARY_PATH=${DUNEANAOBJ_LIB}:$LD_LIBRARY_PATH
 # finally, add our lib & bin to the paths
 mydir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 export LD_LIBRARY_PATH=$mydir/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=$mydir/libTG4Event:$LD_LIBRARY_PATH
 export PATH=$mydir/bin:$PATH
 
 # our FCL needs to be findable too
