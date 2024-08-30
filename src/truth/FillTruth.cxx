@@ -497,22 +497,23 @@ namespace cafmaker
         // ancestor_id;
       }
     }
+    caf::SRTrueParticle & part = collection.at(part_index);
 
-    (collection.at(part_index)).G4ID = traj.TrackId;
-    (collection.at(part_index)).interaction_id = ixn.id;
-    (collection.at(part_index)).pdg = traj.PDGCode;
-    (collection.at(part_index)).p = traj.InitialMomentum*0.001;
+    part.G4ID = traj.TrackId;
+    part.interaction_id = ixn.id;
+    part.pdg = traj.PDGCode;
+    part.p = traj.InitialMomentum*0.001;
 
-    (collection.at(part_index)).parent = traj.ParentId;
+    part.parent = traj.ParentId;
 
-    (collection.at(part_index)).ancestor_id.ixn = nixn;
-    (collection.at(part_index)).ancestor_id.part = ancestor_id ;
+    part.ancestor_id.ixn = nixn;
+    part.ancestor_id.part = ancestor_id ;
 
     auto p0 = traj.Points[0];
-    (collection.at(part_index)).start_pos = (p0.Position * .1).Vect();
+    part.start_pos = (p0.Position * .1).Vect();
 
     auto pf = traj.Points[traj.Points.size()-1];
-    (collection.at(part_index)).end_pos = (pf.Position * .1).Vect();
+    part.end_pos = (pf.Position * .1).Vect();
     return ancestor_id;
   }
 
