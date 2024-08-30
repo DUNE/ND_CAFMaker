@@ -533,9 +533,7 @@ namespace cafmaker
 
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
                                    [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
-          srPartCmp.trkid = is_primary
-                            ? truePartPassThrough.gen_id
-                            : truePartPassThrough.gen_id;
+          srPartCmp.trkid = truePartPassThrough.gen_id;
           caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, !truthMatch->HaveGENIE())
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
@@ -645,10 +643,7 @@ namespace cafmaker
            
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
                                    [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
-
-          srPartCmp.trkid = is_primary
-                            ? truePartPassThrough.gen_id
-                            : truePartPassThrough.gen_id;
+          srPartCmp.trkid = truePartPassThrough.gen_id;
 
           // we want to make sure the particle is created, if it isn't there,
           // but we won't do anything further with it, so we throw the return value away
@@ -748,11 +743,9 @@ namespace cafmaker
                                                         sr.mc.nu.end(),
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
-    	  bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
+    	    bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
                                    [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
-          srPartCmp.trkid = is_primary
-                            ? truePartPassThrough.gen_id
-                            : truePartPassThrough.gen_id;
+          srPartCmp.trkid = truePartPassThrough.gen_id;
           // we don't actually need the return value here for anything,
           // but we do want the TruthMatcher to *create* a new particle when that's appropriate
           is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, !truthMatch->HaveGENIE())
