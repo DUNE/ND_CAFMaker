@@ -159,6 +159,7 @@
       ///
       /// \param sr         The caf::StandardRecord in question
       /// \param ixn        Interaction object (if you only have its ID, use the other signature of GetTrueParticle() instead)
+      /// \param G4ID       TrackID of the particle from GEANT4 (or, if not propagated by GEANT4, GENIE)
       /// \param cmp        Function used to decide whether a SRTrueParticle already in the SRTrueInteraction matches desired criteria
       /// \param isPrimary  Was this a "primary" particle (i.e., came out of the true neutrino interaction)?
       /// \param createNew  Should a new SRTrueParticle be made if one corresponding to the given characteristics is not found?
