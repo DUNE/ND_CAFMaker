@@ -126,6 +126,7 @@ namespace cafmaker
                  {std::type_index(typeid(Interaction)),                   "reco_interactions"},
                  {std::type_index(typeid(TrueParticle)),                  "truth_particles"},
                  {std::type_index(typeid(TrueInteraction)),               "truth_interactions"},
+                 {std::type_index(typeid(Flash)),                         "flashes"},
                  {std::type_index(typeid(Event)),                         "events"},
                  {std::type_index(typeid(RunInfo)),                       "run_info"},
                  {std::type_index(typeid(cafmaker::types::dlp::Trigger)), "trigger"}}),  // needs to be disambiguated from CAFMaker's internal Trigger
@@ -177,6 +178,8 @@ namespace cafmaker
 
     FillTracks(particles, trueInteractions, trueParticles, truthMatcher, sr);
     FillShowers(particles, trueInteractions, trueParticles, truthMatcher, sr);
+    H5DataView<cafmaker::types::dlp::Flash> flashes = fDSReader.GetProducts<cafmaker::types::dlp::Flash>(idx);
+    FillFlashes(flashes, sr);
 
     // todo: now do some sanity checks:
     //       - compare the number of true particles in each dlp::TrueInteraction to the number discovered and filled in SRTrueInteraction
@@ -374,7 +377,11 @@ namespace cafmaker
     sr.common.ixn.dlp.reserve(ixns.size());
     sr.common.ixn.ndlp = ixns.size();
 
+    sr.nd.lar.dlp.resize(ixns.size());
+    sr.nd.lar.ndlp = ixns.size();
+    
     LOG.DEBUG() << "Filling reco interactions...\n";
+    int ixnidx = 0;
     for (const auto & ixn : ixns)
     {
       caf::SRInteraction interaction;
@@ -438,6 +445,14 @@ namespace cafmaker
       }
 
       sr.common.ixn.dlp.push_back(std::move(interaction));
+      //Fill matched flash info
+      caf::FlashMatch flashMatch;
+      flashMatch.id = ixn.flash_id;
+      flashMatch.time = ixn.flash_time;
+      flashMatch.total_pe = ixn.flash_total_pe;
+      flashMatch.hypothesis_pe = ixn.flash_hypo_pe;
+      sr.nd.lar.dlp[ixnidx].flash.push_back(flashMatch);
+      ixnidx++;
     }
   }
 
@@ -579,8 +594,6 @@ namespace cafmaker
                                            const TruthMatcher * truthMatch,
                                            caf::StandardRecord &sr) const
   {
-    sr.nd.lar.dlp.resize(sr.common.ixn.dlp.size());
-    sr.nd.lar.ndlp = sr.common.ixn.dlp.size();
     // note: used in the hack further below
     static SRPartCmp srPartCmp;
 
@@ -789,6 +802,29 @@ namespace cafmaker
     }
   }
 
+  // ------------------------------------------------------------------------------
+  void MLNDLArRecoBranchFiller::FillFlashes(const H5DataView<cafmaker::types::dlp::Flash> & flashes,
+                                            caf::StandardRecord &sr) const
+  {
+
+    for (const auto & flash : flashes)
+    {
+
+      caf::SROpticalFlash opflash;
+      // fill flash variables for all flashes
+
+      opflash.id = flash.id;
+      //opflash.tpc_id = flash.tpc; //TODO
+      opflash.time = flash.time;
+      opflash.time_width = flash.time_width;
+      opflash.total_pe = flash.total_pe;
+
+      sr.nd.lar.flashes.push_back(std::move(opflash));
+      sr.nd.lar.nflashes++;
+
+    }
+    
+  }
   // ------------------------------------------------------------------------------
   std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
   {
