@@ -180,7 +180,7 @@
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
       caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, unsigned long ixnID, bool createNew = true) const;
       bool HaveGENIE() const;
-
+      bool HaveEDEPSIM() const;
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
 
     private:
@@ -227,6 +227,7 @@
           void SelectEvent(unsigned long int vertex_id);
           const TG4Event * G4Event() const;
           const TTree * GetEdepTree() const;
+         
           void  LoadTree();
 
         private:

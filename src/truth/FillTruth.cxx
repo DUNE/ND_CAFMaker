@@ -353,7 +353,7 @@ namespace cafmaker
                                                                  return nu.id == interaction_id;
                                                                }));
 
-      if (fEdepSimTree.GetEdepTree())
+      if (HaveEDEPSIM())
       {
         fEdepSimTree.SelectEvent(interaction_id);
         FillParticle(ixn, truthVecIdx, G4ID, collection, counter, fEdepSimTree.G4Event());
@@ -408,7 +408,7 @@ namespace cafmaker
         }
       }
 
-      if (fEdepSimTree.GetEdepTree())
+      if (HaveEDEPSIM())
       {
         try
         {
@@ -426,7 +426,7 @@ namespace cafmaker
       ixn = &sr.mc.nu.back();
       ixn->id = ixnID;
 
-      if (HaveGENIE() && fEdepSimTree.GetEdepTree() )
+      if (HaveGENIE() && HaveEDEPSIM() )
       {
         LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << "; dump follows).  copying...\n";
         if (LOG.GetThreshold() <= Logger::THRESHOLD::VERBOSE)
@@ -457,6 +457,12 @@ namespace cafmaker
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
     return !std::all_of(fGTrees.begin(), fGTrees.end(), isNull);
+  }
+
+  // ------------------------------------------------------------
+  bool TruthMatcher::HaveEDEPSIM() const
+  {
+    return fEdepSimTree.GetEdepTree();
   }
 
   // ------------------------------------------------------------
