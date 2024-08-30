@@ -576,6 +576,7 @@ namespace cafmaker
     }
   }
 
+  // ------------------------------------------------------------
   TruthMatcher::EdepSimTreeContainer::EdepSimTreeContainer(std::string filename)
   : cafmaker::Loggable("GTreeContainer")
   {
@@ -583,11 +584,16 @@ namespace cafmaker
     fEdepTree = (TTree*) fEdepFile->Get("EDepSimEvents");
     fG4Event = 0;
     fEdepTree->SetBranchAddress("Event",&fG4Event);
+    f_isTreeLoaded = false;
+  }
+
+  // ------------------------------------------------------------
+  void  TruthMatcher::EdepSimTreeContainer::LoadTree()
+  {
     for (int i = 0; i<fEdepTree->GetEntries(); i++)
     {
       fEdepTree->GetEntry(i);
-      long int vertex_id = fG4Event->RunId * 1e6 + fG4Event->EventId;
-      fEdepEntries[vertex_id] = i;
+      long int vertex_id = fG4Event->RunId * 1e6 + fG4Event->EventId;                                                                                                                              fEdepEntries[vertex_id] = i;
     }
   }
 
@@ -595,14 +601,17 @@ namespace cafmaker
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
   {
     long int vertex_id = runNum * 1e6 + evtNum;
-
-    fEdepTree->GetEntry(fEdepEntries[vertex_id]);
+     SelectEvent(vertex_id); 
   }
 
   // ------------------------------------------------------------
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long vertex_id)
   {
-
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded=true;
+    }
     fEdepTree->GetEntry(fEdepEntries[vertex_id]);
   }
 

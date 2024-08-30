@@ -226,12 +226,14 @@
           void SelectEvent(unsigned long int vertex_id);
           const TG4Event * G4Event() const;
           const TTree * GetEdepTree() const;
+          void  LoadTree();
 
         private:
           TFile * fEdepFile;
           TTree * fEdepTree;
           std::map<unsigned long int, int> fEdepEntries;
           const TG4Event * fG4Event;
+          bool f_isTreeLoaded;
       };
       mutable EdepSimTreeContainer fEdepSimTree;
 
