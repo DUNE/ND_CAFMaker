@@ -139,7 +139,10 @@ namespace cafmaker
       fGTrees(ghepFilenames, gEvt),
       fGENIEWriterCallback(std::move(genieFillerCallback)),
       fEdepSimTree(edepsimFilename)
-  {}
+  {
+    if (HaveGENIE() && !HaveEDEPSIM())
+    LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
+  }
 
   // --------------------------------------------------------------
   void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn)
@@ -235,12 +238,15 @@ namespace cafmaker
       std::string process;
       if( p->Status() == genie::EGHepStatus::kIStStableFinalState )
       {
-        auto traj = g4event->Trajectories[part.G4ID];
-        auto p0 = traj.Points[0];
-        part.start_pos = (p0.Position * .1).Vect();
+        if (g4event)
+        {
+          auto traj = g4event->Trajectories[part.G4ID];
+          auto p0 = traj.Points[0];
+          part.start_pos = (p0.Position * .1).Vect();
 
-        auto pf = traj.Points[traj.Points.size()-1];
-        part.end_pos = (pf.Position * .1).Vect();
+          auto pf = traj.Points[traj.Points.size()-1];
+          part.end_pos = (pf.Position * .1).Vect();
+        }
         // note: we leave part.id unset since it won't match with the G4 values
         // (edep-sim numbers them all sequentially from 0 throughout the whole file)
         // and the pass-through value is more useful
@@ -357,10 +363,16 @@ namespace cafmaker
       {
         fEdepSimTree.SelectEvent(interaction_id);
         FillParticle(ixn, truthVecIdx, G4ID, collection, counter, fEdepSimTree.G4Event());
+        part = &(collection.at(particle_index));
       }
       else
+      {
         LOG.VERBOSE() << "      --> no matching Edepsim Particle found. Truth particle returned won't be full.\n";
-      part = &(collection.at(particle_index));
+        collection.emplace_back();
+        counter++;
+        part = &collection.back();
+        part->interaction_id = ixn.id;
+      }
     }
     else
     {
@@ -426,7 +438,7 @@ namespace cafmaker
       ixn = &sr.mc.nu.back();
       ixn->id = ixnID;
 
-      if (HaveGENIE() && HaveEDEPSIM() )
+      if (HaveGENIE())
       {
         LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << "; dump follows).  copying...\n";
         if (LOG.GetThreshold() <= Logger::THRESHOLD::VERBOSE)
@@ -478,7 +490,6 @@ namespace cafmaker
     collection.emplace_back();
     int part_index = counter;
     counter++;
-
 
     auto traj = g4event->Trajectories[G4ID];
     //Get Ancestor
@@ -587,9 +598,15 @@ namespace cafmaker
   : cafmaker::Loggable("GTreeContainer")
   {
     fEdepFile = TFile::Open(filename.c_str());
-    fEdepTree = (TTree*) fEdepFile->Get("EDepSimEvents");
     fG4Event = 0;
-    fEdepTree->SetBranchAddress("Event",&fG4Event);
+    if (fEdepFile && !fEdepFile->IsZombie())
+    {
+      fEdepTree = dynamic_cast<TTree *>(fEdepFile->Get("EDepSimEvents"));
+      fEdepTree->SetBranchAddress("Event",&fG4Event);
+    }
+    else {
+      fEdepTree=NULL;
+    }
     f_isTreeLoaded = false;
   }
 

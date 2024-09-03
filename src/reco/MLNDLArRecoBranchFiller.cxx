@@ -534,7 +534,7 @@ namespace cafmaker
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
                                    [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.gen_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.gen_id;
-          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, (!truthMatch->HaveGENIE() && !truthMatch->HaveEDEPSIM()))
+          caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, (!truthMatch->HaveGENIE()))
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
           //  this will fill in any other fields that weren't copied from a GENIE record
@@ -648,7 +648,7 @@ namespace cafmaker
           // we want to make sure the particle is created, if it isn't there,
           // but we won't do anything further with it, so we throw the return value away
           if (is_primary)
-            truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, (!truthMatch->HaveGENIE() && !truthMatch->HaveEDEPSIM()));
+            truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, (!truthMatch->HaveGENIE()));
           else
             truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
@@ -748,7 +748,7 @@ namespace cafmaker
           srPartCmp.trkid = truePartPassThrough.gen_id;
           // we don't actually need the return value here for anything,
           // but we do want the TruthMatcher to *create* a new particle when that's appropriate
-          is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, (!truthMatch->HaveGENIE() && !truthMatch->HaveEDEPSIM()))
+          is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, true, (!truthMatch->HaveGENIE()))
                      : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.gen_id, srPartCmp, false, true);
 
 
