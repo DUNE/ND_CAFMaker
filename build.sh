@@ -8,18 +8,19 @@ if [[ $# == 1 && x$1 == x-f ]]; then FORCE=yes; fi
 # set up software
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 setup cmake v3_22_2
-setup gcc v12_1_0
+setup gcc v9_3_0
 setup pycurl
 setup ifdhc
-setup geant4 v4_10_6_p01g -q debug:e26
-setup dk2nugenie   v01_10_01q -q e26:prof
+setup geant4 v4_11_0_p01c -q e20:debug
+setup dk2nugenie   v01_10_01k -q debug:e20
 setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v03_05_00 -q debug:e26
+setup duneanaobj v03_06_01b -q e20:prof
 setup hdf5 v1_10_5a -q e20
-setup fhiclcpp v4_18_04 -q debug:e26
+setup fhiclcpp v4_15_03 -q debug:e20
+setup edepsim v3_2_0c -q debug:e20
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
