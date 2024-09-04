@@ -17,11 +17,13 @@ setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
 setup jobsub_client
 setup eigen v3_3_5
-setup duneanaobj v03_01_00 -q e20:prof
-setup hdf5 v1_12_0b -q e20:prof
+setup duneanaobj v03_06_01b -q e20:prof
+setup hdf5 v1_10_5a -q e20
+setup fhiclcpp v4_15_03 -q debug:e20
+setup edepsim v3_2_0c -q debug:e20
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
-G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib -name 'Geant4Config.cmake'`
+G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
 export Geant4_DIR=`dirname $G4_cmake_file`
 
 # Just use the edep-sim UPS product, don't clone master branch off repos!
@@ -73,7 +75,7 @@ cd ${TOPDIR}
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${TOPDIR}/DUNE_ND_GeoEff/lib/
 
+
 # make tarballs of edep-sim and nusystematics for grid jobs
-tar -zcf edep-sim.tar.gz edep-sim
 #tar -zcf nusystematics.tar.gz nusystematics
 tar -zcf DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff
