@@ -433,12 +433,13 @@ double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker:
 void loop(CAF &caf,
           cafmaker::Params &par,
           const std::vector<std::string> & ghepFilenames,
+          string edepsimFilename,
           const std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> &recoFillers)
 {
   // if this is a data file, there won't be any truth, of course,
   // but the TruthMatching knows not to try to do anything with a null gtree
   cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
-  cafmaker::TruthMatcher truthMatcher(ghepFilenames, caf.mcrec,
+  cafmaker::TruthMatcher truthMatcher(ghepFilenames, edepsimFilename , caf.mcrec,
                                       [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); });
   truthMatcher.SetLogThrehsold(thresh);
   // figure out which triggers we need to loop over between the various reco fillers
@@ -515,11 +516,13 @@ int main( int argc, char const *argv[] )
   cafmaker::QuietGENIE();  // the GENIE events were already made earlier, we don't need more warnings about them
 
   std::vector<std::string> GHEPFiles;
+  std::string edepsimFile;
   par().cafmaker().GHEPFiles(GHEPFiles);  // fills the vector in if the key is found
+  par().cafmaker().edepsimFile(edepsimFile);  // fills the vector in if the key is found
 
   CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !GHEPFiles.empty());
 
-  loop(caf, par, GHEPFiles, getRecoFillers(par, logThresh));
+  loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 
   caf.version = 5;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
