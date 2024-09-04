@@ -176,7 +176,8 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 // -------------------------------------------------
 bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
 {
-  return ( (std::max(t1.triggerTime_s, t2.triggerTime_s) - std::min(t1.triggerTime_s, t2.triggerTime_s)) * 10000000 + std::max(t1.triggerTime_ns, t2.triggerTime_ns) - std::min(t1.triggerTime_ns, t2.triggerTime_ns) ) < dT;
+  unsigned long int s_to_ns = 1e9;
+  return ( (std::max(t1.triggerTime_s, t2.triggerTime_s) - std::min(t1.triggerTime_s, t2.triggerTime_s)) * s_to_ns + std::max(t1.triggerTime_ns, t2.triggerTime_ns) - std::min(t1.triggerTime_ns, t2.triggerTime_ns) ) < dT;
 }
 
 struct triggerTimeCmp
