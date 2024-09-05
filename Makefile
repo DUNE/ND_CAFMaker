@@ -1,18 +1,20 @@
 export CXX = g++
-export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2
+export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2 -std=c++11
 export ROOTFLAGS = $(shell root-config --cflags)
-export INCLUDE = -I$(HDF5_INC)
+export INCLUDE = -I$(HDF5_INC) -I./
 INCLUDE += -I$(GENIE_INC)/GENIE
 INCLUDE += -I$(LOG4CPP_INC)
 #INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
 #INCLUDE += -I$(NUSYST)/build/Linux/include/
 INCLUDE += -I$(BOOST_INC)
+INCLUDE += -I$(BOOST_INC)
 INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)
-INCLUDE += -I$(H5CPP_INC)
+INCLUDE += -I$(SRPROXY_INC)
 INCLUDE += -I../src
+INCLUDE += -I$(H5CPP_INC)
 
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L$(TBB_LIB) -ltbb
