@@ -24,6 +24,8 @@
 // Standard Record format
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
+//TG4Event
+#include "TG4Event.h"
 // ND_CAFMaker
 #include "CAF.h"
 #include "Params.h"
@@ -107,24 +109,43 @@ namespace cafmaker
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string & fieldName)
   {
-    const auto cmp = [](const double & a, const float &b) -> bool { return util::AreEqual(a, b); };
-
-    const auto assgn = [](const double & a, float & b) {  b = a; };
+    const auto cmp = [](const double & a, const float &b) -> bool { return util::AreEqual(a, b, 1e-4, 1e-4); };
+    const auto assgn = [](const double & a, float & b) { b = a; };
     return ValidateOrCopy<double, float>(input, target, unsetVal, cmp, assgn, fieldName);
   }
+  template <>
+  void ValidateOrCopy<float, float>(const float & input, float & target, const float & unsetVal, const std::string & fieldName)
+  {
+    const auto cmp = [](const float & a, const float &b) -> bool { return util::AreEqual(a, b, 1e-4, 1e-4); };
+    const auto assgn = [](const float & a, float & b) { b = a; };
+    return ValidateOrCopy<float, float>(input, target, unsetVal, cmp, assgn, fieldName);
+  }
+  
+  template <>
+  void ValidateOrCopy<int, long int>(const int & input, long int & target, const long int & unsetVal, const std::string & fieldName)
+  {
+    const auto cmp = [](const int & a, const long int &b) -> bool { return a == b; };
+    const auto assgn = [](const int & a, long int & b) {  b = static_cast<long int>(a); };
+    return ValidateOrCopy<int, long int>(input, target, unsetVal, cmp, assgn, fieldName);
+  }  
 
 
 // ------------------------------------------------------------
   TruthMatcher::TruthMatcher(const std::vector<std::string> & ghepFilenames,
+                             std::string edepsimFilename,
                              const genie::NtpMCEventRecord *gEvt,
                              std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback)
     : cafmaker::Loggable("TruthMatcher"),
       fGTrees(ghepFilenames, gEvt),
-      fGENIEWriterCallback(std::move(genieFillerCallback))
-  {}
+      fGENIEWriterCallback(std::move(genieFillerCallback)),
+      fEdepSimTree(edepsimFilename)
+  {
+    if (HaveGENIE() && !HaveEDEPSIM())
+    LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
+  }
 
   // --------------------------------------------------------------
-  void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt)
+  void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn)
   {
 
     genie::EventRecord * event = gEvt->event;
@@ -212,16 +233,23 @@ namespace cafmaker
       //       or bunched in spill time structure yet.  just leave out?
 //      part.time = nu.time;
 //      part.start_pos = p->X4()->Vect();
-
       // remaining fields need to be filled in with post-G4 info
 
       std::string process;
       if( p->Status() == genie::EGHepStatus::kIStStableFinalState )
       {
+        if (g4event)
+        {
+          auto traj = g4event->Trajectories[part.G4ID];
+          auto p0 = traj.Points[0];
+          part.start_pos = (p0.Position * .1).Vect();
+
+          auto pf = traj.Points[traj.Points.size()-1];
+          part.end_pos = (pf.Position * .1).Vect();
+        }
         // note: we leave part.id unset since it won't match with the G4 values
         // (edep-sim numbers them all sequentially from 0 throughout the whole file)
         // and the pass-through value is more useful
-
         nu.prim.push_back(std::move(part));
         nu.nprim++;
 
@@ -295,12 +323,13 @@ namespace cafmaker
   {
     static SRPartCmp srPartCmp;
     srPartCmp.partID = G4ID;
-    return GetTrueParticle(sr, ixn, srPartCmp, isPrimary, createNew);
+    return GetTrueParticle(sr, ixn, G4ID, srPartCmp, isPrimary, createNew);
   }
 
   // ------------------------------------------------------------
   caf::SRTrueParticle &TruthMatcher::GetTrueParticle(caf::StandardRecord &sr,
                                                      caf::SRTrueInteraction &ixn,
+                                                     int G4ID,
                                                      std::function<bool(const caf::SRTrueParticle &)> cmp,
                                                      bool isPrimary,
                                                      bool createNew) const
@@ -319,25 +348,43 @@ namespace cafmaker
       else
         LOG.VERBOSE() << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
 
-      collection.emplace_back();
-      counter++;
+      int particle_index = counter;
 
-      part = &collection.back();
-      part->interaction_id = ixn.id;
+      long int interaction_id = ixn.id;
+      std::size_t truthVecIdx = std::distance(sr.mc.nu.begin(),
+                                                  std::find_if(sr.mc.nu.begin(),
+                                                               sr.mc.nu.end(),
+                                                               [interaction_id](const caf::SRTrueInteraction& nu)
+                                                               {
+                                                                 return nu.id == interaction_id;
+                                                               }));
+
+      if (HaveEDEPSIM())
+      {
+        fEdepSimTree.SelectEvent(interaction_id);
+        FillParticle(ixn, truthVecIdx, G4ID, collection, counter, fEdepSimTree.G4Event());
+        part = &(collection.at(particle_index));
+      }
+      else
+      {
+        LOG.VERBOSE() << "      --> no matching Edepsim Particle found. Truth particle returned won't be full.\n";
+        collection.emplace_back();
+        counter++;
+        part = &collection.back();
+        part->interaction_id = ixn.id;
+      }
     }
     else
     {
       LOG.VERBOSE() << "    --> found previously created SRTrueParticle (interaction id = " << itPart->interaction_id << ", trk id = " << itPart->G4ID <<  ") .  Returning that.\n";
       part = &(*itPart);
     }
-
     return *part;
   }
 
   // ------------------------------------------------------------
   caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, unsigned long ixnID, bool createNew) const
   {
-
     caf::SRTrueInteraction * ixn = nullptr;
 
     LOG.VERBOSE() << "   Searching for true interaction with interaction ID = " << ixnID << " (allowed to create new one: " << createNew << ")\n";
@@ -358,6 +405,7 @@ namespace cafmaker
       // todo: should this logic live somewhere else?
       unsigned int evtNum = ixnID % 1000000;
       unsigned long runNum = (ixnID - evtNum) / 1000000;
+
       if (HaveGENIE())
       {
         try
@@ -372,24 +420,41 @@ namespace cafmaker
         }
       }
 
+      if (HaveEDEPSIM())
+      {
+        try
+        {
+          fEdepSimTree.SelectEvent(runNum, evtNum);
+        }
+        catch (std::out_of_range & exc)
+        {
+          // intercept briefly to add a log message
+          LOG.FATAL() << "Could not find Edepsim tree for interaction with run number: " << runNum << "!  Abort.\n";
+          throw exc;
+        }
+      }
       sr.mc.nu.emplace_back();
       sr.mc.nnu++;
       ixn = &sr.mc.nu.back();
       ixn->id = ixnID;
+
       if (HaveGENIE())
       {
         LOG.VERBOSE() << "      --> GENIE record found (" << fGTrees.GEvt() << "; dump follows).  copying...\n";
         if (LOG.GetThreshold() <= Logger::THRESHOLD::VERBOSE)
           fGTrees.GEvt()->PrintToStream(const_cast<ostream&>(LOG.VERBOSE().GetStream()));
+        
 
         // this bit of info can't be extracted directly from the GENIE record,
         // so we do it here
         ixn->genieIdx = fGENIEWriterCallback(fGTrees.GEvt());  // copy the GENIE event into the CAF output GENIE tree
 
-        FillInteraction(*ixn, fGTrees.GEvt());  // copy values from the GENIE event into the StandardRecord
+        FillInteraction(*ixn, fGTrees.GEvt(), fEdepSimTree.G4Event(), sr.mc.nnu);  // copy values from the GENIE event into the StandardRecord
+
       }
       else
-        LOG.VERBOSE() << "      --> no matching GENIE interaction found.  New empty SRTrueInteraction will be returned.\n";
+        LOG.VERBOSE() << "      --> no matching GENIE or Edepsim interaction found.  New empty SRTrueInteraction will be returned.\n";
+      
     } // if ( didn't find a matching SRTrueInteraction )
     else
     {
@@ -407,10 +472,66 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  bool TruthMatcher::HaveEDEPSIM() const
+  {
+    return fEdepSimTree.GetEdepTree();
+  }
+
+  // ------------------------------------------------------------
   void TruthMatcher::SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh)
   {
     Loggable::SetLogThrehsold(thresh);
     fGTrees.SetLogThrehsold(thresh);
+  }
+
+  int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event)
+  {
+
+    collection.emplace_back();
+    int part_index = counter;
+    counter++;
+
+    auto traj = g4event->Trajectories[G4ID];
+    //Get Ancestor
+    int ancestor_id = traj.ParentId;
+    int ancestor_parent_id = g4event->Trajectories[ancestor_id].ParentId;
+    if (ancestor_parent_id !=-1)
+    {
+      
+      if(auto itPart = std::find_if(collection.begin(),
+                                    collection.end(),
+                                    [ancestor_id](const caf::SRTrueParticle& mypart)
+                                    {
+                                      return mypart.G4ID == ancestor_id;
+                                    }); itPart == collection.end())
+      {
+        
+        ancestor_id = FillParticle(ixn, nixn, ancestor_id, collection, counter, g4event);
+      } 
+      else
+      {
+        ancestor_id = ((*itPart)).ancestor_id.part;
+        // ancestor_id;
+      }
+    }
+    caf::SRTrueParticle & part = collection.at(part_index);
+
+    part.G4ID = traj.TrackId;
+    part.interaction_id = ixn.id;
+    part.pdg = traj.PDGCode;
+    part.p = traj.InitialMomentum*0.001;
+
+    part.parent = traj.ParentId;
+
+    part.ancestor_id.ixn = nixn;
+    part.ancestor_id.part = ancestor_id ;
+
+    auto p0 = traj.Points[0];
+    part.start_pos = (p0.Position * .1).Vect();
+
+    auto pf = traj.Points[traj.Points.size()-1];
+    part.end_pos = (pf.Position * .1).Vect();
+    return ancestor_id;
   }
 
   // ------------------------------------------------------------
@@ -473,6 +594,63 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  TruthMatcher::EdepSimTreeContainer::EdepSimTreeContainer(std::string filename)
+  : cafmaker::Loggable("GTreeContainer")
+  {
+    fEdepFile = TFile::Open(filename.c_str());
+    fG4Event = 0;
+    if (fEdepFile && !fEdepFile->IsZombie())
+    {
+      fEdepTree = dynamic_cast<TTree *>(fEdepFile->Get("EDepSimEvents"));
+      fEdepTree->SetBranchAddress("Event",&fG4Event);
+    }
+    else {
+      fEdepTree=NULL;
+    }
+    f_isTreeLoaded = false;
+  }
+
+  // ------------------------------------------------------------
+  void  TruthMatcher::EdepSimTreeContainer::LoadTree()
+  {
+    for (int i = 0; i<fEdepTree->GetEntries(); i++)
+    {
+      fEdepTree->GetEntry(i);
+      long int vertex_id = fG4Event->RunId * 1e6 + fG4Event->EventId;                                                                                                                              fEdepEntries[vertex_id] = i;
+    }
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
+  {
+    long int vertex_id = runNum * 1e6 + evtNum;
+     SelectEvent(vertex_id); 
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long vertex_id)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded=true;
+    }
+    fEdepTree->GetEntry(fEdepEntries[vertex_id]);
+  }
+
+  // ------------------------------------------------------------
+  const TG4Event *TruthMatcher::EdepSimTreeContainer::G4Event() const
+  {
+    return fG4Event;
+  }
+
+  // ------------------------------------------------------------
+  const TTree * TruthMatcher::EdepSimTreeContainer::GetEdepTree() const
+  {
+    return fEdepTree;
+  }
+
+  // ------------------------------------------------------------
   const genie::NtpMCEventRecord * TruthMatcher::GTreeContainer::GEvt() const
   {
     return fGEvt;
@@ -489,7 +667,6 @@ namespace cafmaker
       LOG.FATAL() << ss.str();
       throw std::range_error(ss.str());
     }
-
     it_tree->second->GetEntry(evtNum);
   }
 

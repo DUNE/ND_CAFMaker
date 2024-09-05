@@ -4,6 +4,7 @@ export ROOTFLAGS = $(shell root-config --cflags)
 export INCLUDE = -I$(HDF5_INC) -I./
 INCLUDE += -I$(GENIE_INC)/GENIE
 INCLUDE += -I$(LOG4CPP_INC)
+INCLUDE += -I$(EDEPSIM_INC)/EDepSim
 #INCLUDE += -I$(NUSYST) -I$(NUSYST)/build/systematicstools/src/systematicstools
 #INCLUDE += -I$(NUSYST)/build/Linux/include/
 INCLUDE += -I$(BOOST_INC)
@@ -35,7 +36,7 @@ LDLIBS += -lGeom -lEGPythia6 -lGenVector
 LDLIBS += -Lboost -lboost_program_options
 #LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
-
+LDLIBS += -L$(EDEPSIM_LIB) -ledepsim 
 export LIBDIR = $(PWD)/lib
 export BINDIR = $(PWD)/bin
 
