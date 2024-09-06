@@ -95,7 +95,7 @@ namespace cafmaker
     fhicl::Table<PseudoRecoParams> pseudoReco { fhicl::Name("PseudoRecoParams") };
 
   };
-  //using Params = fhicl::Table<cafmaker::FhiclConfig>;
+  using Params = fhicl::Table<cafmaker::FhiclConfig>;
 
 }
 
