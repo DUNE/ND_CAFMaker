@@ -51,11 +51,13 @@ namespace cafmaker
       int _nHitsInTrack[10];
       float _TrackLength[10];
       float _TrackCharge[10];
+      float _TrackMomentum[10];
       float _TrackTotalEnergy[10];
       float _TrackEnergyDeposit[10];
       float _TrackStartPos[10][3];
       float _TrackEndPos[10][3];
-      float _TrackDirection[10][3];
+      float _TrackStartDirection[10][3];
+      float _TrackEndDirection[10][3];
       float _Occupancy[10];
 
       float _DirectionX_Downstream[10];

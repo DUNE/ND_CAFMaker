@@ -36,16 +36,19 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("nTracks",               &_nTracks);
       TMSRecoTree->SetBranchAddress("nHits",                 _nHitsInTrack);
       TMSRecoTree->SetBranchAddress("Length",                _TrackLength);
-      TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
+      TMSRecoTree->SetBranchAddress("Momentum",              _TrackMomentum);
+      //TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
       TMSRecoTree->SetBranchAddress("EnergyRange",           _TrackTotalEnergy);
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
-      TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
+      //TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
 
-      //TMSRecoTree->SetBranchAddress("HitPos",           _TrackHitPos); // TODO: how get hits from da vectur??
       //TMSRecoTree->SetBranchAddress("RecoHitPos",       _TrackRecoHitPos);
       TMSRecoTree->SetBranchAddress("StartPos",              _TrackStartPos);
+      TMSRecoTree->SetBranchAddress("KalmanPos",             _TrackHitPos); // TODO: how get hits from da vectur??
+      //TMSRecoTree->SetBranchAddress("HitPos",             _TrackKalmanPos); // TODO: how get hits from da vectur??
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
-      TMSRecoTree->SetBranchAddress("Direction",             _TrackDirection);
+      TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
+      TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
     } else {
       fTMSRecoFile = NULL;
       TMSRecoTree  = NULL;
@@ -116,19 +119,26 @@ namespace cafmaker
       sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackEndPos[i][0]/10., _TrackEndPos[i][1]/10., _TrackEndPos[i][1]/10.);
       // Get the directions
       // TODO: At present tracks are completely straight objects, so dir is the same here for both
-      sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
-      sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
+      sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[i][0], _TrackStartDirection[i][1] , _TrackStartDirection[i][2]);
+      sr.nd.tms.ixn[i].tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[i][0], _TrackEndDirection[i][1] , _TrackEndDirection[i][2]);
 
-      TVector3* trackVec = new TVector3( (sr.nd.tms.ixn[i].tracks[0].end - sr.nd.tms.ixn[i].tracks[0].start) );
+      //TVector3* trackVec = new TVector3( (sr.nd.tms.ixn[i].tracks[0].end - sr.nd.tms.ixn[i].tracks[0].start) );
+
+      // Calculate length by summing up the distances from the kalman reco positions
+      double tmpLength_cm = 0.0;
+      for (int k=0; k<_nHitsInTrack[i]-1; k++)
+        tmpLength_cm += sqrt( pow(_TrackHitPos[i][k][0] - _TrackHitPos[i][k+1][0], 2)
+                            + pow(_TrackHitPos[i][k][1] - _TrackHitPos[i][k+1][1], 2)
+                            + pow(_TrackHitPos[i][k][2] - _TrackHitPos[i][k+1][2], 2) );
 
       // Track info
-      sr.nd.tms.ixn[i].tracks[0].len_cm    = trackVec->Mag();
-      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = _TrackLength[i]/10.;
+      sr.nd.tms.ixn[i].tracks[0].len_cm    = tmpLength_cm; //trackVec->Mag();
+      sr.nd.tms.ixn[i].tracks[0].len_gcm2  = (_TrackLength[i]>0.0) ? _TrackLength[i]/10. : 0.0; // idk why we have negatives
       sr.nd.tms.ixn[i].tracks[0].qual      = _Occupancy[i]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
       sr.nd.tms.ixn[i].tracks[0].Evis      = _TrackEnergyDeposit[i];
       sr.nd.tms.ixn[i].tracks[0].E         = _TrackTotalEnergy[i];
 
-      delete trackVec;
+      //delete trackVec;
     }
   }
 

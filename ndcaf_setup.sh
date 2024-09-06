@@ -12,7 +12,6 @@ setup eigen v3_3_5
 setup duneanaobj v03_06_01b -q e20:prof
 setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_15_03 -q debug:e20
-setup srproxy v00.44 -q py3915
 setup edepsim v3_2_0c -q debug:e20
 
 # edep-sim needs to know where a certain GEANT .cmake file is...

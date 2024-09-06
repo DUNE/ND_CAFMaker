@@ -15,8 +15,8 @@ namespace cafmaker
 {
   struct RunConfig
   {
-    //fhicl::Atom<int> run    { fhicl::Name("Run"),    fhicl::Comment("Run number"), 1 };    // CAFAna doesn't like run number 0
-    //fhicl::Atom<int> subrun { fhicl::Name("Subrun"), fhicl::Comment("Subrun number"), 0 };
+    fhicl::Atom<int> run    { fhicl::Name("Run"),    fhicl::Comment("Run number"), 1 };    // CAFAna doesn't like run number 0
+    fhicl::Atom<int> subrun { fhicl::Name("Subrun"), fhicl::Comment("Subrun number"), 0 };
 
     // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
     fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
@@ -24,7 +24,7 @@ namespace cafmaker
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
-    //fhicl::Atom<double> OA_xcoord  { fhicl::Name("OffAxisXCoord"), fhicl::Comment("Off-axis position of MPD in cm"), 0. };  // on-axis by default
+    fhicl::Atom<double> OA_xcoord  { fhicl::Name("OffAxisXCoord"), fhicl::Comment("Off-axis position of MPD in cm"), 0. };  // on-axis by default
 
   };
 
@@ -37,7 +37,7 @@ namespace cafmaker
 
     // this one is mandatory but has a default.  (the 'fhicl.fcl' file is provided in the 'sim_inputs' directory).
     // fixme: this file is currently not used for anything, but will be once DIRT-II is done and re-enables the interaction systematics
-    //fhicl::Atom<std::string> nusystsFcl   { fhicl::Name{"NuSystsFCLFile"}, fhicl::Comment(".fcl configuration file for nusystematics"), "fhicl.fcl" };
+    fhicl::Atom<std::string> nusystsFcl   { fhicl::Name{"NuSystsFCLFile"}, fhicl::Comment(".fcl configuration file for nusystematics"), "fhicl.fcl" };
 
     // these are optional, but will change the contents of the output CAF if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
@@ -49,7 +49,7 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> POTFile { fhicl::Name{"POTFile"}, fhicl::Comment("Input txt file with beam spill information") };
     
     // this is optional by way of the default value. Will result in an extra output file if enabled
-    //fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
+    fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
 
     // these are optional and have defaults
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
@@ -69,30 +69,30 @@ namespace cafmaker
   struct PseudoRecoParams
   {
 
-    //fhicl::Atom<double> trk_muRes       { fhicl::Name("trk_muRes"),       fhicl::Comment("Fractional muon energy resolution of HP GAr TPC"),             0.02 };
-    //fhicl::Atom<double> LAr_muRes       { fhicl::Name("LAr_muRes"),       fhicl::Comment("Fractional muon energy resolution of muons contained in LAr"), 0.05 };
-    //fhicl::Atom<double> ECAL_muRes      { fhicl::Name("ECAL_muRes"),      fhicl::Comment("Fractional muon energy resolution of muons ending in ECAL"),   0.1 };
-    //fhicl::Atom<double> em_const        { fhicl::Name("em_const"),        fhicl::Comment("EM energy resolution constant term: A + B/sqrt(E) (GeV)"),     0.03 };
-    //fhicl::Atom<double> em_sqrtE        { fhicl::Name("em_sqrtE"),        fhicl::Comment("EM energy resolution 1/sqrt(E) term: A + B/sqrt(E) (GeV)"),    0.1 };
-    //fhicl::Atom<double> michelEff       { fhicl::Name("michelEff"),       fhicl::Comment("Michel finder efficiency"),                                    0.75 };
-    ////fhicl::Atom<double> CC_trk_length   { fhicl::Name("CC_trk_length"),   fhicl::Comment("Minimum track length for CC (cm)"),                            100. };
-    //fhicl::Atom<double> pileup_frac     { fhicl::Name("pileup_frac"),     fhicl::Comment("Fraction of events with non-zero pile-up"),                    0.1 };
-    //fhicl::Atom<double> pileup_max      { fhicl::Name("pileup_max"),      fhicl::Comment("Maximum energy assumed for pileup events (GeV)"),              0.5 };
-    //fhicl::Atom<double> gastpc_len      { fhicl::Name("gastpc_len"),      fhicl::Comment("Gas TPC track length cut (cm)"),                               6. };
-    //fhicl::Atom<double> gastpc_B        { fhicl::Name("gastpc_B"),        fhicl::Comment("Gas TPC B field strength (Tesla)"),                            0.4 };
-    //fhicl::Atom<double> gastpc_padPitch { fhicl::Name("gastpc_padPitch"), fhicl::Comment("(Fixed) pad pitch of gas TPC (cm)"),                           0.1 };  // Actual pad pitch varies, which is going to be impossible to implement
-    //fhicl::Atom<double> gastpc_X0       { fhicl::Name("gastpc_X0"),       fhicl::Comment("Gas TPC radiation length (cm)"),                               1300. };
+    fhicl::Atom<double> trk_muRes       { fhicl::Name("trk_muRes"),       fhicl::Comment("Fractional muon energy resolution of HP GAr TPC"),             0.02 };
+    fhicl::Atom<double> LAr_muRes       { fhicl::Name("LAr_muRes"),       fhicl::Comment("Fractional muon energy resolution of muons contained in LAr"), 0.05 };
+    fhicl::Atom<double> ECAL_muRes      { fhicl::Name("ECAL_muRes"),      fhicl::Comment("Fractional muon energy resolution of muons ending in ECAL"),   0.1 };
+    fhicl::Atom<double> em_const        { fhicl::Name("em_const"),        fhicl::Comment("EM energy resolution constant term: A + B/sqrt(E) (GeV)"),     0.03 };
+    fhicl::Atom<double> em_sqrtE        { fhicl::Name("em_sqrtE"),        fhicl::Comment("EM energy resolution 1/sqrt(E) term: A + B/sqrt(E) (GeV)"),    0.1 };
+    fhicl::Atom<double> michelEff       { fhicl::Name("michelEff"),       fhicl::Comment("Michel finder efficiency"),                                    0.75 };
+    fhicl::Atom<double> CC_trk_length   { fhicl::Name("CC_trk_length"),   fhicl::Comment("Minimum track length for CC (cm)"),                            100. };
+    fhicl::Atom<double> pileup_frac     { fhicl::Name("pileup_frac"),     fhicl::Comment("Fraction of events with non-zero pile-up"),                    0.1 };
+    fhicl::Atom<double> pileup_max      { fhicl::Name("pileup_max"),      fhicl::Comment("Maximum energy assumed for pileup events (GeV)"),              0.5 };
+    fhicl::Atom<double> gastpc_len      { fhicl::Name("gastpc_len"),      fhicl::Comment("Gas TPC track length cut (cm)"),                               6. };
+    fhicl::Atom<double> gastpc_B        { fhicl::Name("gastpc_B"),        fhicl::Comment("Gas TPC B field strength (Tesla)"),                            0.4 };
+    fhicl::Atom<double> gastpc_padPitch { fhicl::Name("gastpc_padPitch"), fhicl::Comment("(Fixed) pad pitch of gas TPC (cm)"),                           0.1 };  // Actual pad pitch varies, which is going to be impossible to implement
+    fhicl::Atom<double> gastpc_X0       { fhicl::Name("gastpc_X0"),       fhicl::Comment("Gas TPC radiation length (cm)"),                               1300. };
   };
 
   /// FHICL table specifying which params are accepted
   struct FhiclConfig
   {
-    //fhicl::Table<ControlConfig> cafmaker     { fhicl::Name("CAFMakerSettings") };
-    //fhicl::Table<RunConfig>     runInfo      { fhicl::Name("RunParams") };
+    fhicl::Table<ControlConfig> cafmaker     { fhicl::Name("CAFMakerSettings") };
+    fhicl::Table<RunConfig>     runInfo      { fhicl::Name("RunParams") };
 
-    //fhicl::Atom<bool>  grid  { fhicl::Name("OnGrid"), false };
+    fhicl::Atom<bool>  grid  { fhicl::Name("OnGrid"), false };
 
-    //fhicl::Table<PseudoRecoParams> pseudoReco { fhicl::Name("PseudoRecoParams") };
+    fhicl::Table<PseudoRecoParams> pseudoReco { fhicl::Name("PseudoRecoParams") };
 
   };
   //using Params = fhicl::Table<cafmaker::FhiclConfig>;
