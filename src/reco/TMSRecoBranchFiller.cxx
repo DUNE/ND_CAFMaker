@@ -112,8 +112,8 @@ namespace cafmaker
 
       // Save first and last hit in track
       // TMS Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
-      sr.nd.tms.ixn[i].tracks[0].start = caf::SRVector3D(_TrackStartPos[i][0]/10., _TrackStartPos[i][1]/10., _TrackStartPos[i][1]/10.);
-      sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackEndPos[i][0]/10., _TrackEndPos[i][1]/10., _TrackEndPos[i][1]/10.);
+      sr.nd.tms.ixn[i].tracks[0].start = caf::SRVector3D(_TrackStartPos[i][0]/10., _TrackStartPos[i][1]/10., _TrackStartPos[i][2]/10.);
+      sr.nd.tms.ixn[i].tracks[0].end   = caf::SRVector3D(_TrackEndPos[i][0]/10., _TrackEndPos[i][1]/10., _TrackEndPos[i][2]/10.);
       // Get the directions
       // TODO: At present tracks are completely straight objects, so dir is the same here for both
       sr.nd.tms.ixn[i].tracks[0].dir     = caf::SRVector3D(_TrackDirection[i][0], _TrackDirection[i][1] , _TrackDirection[i][2]);
