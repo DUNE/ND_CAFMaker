@@ -161,13 +161,16 @@ namespace cafmaker
 
     //Fill ND-LAr specific info in the meta branch
     H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
-    sr.meta.nd_lar.enabled = true;
+    sr.meta.lar2x2.enabled = true;
     for (const auto & runinf : run_info)
     {
-      sr.meta.nd_lar.run = runinf.run;
-      sr.meta.nd_lar.subrun = runinf.subrun;
-      sr.meta.nd_lar.event = runinf.event;
+      sr.meta.lar2x2.run = runinf.run;
+      sr.meta.lar2x2.subrun = runinf.subrun;
+      sr.meta.lar2x2.event = runinf.event;
     }
+    
+    sr.meta.lar2x2.readoutstart_s = trigger.triggerTime_s;
+    sr.meta.lar2x2.readoutstart_ns = trigger.triggerTime_ns;
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
