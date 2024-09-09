@@ -168,6 +168,9 @@ namespace cafmaker
       sr.meta.nd_lar.subrun = runinf.subrun;
       sr.meta.nd_lar.event = runinf.event;
     }
+    
+    sr.meta.nd_lar.readoutstart_s = trigger.triggerTime_s;
+    sr.meta.nd_lar.readoutstart_ns = trigger.triggerTime_ns;
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
