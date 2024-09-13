@@ -12,10 +12,11 @@
 using BeamSpills = std::map<double, double>;
 using json = nlohmann::json;
 
-bool loadBeamSpills(const std::string& filename, BeamSpills& beam_spills);
+BeamSpills loadBeamSpills(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers);   
 
 double getPOT(const cafmaker::Params& par, 
-              std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger, 
+              std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger,
+              const BeamSpills& beam_spills, 
               int ii);
 
 #endif // IFBEAM_H
