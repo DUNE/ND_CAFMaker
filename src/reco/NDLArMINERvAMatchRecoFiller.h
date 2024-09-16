@@ -24,7 +24,7 @@ namespace cafmaker
 
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
-
+      bool Passes_cut(caf::SRTrack track_minerva, caf::SRTrack track_Lar, double &costheta, double &residual) const;
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
