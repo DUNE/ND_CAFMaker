@@ -453,7 +453,10 @@ void loop(CAF &caf,
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+  {
+    if (filler->GetName() == "LArTMSMatcher" || filler->GetName() == "LArMINERvAMatcher") continue; //We don't want to store a trigger from a Matcher algorithm
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+  }
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
 
@@ -499,7 +502,6 @@ void loop(CAF &caf,
     {
       if (filler->GetName() == "LArTMSMatcher" || filler->GetName() == "LArMINERvAMatcher")
       {
-        std::cout<<filler->GetName()<<std::endl;
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }
     }
