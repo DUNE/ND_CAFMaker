@@ -74,9 +74,9 @@ namespace cafmaker
       mutable std::string fPendingPreamble; ///< temporary preamble used only for the next message
       mutable bool fIsMuted = false;  ///<  is this stream currently muted?
 
+      THRESHOLD fThresh;      ///<  current log threshold
       std::ostream & fStream;  ///<  where output will be written
 
-      THRESHOLD fThresh;      ///<  current log threshold
       bool fIsTerm;           ///<  is this output stream a terminal?
   };
 
