@@ -14,6 +14,7 @@ INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)
 INCLUDE += -I$(SRPROXY_INC)
+INCLUDE += -I$(H5CPP_INC)
 INCLUDE += -I../src
 #INCLUDE += -I$(H5CPP_INC)
 
@@ -34,7 +35,7 @@ LDLIBS += $(shell genie-config --libs)
 LDLIBS += $(shell root-config --glibs)
 LDLIBS += -lMathMore
 LDLIBS += -lGeom -lEGPythia6 -lGenVector
-LDLIBS += -Lboost #-lboost_program_options
+LDLIBS += -L$(BOOST_LIB) -lboost_program_options
 LDLIBS += -L$(CETLIB_LIB) -L$(CETLIB_EXCEPT_LIB) -lcetlib -lcetlib_except
 LDLIBS += -L$(FHICLCPP_LIB) -lfhiclcpp -lfhiclcpp_types
 LDLIBS += -L$(EDEPSIM_LIB) -ledepsim 
