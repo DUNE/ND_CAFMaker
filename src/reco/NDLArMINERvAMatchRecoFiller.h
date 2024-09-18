@@ -1,7 +1,8 @@
-/// Fill ND-LAr reco branches using DeepLearnPhysics machine learning based reconstruction.
+/// Matches NDLar tracks to Minerva tracks.
 ///
-/// \author  J. Wolcott <jwolcott@fnal.gov> & F. Akbar <fakbar@ur.rochester.edu>
-/// \date    Nov. 2021
+/// \author  N.Roy <noeroy@yorku.ca>
+/// \date    Sep. 2024
+
 
 #ifndef ND_CAFMAKER_NDLARMINERvAMATCHRECOFILLER_H
 #define ND_CAFMAKER_NDLARMINERvAMATCHRECOFILLER_H
@@ -18,9 +19,12 @@ namespace cafmaker
   class NDLArMINERvAMatchRecoFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      NDLArMINERvAMatchRecoFiller();
+      NDLArMINERvAMatchRecoFiller(double _z_extr, double _d_x, double _d_y, double _d_thetax, double d_theta_y);
+      
+      RecoFillerType FillerType() const override { return RecoFillerType::Matcher; }
 
       std::deque<Trigger> GetTriggers(int triggerType) const override;
+
 
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
@@ -29,6 +33,13 @@ namespace cafmaker
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;
+
+      // Matching parameters
+      double z_extr;   // Extrapolated position compariton. Here it's the front of the Lar modules.
+      double d_x;       // Maximum residual in x coordinate [cm];
+      double d_y;       // Maximum residual in y coordinate [cm];
+      double d_thetax; // Maximum Angle difference wrt to x axis [rad];
+      double d_thetay; // Maximum Angle difference wrt to y axis [rad];
   };
 }
 
