@@ -168,7 +168,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   if (!ndlarFile.empty() && !minervaFile.empty())
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>(par().cafmaker().matchExtrapolatedZ(), par().cafmaker().matchdX(), par().cafmaker().matchdY(), par().cafmaker().matchdThetaX(), par().cafmaker().matchdThetaY()));
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>(par().cafmaker().trackMatchExtrapolatedZ(), par().cafmaker().trackMatchdX(), par().cafmaker().trackMatchdY(), par().cafmaker().trackMatchdThetaX(), par().cafmaker().trackMatchdThetaY()));
     std::cout << "   ND-LAr + MINERvA matching\n";
   } 
   // for now all the fillers get the same threshold.

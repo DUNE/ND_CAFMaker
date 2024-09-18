@@ -64,11 +64,11 @@ namespace cafmaker
     
 
     // Track matching criteria (default values for 2x2 based on DOCDB 31970)
-    fhicl::Atom<float> matchExtrapolatedZ { fhicl::Name("MatchExtrapolatedZ"), fhicl::Comment("Z position where the track transversal displacement is computed when doing matching"), -70};
-    fhicl::Atom<float> matchdX { fhicl::Name("MatchdX"), fhicl::Comment("Maximum displacement authorised in X [cm]"), 17};
-    fhicl::Atom<float> matchdY { fhicl::Name("MatchdY"), fhicl::Comment("Maximum displacement authorised in Y [cm]"), 19};
-    fhicl::Atom<float> matchdThetaX { fhicl::Name("MatchdThetaX"), fhicl::Comment("Maximum angle difference with respect to X axis [rad]"), .08};
-    fhicl::Atom<float> matchdThetaY { fhicl::Name("MatchdThetaY"), fhicl::Comment("Maximum angle difference with respect to Y axis [rad]"), .09};
+    fhicl::Atom<float> trackMatchExtrapolatedZ { fhicl::Name("TrackMatchExtrapolatedZ"), fhicl::Comment("Z position where the track transversal displacement is computed when doing matching"), -70};
+    fhicl::Atom<float> trackMatchdX { fhicl::Name("TrackMatchDeltaX"), fhicl::Comment("Maximum displacement authorised in X [cm]"), 17};
+    fhicl::Atom<float> trackMatchdY { fhicl::Name("TrackMatchDeltaY"), fhicl::Comment("Maximum displacement authorised in Y [cm]"), 19};
+    fhicl::Atom<float> trackMatchdThetaX { fhicl::Name("TrackMatchDeltaThetaX"), fhicl::Comment("Maximum angle difference with respect to X axis [rad]"), .08};
+    fhicl::Atom<float> trackMatchdThetaY { fhicl::Name("TrackMatchDeltaThetaY"), fhicl::Comment("Maximum angle difference with respect to Y axis [rad]"), .09};
 
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
     fhicl::Atom<std::string> verbosity { fhicl::Name("Verbosity"), fhicl::Comment("Verbosity level of output"), "WARNING" };
