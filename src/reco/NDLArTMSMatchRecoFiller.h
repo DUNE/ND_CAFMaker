@@ -21,6 +21,9 @@ namespace cafmaker
 
       std::deque<Trigger> GetTriggers(int triggerType) const override;
 
+      RecoFillerType FillerType() const override { return RecoFillerType::Matcher; }
+
+
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
 
