@@ -168,7 +168,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   if (!ndlarFile.empty() && !minervaFile.empty())
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>());
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>(par().cafmaker().matchExtrapolatedZ(), par().cafmaker().matchdX(), par().cafmaker().matchdY(), par().cafmaker().matchdThetaX(), par().cafmaker().matchdThetaY()));
     std::cout << "   ND-LAr + MINERvA matching\n";
   } 
   // for now all the fillers get the same threshold.
@@ -454,7 +454,7 @@ void loop(CAF &caf,
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
   {
-    if (filler->GetName() == "LArTMSMatcher" || filler->GetName() == "LArMINERvAMatcher") continue; //We don't want to store a trigger from a Matcher algorithm
+    if (filler->FillerType() != cafmaker::RecoFillerType::BaseReco) continue; //We don't want to store a trigger from a Matcher algorithm
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
   }
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
@@ -500,7 +500,7 @@ void loop(CAF &caf,
     // Once all the reco fillers have been called, let's call the matching fillers
     for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     {
-      if (filler->GetName() == "LArTMSMatcher" || filler->GetName() == "LArMINERvAMatcher")
+      if (filler->FillerType() == cafmaker::RecoFillerType::Matcher)
       {
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }

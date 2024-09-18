@@ -2,10 +2,15 @@
 
 namespace cafmaker
 {
-  NDLArMINERvAMatchRecoFiller::NDLArMINERvAMatchRecoFiller()
+  NDLArMINERvAMatchRecoFiller::NDLArMINERvAMatchRecoFiller(double _z_extr, double _d_x, double _d_y, double _d_thetax, double d_theta_y)
       : IRecoBranchFiller("LArMINERvAMatcher")
   {
-    // nothing to do
+    // setup matching criteria
+    z_extr = _z_extr;
+    d_x = _d_x;
+    d_y = _d_y;
+    d_thetax = _d_thetax;
+    d_thetay = d_theta_y;
     SetConfigured(true);
   }
 
@@ -29,14 +34,6 @@ namespace cafmaker
 
   bool NDLArMINERvAMatchRecoFiller::Passes_cut(caf::SRTrack track_minerva, caf::SRTrack track_Lar, double &costheta, double &residual) const
   {
-
-    // HARDCODED VALUES BASED ON DOCDB 31970
-    double z_extr = -70;   // Extrapolated position compariton. Here it's the front of the Lar modules.
-    double d_x = 17;       // Maximum residual in x coordinate [cm];
-    double d_y = 19;       // Maximum residual in y coordinate [cm];
-    double d_thetax = .08; // Maximum Angle difference wrt to x axis [rad];
-    double d_thetay = .09; // Maximum Angle difference wrt to y axis [rad];
-
     double x1_minerva = track_minerva.start.x;
     double x2_minerva = track_minerva.end.x;
     double y1_minerva = track_minerva.start.y;
