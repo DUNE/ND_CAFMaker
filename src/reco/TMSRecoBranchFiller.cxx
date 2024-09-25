@@ -209,17 +209,16 @@ namespace cafmaker
         TMSRecoTree->GetEntry(entry);
 
         if (_SpillNo == lastSpillNo)
-        {
           continue; // Only first 'event' in each spill populates a trigger
-        }
+
         lastSpillNo = _SpillNo;
 
         fTriggers.emplace_back();
         Trigger & trig = fTriggers.back();
         trig.evtID = entry; //trigger.id;
-        //trig.triggerType = trigger.type;
-        //trig.triggerTime_s = .time_s;
-        //trig.triggerTime_ns = .time_ns;
+        trig.triggerType = trigger.type;
+        trig.triggerTime_s = .time_s;
+        trig.triggerTime_ns = .time_ns;
         //trig.evtID = Long_t(_EventNo);
 
         // todo: these are placeholder values until we can propagate enough info through the reco files
