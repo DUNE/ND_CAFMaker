@@ -13,18 +13,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* use
     return size * nmemb;
 }
 
-double unitToFactor(const std::string& unit) { //because the exponent part in IFBeam is stored as a string under "value" :/
-    std::regex re("E(\\d+)");
-    std::smatch match;
-
-    if (std::regex_search(unit, match, re) && match.size() > 1) {
-        int exponent = std::stoi(match.str(1));
-        return std::pow(10, exponent);
-    } else {
-        std::cerr << "Unknown unit in beam database: " << unit << std::endl;
-        return 1.0;
-    }
-}
 
 double getTriggerTime(const cafmaker::Trigger& trigger) {
     return trigger.triggerTime_s + 1e-9 * trigger.triggerTime_ns;
@@ -61,6 +49,19 @@ std::string IFBeam::createUrl(const std::string& min_time_iso, const std::string
                << "&t1=" << max_time_iso
                << "&f=json";
     return url_stream.str();
+}
+
+double IFBeam::unitToFactor(const std::string& unit) { //because the exponent part in IFBeam is stored as a string under "value" :/
+    std::regex re("E(\\d+)");
+    std::smatch match;
+
+    if (std::regex_search(unit, match, re) && match.size() > 1) {
+        int exponent = std::stoi(match.str(1));
+        return std::pow(10, exponent);
+    } else {
+        std::cerr << "Unknown unit in beam database: " << unit << std::endl;
+        return 1.0;
+    }
 }
 
 void IFBeam::loadBeamSpills(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers) { //todo: this should return other information as well like horn current, position, etc., querying all devices and storing in a map
