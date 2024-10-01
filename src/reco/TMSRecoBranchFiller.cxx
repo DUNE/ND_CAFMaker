@@ -48,7 +48,6 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
       TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
-      TMSRecoTree->SetBranchAddress("Direction",          _TrackStartDirection);
     } else {
       fTMSRecoFile = NULL;
       TMSRecoTree  = NULL;
@@ -106,29 +105,32 @@ namespace cafmaker
     caf::SRTMSInt& interaction = sr.nd.tms.ixn.back();
 
     interaction.ntracks = 0;
-    while (_nTracks <=1 && _SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries())
+    while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries())
     {
       TMSRecoTree->GetEntry(++i);
-      interaction.tracks.resize(_nTracks + interaction.tracks.size());
-      for (int j = 0; j < _nTracks; ++j) {
-        interaction.ntracks++;
-        interaction.tracks[j].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);;
-        interaction.tracks[j].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
-        interaction.tracks[j].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
-        interaction.tracks[j].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
+      if (_nTracks > 0)
+      {
+        interaction.tracks.resize(_nTracks + interaction.tracks.size());
+        for (int j = 0; j < _nTracks; ++j) {
+          interaction.ntracks++;
+          interaction.tracks[j].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);;
+          interaction.tracks[j].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
+          interaction.tracks[j].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
+          interaction.tracks[j].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-        // Calculate length by summing up the distances from the kalman reco positions
-        double tmpLength_cm = 0.0;
-        for (int k=0; k<_nHitsInTrack[j]-1; k++)
-          tmpLength_cm += sqrt( pow(_TrackHitPos[j][k][0] - _TrackHitPos[j][k+1][0], 2)
-                              + pow(_TrackHitPos[j][k][1] - _TrackHitPos[j][k+1][1], 2)
-                              + pow(_TrackHitPos[j][k][2] - _TrackHitPos[j][k+1][2], 2) );
+          // Calculate length by summing up the distances from the kalman reco positions
+//          double tmpLength_cm = 0.0;
+//          for (int k=0; k<_nHitsInTrack[j]-1; k++)
+//            tmpLength_cm += sqrt( pow(_TrackRecoHitPos[j][k][0] - _TrackRecoHitPos[j][k+1][0], 2)
+//                                + pow(_TrackRecoHitPos[j][k][1] - _TrackRecoHitPos[j][k+1][1], 2)
+//                                + pow(_TrackRecoHitPos[j][k][2] - _TrackRecoHitPos[j][k+1][2], 2) );
 
-        // Track info
-        interaction.tracks[j].len_cm    = tmpLength_cm; //trackVec->Mag();
-        interaction.tracks[j].len_gcm2  = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
-        interaction.tracks[j].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
-        interaction.tracks[j].Evis      = _TrackEnergyDeposit[j];
+          // Track info
+          //interaction.tracks[j].len_cm    = tmpLength_cm; //trackVec->Mag();
+          interaction.tracks[j].len_gcm2  = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
+          interaction.tracks[j].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
+          interaction.tracks[j].Evis      = _TrackEnergyDeposit[j];
+        }
       }
     }
   }
@@ -159,12 +161,12 @@ namespace cafmaker
         Trigger & trig      = fTriggers.back(); // trigger we're working on
 
         trig.evtID = entry;
-        trig.triggerType = 2147483647; // TODO real number
+        trig.triggerType = 2147483647; // TODO real number?
 
         if (entry == 0) // TODO do this less bad
           trig.triggerTime_ns = 0;
         else
-          trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;//+ (int) _TrackRecoHitPos[0][0][3];
+          trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;
 
         if (entry == 0) // TODO do this less bad
           trig.triggerTime_s = 0;
