@@ -363,8 +363,8 @@ void loop(CAF &caf,
     abort();
   }
 
-  BeamSpills beam_spills;  
-  if(par().cafmaker().POTFile.hasValue()) beam_spills = loadBeamSpills(groupedTriggers); //get beam spills from IFBeam database fixme: should not be pot file
+  IFBeam beamManager(groupedTriggers, par().cafmaker().IsData()); //initialize IFBeam manager if data  
+
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
   for( int ii = start; ii < start + N; ++ii )
@@ -387,16 +387,19 @@ void loop(CAF &caf,
     }
     //Fill POT
     double pot = 0.0;
-    if (!beam_spills.empty())
-    	pot = getPOT(par, groupedTriggers[ii], beam_spills, ii);
+    if (par().cafmaker().IsData())
+    {
+    	pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
+    }
     else
+    {
 	pot = par().runInfo().POTPerSpill() * 1e13;
-	
+    	caf.sr.beam.ismc = true; 
+    }
     if (std::isnan(caf.pot))
       caf.pot = 0;
     caf.pot += pot;
     caf.sr.beam.pulsepot = pot;
-    caf.sr.beam.ismc = !par().cafmaker().POTFile.hasValue();  // fixme: when we have proper IFDB interface, should use the same mechanism as however we decide when to use that
 
     caf.fill();
   }
