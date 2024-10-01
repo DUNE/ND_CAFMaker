@@ -42,12 +42,12 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
       TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
 
-      //TMSRecoTree->SetBranchAddress("RecoHitPos",       _TrackRecoHitPos);
+      TMSRecoTree->SetBranchAddress("TrackHitPos",            _TrackRecoHitPos);
       TMSRecoTree->SetBranchAddress("StartPos",              _TrackStartPos);
       TMSRecoTree->SetBranchAddress("KalmanPos",             _TrackHitPos); // TODO: how get hits from da vectur??
       //TMSRecoTree->SetBranchAddress("HitPos",             _TrackKalmanPos); // TODO: how get hits from da vectur??
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
-      //TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
+      TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
       TMSRecoTree->SetBranchAddress("Direction",          _TrackStartDirection);
     } else {
@@ -213,18 +213,37 @@ namespace cafmaker
 
         lastSpillNo = _SpillNo;
 
-        fTriggers.emplace_back();
-        Trigger & trig = fTriggers.back();
-        trig.evtID = entry; //trigger.id;
-        trig.triggerType = trigger.type;
-        trig.triggerTime_s = .time_s;
-        trig.triggerTime_ns = .time_ns;
-        //trig.evtID = Long_t(_EventNo);
+        Trigger & prev_trig = fTriggers.back(); // trigger before 'trig'
+        fTriggers.emplace_back();               // add new trigger entry (unfilled)
+        Trigger & trig      = fTriggers.back(); // trigger we're working on
 
-        // todo: these are placeholder values until we can propagate enough info through the reco files
+        trig.evtID = entry;
+        //std::cout << _TrackRecoHitPos[0][0][3] << " " << (int) _TrackRecoHitPos[0][0][3] << " " << (int) (_TrackRecoHitPos[0][0][3]*1E9)%1000 << std::endl;
+        trig.triggerType = 2147483647; // TODO real number
+
+        if (entry == 0) // TODO do this less bad
+          trig.triggerTime_ns = 0;
+        else
+          trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;//+ (int) _TrackRecoHitPos[0][0][3];
+
+        if (entry == 0) // TODO do this less bad
+          trig.triggerTime_s = 0;
+        else
+        {
+          trig.triggerTime_s = prev_trig.triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
+          if (trig.triggerTime_ns >= 1E9)
+          {
+            trig.triggerTime_s += 1;
+            trig.triggerTime_ns -= 1E9;
+          }
+        }
+
+            //std::cout << "  added trigger:  evtID=" << trig.evtID
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                      << ", triggerType=" << trig.triggerType
+                      << ", triggerTime_s=" << trig.triggerTime_s
+                      << ", triggerTime_ns=" << trig.triggerTime_ns
                       << "\n";
-
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
