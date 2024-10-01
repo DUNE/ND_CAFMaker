@@ -8,15 +8,27 @@
 
 #include "Params.h"
 #include "CAF.h"
+#include "reco/IRecoBranchFiller.h"
 
 using BeamSpills = std::map<double, double>;
 using json = nlohmann::json;
 
-BeamSpills loadBeamSpills(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers);   
+class IFBeam {
+public:
+    IFBeam(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers, bool is_data);
+    
+    double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger, int ii);
 
-double getPOT(const cafmaker::Params& par, 
-              std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger,
-              const BeamSpills& beam_spills, 
-              int ii);
+private:
+    const std::string potDevice = "E:TRTGTD";
+    BeamSpills beamSpills;
+
+    void loadBeamSpills(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers);
+    std::string createUrl(const std::string& min_time_iso, const std::string& max_time_iso);
+};
+ 
+std::string toISO8601(double time_sec);
+double unitToFactor(const std::string& unit);
+double getTriggerTime(const cafmaker::Trigger& trigger);
 
 #endif // IFBEAM_H
