@@ -32,6 +32,9 @@ namespace cafmaker
 
       std::deque<Trigger> GetTriggers(int triggerType) const override;
 
+      RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
+
+
     protected:
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
@@ -51,6 +54,9 @@ namespace cafmaker
                        const TruthMatcher * truthMatch,
                        caf::StandardRecord & sr) const;
 
+      void FillFlashes(const H5DataView<cafmaker::types::dlp::Flash> & flashes,
+                       caf::StandardRecord & sr) const;
+      
       void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
                             const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
                             const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,

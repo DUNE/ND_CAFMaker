@@ -225,7 +225,8 @@ namespace cafmaker
     sr.meta.minerva.run = ev_run;
     sr.meta.minerva.subrun = ev_sub_run;
     sr.meta.minerva.event = ev_gate;
-
+    sr.meta.minerva.readoutstart_s = trigger.triggerTime_s;
+    sr.meta.minerva.readoutstart_ns = trigger.triggerTime_ns;
 
     FillInteractions(truthMatch, sr);
 

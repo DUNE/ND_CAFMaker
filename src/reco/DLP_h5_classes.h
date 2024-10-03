@@ -5,7 +5,7 @@
 //
 //    The invocation that generated this file was:
 //
-//       h5_to_cpp.py -f MiniRun5_1E19_RHC.flow2supera.0000000.ANA.h5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d run_info -cn RunInfo -d trigger -cn Trigger
+//       h5_to_cpp.py -f MiniRun5_1E19_RHC.flow.0000000.flash.larcv_spine.h5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
@@ -196,35 +196,38 @@ namespace cafmaker::types::dlp
   struct Particle;
   struct TrueInteraction;
   struct TrueParticle;
+  struct Flash;
   struct RunInfo;
   struct Trigger;
   
   struct Event
   {
-    hdset_reg_ref_t truth_particles;
-    hdset_reg_ref_t truth_interactions;
-    hdset_reg_ref_t depositions;
     hdset_reg_ref_t depositions_label;
-    hdset_reg_ref_t run_info;
-    hdset_reg_ref_t points_label;
+    hdset_reg_ref_t reco_interactions;
+    hdset_reg_ref_t depositions;
     hdset_reg_ref_t trigger;
     hdset_reg_ref_t points;
-    hdset_reg_ref_t meta;
-    hdset_reg_ref_t reco_interactions;
+    hdset_reg_ref_t truth_interactions;
+    hdset_reg_ref_t run_info;
     hdset_reg_ref_t index;
+    hdset_reg_ref_t truth_particles;
+    hdset_reg_ref_t meta;
     hdset_reg_ref_t reco_particles;
+    hdset_reg_ref_t points_label;
+    hdset_reg_ref_t flashes;
     
     void SyncVectors();
     
     template <typename T>
     const hdset_reg_ref_t& GetRef() const
     {
-      if constexpr(std::is_same_v<T, TrueParticle>) return truth_particles;
+      if constexpr(std::is_same_v<T, Interaction>) return reco_interactions;
+      else if(std::is_same_v<T, Trigger>) return trigger;
       else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
       else if(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, Trigger>) return trigger;
-      else if(std::is_same_v<T, Interaction>) return reco_interactions;
+      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
       else if(std::is_same_v<T, Particle>) return reco_particles;
+      else if(std::is_same_v<T, Flash>) return flashes;
     }
     
   };
@@ -234,6 +237,9 @@ namespace cafmaker::types::dlp
   {
     int64_t id;
     BufferView<int64_t> index;
+    int64_t size;
+    float depositions_sum;
+    BufferView<int64_t> module_ids;
     bool is_contained;
     bool is_matched;
     BufferView<int64_t> match_ids;
@@ -243,6 +249,9 @@ namespace cafmaker::types::dlp
     bool is_truth;
     char * units;
     BufferView<int64_t> particle_ids;
+    int64_t num_particles;
+    std::array<int64_t, 6> particle_counts;
+    std::array<int64_t, 6> primary_particle_counts;
     std::array<float, 3> vertex;
     bool is_fiducial;
     bool is_flash_matched;
@@ -263,6 +272,7 @@ namespace cafmaker::types::dlp
     // and then use those for access to the data.
     
     hvl_t index_handle;
+    hvl_t module_ids_handle;
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t particle_ids_handle;
@@ -273,6 +283,9 @@ namespace cafmaker::types::dlp
   {
     int64_t id;
     BufferView<int64_t> index;
+    int64_t size;
+    float depositions_sum;
+    BufferView<int64_t> module_ids;
     bool is_contained;
     bool is_matched;
     BufferView<int64_t> match_ids;
@@ -282,6 +295,7 @@ namespace cafmaker::types::dlp
     bool is_truth;
     char * units;
     BufferView<int32_t> fragment_ids;
+    int64_t num_fragments;
     int64_t interaction_id;
     Shape shape;
     Pid pid;
@@ -314,6 +328,7 @@ namespace cafmaker::types::dlp
     // and then use those for access to the data.
     
     hvl_t index_handle;
+    hvl_t module_ids_handle;
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t fragment_ids_handle;
@@ -325,6 +340,9 @@ namespace cafmaker::types::dlp
   {
     int64_t id;
     BufferView<int64_t> index;
+    int64_t size;
+    float depositions_sum;
+    BufferView<int64_t> module_ids;
     bool is_contained;
     bool is_matched;
     BufferView<int64_t> match_ids;
@@ -334,9 +352,17 @@ namespace cafmaker::types::dlp
     bool is_truth;
     char * units;
     int64_t orig_id;
+    float depositions_q_sum;
     BufferView<int64_t> index_adapt;
+    int64_t size_adapt;
+    float depositions_adapt_sum;
+    float depositions_adapt_q_sum;
     BufferView<int64_t> index_g4;
+    int64_t depositions_g4_sum;
     BufferView<int64_t> particle_ids;
+    int64_t num_particles;
+    std::array<int64_t, 6> particle_counts;
+    std::array<int64_t, 6> primary_particle_counts;
     std::array<float, 3> vertex;
     bool is_fiducial;
     bool is_flash_matched;
@@ -383,6 +409,7 @@ namespace cafmaker::types::dlp
     // and then use those for access to the data.
     
     hvl_t index_handle;
+    hvl_t module_ids_handle;
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t index_adapt_handle;
@@ -395,6 +422,9 @@ namespace cafmaker::types::dlp
   {
     int64_t id;
     BufferView<int64_t> index;
+    int64_t size;
+    float depositions_sum;
+    BufferView<int64_t> module_ids;
     bool is_contained;
     bool is_matched;
     BufferView<int64_t> match_ids;
@@ -404,9 +434,15 @@ namespace cafmaker::types::dlp
     bool is_truth;
     char * units;
     int64_t orig_id;
+    float depositions_q_sum;
     BufferView<int64_t> index_adapt;
+    int64_t size_adapt;
+    float depositions_adapt_sum;
+    float depositions_adapt_q_sum;
     BufferView<int64_t> index_g4;
+    int64_t depositions_g4_sum;
     BufferView<int32_t> fragment_ids;
+    int64_t num_fragments;
     int64_t interaction_id;
     Shape shape;
     Pid pid;
@@ -472,6 +508,7 @@ namespace cafmaker::types::dlp
     // and then use those for access to the data.
     
     hvl_t index_handle;
+    hvl_t module_ids_handle;
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t index_adapt_handle;
@@ -479,6 +516,36 @@ namespace cafmaker::types::dlp
     hvl_t fragment_ids_handle;
     hvl_t children_id_handle;
     hvl_t children_counts_handle;
+  };
+  
+  
+  struct Flash
+  {
+    int64_t id;
+    int64_t frame;
+    uint8_t in_beam_frame;
+    int64_t on_beam_time;
+    double time;
+    double time_width;
+    double time_abs;
+    double total_pe;
+    double fast_to_total;
+    BufferView<float> pe_per_ch;
+    std::array<double, 3> center;
+    std::array<double, 3> width;
+    char * units;
+    
+    void SyncVectors();
+    
+    // note: the following 'handle' objects
+    // are used internally by HDF5 to keep track
+    // of the memory for variable-length buffers.
+    // please use the SyncVectors() method
+    // after loading data into the object
+    // to fill the corresponding BufferView<>s above,
+    // and then use those for access to the data.
+    
+    hvl_t pe_per_ch_handle;
   };
   
   
@@ -523,6 +590,10 @@ namespace cafmaker::types::dlp
   
   template <>
   H5::CompType BuildCompType<TrueParticle>();
+  
+  
+  template <>
+  H5::CompType BuildCompType<Flash>();
   
   
   template <>

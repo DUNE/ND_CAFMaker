@@ -8,6 +8,10 @@ if [[ $# == 1 && x$1 == x-f ]]; then FORCE=yes; fi
 # set up software
 source ndcaf_setup.sh
 
+# edep-sim needs to know where a certain GEANT .cmake file is...
+G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
+export Geant4_DIR=`dirname $G4_cmake_file`
+
 # Just use the edep-sim UPS product, don't clone master branch off repos!
 # Get edep-sim and build it
 #if [ $FORCE == yes ]; then rm -rf edep-sim; fi
@@ -57,7 +61,7 @@ cd ${TOPDIR}
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${TOPDIR}/DUNE_ND_GeoEff/lib/
 
+
 # make tarballs of edep-sim and nusystematics for grid jobs
-#tar -zcf edep-sim.tar.gz edep-sim
 #tar -zcf nusystematics.tar.gz nusystematics
 tar -zcf DUNE_ND_GeoEff.tar.gz DUNE_ND_GeoEff
