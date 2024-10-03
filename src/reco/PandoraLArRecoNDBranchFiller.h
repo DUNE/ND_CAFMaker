@@ -47,6 +47,7 @@ namespace cafmaker
       int m_eventId;
       int m_run;
       int m_subRun;
+      int m_unixTime;
       int m_startTime;
       std::vector<int> *m_isShowerVect = nullptr;
       std::vector<int> *m_sliceIdVect = nullptr;

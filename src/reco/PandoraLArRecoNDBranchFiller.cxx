@@ -34,6 +34,7 @@ namespace cafmaker
 	  m_LArRecoNDTree->SetBranchAddress("event", &m_eventId);
 	  m_LArRecoNDTree->SetBranchAddress("run", &m_run);
 	  m_LArRecoNDTree->SetBranchAddress("subRun", &m_subRun);
+	  m_LArRecoNDTree->SetBranchAddress("unixTime", &m_unixTime);
 	  m_LArRecoNDTree->SetBranchAddress("startTime", &m_startTime);
 	  m_LArRecoNDTree->SetBranchAddress("isShower", &m_isShowerVect);
 	  m_LArRecoNDTree->SetBranchAddress("sliceId", &m_sliceIdVect);
@@ -156,19 +157,18 @@ namespace cafmaker
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
 	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
-	// nuId = orig_nuId + 10^8, so orig_nuId = nuId - 10^8
-	// mcId = orig_mcId + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
-	// nuIndex = int(mcId/10^6), so orig_mcId = mcId - nuIndex*10^6
-	// Use the original MCId values
+	// mcNuId = vertex_id + 10^8, so vertex_id = mcNuId - 10^8
+	// mcId = traj_id + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
+	// nuIndex = int(mcId/10^6), so traj_id = mcId - nuIndex*10^6
 	const int mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
-	const int origMCNuId = (mcNuId > m_nuIdOffset) ? mcNuId - m_nuIdOffset : mcNuId;
+	const int vertex_id = (mcNuId > m_nuIdOffset) ? mcNuId - m_nuIdOffset : mcNuId;
 	const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
 	const int mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
 	const int nuIndex = int(mcId/m_maxMCId);
-	const int origMCId = mcId - nuIndex*m_maxMCId;
+	const int traj_id = mcId - nuIndex*m_maxMCId;
 	
 	caf::TrueParticleID trueID;
-	trueID.ixn = origMCNuId;
+	trueID.ixn = vertex_id;
 	if (isPrimary == 1) {
 	    trueID.type = caf::TrueParticleID::kPrimary;
 	} else if (isPrimary == -1) {
@@ -176,7 +176,7 @@ namespace cafmaker
 	} else {
 	    trueID.type = caf::TrueParticleID::kSecondary;
 	}
-	trueID.part = origMCId;
+	trueID.part = traj_id;
 
 	// Just store the best MC match
 	std::vector<caf::TrueParticleID> trueIDVect;
@@ -231,19 +231,18 @@ namespace cafmaker
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
 	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
-	// nuId = orig_nuId + 10^8, so orig_nuId = nuId - 10^8
-	// mcId = orig_mcId + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
-	// nuIndex = int(mcId/10^6), so orig_mcId = mcId - nuIndex*10^6
-	// Use the original MCId values
+	// mcNuId = vertex_id + 10^8, so vertex_id = mcNuId - 10^8
+	// mcId = traj_id + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
+	// nuIndex = int(mcId/10^6), so traj_id = mcId - nuIndex*10^6
 	const int mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
-	const int origMCNuId = (mcNuId > m_nuIdOffset) ? mcNuId - m_nuIdOffset : mcNuId;
+	const int vertex_id = (mcNuId > m_nuIdOffset) ? mcNuId - m_nuIdOffset : mcNuId;
 	const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
 	const int mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
 	const int nuIndex = int(mcId/m_maxMCId);
-	const int origMCId = mcId - nuIndex*m_maxMCId;
+	const int traj_id = mcId - nuIndex*m_maxMCId;
 
 	caf::TrueParticleID trueID;
-	trueID.ixn = origMCNuId;
+	trueID.ixn = vertex_id;
 	if (isPrimary == 1) {
 	    trueID.type = caf::TrueParticleID::kPrimary;
 	} else if (isPrimary == -1) {
@@ -251,7 +250,7 @@ namespace cafmaker
 	} else {
 	    trueID.type = caf::TrueParticleID::kSecondary;
 	}
-	trueID.part = origMCId;
+	trueID.part = traj_id;
 
 	// Just store the best MC match
 	std::vector<caf::TrueParticleID> trueIDVect;
@@ -290,10 +289,10 @@ namespace cafmaker
 	    trig.evtID = m_eventId;
 	    // Pandora SpacePoint (SP) H5Flow-to-ROOT format doesn't store trigger type, so just select "all"
 	    trig.triggerType = -1;
-	    // Pandora SP format uses timestamp ticks from /charge/events/ts_start
-	    trig.triggerTime_s = m_startTime;
-	    // Use the same (integer) time for now
-	    trig.triggerTime_ns = m_startTime;
+	    // unix_ts trigger time (seconds)
+	    trig.triggerTime_s = m_unixTime;
+	    // ts_start ticks (0.1 microseconds) converted to nanoseconds
+	    trig.triggerTime_ns = m_startTime * 100;
 
 	    LOG.VERBOSE() << "  added trigger: evtID = " << trig.evtID
 			  << ", triggerType = " << trig.triggerType

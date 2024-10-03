@@ -1,7 +1,7 @@
 #include "NDCAFMaker.fcl"
 nd_cafmaker: @local::standard_nd_cafmaker
 nd_cafmaker.CAFMakerSettings.GHEPFiles: ["/exp/dune/data/users/jback/ND_CAFs/MiniRun5/MiniRun5_1E19_RHC.genie.nu.0000001.GHEP.root"]
-nd_cafmaker.CAFMakerSettings.PandoraLArRecoNDFile: "/exp/dune/data/users/jback/ND_CAFs/MiniRun5/LArRecoND_MR5_0000001.root"
-nd_cafmaker.CAFMakerSettings.OutputFile: "CAF_MR5_0000001.root"
+nd_cafmaker.CAFMakerSettings.PandoraLArRecoNDFile: "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/LArRecoND_MR6_0000001.root"
+nd_cafmaker.CAFMakerSettings.OutputFile: "CAF_MR6_0000001.root"
 nd_cafmaker.CAFMakerSettings.Verbosity: VERBOSE
 nd_cafmaker.CAFMakerSettings.NumEvts: -1
