@@ -37,10 +37,10 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("nHits",                 _nHitsInTrack);
       TMSRecoTree->SetBranchAddress("Length",                _TrackLength);
       TMSRecoTree->SetBranchAddress("Momentum",              _TrackMomentum);
-      TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
+      //TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge); // TODO: Uncomment when Occupancy filled by TMS
       TMSRecoTree->SetBranchAddress("EnergyRange",           _TrackTotalEnergy);
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
-      TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy);
+      //TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy); // TODO: Uncomment when Occupancy filled by TMS
 
       TMSRecoTree->SetBranchAddress("TrackHitPos",            _TrackRecoHitPos);
       TMSRecoTree->SetBranchAddress("StartPos",              _TrackStartPos);
