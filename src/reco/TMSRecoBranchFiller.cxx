@@ -2,10 +2,8 @@
 #include "truth/FillTruth.h"
 
 /*
- * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Mar 2024
+ * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Oct 2024
  * Put together mostly from the previous example and the MINERvA RecoBranchFiller
- * This code currently assumes one track <-> one interaction; to first order
- * this is sane, as the primary use of TMS is muon collection for LAr events.
  */
 
 namespace cafmaker
@@ -94,20 +92,16 @@ namespace cafmaker
     // Get nth entry from tree
 
     int LastSpillNo = -999999; //_SpillNo;
-    TMSRecoTree->GetEntry(i);
+    TMSRecoTree->GetEntry(i); // Load first entry for now
     LastSpillNo = _SpillNo;
-    //TMSRecoTree->GetEntry(idx);//trigger.evtID);
-
-    //caf::SRTMSInt* interaction;
-    //interaction = new caf::SRTMSInt();
 
     sr.nd.tms.ixn.emplace_back();
     caf::SRTMSInt& interaction = sr.nd.tms.ixn.back();
 
     interaction.ntracks = 0;
-    while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries())
+    while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
-      TMSRecoTree->GetEntry(++i);
+      TMSRecoTree->GetEntry(++i); // Load each subsequent entry in the spill
       if (_nTracks > 0)
       {
         interaction.tracks.resize(_nTracks + interaction.tracks.size());
