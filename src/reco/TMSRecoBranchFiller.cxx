@@ -101,7 +101,7 @@ namespace cafmaker
     interaction.ntracks = 0;
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
-      TMSRecoTree->GetEntry(i++); // Load each subsequent entry in the spill
+      TMSRecoTree->GetEntry(i++); // Load each subsequent entry in the spill, start from original i
       if (_nTracks > 0)
       {
         interaction.tracks.resize(_nTracks + interaction.tracks.size());
