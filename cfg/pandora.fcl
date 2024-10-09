@@ -1,6 +1,29 @@
 #include "NDCAFMaker.fcl"
 nd_cafmaker: @local::standard_nd_cafmaker
-nd_cafmaker.CAFMakerSettings.GHEPFiles: ["/exp/dune/data/users/jback/ND_CAFs/MiniRun5/MiniRun5_1E19_RHC.genie.nu.0000001.GHEP.root"]
+
+nd_cafmaker.CAFMakerSettings.GHEPFiles: [
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000010.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000011.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000012.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000013.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000014.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000015.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000016.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000017.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000018.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.nu.0000019.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000010.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000011.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000012.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000013.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000014.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000015.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000016.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000017.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000018.GHEP.root",
+  "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/MiniRun5_1E19_RHC.genie.rock.0000019.GHEP.root"
+]
+
 nd_cafmaker.CAFMakerSettings.PandoraLArRecoNDFile: "/exp/dune/data/users/jback/ND_CAFs/MiniRun6/LArRecoND_MR6_0000001.root"
 nd_cafmaker.CAFMakerSettings.OutputFile: "CAF_MR6_0000001.root"
 nd_cafmaker.CAFMakerSettings.Verbosity: VERBOSE

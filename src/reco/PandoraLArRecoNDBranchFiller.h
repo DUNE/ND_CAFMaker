@@ -40,8 +40,8 @@ namespace cafmaker
 			     const cafmaker::Params &par,
 			     const TruthMatcher *truthMatch= nullptr) const override;
 
-      void FillTracks(caf::StandardRecord &sr, const int nClusters) const;
-      void FillShowers(caf::StandardRecord &sr, const int nClusters) const;
+      void FillTracks(caf::StandardRecord &sr, const int nClusters, const TruthMatcher *truthMatch) const;
+      void FillShowers(caf::StandardRecord &sr, const int nClusters, const TruthMatcher *truthMatch) const;
       
       TFile *m_LArRecoNDFile;
       TTree *m_LArRecoNDTree;
@@ -64,7 +64,7 @@ namespace cafmaker
       std::vector<float> *m_dirZVect = nullptr;
       std::vector<float> *m_energyVect = nullptr;
       std::vector<int> *m_n3DHitsVect = nullptr;
-      std::vector<int> *m_mcNuIdVect = nullptr;
+      std::vector<long> *m_mcVertexIdVect = nullptr;
       std::vector<int> *m_isPrimaryVect = nullptr;
       std::vector<int> *m_mcIdVect = nullptr;
       std::vector<float> *m_completenessVect = nullptr;

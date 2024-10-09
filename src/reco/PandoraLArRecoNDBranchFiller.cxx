@@ -49,7 +49,7 @@ namespace cafmaker
 	  m_LArRecoNDTree->SetBranchAddress("dirZ", &m_dirZVect);
 	  m_LArRecoNDTree->SetBranchAddress("energy", &m_energyVect);
 	  m_LArRecoNDTree->SetBranchAddress("n3DHits", &m_n3DHitsVect);
-	  m_LArRecoNDTree->SetBranchAddress("mcNuId", &m_mcNuIdVect);
+	  m_LArRecoNDTree->SetBranchAddress("mcVertexId", &m_mcVertexIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("isPrimary", &m_isPrimaryVect);
 	  m_LArRecoNDTree->SetBranchAddress("mcId", &m_mcIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("completeness", &m_completenessVect);
@@ -96,12 +96,13 @@ namespace cafmaker
 
     // Fill track and shower info. Both use the same clusters (PFOs), and no
     // distinction is made (yet) to identify which are tracks or showers
-    FillTracks(sr, nClusters);
-    FillShowers(sr, nClusters);
+    FillTracks(sr, nClusters, truthMatch);
+    FillShowers(sr, nClusters, truthMatch);
   }
 
   // ------------------------------------------------------------------------------
-    void PandoraLArRecoNDBranchFiller::FillTracks(caf::StandardRecord& sr, const int nClusters) const
+    void PandoraLArRecoNDBranchFiller::FillTracks(caf::StandardRecord &sr, const int nClusters,
+						  const TruthMatcher *truthMatch) const
   {
     // Create tracks for each PFO (cluster) in the event
     LOG.VERBOSE() << " Pandora LArRecoND FillTracks using " << nClusters <<" PFO clusters\n";
@@ -157,38 +158,60 @@ namespace cafmaker
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
 	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
-	// mcNuId = vertex_id + 10^8, so vertex_id = mcNuId - 10^8
 	// mcId = traj_id + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
 	// nuIndex = int(mcId/10^6), so traj_id = mcId - nuIndex*10^6
-	const int mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
-	const int vertex_id = (mcNuId > m_nuIdOffset) ? mcNuId - m_nuIdOffset : mcNuId;
+	// The vertex_id's are the same as those in the HDF5 files
+
+	const long vertex_id = (m_mcVertexIdVect != nullptr) ? (*m_mcVertexIdVect)[i] : 0;
 	const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
+
 	const int mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
 	const int nuIndex = int(mcId/m_maxMCId);
 	const int traj_id = mcId - nuIndex*m_maxMCId;
-	
-	caf::TrueParticleID trueID;
-	trueID.ixn = vertex_id;
+
+	caf::TrueParticleID truePartID;
+
 	if (isPrimary == 1) {
-	    trueID.type = caf::TrueParticleID::kPrimary;
+	    truePartID.type = caf::TrueParticleID::kPrimary;
+	    truePartID.part = traj_id;
 	} else if (isPrimary == -1) {
-	    trueID.type = caf::TrueParticleID::kUnknown;
+	    truePartID.type = caf::TrueParticleID::kUnknown;
 	} else {
-	    trueID.type = caf::TrueParticleID::kSecondary;
+	    truePartID.type = caf::TrueParticleID::kSecondary;
 	}
-	trueID.part = traj_id;
+
+	try
+	{
+	    // Get the true interaction in the stack
+	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, vertex_id);
+	    const auto predicate = [&srTrueInt](const caf::SRTrueInteraction& ixn) { return ixn.id == srTrueInt.id; };
+	    // Get the truth interaction index
+	    const int srTrueIntIdx = std::distance(sr.mc.nu.begin(), std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), predicate));
+	    truePartID.ixn = srTrueIntIdx;
+
+	    // If the particle is not a primary, we might want to create a new particle if it wasn't created originally
+	    if (isPrimary != 1) {
+		const auto pred = [&traj_id](const caf::SRTrueParticle& part) { return part.G4ID == traj_id; };
+		truePartID.part = std::distance(srTrueInt.sec.begin(),
+						std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
+	    }
+	}
+	catch (...)
+	{
+	    LOG.VERBOSE() << "Could not fill some of the truth information" << "\n";
+	}
 
 	// Just store the best MC match
-	std::vector<caf::TrueParticleID> trueIDVect;
-	trueIDVect.emplace_back(trueID);
-	track.truth = trueIDVect;
+	std::vector<caf::TrueParticleID> truePartIDVect;
+	truePartIDVect.emplace_back(truePartID);
+	track.truth = truePartIDVect;
 
 	// Fraction of true MC hits that are captured by the reconstructed cluster
 	const float completeness = (m_completenessVect != nullptr) ? (*m_completenessVect)[i] : 0.0;
 	std::vector<float> truthOverlap;
 	truthOverlap.emplace_back(completeness);
 	track.truthOverlap = truthOverlap;
-	
+
 	// Add track to the record
 	sr.nd.lar.pandora[sliceId].tracks.emplace_back(std::move(track));
 	sr.nd.lar.pandora[sliceId].ntracks++;
@@ -196,7 +219,8 @@ namespace cafmaker
   }
     
   // ------------------------------------------------------------------------------
-    void PandoraLArRecoNDBranchFiller::FillShowers(caf::StandardRecord& sr, const int nClusters) const
+    void PandoraLArRecoNDBranchFiller::FillShowers(caf::StandardRecord &sr, const int nClusters,
+						   const TruthMatcher *truthMatch) const
   {
     // Create showers for each PFO (cluster) in the event
     LOG.VERBOSE() << " Pandora LArRecoND FillShowers using " << nClusters <<" PFO clusters\n";
@@ -231,31 +255,53 @@ namespace cafmaker
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
 	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
-	// mcNuId = vertex_id + 10^8, so vertex_id = mcNuId - 10^8
 	// mcId = traj_id + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
 	// nuIndex = int(mcId/10^6), so traj_id = mcId - nuIndex*10^6
-	const int mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
-	const int vertex_id = (mcNuId > m_nuIdOffset) ? mcNuId - m_nuIdOffset : mcNuId;
+	// The vertex_id's are the same as those in the HDF5 files
+
+	const long vertex_id = (m_mcVertexIdVect != nullptr) ? (*m_mcVertexIdVect)[i] : 0;
 	const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
+
 	const int mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
 	const int nuIndex = int(mcId/m_maxMCId);
 	const int traj_id = mcId - nuIndex*m_maxMCId;
 
-	caf::TrueParticleID trueID;
-	trueID.ixn = vertex_id;
+	caf::TrueParticleID truePartID;
+
 	if (isPrimary == 1) {
-	    trueID.type = caf::TrueParticleID::kPrimary;
+	    truePartID.type = caf::TrueParticleID::kPrimary;
+	    truePartID.part = traj_id;
 	} else if (isPrimary == -1) {
-	    trueID.type = caf::TrueParticleID::kUnknown;
+	    truePartID.type = caf::TrueParticleID::kUnknown;
 	} else {
-	    trueID.type = caf::TrueParticleID::kSecondary;
+	    truePartID.type = caf::TrueParticleID::kSecondary;
 	}
-	trueID.part = traj_id;
+
+	try
+	{
+	    // Get the true interaction in the stack
+	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, vertex_id);
+	    const auto predicate = [&srTrueInt](const caf::SRTrueInteraction& ixn) { return ixn.id == srTrueInt.id; };
+	    // Get the truth interaction index
+	    const int srTrueIntIdx = std::distance(sr.mc.nu.begin(), std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), predicate));
+	    truePartID.ixn = srTrueIntIdx;
+
+	    // If the particle is not a primary, we might want to create a new particle if it wasn't created originally
+	    if (isPrimary != 1) {
+		const auto pred = [&traj_id](const caf::SRTrueParticle& part) { return part.G4ID == traj_id; };
+		truePartID.part = std::distance(srTrueInt.sec.begin(),
+						std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
+	    }
+	}
+	catch (...)
+	{
+	    LOG.VERBOSE() << "Could not fill some of the truth information" << "\n";
+	}
 
 	// Just store the best MC match
-	std::vector<caf::TrueParticleID> trueIDVect;
-	trueIDVect.emplace_back(trueID);
-	shower.truth = trueIDVect;
+	std::vector<caf::TrueParticleID> truePartIDVect;
+	truePartIDVect.emplace_back(truePartID);
+	shower.truth = truePartIDVect;
 
 	// Fraction of true MC hits that are captured by the reconstructed cluster
 	const float completeness = (m_completenessVect != nullptr) ? (*m_completenessVect)[i] : 0.0;
