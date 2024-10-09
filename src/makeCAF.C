@@ -33,6 +33,7 @@
 
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/NDLArMINERvAMatchRecoFiller.h"
+#include "reco/PandoraLArRecoNDBranchFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 #include "util/GENIEQuiet.h"
@@ -143,6 +144,14 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   SAND\n";
   }
 
+  // Pandora LArRecoND
+  std::string pandoraFile;
+  if (par().cafmaker().pandoraLArRecoNDFile(pandoraFile))
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::PandoraLArRecoNDBranchFiller>(pandoraFile));
+    std::cout << "  Pandora LArRecoND\n";
+  }
+
   // next: did we do TMS reco?
   std::string tmsFile;
   if (par().cafmaker().tmsRecoFile(tmsFile))
@@ -170,7 +179,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>(par().cafmaker().trackMatchExtrapolatedZ(), par().cafmaker().trackMatchdX(), par().cafmaker().trackMatchdY(), par().cafmaker().trackMatchdThetaX(), par().cafmaker().trackMatchdThetaY()));
     std::cout << "   ND-LAr + MINERvA matching\n";
-  } 
+  }
   // for now all the fillers get the same threshold.
   // if we decide we need to do it differently later
   // we can adjust the FCL params...
@@ -375,17 +384,17 @@ double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker:
   double pot = 0.0;
 
   if (par().cafmaker().POTFile(potFile) && loadBeamSpills(potFile, beam_spills)) { //If there is a POT file in config that is readable, check if all trigger times match any of the beam times
-    auto it = std::find_if(beam_spills.begin(), beam_spills.end(),                
+    auto it = std::find_if(beam_spills.begin(), beam_spills.end(),
                            [par, &groupedTrigger](const auto& spill) {
       return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
                          [par, &spill](const auto& groupedTrigger) {
         return std::abs(GetTriggerTime(groupedTrigger.second) - spill.first) < par().cafmaker().beamMatchDT(); //fixme: shouldn't be abs after 2x2 trigger times are fixed
         });
       });
-                                  
+
     if (it != beam_spills.end()) {
       pot = it->second;
-    }     
+    }
     else { //Check if any of the triggers match the beam time if there is no beam time match in the previous search
       bool any_matched = false;
       std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> matched_triggers;
@@ -400,7 +409,7 @@ double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker:
         if (matched) {
           any_matched = true;
           matched_triggers.push_back(trig);
-        } 
+        }
         else {
           unmatched_triggers.push_back(trig);
         }
@@ -414,22 +423,22 @@ double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker:
                        << "Matched triggers: \n";
         for (auto trig : matched_triggers)
           log_message << std::fixed << trig.first->GetName() << " " << GetTriggerTime(trig.second) << "\n";
- 
+
         log_message << "Unmatched triggers: \n";
         for (auto trig : unmatched_triggers)
           log_message << std::fixed << trig.first->GetName() << " " << GetTriggerTime(trig.second) << "\n";
-        
+
         LOG().ERROR() << log_message.str() << "\n";
         std::abort();
-      } 
+      }
       else { //If none of the trigger times match give a warning
         log_message << "No matching spill found for trigger group " << ii << " with triggers: \n";
         for (auto trig : groupedTrigger)
           log_message << std::fixed << trig.first->GetName() << " " << GetTriggerTime(trig.second) << "\n";
         LOG().WARNING() << log_message.str() << "\n";
-      } 
-    } 
-  } 
+      }
+    }
+  }
   else { //else get POT from config
     pot = par().runInfo().POTPerSpill() * 1e13;
   }
@@ -505,7 +514,7 @@ void loop(CAF &caf,
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }
     }
-    
+
     //Fill POT
     double pot = getPOT(par, groupedTriggers[ii], ii);
     if (std::isnan(caf.pot))
