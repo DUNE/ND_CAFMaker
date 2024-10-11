@@ -1,4 +1,4 @@
-#include <cstdio>
+include <cstdio>
 #include <numeric>
 
 #include "boost/program_options/options_description.hpp"
@@ -23,9 +23,11 @@
 #include "Params.h"
 #include "reco/MLNDLArRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
-#include "reco/NDLArTMSMatchRecoFiller.h"
-#include "reco/SANDRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
+
+#include "reco/NDLArTMSMatchRecoFiller.h"
+#include "reco/NDLArMINERvAMatchRecoFiller.h"
+#include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 #include "beam/IFBeam.h"
 #include "util/GENIEQuiet.h"
@@ -159,6 +161,11 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   ND-LAr + TMS matching\n";
   }
 
+  if (!ndlarFile.empty() && !minervaFile.empty())
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>(par().cafmaker().trackMatchExtrapolatedZ(), par().cafmaker().trackMatchdX(), par().cafmaker().trackMatchdY(), par().cafmaker().trackMatchdThetaX(), par().cafmaker().trackMatchdThetaY()));
+    std::cout << "   ND-LAr + MINERvA matching\n";
+  } 
   // for now all the fillers get the same threshold.
   // if we decide we need to do it differently later
   // we can adjust the FCL params...
@@ -343,7 +350,10 @@ void loop(CAF &caf,
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+  {
+    if (filler->FillerType() != cafmaker::RecoFillerType::BaseReco) continue; //We don't want to store a trigger from a Matcher algorithm
     triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+  }
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
 
@@ -385,6 +395,16 @@ void loop(CAF &caf,
       cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
       fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
     }
+
+    // Once all the reco fillers have been called, let's call the matching fillers
+    for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+    {
+      if (filler->FillerType() == cafmaker::RecoFillerType::Matcher)
+      {
+        filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
+      }
+    }
+    
     //Fill POT
     double pot = 0.0;
     if (par().cafmaker().IsData())
@@ -400,7 +420,6 @@ void loop(CAF &caf,
       caf.pot = 0;
     caf.pot += pot;
     caf.sr.beam.pulsepot = pot;
-
     caf.fill();
   }
   progBar.Done();
