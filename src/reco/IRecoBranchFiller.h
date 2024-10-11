@@ -26,13 +26,6 @@ namespace cafmaker
     bool operator==(const Trigger & other) const  { return evtID == other.evtID && triggerType == other.triggerType; }
   };
 
-  enum class RecoFillerType
-  {
-    Unknown,
-    BaseReco,  ///<  Full reconstruction stack like SPINE or Pandora
-    Matcher,   ///<  Post-hoc matching run across detectors, but not creating new trigger entries etc.
-  };
-
   class IRecoBranchFiller: public Loggable
   {
     public:
@@ -64,10 +57,6 @@ namespace cafmaker
       /// \param  triggerType   (Detector-specific) type of trigger to select.  <0 means "all"
       /// \return List of selected triggers (a std::deque because we're always working at the beginning or end)
       virtual std::deque<Trigger> GetTriggers(int triggerType=-1) const = 0;
-
-
-      /// What type of IRecoBranchFiller is this?
-      virtual RecoFillerType  FillerType() const = 0;
 
     protected:
       /// Actual implementation of reco branch filling.  Derived classes should override this.

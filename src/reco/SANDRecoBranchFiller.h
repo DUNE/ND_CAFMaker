@@ -23,9 +23,6 @@ namespace cafmaker
 
       std::deque<Trigger> GetTriggers(int triggerType) const override;
 
-      RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
-
-
     private:
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
