@@ -3,6 +3,29 @@
 
 ##### current
 
+##### [v4.7.0] -- 2024-10-16
+* Add TMS Branch reco with updated StandardRecord format with one entry per spill and trigger logic ([PR #87](https://github.com/DUNE/ND_CAFMaker/pull/87))
+* Add track matching logic for 2x2 reconstructions (Pandora, SPINE to MINERvA) ([PR #86](https://github.com/DUNE/ND_CAFMaker/pull/86))
+* Add trigger time in meta information of SPINE and MINERvA ([PR #84](https://github.com/DUNE/ND_CAFMaker/pull/84))
+* Fix: TMS start and end z position for tracks ([PR #83](https://github.com/DUNE/ND_CAFMaker/pull/83))
+
+##### [v4.6.5] -- 2024-09-04
+* Fix: Trigger matching second to nanosecond conversion ([PR #82](https://github.com/DUNE/ND_CAFMaker/pull/82))
+
+##### [v4.6.4] -- 2024-09-03
+* Changed ML-Reco branch filler to read new SPINE format ([PR #74](https://github.com/DUNE/ND_CAFMaker/pull/74))
+* Added POT information for Data from file  ([PR #78](https://github.com/DUNE/ND_CAFMaker/pull/78))
+* Added flash info in ML-Reco branch filler  ([PR #80](https://github.com/DUNE/ND_CAFMaker/pull/80))
+* Added the possibility to read Truth info from Edepsim file  ([PR #77](https://github.com/DUNE/ND_CAFMaker/pull/77))
+
+##### [v4.6.3] -- 2024-05-17
+* Fix: Fill the flat CAFs correctly ([PR #65](https://github.com/DUNE/ND_CAFMaker/pull/65))
+* Fix: Correction to the truth backtracking for ML-Reco branch filler ([PR #68](https://github.com/DUNE/ND_CAFMaker/pull/68))
+
+##### [v4.6.2] -- 2024-04-05
+* Fix: Added some failsafe when MINERvA Trajectory number overloads its capacity ([PR #59](https://github.com/DUNE/ND_CAFMaker/pull/59))
+* Fix: Some correction to the truth backtracking ([PR #61](https://github.com/DUNE/ND_CAFMaker/pull/61))
+
 ##### [v4.6.1] -- 2024-02-13
 * Fix: actually use GENIE true vertex info as intended ([PR #56](https://github.com/DUNE/ND_CAFMaker/pull/56))
 * Fix: don't use invalidated iterators in trigger group loop ([PR #57](https://github.com/DUNE/ND_CAFMaker/pull/57))
