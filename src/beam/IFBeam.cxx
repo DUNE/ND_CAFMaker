@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <limits>
 
+using json = nlohmann::json;
+
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) { //write https response data into a string
     userp->append((char*)contents, size * nmemb);
     return size * nmemb;

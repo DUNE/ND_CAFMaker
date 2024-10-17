@@ -10,11 +10,10 @@
 #include "CAF.h"
 #include "reco/IRecoBranchFiller.h"
 
-using BeamSpills = std::map<double, double>;
-using json = nlohmann::json;
 
 class IFBeam {
 public:
+    using BeamSpills = std::map<double, double>;
     IFBeam(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers, bool is_data);
     
     double getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger, int ii);
