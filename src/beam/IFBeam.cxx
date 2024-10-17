@@ -38,7 +38,7 @@ std::string toISO8601(double time_sec) { //IFBeam query requires ISO format
     return ss.str();
 }
 
-IFBeam::IFBeam(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers, bool is_data) {
+IFBeam::IFBeam(const std::vector<TriggerGroup>& groupedTriggers, bool is_data) {
     if (is_data)
 	loadBeamSpills(groupedTriggers); // Load all beam spills upon instantiation if data
 }
@@ -66,7 +66,7 @@ double IFBeam::unitToFactor(const std::string& unit) { //because the exponent pa
     }
 }
 
-void IFBeam::loadBeamSpills(const std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>& groupedTriggers) { //todo: this should return other information as well like horn current, position, etc., querying all devices and storing in a map
+void IFBeam::loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers) { //todo: this should return other information as well like horn current, position, etc., querying all devices and storing in a map
     beamSpills.clear();
     double dt = 5.0; //time window to query before and after first and last spill, respectively
     double ms_to_s = 1e-3;
@@ -113,7 +113,7 @@ void IFBeam::loadBeamSpills(const std::vector<std::vector<std::pair<const cafmak
     }
 }
 
-double IFBeam::getPOT(const cafmaker::Params& par, std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>& groupedTrigger, int ii) {
+double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
     double pot = 0.0;
 
     auto it = std::find_if(beamSpills.begin(), beamSpills.end(),
