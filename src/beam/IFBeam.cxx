@@ -10,6 +10,7 @@
 
 using json = nlohmann::json;
 
+
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) { //write https response data into a string
     userp->append((char*)contents, size * nmemb);
     return size * nmemb;
@@ -61,7 +62,7 @@ double IFBeam::unitToFactor(const std::string& unit) { //because the exponent pa
         int exponent = std::stoi(match.str(1));
         return std::pow(10, exponent);
     } else {
-        std::cerr << "Unknown unit in beam database: " << unit << std::endl;
+        cafmaker::LOG_S("Fetch beam information").WARNING() << "Unknown unit in beam database: " << unit << "\n";
         return 1.0;
     }
 }
@@ -96,7 +97,8 @@ void IFBeam::loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers) { 
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
-            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            cafmaker::LOG_S("Fetch beam information").ERROR() << "curl_easy_perform() failed: " << curl_easy_strerror(res) << "\n";
+            std::abort();
         }
         curl_easy_cleanup(curl);
         try {
@@ -108,7 +110,8 @@ void IFBeam::loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers) { 
                 beamSpills[time] = pot;
             }
         } catch (const json::exception& e) {
-            std::cerr << "Failed to parse JSON data: " << e.what() << std::endl;
+            cafmaker::LOG_S("Fetch beam information").ERROR() << "Failed to parse JSON data: " << e.what() << "\n";
+	    std::abort();
         }
     }
 }
@@ -146,7 +149,6 @@ double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTr
             }
         }
 
-        auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("Beam spill matching"); };
         std::stringstream log_message;
 
         if (any_matched) {
@@ -159,14 +161,14 @@ double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTr
             for (auto trig : unmatched_triggers)
                 log_message << std::fixed << trig.first->GetName() << " " << getTriggerTime(trig.second) << "\n";
 
-            LOG().ERROR() << log_message.str() << "\n";
+            cafmaker::LOG_S("Fill beam POT information").ERROR() << log_message.str() << "\n";
             std::abort();
         } 
         else {
             log_message << "No matching spill found for trigger group " << ii << " with triggers: \n";
             for (auto trig : groupedTrigger)
                 log_message << std::fixed << trig.first->GetName() << " " << getTriggerTime(trig.second) << "\n";
-            LOG().WARNING() << log_message.str() << "\n";
+            cafmaker::LOG_S("Fill beam POT information").WARNING() << log_message.str() << "\n";
         }
     }
 
