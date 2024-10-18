@@ -2,6 +2,7 @@ source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 setup cmake v3_22_2
 setup gcc v9_3_0
 setup pycurl
+setup curl
 setup ifdhc
 setup geant4 v4_11_0_p01c -q e20:debug
 setup dk2nugenie   v01_10_01k -q debug:e20
