@@ -373,7 +373,7 @@ void loop(CAF &caf,
     abort();
   }
 
-  IFBeam beamManager(groupedTriggers, par().cafmaker().IsData()); //initialize IFBeam manager if data  
+  cafmaker::IFBeam beamManager(groupedTriggers, par().cafmaker().IsData()); //initialize IFBeam manager if data  
 
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
