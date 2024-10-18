@@ -3,7 +3,8 @@ SOURCES = $(shell find $(SRCDIR) -name '*.cxx')
 HEADERS = $(shell find $(SRCDIR) -name '*.h')
 OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 
-INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC)
+INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC) -I/usr/include/curl
+LDLIBS += -L$(SANDRECO_LIB) -lStruct -L/usr/lib64 -lcurl
 
 # enable TMS unless otherwise specified
 # (set ENABLE_TMS=0 in the make command line)
