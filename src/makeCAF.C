@@ -376,7 +376,7 @@ void loop(CAF &caf,
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
  
-  cafmaker::IFBeam beamManager(groupedTriggers, is_data); //initialize IFBeam manager if data and when IFBeam is not force disabled
+  cafmaker::IFBeam beamManager(groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
 
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
