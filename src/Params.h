@@ -49,7 +49,7 @@ namespace cafmaker
     // this is optional by way of the default value. Will result in an extra output file if enabled
     fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
 
-    fhicl::Atom<bool> IsData { fhicl::Name("IsData"), fhicl::Comment("True if data"), false}; //Get IFbeam info if true, default is false
+    fhicl::Atom<bool> ForceDisableIFBeam { fhicl::Name("ForceDisableIFBeam"), fhicl::Comment("Forcefully disable IFBeam interface"), false}; //Disable IFBeam interface when needed (use case: running simulation without GENIE/edepsim
 
     // these are optional and have defaults
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };

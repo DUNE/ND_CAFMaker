@@ -373,7 +373,10 @@ void loop(CAF &caf,
     abort();
   }
 
-  cafmaker::IFBeam beamManager(groupedTriggers, par().cafmaker().IsData()); //initialize IFBeam manager if data  
+  bool is_data = false;
+  if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) is_data = true;
+ 
+  cafmaker::IFBeam beamManager(groupedTriggers, is_data); //initialize IFBeam manager if data and when IFBeam is not force disabled
 
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
@@ -407,7 +410,7 @@ void loop(CAF &caf,
     
     //Fill POT
     double pot = 0.0;
-    if (par().cafmaker().IsData())
+    if (is_data)
     {
     	pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
     }
