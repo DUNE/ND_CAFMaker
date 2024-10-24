@@ -373,8 +373,8 @@ void loop(CAF &caf,
     abort();
   }
 
-  bool is_data = false;
-  if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) is_data = true;
+  bool useIFBeam = false;
+  if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
  
   cafmaker::IFBeam beamManager(groupedTriggers, is_data); //initialize IFBeam manager if data and when IFBeam is not force disabled
 
@@ -410,7 +410,7 @@ void loop(CAF &caf,
     
     //Fill POT
     double pot = 0.0;
-    if (is_data)
+    if (useIFBeam)
     {
     	pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
     }
