@@ -2,6 +2,7 @@ source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 setup cmake v3_22_2
 setup gcc v9_3_0
 setup pycurl
+setup curl
 setup ifdhc
 setup geant4 v4_11_0_p01c -q e20:debug
 setup dk2nugenie   v01_10_01k -q debug:e20
@@ -14,7 +15,9 @@ setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_15_03 -q debug:e20
 setup edepsim v3_2_0c -q debug:e20
 
-# edep-sim needs to know where a certain GEANT .cmake file is...
+export LD_LIBRARY_PATH=$CURL_ROOT/lib:$LD_LIBRARY_PATH
+
+#edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
 export Geant4_DIR=`dirname $G4_cmake_file`
 

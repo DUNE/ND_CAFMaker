@@ -20,7 +20,7 @@ namespace cafmaker
 
     // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
     fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
-
+    
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
@@ -45,11 +45,11 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
 
-    // fixme: temporary hack for data.  should be removed when interface to IFDB is complete
-    fhicl::OptionalAtom<std::string> POTFile { fhicl::Name{"POTFile"}, fhicl::Comment("Input txt file with beam spill information") };
     
     // this is optional by way of the default value. Will result in an extra output file if enabled
     fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
+
+    fhicl::Atom<bool> ForceDisableIFBeam { fhicl::Name("ForceDisableIFBeam"), fhicl::Comment("Forcefully disable IFBeam interface"), false}; //Disable IFBeam interface when needed (use case: running simulation without GENIE/edepsim)
 
     // these are optional and have defaults
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
