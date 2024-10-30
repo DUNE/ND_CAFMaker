@@ -27,6 +27,7 @@
 
 #include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/NDLArMINERvAMatchRecoFiller.h"
+#include "reco/PandoraLArRecoNDBranchFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 #include "beam/IFBeam.h"
@@ -138,6 +139,14 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
     std::cout << "   SAND\n";
   }
 
+  // Pandora LArRecoND
+  std::string pandoraFile;
+  if (par().cafmaker().pandoraLArRecoNDFile(pandoraFile))
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::PandoraLArRecoNDBranchFiller>(pandoraFile));
+    std::cout << "  Pandora LArRecoND\n";
+  }
+
   // next: did we do TMS reco?
   std::string tmsFile;
   if (par().cafmaker().tmsRecoFile(tmsFile))
@@ -165,7 +174,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArMINERvAMatchRecoFiller>(par().cafmaker().trackMatchExtrapolatedZ(), par().cafmaker().trackMatchdX(), par().cafmaker().trackMatchdY(), par().cafmaker().trackMatchdThetaX(), par().cafmaker().trackMatchdThetaY()));
     std::cout << "   ND-LAr + MINERvA matching\n";
-  } 
+  }
   // for now all the fillers get the same threshold.
   // if we decide we need to do it differently later
   // we can adjust the FCL params...
@@ -375,7 +384,7 @@ void loop(CAF &caf,
 
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
- 
+
   cafmaker::IFBeam beamManager(groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
 
   // Main event loop
@@ -407,17 +416,17 @@ void loop(CAF &caf,
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }
     }
-    
+
     //Fill POT
     double pot = 0.0;
     if (useIFBeam)
     {
-    	pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
+        pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
     }
     else
     {
 	pot = par().runInfo().POTPerSpill() * 1e13;
-    	caf.sr.beam.ismc = true; 
+        caf.sr.beam.ismc = true;
     }
     if (std::isnan(caf.pot))
       caf.pot = 0;

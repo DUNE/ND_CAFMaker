@@ -49,9 +49,9 @@ namespace cafmaker
 	  m_LArRecoNDTree->SetBranchAddress("dirZ", &m_dirZVect);
 	  m_LArRecoNDTree->SetBranchAddress("energy", &m_energyVect);
 	  m_LArRecoNDTree->SetBranchAddress("n3DHits", &m_n3DHitsVect);
-	  m_LArRecoNDTree->SetBranchAddress("mcVertexId", &m_mcVertexIdVect);
+	  m_LArRecoNDTree->SetBranchAddress("mcNuId", &m_mcNuIdVect);
+	  m_LArRecoNDTree->SetBranchAddress("mcLocalId", &m_mcLocalIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("isPrimary", &m_isPrimaryVect);
-	  m_LArRecoNDTree->SetBranchAddress("mcId", &m_mcIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("completeness", &m_completenessVect);
 	  
 	  // We have setup the input tree
@@ -89,7 +89,8 @@ namespace cafmaker
     sr.meta.nd_lar.run = m_run;
     sr.meta.nd_lar.subrun = m_subRun;
 
-    // Set the size for the Pandora NDLAr standard record for this trigger/event
+    // Set the size for the Pandora NDLAr standard record for this trigger/event.
+    // The number of clusters will be equal to the size of the sliceID vector
     const int nClusters = (m_sliceIdVect != nullptr) ? m_sliceIdVect->size() : 0;
     sr.nd.lar.pandora.resize(nClusters);
     sr.nd.lar.npandora = sr.nd.lar.pandora.size();
@@ -157,23 +158,21 @@ namespace cafmaker
 	track.len_gcm2 = track.len_cm*m_LArRho;
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
-	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
-	// mcId = traj_id + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
-	// nuIndex = int(mcId/10^6), so traj_id = mcId - nuIndex*10^6
-	// The vertex_id's are the same as those in the HDF5 files
+	// For LArRecoND MC SpacePoints, we use the unique file_traj_id's
+	// for the MCParticles and the neutrino ID is the unique vertex_id.
+	// We also store the local traj_id's for the CAF truth matching tools
 
-	const long vertex_id = (m_mcVertexIdVect != nullptr) ? (*m_mcVertexIdVect)[i] : 0;
+	// Neutrino ID = vertex_id
+	const long mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
+	// MC particle ID = traj_id
+	const long mcId = (m_mcLocalIdVect != nullptr) ? (*m_mcLocalIdVect)[i] : 0;
 	const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
-
-	const int mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
-	const int nuIndex = int(mcId/m_maxMCId);
-	const int traj_id = mcId - nuIndex*m_maxMCId;
 
 	caf::TrueParticleID truePartID;
 
 	if (isPrimary == 1) {
 	    truePartID.type = caf::TrueParticleID::kPrimary;
-	    truePartID.part = traj_id;
+	    truePartID.part = mcId;
 	} else if (isPrimary == -1) {
 	    truePartID.type = caf::TrueParticleID::kUnknown;
 	} else {
@@ -183,7 +182,7 @@ namespace cafmaker
 	try
 	{
 	    // Get the true interaction in the stack
-	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, vertex_id);
+	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, mcNuId);
 	    const auto predicate = [&srTrueInt](const caf::SRTrueInteraction& ixn) { return ixn.id == srTrueInt.id; };
 	    // Get the truth interaction index
 	    const int srTrueIntIdx = std::distance(sr.mc.nu.begin(), std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), predicate));
@@ -191,7 +190,7 @@ namespace cafmaker
 
 	    // If the particle is not a primary, we might want to create a new particle if it wasn't created originally
 	    if (isPrimary != 1) {
-		const auto pred = [&traj_id](const caf::SRTrueParticle& part) { return part.G4ID == traj_id; };
+		const auto pred = [&mcId](const caf::SRTrueParticle& part) { return part.G4ID == mcId; };
 		truePartID.part = std::distance(srTrueInt.sec.begin(),
 						std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
 	    }
@@ -254,23 +253,21 @@ namespace cafmaker
 	shower.Evis = energy;
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
-	// For LArRecoND MC SpacePoints, we offset the MCId's to make them all unique:
-	// mcId = traj_id + nuIndex*10^6, where nuIndex = 0 to N-1 neutrinos
-	// nuIndex = int(mcId/10^6), so traj_id = mcId - nuIndex*10^6
-	// The vertex_id's are the same as those in the HDF5 files
+	// For LArRecoND MC SpacePoints, we use the unique file_traj_id's
+	// for the MCParticles and the neutrino ID is the unique vertex_id.
+	// We also store the local traj_id's for the CAF truth matching tools
 
-	const long vertex_id = (m_mcVertexIdVect != nullptr) ? (*m_mcVertexIdVect)[i] : 0;
+	// Neutrino ID = vertex_id
+	const long mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
+	// MC particle ID = traj_id
+	const long mcId = (m_mcLocalIdVect != nullptr) ? (*m_mcLocalIdVect)[i] : 0;
 	const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
-
-	const int mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
-	const int nuIndex = int(mcId/m_maxMCId);
-	const int traj_id = mcId - nuIndex*m_maxMCId;
 
 	caf::TrueParticleID truePartID;
 
 	if (isPrimary == 1) {
 	    truePartID.type = caf::TrueParticleID::kPrimary;
-	    truePartID.part = traj_id;
+	    truePartID.part = mcId;
 	} else if (isPrimary == -1) {
 	    truePartID.type = caf::TrueParticleID::kUnknown;
 	} else {
@@ -280,7 +277,7 @@ namespace cafmaker
 	try
 	{
 	    // Get the true interaction in the stack
-	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, vertex_id);
+	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, mcNuId);
 	    const auto predicate = [&srTrueInt](const caf::SRTrueInteraction& ixn) { return ixn.id == srTrueInt.id; };
 	    // Get the truth interaction index
 	    const int srTrueIntIdx = std::distance(sr.mc.nu.begin(), std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), predicate));
@@ -288,7 +285,7 @@ namespace cafmaker
 
 	    // If the particle is not a primary, we might want to create a new particle if it wasn't created originally
 	    if (isPrimary != 1) {
-		const auto pred = [&traj_id](const caf::SRTrueParticle& part) { return part.G4ID == traj_id; };
+		const auto pred = [&mcId](const caf::SRTrueParticle& part) { return part.G4ID == mcId; };
 		truePartID.part = std::distance(srTrueInt.sec.begin(),
 						std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
 	    }

@@ -64,9 +64,9 @@ namespace cafmaker
       std::vector<float> *m_dirZVect = nullptr;
       std::vector<float> *m_energyVect = nullptr;
       std::vector<int> *m_n3DHitsVect = nullptr;
-      std::vector<long> *m_mcVertexIdVect = nullptr;
+      std::vector<long> *m_mcNuIdVect = nullptr;
+      std::vector<long> *m_mcLocalIdVect = nullptr;
       std::vector<int> *m_isPrimaryVect = nullptr;
-      std::vector<int> *m_mcIdVect = nullptr;
       std::vector<float> *m_completenessVect = nullptr;
 
       float m_LArRho{1.3973f}; // LAr density (g/cm3)
