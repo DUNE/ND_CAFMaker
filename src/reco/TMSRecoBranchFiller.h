@@ -52,12 +52,14 @@ namespace cafmaker
       int _nTracks;
       int _nHitsInTrack[10];
       float _TrackLength[10];
-      float _TrackCharge[10];
+      int _TrackCharge[10];
+      float _TrackMomentum[10];
       float _TrackTotalEnergy[10];
       float _TrackEnergyDeposit[10];
       float _TrackStartPos[10][3];
       float _TrackEndPos[10][3];
-      float _TrackDirection[10][3];
+      float _TrackStartDirection[10][3];
+      float _TrackEndDirection[10][3];
       float _Occupancy[10];
 
       float _DirectionX_Downstream[10];
@@ -65,9 +67,9 @@ namespace cafmaker
       float _DirectionX_Upstream[10];
       float _DirectionZ_Upstream[10];
 
-      // [10][200][2] needs to match TMS reco output (check file if in doubt)
-      float _TrackHitPos[10][200][2];
-      float _TrackRecoHitPos[10][200][2];
+      // [100][200][4] needs to match TMS reco output (check file if in doubt)
+      float _TrackHitPos[100][200][4];
+      float _TrackRecoHitPos[100][200][4];
 
       bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;
