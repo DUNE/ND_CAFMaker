@@ -179,7 +179,7 @@ namespace cafmaker
 	    truePartID.type = caf::TrueParticleID::kSecondary;
 	}
 
-	try
+	if (mcNuId != 0)
 	{
 	    // Get the true interaction in the stack
 	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, mcNuId);
@@ -194,10 +194,6 @@ namespace cafmaker
 		truePartID.part = std::distance(srTrueInt.sec.begin(),
 						std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
 	    }
-	}
-	catch (...)
-	{
-	    LOG.VERBOSE() << "Could not fill some of the truth information" << "\n";
 	}
 
 	// Just store the best MC match
@@ -274,7 +270,7 @@ namespace cafmaker
 	    truePartID.type = caf::TrueParticleID::kSecondary;
 	}
 
-	try
+	if (mcNuId != 0)
 	{
 	    // Get the true interaction in the stack
 	    caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, mcNuId);
@@ -289,10 +285,6 @@ namespace cafmaker
 		truePartID.part = std::distance(srTrueInt.sec.begin(),
 						std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
 	    }
-	}
-	catch (...)
-	{
-	    LOG.VERBOSE() << "Could not fill some of the truth information" << "\n";
 	}
 
 	// Just store the best MC match
