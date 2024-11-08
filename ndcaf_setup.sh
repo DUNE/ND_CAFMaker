@@ -14,7 +14,6 @@ setup duneanaobj v03_06_01b -q e20:prof
 setup hdf5 v1_10_5a -q e20
 setup fhiclcpp v4_15_03 -q debug:e20
 setup edepsim v3_2_0c -q debug:e20
-setup root v6_26_06b -q e20:p3913:prof
 
 export LD_LIBRARY_PATH=$CURL_ROOT/lib:$LD_LIBRARY_PATH
 

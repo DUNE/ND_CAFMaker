@@ -1,30 +1,26 @@
 #include "PandoraLArRecoNDBranchFiller.h"
 
+#include "Params.h"
+
 namespace cafmaker
 {
 
-  PandoraLArRecoNDBranchFiller::~PandoraLArRecoNDBranchFiller()
-  {
-      if (m_LArRecoNDFile && m_LArRecoNDFile->IsOpen())
-      {
-	  delete m_LArRecoNDTree; m_LArRecoNDTree = nullptr;
-      }
-      delete m_LArRecoNDFile; m_LArRecoNDFile = nullptr;      
-  }
-
-  PandoraLArRecoNDBranchFiller::PandoraLArRecoNDBranchFiller(const std::string &pandoraLArRecoNDFilename)
+  PandoraLArRecoNDBranchFiller::PandoraLArRecoNDBranchFiller(const std::string &pandoraLArRecoNDFilename,
+							     const float LArDensity)
   : IRecoBranchFiller("PandoraLArRecoND"),
     m_Triggers(),
-    m_LastTriggerReqd(m_Triggers.end())
+    m_LastTriggerReqd(m_Triggers.end()),
+    m_LArDensity(LArDensity)
   {
       // Open Pandora LArRecoND hierarchy analysis ROOT file
-      m_LArRecoNDFile = TFile::Open(pandoraLArRecoNDFilename.c_str(), "read");
+      m_LArRecoNDFile.reset(TFile::Open(pandoraLArRecoNDFilename.c_str(), "read"));
+
       if (m_LArRecoNDFile && m_LArRecoNDFile->IsOpen()) {
 
 	  LOG.VERBOSE() << " Using PandoraLArRecoND file " << pandoraLArRecoNDFilename << "\n";
 	  
 	  // Input tree
-	  m_LArRecoNDTree = dynamic_cast<TTree*>(m_LArRecoNDFile->Get("LArRecoND"));
+	  m_LArRecoNDTree.reset(dynamic_cast<TTree*>(m_LArRecoNDFile->Get("LArRecoND")));
 	  if (!m_LArRecoNDTree) {
 	      LOG.FATAL() << "Did not find LArRecoND tree in input file " << pandoraLArRecoNDFilename << "\n";
 	      throw;
@@ -102,8 +98,8 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-    void PandoraLArRecoNDBranchFiller::FillTracks(caf::StandardRecord &sr, const int nClusters,
-						  const TruthMatcher *truthMatch) const
+  void PandoraLArRecoNDBranchFiller::FillTracks(caf::StandardRecord &sr, const int nClusters,
+						const TruthMatcher *truthMatch) const
   {
     // Create tracks for each PFO (cluster) in the event
     LOG.VERBOSE() << " Pandora LArRecoND FillTracks using " << nClusters <<" PFO clusters\n";
@@ -155,7 +151,7 @@ namespace cafmaker
 	track.len_cm = sqrt(dX*dX + dY*dY + dZ*dZ);
 
 	// Cluster length multiplied by LAr density (g/cm2)
-	track.len_gcm2 = track.len_cm*m_LArRho;
+	track.len_gcm2 = track.len_cm*m_LArDensity;
 
 	// Use truth matching info from Pandora's LArContent hierarchy tools.
 	// For LArRecoND MC SpacePoints, we use the unique file_traj_id's
@@ -214,8 +210,8 @@ namespace cafmaker
   }
     
   // ------------------------------------------------------------------------------
-    void PandoraLArRecoNDBranchFiller::FillShowers(caf::StandardRecord &sr, const int nClusters,
-						   const TruthMatcher *truthMatch) const
+  void PandoraLArRecoNDBranchFiller::FillShowers(caf::StandardRecord &sr, const int nClusters,
+						 const TruthMatcher *truthMatch) const
   {
     // Create showers for each PFO (cluster) in the event
     LOG.VERBOSE() << " Pandora LArRecoND FillShowers using " << nClusters <<" PFO clusters\n";

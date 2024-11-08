@@ -6,9 +6,7 @@
 #ifndef ND_CAFMAKER_PandoraLArRecoNDBranchFiller_H
 #define ND_CAFMAKER_PandoraLArRecoNDBranchFiller_H
 
-#include <iostream>
 #include <vector>
-#include <algorithm>
 
 // The virtual base class
 #include "reco/IRecoBranchFiller.h"
@@ -26,25 +24,24 @@ namespace cafmaker
   class PandoraLArRecoNDBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      PandoraLArRecoNDBranchFiller(const std::string & pandoraLArRecoNDFilename);
+      PandoraLArRecoNDBranchFiller(const std::string &pandoraLArRecoNDFilename,
+				   const float LArDensity = 1.3973);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const  override;
+      std::deque<Trigger> GetTriggers(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
-
-      ~PandoraLArRecoNDBranchFiller();
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
 			     caf::StandardRecord &sr,
 			     const cafmaker::Params &par,
-			     const TruthMatcher *truthMatch= nullptr) const override;
+			     const TruthMatcher *truthMatch = nullptr) const override;
 
       void FillTracks(caf::StandardRecord &sr, const int nClusters, const TruthMatcher *truthMatch) const;
       void FillShowers(caf::StandardRecord &sr, const int nClusters, const TruthMatcher *truthMatch) const;
       
-      TFile *m_LArRecoNDFile;
-      TTree *m_LArRecoNDTree;
+      std::unique_ptr<TFile> m_LArRecoNDFile;
+      std::unique_ptr<TTree> m_LArRecoNDTree;
 
       int m_eventId;
       int m_run;
@@ -69,13 +66,9 @@ namespace cafmaker
       std::vector<int> *m_isPrimaryVect = nullptr;
       std::vector<float> *m_completenessVect = nullptr;
 
-      float m_LArRho{1.3973f}; // LAr density (g/cm3)
-
-      int m_nuIdOffset{100000000};
-      int m_maxMCId{1000000};
-
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
+      const float m_LArDensity;
   };
 
 }

@@ -143,7 +143,8 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   std::string pandoraFile;
   if (par().cafmaker().pandoraLArRecoNDFile(pandoraFile))
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::PandoraLArRecoNDBranchFiller>(pandoraFile));
+    const float LArDensity = par().pseudoReco().LArDensity(); // For track lengths in g/cm2
+    recoFillers.emplace_back(std::make_unique<cafmaker::PandoraLArRecoNDBranchFiller>(pandoraFile, LArDensity));
     std::cout << "  Pandora LArRecoND\n";
   }
 

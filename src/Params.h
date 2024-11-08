@@ -45,7 +45,6 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };
-
     
     // this is optional by way of the default value. Will result in an extra output file if enabled
     fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
@@ -91,6 +90,7 @@ namespace cafmaker
     fhicl::Atom<double> gastpc_B        { fhicl::Name("gastpc_B"),        fhicl::Comment("Gas TPC B field strength (Tesla)"),                            0.4 };
     fhicl::Atom<double> gastpc_padPitch { fhicl::Name("gastpc_padPitch"), fhicl::Comment("(Fixed) pad pitch of gas TPC (cm)"),                           0.1 };  // Actual pad pitch varies, which is going to be impossible to implement
     fhicl::Atom<double> gastpc_X0       { fhicl::Name("gastpc_X0"),       fhicl::Comment("Gas TPC radiation length (cm)"),                               1300. };
+    fhicl::Atom<float> LArDensity       { fhicl::Name("LArDensity"),      fhicl::Comment("LAr density (g/cm3)"),                                         1.3973 };
   };
 
   /// FHICL table specifying which params are accepted
