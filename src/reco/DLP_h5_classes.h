@@ -5,7 +5,7 @@
 //
 //    The invocation that generated this file was:
 //
-//       h5_to_cpp.py -f MiniRun5_1E19_RHC.flow.0000000.flash.larcv_spine.h5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
+//       h5_to_cpp.py -f MiniRun6.1_1E19_RHC.flow.0000001.LARCV_spine.h5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
@@ -202,32 +202,32 @@ namespace cafmaker::types::dlp
   
   struct Event
   {
-    hdset_reg_ref_t depositions_label;
-    hdset_reg_ref_t reco_interactions;
-    hdset_reg_ref_t depositions;
-    hdset_reg_ref_t trigger;
     hdset_reg_ref_t points;
-    hdset_reg_ref_t truth_interactions;
-    hdset_reg_ref_t run_info;
-    hdset_reg_ref_t index;
     hdset_reg_ref_t truth_particles;
-    hdset_reg_ref_t meta;
+    hdset_reg_ref_t depositions;
     hdset_reg_ref_t reco_particles;
+    hdset_reg_ref_t meta;
+    hdset_reg_ref_t reco_interactions;
     hdset_reg_ref_t points_label;
+    hdset_reg_ref_t truth_interactions;
+    hdset_reg_ref_t depositions_label;
+    hdset_reg_ref_t trigger;
+    hdset_reg_ref_t index;
     hdset_reg_ref_t flashes;
+    hdset_reg_ref_t run_info;
     
     void SyncVectors();
     
     template <typename T>
     const hdset_reg_ref_t& GetRef() const
     {
-      if constexpr(std::is_same_v<T, Interaction>) return reco_interactions;
-      else if(std::is_same_v<T, Trigger>) return trigger;
-      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
-      else if(std::is_same_v<T, RunInfo>) return run_info;
-      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
+      if constexpr(std::is_same_v<T, TrueParticle>) return truth_particles;
       else if(std::is_same_v<T, Particle>) return reco_particles;
+      else if(std::is_same_v<T, Interaction>) return reco_interactions;
+      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
+      else if(std::is_same_v<T, Trigger>) return trigger;
       else if(std::is_same_v<T, Flash>) return flashes;
+      else if(std::is_same_v<T, RunInfo>) return run_info;
     }
     
   };
@@ -255,8 +255,9 @@ namespace cafmaker::types::dlp
     std::array<float, 3> vertex;
     bool is_fiducial;
     bool is_flash_matched;
-    int64_t flash_id;
-    double flash_time;
+    BufferView<int32_t> flash_ids;
+    BufferView<int32_t> flash_volume_ids;
+    BufferView<int32_t> flash_times;
     double flash_total_pe;
     double flash_hypo_pe;
     char * topology;
@@ -276,6 +277,9 @@ namespace cafmaker::types::dlp
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t particle_ids_handle;
+    hvl_t flash_ids_handle;
+    hvl_t flash_volume_ids_handle;
+    hvl_t flash_times_handle;
   };
   
   
@@ -301,21 +305,26 @@ namespace cafmaker::types::dlp
     Pid pid;
     int64_t pdg_code;
     bool is_primary;
-    double length;
+    float length;
     std::array<float, 3> start_point;
     std::array<float, 3> end_point;
     std::array<float, 3> start_dir;
     std::array<float, 3> end_dir;
+    double mass;
     double ke;
     double calo_ke;
     double csda_ke;
+    std::array<float, 6> csda_ke_per_pid;
     double mcs_ke;
+    std::array<float, 6> mcs_ke_per_pid;
     std::array<float, 3> momentum;
     float p;
     bool is_valid;
     std::array<float, 6> pid_scores;
     std::array<float, 2> primary_scores;
     BufferView<int32_t> ppn_ids;
+    double vertex_distance;
+    double shower_split_angle;
     
     void SyncVectors();
     
@@ -355,6 +364,7 @@ namespace cafmaker::types::dlp
     float depositions_q_sum;
     BufferView<int64_t> index_adapt;
     int64_t size_adapt;
+    int64_t size_g4;
     float depositions_adapt_sum;
     float depositions_adapt_q_sum;
     BufferView<int64_t> index_g4;
@@ -366,8 +376,9 @@ namespace cafmaker::types::dlp
     std::array<float, 3> vertex;
     bool is_fiducial;
     bool is_flash_matched;
-    int64_t flash_id;
-    double flash_time;
+    BufferView<int32_t> flash_ids;
+    BufferView<int32_t> flash_volume_ids;
+    BufferView<int32_t> flash_times;
     double flash_total_pe;
     double flash_hypo_pe;
     char * topology;
@@ -415,6 +426,9 @@ namespace cafmaker::types::dlp
     hvl_t index_adapt_handle;
     hvl_t index_g4_handle;
     hvl_t particle_ids_handle;
+    hvl_t flash_ids_handle;
+    hvl_t flash_volume_ids_handle;
+    hvl_t flash_times_handle;
   };
   
   
@@ -437,6 +451,7 @@ namespace cafmaker::types::dlp
     float depositions_q_sum;
     BufferView<int64_t> index_adapt;
     int64_t size_adapt;
+    int64_t size_g4;
     float depositions_adapt_sum;
     float depositions_adapt_q_sum;
     BufferView<int64_t> index_g4;
@@ -453,10 +468,13 @@ namespace cafmaker::types::dlp
     std::array<float, 3> end_point;
     std::array<float, 3> start_dir;
     std::array<float, 3> end_dir;
+    double mass;
     double ke;
     double calo_ke;
     double csda_ke;
+    std::array<float, 6> csda_ke_per_pid;
     double mcs_ke;
+    std::array<float, 6> mcs_ke_per_pid;
     std::array<float, 3> momentum;
     float p;
     bool is_valid;
@@ -482,6 +500,7 @@ namespace cafmaker::types::dlp
     char * parent_creation_process;
     char * ancestor_creation_process;
     double t;
+    double end_t;
     double parent_t;
     double ancestor_t;
     std::array<float, 3> position;
@@ -494,6 +513,7 @@ namespace cafmaker::types::dlp
     float end_p;
     int64_t orig_interaction_id;
     BufferView<int64_t> children_counts;
+    double reco_length;
     std::array<float, 3> reco_start_dir;
     std::array<float, 3> reco_end_dir;
     
@@ -522,17 +542,18 @@ namespace cafmaker::types::dlp
   struct Flash
   {
     int64_t id;
+    int64_t volume_id;
     int64_t frame;
     uint8_t in_beam_frame;
-    int64_t on_beam_time;
+    uint8_t on_beam_time;
     double time;
     double time_width;
     double time_abs;
     double total_pe;
     double fast_to_total;
     BufferView<float> pe_per_ch;
-    std::array<double, 3> center;
-    std::array<double, 3> width;
+    std::array<float, 3> center;
+    std::array<float, 3> width;
     char * units;
     
     void SyncVectors();
