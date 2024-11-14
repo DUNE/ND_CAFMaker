@@ -714,7 +714,6 @@ namespace cafmaker
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
-                    << "gen ID = " << truePartPassThrough.track_id << "; "
                     << "interaction ID = " << truePartPassThrough.interaction_id << "; "
                     << "is primary = " << truePartPassThrough.is_primary << "; "
                     << "pdg = " << truePartPassThrough.pdg_code << "; "
