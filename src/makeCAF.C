@@ -264,7 +264,6 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
     // do they have any events in them that should go in this group?
     std::vector<decltype(triggersByFiller)::key_type> trigStreamsToRemove;  // since we can't edit the `triggersByFiller` group without invalidating its iterators
     std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> & trigGroup = ret.back();
-    const cafmaker::Trigger & trigSeed = trigGroup.front().second;
     LOG().VERBOSE() << "    Considering other triggers:\n";
     for (auto & fillerTrigPair : triggersByFiller)
     {
@@ -281,7 +280,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
         // we will only take at most one trigger from each of the other streams.
         // since the seed was the earliest one out of all the triggers,
         // we only need to check the first one in each other stream
-        if (doTriggersMatch( trigSeed, fillerTrigPair.second.front(), trigMatchMaxDT))
+        if (doTriggersMatch( trigGroup.front().second, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
           ss << " -->  MATCHES\n";
           trigGroup.push_back({fillerTrigPair.first, std::move(fillerTrigPair.second.front())});
