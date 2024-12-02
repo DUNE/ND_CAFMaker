@@ -2,17 +2,7 @@
 
 nd_cafmaker: @local::standard_nd_cafmaker
 
-#nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/dune/data/users/jwolcott/nd/nd-lar-reco/cafmaker_input/neutrino.LArTMSProductionJun23withLArCV.99.ghep.root"
-#nd_cafmaker.CAFMakerSettings.OutputFile: "/dune/data/users/jwolcott/scratch/neutrino.LArTMSProductionJun23withLArCV.99.caf.root"
-#nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/dune/data/users/jwolcott/nd/nd-lar-reco/cafmaker_input/neutrino.LArTMSProductionJun23withLArCV.99.summary.h5"
 
-# CWret test setup
-nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/dune/data/users/cwret/tms/dune_nd_production_2022_v1/genie/00/neutrino.0_1649778420.ghep.root"
-#nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/dune/data/users/
-nd_cafmaker.CAFMakerSettings.TMSRecoFile: "/dune/app/users/cwret/SSRI/dune-ssri/neutrino.0_1649778420.edep_TMS_RecoCandidates_Hough_Cluster1.root"
-nd_cafmaker.CAFMakerSettings.OutputFile: "/dune/app/users/cwret/ND_CAFMaker/out_caf.root"
-
-# SAND test setup
-#nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/pnfs/dune/scratch/users/mvicenzi/100k_FHC.0.fast-reco.root"
-#nd_cafmaker.CAFMakerSettings.InputGHEPFile: "/pnfs/dune/scratch/users/mvicenzi/100k_FHC.0.ghep.root"
-#nd_cafmaker.CAFMakerSettings.OutputFile: "/pnfs/dune/scratch/users/mvicenzi/test_SAND_CAF.root"
+nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-STTtracker.12.reco.root"
+nd_cafmaker.CAFMakerSettings.GHEPFiles: ["/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-STTtracker.12.ghep.root"]
+nd_cafmaker.CAFMakerSettings.OutputFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-STTtracker.12.SAND_CAF.root"

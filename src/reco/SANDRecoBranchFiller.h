@@ -20,7 +20,7 @@ namespace cafmaker
   {
     public:
       SANDRecoBranchFiller(const std::string &SANDRecoFilename);
-
+      
       std::deque<Trigger> GetTriggers(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
@@ -32,9 +32,17 @@ namespace cafmaker
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;
 
+
+      void FillECalClusters(const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr, int event_num) const;
+
       TFile* fSANDRecoFile;
-      TTree* fTree;
+      TTree* NDSANDRecoTree;
       struct event* fEvent;
+
+      mutable std::vector<cafmaker::Trigger> fTriggers;
+      mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
+  
   };
 
 }
