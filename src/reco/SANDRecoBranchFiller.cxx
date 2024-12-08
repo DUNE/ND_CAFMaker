@@ -78,31 +78,98 @@ namespace cafmaker
       //   return;
       // }
 
-      //TLeaf *cluster_energy = cluster->FindLeaf("e");
+      //TLeaf *energy = cluster->FindLeaf("e");
       NDSANDRecoTree->GetEntry(event_num);
-      TLeaf* cluster_energy = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.e");
-      if (!cluster_energy)
+      TLeaf* energy = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.e");
+      TLeaf* position_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.x");
+      TLeaf* position_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.y");
+      TLeaf* position_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.z");
+      TLeaf* var_positionx = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.varx");
+      TLeaf* var_positiony = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.vary");
+      TLeaf* var_positionz = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.varz");
+      TLeaf* cluster_time = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.t");
+      TLeaf* apex_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.ax");
+      TLeaf* apex_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.ay");
+      TLeaf* apex_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.az");
+      TLeaf* dir_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sx");
+      TLeaf* dir_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sy");
+      TLeaf* dir_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sz");
+      TLeaf* id = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.tid");
+
+      // if (!energy || !position_x || !position_y  || !position_z || !var_positionx || 
+      // !var_positiony || !var_positionz || !cluster_time|| !apex_x || !apex_y || !apex_z ||
+      //  !dir_x || !dir_y || !dir_z )//!id)
+      // {
+      //   std::cerr << "Error: leaf not found in cluster" << std::endl;
+      //   return;
+      // }
+
+       if (!energy )
       {
-        std::cerr << "Error: energy not found in cluster" << std::endl;
+        std::cerr << "Error: energy leaf not found in cluster" << std::endl;
         return;
       }
 
-      int num_clusters = cluster_energy->GetLen();
-      size_t nclusters = num_clusters;
-      std::cout << "EVENT: " << event_num << ",num clusters: "<< num_clusters << std::endl; 
-      sr.nd.sand.ixn.resize(1);
-      //std::cout << "Event " << trigger.evtID << ", cluster energy:" << std::endl; 
-      sr.nd.sand.ixn[0].nshowers = nclusters;
-      sr.nd.sand.ixn[0].showers.resize(num_clusters);
-      std::vector<double> SANDECALClusterEnergy;
-      for (int i = 0; i < num_clusters; i++)
+      if (!position_x || !position_y || !position_z)
       {
-        double energy = cluster_energy->GetValue(i);
-        SANDECALClusterEnergy.push_back(energy);
-        //std::cout << "  Cluster " << i << ": energy(from fECALCLusternergy) = " << SANDECALClusterEnergy.at(i) << " MeV" << std::endl;
-        //shower.Evis = energy; 
-        std::cout << "  Cluster " << i << ": energy = " << energy << " MeV" << std::endl;
-        sr.nd.sand.ixn[0].showers[i].Evis = energy;
+          std::cerr << "Error: position leaf not found in cluster" << std::endl;
+          return;
+      }
+      
+      if (!var_positionx || !var_positiony || !var_positionz)
+      {
+          std::cerr << "Error: var position leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      if (!cluster_time)
+      {
+          std::cerr << "Error: time leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      if (!apex_x || !apex_y || !apex_z)
+      {
+          std::cerr << "Error: apex position leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      if (!dir_x || !dir_y || !dir_z)
+      {
+          std::cerr << "Error: direction leaf not found in cluster" << std::endl;
+          return;
+      }
+      
+      if (!id)
+      {
+          std::cerr << "Error: id leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      size_t n_clusters = energy->GetLen(); //better to use a cluster size 
+      std::cout << "EVENT: " << event_num << ", num clusters: "<< n_clusters << std::endl; 
+      
+      sr.nd.sand.ixn.resize(1);
+      sr.nd.sand.ixn[0].nclusters = n_clusters;
+      sr.nd.sand.ixn[0].ECALClusters.resize(n_clusters);
+      
+      for (int i = 0; i < n_clusters; i++)
+      { 
+        std::cout << "  Cluster " << i << ": energy = " << energy->GetValue(i) << " MeV" << std::endl;
+        std::cout << "position x: " << position_x->GetValue(i) << ",position y: " << position_y->GetValue(i) << ", position z:" << position_z->GetValue(i) << std::endl; 
+        std::cout << "var x: " << var_positionx->GetValue(i) << ", var y: " << var_positiony->GetValue(i) << ", var z:" << var_positionz->GetValue(i) << std::endl; 
+        std::cout << "time: "<< cluster_time->GetValue(i) << std::endl; 
+        std::cout << "apex x: " << apex_x->GetValue(i) << ", apex y: " << apex_y->GetValue(i) << ", apex z:" << apex_z->GetValue(i) << std::endl; 
+        std::cout << "dir x: " << dir_x->GetValue(i) << ", dir y: " << dir_y->GetValue(i) << ", dir z:" << dir_z->GetValue(i) << std::endl; 
+        std::cout << "id: "<< id->GetValue(i) << std::endl; 
+
+        sr.nd.sand.ixn[0].ECALClusters[i].E = energy->GetValue(i);
+        sr.nd.sand.ixn[0].ECALClusters[i].position.SetXYZ(position_x->GetValue(i), position_y->GetValue(i), position_z->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].var_position.SetXYZ(var_positionx->GetValue(i), var_positiony->GetValue(i), var_positionz->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].time = cluster_time->GetValue(i);
+        sr.nd.sand.ixn[0].ECALClusters[i].start.SetXYZ(apex_x->GetValue(i), apex_y->GetValue(i), apex_z->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].direction.SetXYZ(dir_x->GetValue(i), dir_y->GetValue(i), dir_z->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].id = id->GetValue(i);
       }
   }
 
