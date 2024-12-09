@@ -34,11 +34,16 @@ namespace cafmaker
 
 
       void FillECalClusters(const TruthMatcher * truthMatch,
-                            caf::StandardRecord &sr, int event_num) const;
+                            caf::StandardRecord &sr) const;
+
+      void FillInteractions(const TruthMatcher * truthMatch,
+                            caf::StandardRecord &sr) const;
 
       TFile* fSANDRecoFile;
       TTree* NDSANDRecoTree;
-      struct event* fEvent;
+      TTree* NDSANDEventTree;
+      
+      //struct event* fEvent;
 
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()

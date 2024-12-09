@@ -31,12 +31,15 @@ namespace cafmaker
         fLastTriggerReqd(fTriggers.end())
   {
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
-    // NDSANDRecoTree = (TTree*) fSANDRecoFile->Get("tEvent");
     NDSANDRecoTree = (TTree *)fSANDRecoFile->Get("tReco");
-    
+//    NDSANDEventTree = (TTree *)fSANDRecoFile->Get("tEvent");
+//    NDSANDRecoTree->AddFriend(NDSANDEventTree);
+     
     // fEvent = new event;
+    std::cout<<"Number of entries "<<NDSANDRecoTree->GetEntries()<<std::endl;
+    
 
-    if (!fSANDRecoFile->IsZombie())
+     if (!fSANDRecoFile->IsZombie())
       SetConfigured(true);
   }
 
@@ -58,18 +61,79 @@ namespace cafmaker
     }
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
     int event_num = idx;
+    NDSANDRecoTree->GetEntry(event_num);
+    
     sr.meta.sand.event = event_num;
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
-    FillECalClusters(truthMatcher, sr, event_num);
-    
-    
+    FillInteractions(truthMatcher, sr); 
+    FillECalClusters(truthMatcher, sr);
 
   }
 
-  void SANDRecoBranchFiller::FillECalClusters(const TruthMatcher * truthMatch,
-                                                caf::StandardRecord &sr, int event_num) const
+void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
+                                               caf::StandardRecord &sr) const
   {
-  //NDSANDRecoTree->GetEntry(idx);
+    // F says: our GArSoft samples contain one neutrino interaction
+    //         per event/trigger (I think we can easily change that?)
+    //         so we only need one interaction object in the common
+    //         reco branch so far
+    sr.common.ixn.sandreco.reserve(1);
+    sr.common.ixn.nsandreco = 1;
+
+    //         now we have one interaction per event/trigger
+    //         so we simply need to create an SRInteraction and assign a
+    //         dummy id of 1 to it
+
+    caf::SRInteraction interaction;
+    interaction.id  = 1;
+   /* 
+    TLeaf* Enureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("Enureco");
+    TLeaf* pxnureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("pxnureco");
+    TLeaf* pynureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("pynureco");
+    TLeaf* pznureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("pznureco");
+    
+    TLeaf* xvertex = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("x");
+    TLeaf* yvertex = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("y");
+    TLeaf* zvertex = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("z");
+
+    if (!Enureco)
+      {
+        std::cerr << "Error: energy not found in cluster" << std::endl;
+        return;
+      }
+    */
+    
+    //interaction.vtx  = caf::SRVector3D(xvertex->GetValue(0), yvertex->GetValue(0), zvertex->GetValue(0)); 
+    interaction.vtx  = caf::SRVector3D(10.0, 11.0, 12.0); 
+
+ //   interaction.Enu.calo = Enureco->GetValue(0);
+ //   interaction.Enu.momentum.SetXYZ(pxnureco->GetValue(0),pynureco->GetValue(0),pznureco->GetValue(0));
+    float Enureco=12.0;
+    interaction.Enu.calo = Enureco;
+    interaction.Enu.momentum.SetXYZ(20.0,21.0, 22.0);
+ 
+    int nparticles=5; //legge la size del vettore particle del tree
+ 
+
+    interaction.part.npida = nparticles;  
+    interaction.part.pida.resize(nparticles);  
+
+    for(int i=0; i<nparticles; i++){
+     interaction.part.pida[i].primary=false;
+     interaction.part.pida[i].pdg=10.0*i;
+     interaction.part.pida[i].start=caf::SRVector3D(i,i,i);
+     interaction.part.pida[i].end=caf::SRVector3D(i*10,i*10,i*10);
+     interaction.part.pida[i].p=caf::SRVector3D(i*0.1,i*0.1,i*0.1);
+    }
+
+
+    sr.common.ixn.sandreco.push_back(std::move(interaction));
+}
+
+
+  void SANDRecoBranchFiller::FillECalClusters(const TruthMatcher * truthMatch,
+                                                caf::StandardRecord &sr) const
+  {
 
       // TBranch *cluster = NDSANDRecoTree->GetBranch("cluster");
       // if (!cluster)
@@ -79,7 +143,6 @@ namespace cafmaker
       // }
 
       //TLeaf *cluster_energy = cluster->FindLeaf("e");
-      NDSANDRecoTree->GetEntry(event_num);
       TLeaf* cluster_energy = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.e");
       if (!cluster_energy)
       {
@@ -89,7 +152,7 @@ namespace cafmaker
 
       int num_clusters = cluster_energy->GetLen();
       size_t nclusters = num_clusters;
-      std::cout << "EVENT: " << event_num << ",num clusters: "<< num_clusters << std::endl; 
+      std::cout <<" num clusters: "<< num_clusters << std::endl; 
       sr.nd.sand.ixn.resize(1);
       //std::cout << "Event " << trigger.evtID << ", cluster energy:" << std::endl; 
       sr.nd.sand.ixn[0].nshowers = nclusters;
@@ -116,6 +179,8 @@ namespace cafmaker
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "\n";
       fTriggers.reserve(n_entries);
 
+      std::cout<<"creating triggers"<<std::endl;
+
       for (size_t i = 0; i < n_entries; i++)
       {
 
@@ -127,6 +192,7 @@ namespace cafmaker
           continue;
         }
 
+        
         NDSANDRecoTree->GetEntry(i);
 
         fTriggers.emplace_back();
@@ -156,6 +222,7 @@ namespace cafmaker
           triggers.push_back(trigger);
       }
     }
+    std::cout<<"Trigger completed!"<<std::endl;
     return triggers;
   }
 }
