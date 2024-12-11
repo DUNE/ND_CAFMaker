@@ -12,15 +12,14 @@
 #include "truth/FillTruth.h"
 
 // #ifdef ENABLE_SAND
-#warning Including SANDRecoBranchFiller in build
+//#warning Including SANDRecoBranchFiller in build
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
 #include "TFile.h"
 #include "TSystem.h"
 #include "TTree.h"
-
-// #include "SANDReco/SANDRecord.h"
+#include "struct.h"
 
 namespace cafmaker
 {
@@ -32,20 +31,16 @@ namespace cafmaker
   {
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
     NDSANDRecoTree = (TTree *)fSANDRecoFile->Get("tReco");
-//    NDSANDEventTree = (TTree *)fSANDRecoFile->Get("tEvent");
-//    NDSANDRecoTree->AddFriend(NDSANDEventTree);
-     
-    // fEvent = new event;
-    std::cout<<"Number of entries "<<NDSANDRecoTree->GetEntries()<<std::endl;
+    NDSANDEventTree = (TTree *)fSANDRecoFile->Get("tEvent");
+   
+    fEvent = new event;
+    NDSANDEventTree->SetBranchAddress("event", &fEvent);  
     
-
+    std::cout<<"Number of entries "<<NDSANDEventTree->GetEntries()<<std::endl;
      if (!fSANDRecoFile->IsZombie())
       SetConfigured(true);
   }
 
-  // void SANDRecoBranchFiller::_FillRecoBranches(std::size_t N, std::size_t ii,
-  //                                              caf::StandardRecord &sr,
-  //                                              const cafmaker::Params &par) const
   void SANDRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                caf::StandardRecord &sr,
                                                const cafmaker::Params &par, const TruthMatcher *truthMatcher) const
@@ -62,6 +57,8 @@ namespace cafmaker
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
     int event_num = idx;
     NDSANDRecoTree->GetEntry(event_num);
+    NDSANDEventTree->GetEntry(event_num);
+    std::cout<<"Fatta entry"<<std::endl;
     
     sr.meta.sand.event = event_num;
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
@@ -73,10 +70,8 @@ namespace cafmaker
 void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
                                                caf::StandardRecord &sr) const
   {
-    // F says: our GArSoft samples contain one neutrino interaction
-    //         per event/trigger (I think we can easily change that?)
-    //         so we only need one interaction object in the common
-    //         reco branch so far
+    //  now samples contain one neutrino interaction
+    //  per event/trigger 
     sr.common.ixn.sandreco.reserve(1);
     sr.common.ixn.nsandreco = 1;
 
@@ -86,46 +81,24 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
 
     caf::SRInteraction interaction;
     interaction.id  = 1;
-   /* 
-    TLeaf* Enureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("Enureco");
-    TLeaf* pxnureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("pxnureco");
-    TLeaf* pynureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("pynureco");
-    TLeaf* pznureco = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("pznureco");
-    
-    TLeaf* xvertex = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("x");
-    TLeaf* yvertex = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("y");
-    TLeaf* zvertex = (TLeaf*) NDSANDEventTree->GetListOfLeaves()->FindObject("z");
-
-    if (!Enureco)
-      {
-        std::cerr << "Error: energy not found in cluster" << std::endl;
-        return;
-      }
-    */
-    
-    //interaction.vtx  = caf::SRVector3D(xvertex->GetValue(0), yvertex->GetValue(0), zvertex->GetValue(0)); 
-    interaction.vtx  = caf::SRVector3D(10.0, 11.0, 12.0); 
-
- //   interaction.Enu.calo = Enureco->GetValue(0);
- //   interaction.Enu.momentum.SetXYZ(pxnureco->GetValue(0),pynureco->GetValue(0),pznureco->GetValue(0));
-    float Enureco=12.0;
-    interaction.Enu.calo = Enureco;
-    interaction.Enu.momentum.SetXYZ(20.0,21.0, 22.0);
+    //std::cout<<"event.x "<<fEvent->x<<std::endl;
+   
+    interaction.vtx  = caf::SRVector3D(fEvent->x,fEvent->y,fEvent->z); 
+    interaction.Enu.calo = fEvent->Enureco;
+    interaction.dir.sandreco_mom.SetXYZ(fEvent->pxnureco,fEvent->pynureco,fEvent->pznureco);
  
-    int nparticles=5; //legge la size del vettore particle del tree
+    int nparticles=fEvent->particles.size(); 
  
-
-    interaction.part.npida = nparticles;  
-    interaction.part.pida.resize(nparticles);  
+    interaction.part.nsandreco = nparticles;  
+    interaction.part.sandreco.resize(nparticles);  
 
     for(int i=0; i<nparticles; i++){
-     interaction.part.pida[i].primary=false;
-     interaction.part.pida[i].pdg=10.0*i;
-     interaction.part.pida[i].start=caf::SRVector3D(i,i,i);
-     interaction.part.pida[i].end=caf::SRVector3D(i*10,i*10,i*10);
-     interaction.part.pida[i].p=caf::SRVector3D(i*0.1,i*0.1,i*0.1);
+     if(fEvent->particles.at(i).primary==1) interaction.part.sandreco[i].primary=true;
+     else if (fEvent->particles.at(i).primary==0) interaction.part.sandreco[i].primary=false;
+     interaction.part.sandreco[i].pdg=fEvent->particles.at(i).pdg;
+     interaction.part.sandreco[i].start=caf::SRVector3D(fEvent->particles.at(i).xreco,fEvent->particles.at(i).yreco,fEvent->particles.at(i).zreco);
+     interaction.part.sandreco[i].p=caf::SRVector3D(fEvent->particles.at(i).pxreco,fEvent->particles.at(i).pyreco,fEvent->particles.at(i).pzreco);
     }
-
 
     sr.common.ixn.sandreco.push_back(std::move(interaction));
 }
@@ -135,37 +108,90 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
                                                 caf::StandardRecord &sr) const
   {
 
-      // TBranch *cluster = NDSANDRecoTree->GetBranch("cluster");
-      // if (!cluster)
-      // {
-      //   std::cerr << "Error: cluster branch not found in tReco tree" << std::endl;
-      //   return;
-      // }
-
-      //TLeaf *cluster_energy = cluster->FindLeaf("e");
-      TLeaf* cluster_energy = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.e");
-      if (!cluster_energy)
+      TLeaf* energy = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.e");
+      TLeaf* position_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.x");
+      TLeaf* position_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.y");
+      TLeaf* position_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.z");
+      TLeaf* var_positionx = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.varx");
+      TLeaf* var_positiony = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.vary");
+      TLeaf* var_positionz = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.varz");
+      TLeaf* cluster_time = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.t");
+      TLeaf* apex_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.ax");
+      TLeaf* apex_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.ay");
+      TLeaf* apex_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.az");
+      TLeaf* dir_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sx");
+      TLeaf* dir_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sy");
+      TLeaf* dir_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sz");
+      TLeaf* id = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.tid");
+       
+      if (!energy )
       {
-        std::cerr << "Error: energy not found in cluster" << std::endl;
+        std::cerr << "Error: energy leaf not found in cluster" << std::endl;
         return;
       }
 
-      int num_clusters = cluster_energy->GetLen();
-      size_t nclusters = num_clusters;
-      std::cout <<" num clusters: "<< num_clusters << std::endl; 
-      sr.nd.sand.ixn.resize(1);
-      //std::cout << "Event " << trigger.evtID << ", cluster energy:" << std::endl; 
-      sr.nd.sand.ixn[0].nshowers = nclusters;
-      sr.nd.sand.ixn[0].showers.resize(num_clusters);
-      std::vector<double> SANDECALClusterEnergy;
-      for (int i = 0; i < num_clusters; i++)
+      
+      if (!position_x || !position_y || !position_z)
       {
-        double energy = cluster_energy->GetValue(i);
-        SANDECALClusterEnergy.push_back(energy);
-        //std::cout << "  Cluster " << i << ": energy(from fECALCLusternergy) = " << SANDECALClusterEnergy.at(i) << " MeV" << std::endl;
-        //shower.Evis = energy; 
-        std::cout << "  Cluster " << i << ": energy = " << energy << " MeV" << std::endl;
-        sr.nd.sand.ixn[0].showers[i].Evis = energy;
+          std::cerr << "Error: position leaf not found in cluster" << std::endl;
+          return;
+      }
+      
+      if (!var_positionx || !var_positiony || !var_positionz)
+      {
+          std::cerr << "Error: var position leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      if (!cluster_time)
+      {
+          std::cerr << "Error: time leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      if (!apex_x || !apex_y || !apex_z)
+      {
+          std::cerr << "Error: apex position leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      if (!dir_x || !dir_y || !dir_z)
+      {
+          std::cerr << "Error: direction leaf not found in cluster" << std::endl;
+          return;
+      }
+      
+      if (!id)
+      {
+          std::cerr << "Error: id leaf not found in cluster" << std::endl;
+          return;
+      }
+
+      size_t n_clusters = energy->GetLen(); //better to use a cluster size 
+      std::cout <<" num clusters: "<< n_clusters << std::endl; 
+      
+      sr.nd.sand.ixn.resize(1);
+      sr.nd.sand.ixn[0].nclusters = n_clusters;
+      sr.nd.sand.ixn[0].ECALClusters.resize(n_clusters);
+      
+      for (size_t i = 0; i < n_clusters; i++)
+      {
+         LOG.VERBOSE() << "  Cluster " << i << ": energy = " << energy->GetValue(i) << " MeV"
+                       << "position x: " << position_x->GetValue(i) << ",position y: " << position_y->GetValue(i) << ", position z:" << position_z->GetValue(i) 
+                       << "var x: " << var_positionx->GetValue(i) << ", var y: " << var_positiony->GetValue(i) << ", var z:" << var_positionz->GetValue(i) 
+                       << "time: "<< cluster_time->GetValue(i) 
+                       << "apex x: " << apex_x->GetValue(i) << ", apex y: " << apex_y->GetValue(i) << ", apex z:" << apex_z->GetValue(i)
+                       << "dir x: " << dir_x->GetValue(i) << ", dir y: " << dir_y->GetValue(i) << ", dir z:" << dir_z->GetValue(i)
+                       << "id: "<< id->GetValue(i) 
+                       << "\n";
+
+        sr.nd.sand.ixn[0].ECALClusters[i].E = energy->GetValue(i);
+        sr.nd.sand.ixn[0].ECALClusters[i].position.SetXYZ(position_x->GetValue(i), position_y->GetValue(i), position_z->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].var_position.SetXYZ(var_positionx->GetValue(i), var_positiony->GetValue(i), var_positionz->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].time = cluster_time->GetValue(i);
+        sr.nd.sand.ixn[0].ECALClusters[i].start.SetXYZ(apex_x->GetValue(i), apex_y->GetValue(i), apex_z->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].direction.SetXYZ(dir_x->GetValue(i), dir_y->GetValue(i), dir_z->GetValue(i));
+        sr.nd.sand.ixn[0].ECALClusters[i].id = id->GetValue(i);
       }
   }
 
@@ -229,8 +255,8 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
 
 // #else // ENABLE_SAND
 
-#warning Not configured to build SANDRecoBranchFiller. Must set SANDRECO_INC and SANDRECO_LIB environment variables
-
+//#warning Not configured to build SANDRecoBranchFiller. Must set SANDRECO_INC and SANDRECO_LIB environment variables
+/*
 namespace
 {
   void error_msg()
@@ -239,30 +265,5 @@ namespace
               << " Either avoid setting `nd_cafmaker.CAFMakerSettings.SANDRecoFile` in your FCL\n"
               << " or set $SANDRECO_INC and $SANDRECO_LIB in your environment and do a clean rebuild of ND_CAFMaker...\n";
   }
-}
-
-// namespace cafmaker
-// {
-//   SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
-//       : IRecoBranchFiller("SAND")
-//   {
-//     error_msg();
-//     abort();
-//   }
-
-//   void SANDRecoBranchFiller::
-//       _FillRecoBranches(const Trigger &, caf::StandardRecord &, const cafmaker::Params &,
-//                         const TruthMatcher *truthMatcher) const
-//   {
-//     error_msg();
-//     abort();
-//   }
-
-//   // todo: this is a placeholder
-//   std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType) const
-//   {
-//     return std::deque<Trigger>();
-//   }
-// }
-
+}*/
 // #endif // ENABLE_SAND
