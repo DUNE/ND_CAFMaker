@@ -43,7 +43,7 @@ namespace cafmaker
       TTree* NDSANDRecoTree;
       TTree* NDSANDEventTree;
       
-      //struct event* fEvent;
+      struct event* fEvent;
 
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
