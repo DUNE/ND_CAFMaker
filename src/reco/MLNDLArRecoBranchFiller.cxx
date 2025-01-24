@@ -439,8 +439,12 @@ namespace cafmaker
       sr.common.ixn.dlp.push_back(std::move(interaction));
       //Fill matched flash info
       caf::FlashMatch flashMatch;
-      //flashMatch.id = ixn.flash_id;
-      //flashMatch.time = ixn.flash_time;
+      for(int i=0; i < (int)ixn.flash_ids.size(); i++)
+      {
+      	flashMatch.ids.push_back(ixn.flash_ids[i]);
+      	flashMatch.tpc_ids.push_back(ixn.flash_volume_ids[i]);
+      	flashMatch.times.push_back(ixn.flash_times[i]);
+      }
       flashMatch.total_pe = ixn.flash_total_pe;
       flashMatch.hypothesis_pe = ixn.flash_hypo_pe;
       sr.nd.lar.dlp[ixnidx].flash.push_back(flashMatch);
@@ -797,7 +801,7 @@ namespace cafmaker
       // fill flash variables for all flashes
 
       opflash.id = flash.id;
-      //opflash.tpc_id = flash.tpc; //TODO
+      opflash.tpc_id = flash.volume_id;
       opflash.time = flash.time;
       opflash.time_width = flash.time_width;
       opflash.total_pe = flash.total_pe;
