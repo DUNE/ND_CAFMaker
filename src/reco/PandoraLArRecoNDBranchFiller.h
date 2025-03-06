@@ -38,11 +38,9 @@ namespace cafmaker
 			     const TruthMatcher *truthMatch = nullptr) const override;
 
       void FillTracks(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-		      const TruthMatcher *truthMatch) const;
+		      std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
       void FillShowers(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-		       const TruthMatcher *truthMatch) const;
-      void FillInteractions(caf::StandardRecord &sr, const std::vector<int> &uniqueSliceIDs,
-			    std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+		       std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
       
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
@@ -72,6 +70,8 @@ namespace cafmaker
       std::vector<float> *m_nuVtxXVect = nullptr;
       std::vector<float> *m_nuVtxYVect = nullptr;
       std::vector<float> *m_nuVtxZVect = nullptr;
+      std::vector<int> *m_isRecoPrimaryVect = nullptr;
+      std::vector<int> *m_recoPDGVect = nullptr;
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
