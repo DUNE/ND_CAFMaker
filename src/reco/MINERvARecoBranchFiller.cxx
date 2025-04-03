@@ -29,10 +29,7 @@ namespace cafmaker
         throw;
       }
 
-      //Meta branches
-      MnvRecoTree->SetBranchAddress("offsetX", &offsetX);
-      MnvRecoTree->SetBranchAddress("offsetY", &offsetY);
-      MnvRecoTree->SetBranchAddress("offsetZ", &offsetZ);
+     
 
       MnvRecoTree->SetBranchAddress("ev_trigger_type", &ev_trigger_type);
       MnvRecoTree->SetBranchAddress("ev_gl_gate", &ev_gl_gate);
@@ -117,6 +114,20 @@ namespace cafmaker
 
       MnvRecoTree->GetEntry(0);
       is_data =  ev_gps_time_sec>1.5e9; 
+
+      //Meta branches
+      if (is_data)
+      {
+          offsetX = 0;
+          offsetY = 218;
+          offsetZ = 6913;
+      }
+      else
+      {
+          MnvRecoTree->SetBranchAddress("offsetX", &offsetX);
+          MnvRecoTree->SetBranchAddress("offsetY", &offsetY);
+          MnvRecoTree->SetBranchAddress("offsetZ", &offsetZ);
+      }
 
 
     } else {
@@ -224,7 +235,7 @@ namespace cafmaker
     sr.meta.minerva.enabled = true;
     sr.meta.minerva.run = ev_run;
     sr.meta.minerva.subrun = ev_sub_run;
-    sr.meta.minerva.event = ev_gate;
+    sr.meta.minerva.event = idx;
     sr.meta.minerva.readoutstart_s = trigger.triggerTime_s;
     sr.meta.minerva.readoutstart_ns = trigger.triggerTime_ns;
 
@@ -269,11 +280,7 @@ namespace cafmaker
       // We offset positions in MINERvA reconstruction so we reofset them here.
       my_track.start = caf::SRVector3D(trk_node_X[i][0]/10.  - offsetX/10. ,trk_node_Y[i][0]/10. - offsetY/10., trk_node_Z[i][0]/10. - offsetZ/10.);
       my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10.  - offsetX/10. ,trk_node_Y[i][trk_nodes[i] -1]/10. - offsetY/10., trk_node_Z[i][trk_nodes[i] -1]/10. - offsetZ/10.);
-      if (is_data)
-      {
-        my_track.start = caf::SRVector3D(trk_node_X[i][0]/10., trk_node_Y[i][0]/10., trk_node_Z[i][0]/10.);
-        my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10., trk_node_Y[i][trk_nodes[i] -1]/10., trk_node_Z[i][trk_nodes[i] -1]/10.);
-      }
+
       // Track info
       my_track.len_cm  = sqrt(pow(trk_node_X[i][trk_nodes[i] -1] - trk_node_X[i][0],2)+pow(trk_node_Y[i][trk_nodes[i] -1] - trk_node_Y[i][0],2)+pow(trk_node_Z[i][trk_nodes[i] -1] - trk_node_Z[i][0],2))/10.;
       my_track.qual      = trk_chi2perDof[i];
@@ -307,7 +314,6 @@ namespace cafmaker
       // Save first and last hit in track
       // MINERvA Reco info is saved in mm whereas CAFs use CM as default -> do conversion here
       my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10. - offsetX/10.,blob_id_startpoint_y[i]/10. - offsetY/10., blob_id_startpoint_z[i]/10. - offsetZ/10.);
-      if (is_data) my_shower.start = caf::SRVector3D(blob_id_startpoint_x[i]/10., blob_id_startpoint_y[i]/10., blob_id_startpoint_z[i]/10.);     
  
       //Actual direction but Centroid makes more sense 
 //      double x_dir = (blob_id_centroid_x[i] - blob_id_startpoint_x[i]);
@@ -324,12 +330,7 @@ namespace cafmaker
       double x_dir = blob_id_centroid_x[i]/10. - offsetX/10.;
       double y_dir = blob_id_centroid_y[i]/10. - offsetY/10.;
       double z_dir = blob_id_centroid_z[i]/10. - offsetZ/10.;
-      if (is_data)
-      {
-        x_dir = blob_id_centroid_x[i]/10.;
-        y_dir = blob_id_centroid_y[i]/10.;
-        z_dir = blob_id_centroid_z[i]/10.;
-      }
+
       my_shower.direction = caf::SRVector3D(x_dir, y_dir, z_dir);
       my_shower.Evis = blob_id_e[i]/1000.; //Energy in GeV
 
@@ -565,7 +566,8 @@ namespace cafmaker
 
 
         //Initialize first trigger at 0 while we don't have a global time strategy
-        trig.triggerTime_s -= t0_minerva;
+        
+        if (!is_data) trig.triggerTime_s -= t0_minerva;
 
 
         LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
