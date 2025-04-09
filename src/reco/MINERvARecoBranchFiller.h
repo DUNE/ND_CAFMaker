@@ -33,7 +33,7 @@ namespace cafmaker
   class MINERvARecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      MINERvARecoBranchFiller(const std::string & minervaRecoFilename);
+      MINERvARecoBranchFiller(const std::string & minervaRecoFilename, float X_offset, float Y_offset, float Z_offset);
 
       std::deque<Trigger> GetTriggers(int triggerType) const  override;
 

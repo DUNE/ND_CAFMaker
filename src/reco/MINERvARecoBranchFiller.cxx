@@ -12,7 +12,7 @@ namespace cafmaker
   }
 
 
-  MINERvARecoBranchFiller::MINERvARecoBranchFiller(const std::string &minervaRecoFilename)
+  MINERvARecoBranchFiller::MINERvARecoBranchFiller(const std::string &minervaRecoFilename, float X_offset, float Y_offset, float Z_offset)
   : IRecoBranchFiller("MINERvA"),
     fTriggers(),
     fLastTriggerReqd(fTriggers.end())
@@ -118,9 +118,9 @@ namespace cafmaker
       //Meta branches
       if (is_data)
       {
-          offsetX = 0;
-          offsetY = 218;
-          offsetZ = 6913;
+          offsetX = X_offset;
+          offsetY = Y_offset;
+          offsetZ = Z_offset;
       }
       else
       {
