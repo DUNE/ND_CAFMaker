@@ -797,7 +797,7 @@ namespace cafmaker
       // fill flash variables for all flashes
 
       opflash.id = flash.id;
-      opflash.tpc_id = flash.tpc; //TODO
+      //opflash.tpc_id = flash.tpc; //TODO
       opflash.time = flash.time;
       opflash.time_width = flash.time_width;
       opflash.total_pe = flash.total_pe;
