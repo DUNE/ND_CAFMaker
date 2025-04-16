@@ -62,6 +62,11 @@ namespace cafmaker
     // 0.1 s is default
     fhicl::Atom<float>  beamMatchDT { fhicl::Name("BeamMatchDeltaT"), fhicl::Comment("Maximum time difference, in s, between triggers and beam"), 0.1 };
     
+    // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future 
+    fhicl::Atom<float> mx2_2x2_offsetX {fhicl::Name("Mx2_2x2_offsetX"), fhicl::Comment("Mx2 - 2x2 offset in X direction in cm"), 0.};
+    fhicl::Atom<float> mx2_2x2_offsetY {fhicl::Name("Mx2_2x2_offsetY"), fhicl::Comment("Mx2 - 2x2 offset in Y direction in cm"), 218.};
+    fhicl::Atom<float> mx2_2x2_offsetZ {fhicl::Name("Mx2_2x2_offsetZ"), fhicl::Comment("Mx2 - 2x2 offset in Z direction in cm"), 6913.};
+
 
     // Track matching criteria (default values for 2x2 based on DOCDB 31970)
     fhicl::Atom<float> trackMatchExtrapolatedZ { fhicl::Name("TrackMatchExtrapolatedZ"), fhicl::Comment("Z position where the track transversal displacement is computed when doing matching"), -70};

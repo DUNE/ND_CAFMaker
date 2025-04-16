@@ -160,7 +160,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   std::string minervaFile;
   if (par().cafmaker().minervaRecoFile(minervaFile))
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::MINERvARecoBranchFiller>(minervaFile));
+    recoFillers.emplace_back(std::make_unique<cafmaker::MINERvARecoBranchFiller>(minervaFile, par().cafmaker().mx2_2x2_offsetX(), par().cafmaker().mx2_2x2_offsetY(), par().cafmaker().mx2_2x2_offsetZ() ));
     std::cout<< "   MINERVA\n";
   }
 
