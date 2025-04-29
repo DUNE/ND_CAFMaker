@@ -32,6 +32,7 @@ namespace cafmaker
 	  m_LArRecoNDTree->SetBranchAddress("subRun", &m_subRun);
 	  m_LArRecoNDTree->SetBranchAddress("unixTime", &m_unixTime);
 	  m_LArRecoNDTree->SetBranchAddress("startTime", &m_startTime);
+	  m_LArRecoNDTree->SetBranchAddress("triggers", &m_triggerType);
 	  m_LArRecoNDTree->SetBranchAddress("isShower", &m_isShowerVect);
 	  m_LArRecoNDTree->SetBranchAddress("sliceId", &m_sliceIdVect);
 	  m_LArRecoNDTree->SetBranchAddress("startX", &m_startXVect);
@@ -488,8 +489,8 @@ namespace cafmaker
 	    Trigger &trig = m_Triggers.back();
 	    // Event number
 	    trig.evtID = m_eventId;
-	    // Pandora SpacePoint (SP) H5Flow-to-ROOT format doesn't store trigger type, so just select "all"
-	    trig.triggerType = -1;
+	    // Type
+	    trig.triggerType = m_triggerType;
 	    // unix_ts trigger time (seconds)
 	    trig.triggerTime_s = m_unixTime;
 	    // ts_start ticks (0.1 microseconds) converted to nanoseconds
