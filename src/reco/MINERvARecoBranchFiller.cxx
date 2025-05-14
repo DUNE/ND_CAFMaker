@@ -559,8 +559,7 @@ namespace cafmaker
         trig.evtID = Long_t(ev_gl_gate);
 
 
-        // todo: these are placeholder values until we can propagate enough info through the reco files
-        trig.triggerType = ev_trigger_type;
+        trig.triggerType = Trigger::TriggerType::beamTrigger;
         trig.triggerTime_s = ev_gps_time_sec;
         trig.triggerTime_ns = ev_gps_time_usec * 1000.;
 

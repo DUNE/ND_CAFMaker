@@ -274,12 +274,31 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
       //  map if it's empty, per below)
       if (fillerTrigPair.first != seedFillerIt->first)
       {
+        auto& refTrigger = trigGroup.front().second;
+        auto it_trig = std::find_if(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), [ &refTrigger](const cafmaker::Trigger& t)
+        {
+              return t.triggerType == refTrigger.triggerType;
+          });
+
+        if(it_trig != fillerTrigPair.second.end()){
+            if (it_trig != fillerTrigPair.second.begin()) {
+                //Move the trigger to the front 
+                cafmaker::Trigger temp = std::move(*it_trig);
+                fillerTrigPair.second.erase(it_trig);
+                fillerTrigPair.second.push_front(std::move(temp));
+            }
+        }
+        else continue; //Not found any trigger that match with ref trigger type
+      
         const auto & trig = fillerTrigPair.second.front();
         ss << "       " << fillerTrigPair.first->GetName() << ", " << trig.evtID;
 
         // we will only take at most one trigger from each of the other streams.
         // since the seed was the earliest one out of all the triggers,
         // we only need to check the first one in each other stream
+
+
+        
         if (doTriggersMatch( trigGroup.front().second, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
           ss << " -->  MATCHES\n";

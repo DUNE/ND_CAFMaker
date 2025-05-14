@@ -16,10 +16,18 @@ namespace cafmaker
 {
   class TruthMatcher;
 
-  struct Trigger
-  {
+  struct Trigger{
+
+    enum TriggerType
+    {
+      beamTrigger,
+      lightTrigger2x2,
+      selfTrigger2x2,
+      other
+    };
+
     long int          evtID;
-    int               triggerType;
+    TriggerType          triggerType;
     unsigned long int triggerTime_s;
     unsigned int      triggerTime_ns;
 

@@ -56,7 +56,12 @@ namespace cafmaker
       double max_time = std::numeric_limits<double>::lowest();
       for (const auto& group : groupedTriggers) {
           for (const auto& trig : group) {
+              if (trig.second.triggerType !=1) continue;
               double trigger_time = util::getTriggerTime(trig.second);
+
+              // HACK
+              if (trigger_time > 1e12)
+                continue;
               min_time = std::min(min_time, trigger_time - dt);
               max_time = std::max(max_time, trigger_time + dt);
           }
@@ -99,7 +104,9 @@ namespace cafmaker
   
   double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
       double pot = 0.0;
-  
+      if (groupedTrigger.front().second.triggerType != 1) return 0.0;
+   //   for (auto trig : groupedTrigger) {std::cout<<trig.second.triggerType<<" ";}
+  //  std::cout<<std::endl;
       auto it = std::find_if(beamSpills.begin(), beamSpills.end(),
           [par, &groupedTrigger](const auto& spill) {
               return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
@@ -115,13 +122,14 @@ namespace cafmaker
           bool any_matched = false;
           std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> matched_triggers;
           std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> unmatched_triggers;
-  
           for (auto trig : groupedTrigger) {
+              //check if the trigger is a type 1 trigger (beam trigger)
+              if (trig.second.triggerType != 1) return 0;
               bool matched = std::any_of(beamSpills.cbegin(), beamSpills.cend(),
                   [par, &trig](const auto& spill) {
                       return std::abs(util::getTriggerTime(trig.second) - spill.first) < par().cafmaker().beamMatchDT();
                   });
-  
+              std::cout<<std::endl<<std::endl; 
               if (matched) {
                   any_matched = true;
                   matched_triggers.push_back(trig);
@@ -136,20 +144,20 @@ namespace cafmaker
               log_message << "Only some triggers match beam spill for trigger group " << ii << ":\n"
                           << "Matched triggers: \n";
               for (auto trig : matched_triggers)
-                  log_message << std::fixed << trig.first->GetName() << " " << util::getTriggerTime(trig.second) << "\n";
+                  log_message << std::fixed << trig.first->GetName() << " " << util::getTriggerTime(trig.second) <<" "<<trig.second.triggerType<< "\n";
   
               log_message << "Unmatched triggers: \n";
               for (auto trig : unmatched_triggers)
-                  log_message << std::fixed << trig.first->GetName() << " " << util::getTriggerTime(trig.second) << "\n";
-  
+                  log_message << std::fixed << trig.first->GetName() << " " << util::getTriggerTime(trig.second)<<" "<<trig.second.triggerType << "\n";
               cafmaker::LOG_S("Fill beam POT information").ERROR() << log_message.str() << "\n";
               std::abort();
+
           } 
           else {
-              log_message << "No matching spill found for trigger group " << ii << " with triggers: \n";
+             /* log_message << "No matching spill found for trigger group " << ii << " with triggers: \n";
               for (auto trig : groupedTrigger)
                   log_message << std::fixed << trig.first->GetName() << " " << util::getTriggerTime(trig.second) << "\n";
-              cafmaker::LOG_S("Fill beam POT information").WARNING() << log_message.str() << "\n";
+              cafmaker::LOG_S("Fill beam POT information").WARNING() << log_message.str() << "\n";*/
           }
       }
   
