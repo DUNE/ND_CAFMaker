@@ -830,14 +830,13 @@ namespace cafmaker
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
 
-        //Flow trigger types are the following:
+        //2x2 Flow trigger types are the following:
         //5 = Beam trigger 
         //6 = light trigger 
         //Anything else = Charge self triggering
         if (trigger.type == 5) trig.triggerType = Trigger::TriggerType::beamTrigger;
         else if (trigger.type == 6) trig.triggerType = Trigger::TriggerType::lightTrigger2x2;
         else trig.triggerType = Trigger::TriggerType::selfTrigger2x2;
-        //trig.triggerType = trigger.type;
 
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
