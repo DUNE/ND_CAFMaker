@@ -59,9 +59,6 @@ namespace cafmaker
               if (trig.second.triggerType !=Trigger::TriggerType::beamTrigger) continue;
               double trigger_time = util::getTriggerTime(trig.second);
 
-              // HACK
-              if (trigger_time > 1e12)
-                continue;
               min_time = std::min(min_time, trigger_time - dt);
               max_time = std::max(max_time, trigger_time + dt);
           }
