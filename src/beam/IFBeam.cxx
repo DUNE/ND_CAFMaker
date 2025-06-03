@@ -56,7 +56,7 @@ namespace cafmaker
       double max_time = std::numeric_limits<double>::lowest();
       for (const auto& group : groupedTriggers) {
           for (const auto& trig : group) {
-              if (trig.second.triggerType !=Trigger::TriggerType::beamTrigger) continue;
+              if (trig.second.triggerType !=1) continue;
               double trigger_time = util::getTriggerTime(trig.second);
 
               min_time = std::min(min_time, trigger_time - dt);
@@ -101,7 +101,7 @@ namespace cafmaker
   
   double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
       double pot = 0.0;
-      if (groupedTrigger.front().second.triggerType != Trigger::TriggerType::beamTrigger) return 0.0;
+      if (groupedTrigger.front().second.triggerType != 1) return 0.0;
       auto it = std::find_if(beamSpills.begin(), beamSpills.end(),
           [par, &groupedTrigger](const auto& spill) {
               return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
@@ -118,8 +118,8 @@ namespace cafmaker
           std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> matched_triggers;
           std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> unmatched_triggers;
           for (auto trig : groupedTrigger) {
-              //check if the trigger is a type Trigger::TriggerType::beamTrigger
-              if (trig.second.triggerType != Trigger::TriggerType::beamTrigger) return 0;
+              //Only triggersType == 1 are beam trigger. 
+              if (trig.second.triggerType != 1) return 0;
               bool matched = std::any_of(beamSpills.cbegin(), beamSpills.cend(),
                   [par, &trig](const auto& spill) {
                       return std::abs(util::getTriggerTime(trig.second) - spill.first) < par().cafmaker().beamMatchDT();
