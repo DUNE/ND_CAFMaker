@@ -474,6 +474,15 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   std::deque<Trigger> PandoraLArRecoNDBranchFiller::GetTriggers(int triggerType) const
   {
+
+
+	//Do Trigger Map.
+	std::map<int, int> triggerMap;
+	triggerMap[Pandora2x2::kBeamTrigger] = 1;
+	triggerMap[Pandora2x2::kLightTrigger] = 2;
+	triggerMap[Pandora2x2::kSelfTrigger] = 3;
+	triggerMap[Pandora2x2::kMC] = 1;
+	
     if (m_Triggers.empty())
     {
 	const int nEvents = m_LArRecoNDTree->GetEntries();
@@ -489,14 +498,14 @@ namespace cafmaker
 	    Trigger &trig = m_Triggers.back();
 	    // Event number
 	    trig.evtID = m_eventId;
-	    // Type
-      //2x2 Flow trigger types are the following:
-      //5 = Beam trigger
-      //6 = light trigger
-      //Anything else = Charge self triggering
-      if (m_triggerType == 5) trig.triggerType = Trigger::TriggerType::beamTrigger;
-      else if (m_triggerType == 6) trig.triggerType = Trigger::TriggerType::lightTrigger2x2;
-      else trig.triggerType = Trigger::TriggerType::selfTrigger2x2;
+
+		if (triggerType>=0 && triggerMap[m_triggerType] != triggerType) // skip if not the right type
+		{
+			LOG.VERBOSE() << "    skipping trigger ID=" << m_triggerType << "\n";
+			continue;
+		}
+		
+		trig.triggerType = triggerMap[m_triggerType];
 	    // unix_ts trigger time (seconds)
 	    trig.triggerTime_s = m_unixTime;
 	    // ts_start ticks (0.1 microseconds) converted to nanoseconds

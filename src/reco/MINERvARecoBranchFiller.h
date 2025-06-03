@@ -30,6 +30,11 @@ namespace caf
 
 namespace cafmaker
 {
+
+  namespace Mx2
+  {
+    const int kBeamTrigger = 1;
+  }
   class MINERvARecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
@@ -41,6 +46,7 @@ namespace cafmaker
 
 
       ~MINERvARecoBranchFiller();
+
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
@@ -147,6 +153,8 @@ namespace cafmaker
       bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
+
+      
   };
 
 }

@@ -538,28 +538,38 @@ namespace cafmaker
   std::deque<Trigger> MINERvARecoBranchFiller::GetTriggers(int triggerType) const
   {
     //Just read the branches of interest
-
     std::deque<Trigger> triggers;
+
+    //Do Trigger Map For consistency with the other branch fillers.
+    std::map<int, int> triggerMap;
+    triggerMap[Mx2::kBeamTrigger] = 1;
+
     if (fTriggers.empty())
     {
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << MnvRecoTree->GetEntries() << " MINERvA Tree:\n";
       fTriggers.reserve(MnvRecoTree->GetEntries());
       unsigned long int t0_minerva;
+      MnvRecoTree->GetEntry(0);
+      t0_minerva = ev_gps_time_sec;
+      
       for (int entry = 0; entry < MnvRecoTree->GetEntries(); entry++)
       {
 
-
         MnvRecoTree->GetEntry(entry);
-        if (entry == 0) t0_minerva = ev_gps_time_sec;
-
+        if (triggerType>=0 && triggerMap[Mx2::kBeamTrigger] != triggerType) 
+        {
+          LOG.VERBOSE() << "    skipping trigger ID=" << Mx2::kBeamTrigger << "\n";
+          continue;
+        }
 
         fTriggers.emplace_back();
+
         Trigger & trig = fTriggers.back();
 
         trig.evtID = Long_t(ev_gl_gate);
 
-
-        trig.triggerType = Trigger::TriggerType::beamTrigger;
+        
+        trig.triggerType = triggerMap[Mx2::kBeamTrigger];
         trig.triggerTime_s = ev_gps_time_sec;
         trig.triggerTime_ns = ev_gps_time_usec * 1000.;
 
