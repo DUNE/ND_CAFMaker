@@ -428,7 +428,7 @@ namespace cafmaker
 	sr.nd.lar.pandora[nuIndex].nshowers++;
 
 	// Store this shower in the corresponding neutrino interaction
-	caf::SRInteraction interaction = nuInteractions[nuIndex];
+	caf::SRInteraction &interaction = nuInteractions[nuIndex];
 
 	// Shower reco particle
 	caf::SRRecoParticle showerPart;
