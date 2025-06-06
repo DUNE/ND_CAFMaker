@@ -811,6 +811,14 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
   {
+    
+    //Do Trigger Map.
+    std::map<int, int> triggerMap;
+    triggerMap[SPINE2x2::kBeamTrigger] = 1;
+    triggerMap[SPINE2x2::kLightTrigger] = 2;
+    triggerMap[SPINE2x2::kSelfTrigger] = 3;
+    triggerMap[SPINE2x2::kMC] = 1;
+
     if (fTriggers.empty())
     {
       auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
@@ -818,9 +826,7 @@ namespace cafmaker
       fTriggers.reserve(triggersIn.size());
       for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
-        const int placeholderTriggerType = 0;
-        // fixme: this check needs to be fixed when we have trigger type info
-        if (triggerType >= 0 && triggerType != placeholderTriggerType)
+        if (triggerType >= 0 &&  triggerMap[trigger.type] != triggerType)
         {
           LOG.VERBOSE() << "    skipping trigger ID=" << trigger.id << "\n";
           continue;
@@ -829,8 +835,8 @@ namespace cafmaker
         fTriggers.emplace_back();
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
-
-        trig.triggerType = trigger.type;
+        
+        trig.triggerType = triggerMap[trigger.type];
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
 

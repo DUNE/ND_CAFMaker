@@ -16,8 +16,9 @@ namespace cafmaker
 {
   class TruthMatcher;
 
-  struct Trigger
-  {
+  struct Trigger{
+
+
     long int          evtID;
     int               triggerType;
     unsigned long int triggerTime_s;
