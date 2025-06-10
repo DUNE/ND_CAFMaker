@@ -33,6 +33,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("run", &m_run);
       m_LArRecoNDTree->SetBranchAddress("subRun", &m_subRun);
       m_LArRecoNDTree->SetBranchAddress("unixTime", &m_unixTime);
+      m_LArRecoNDTree->SetBranchAddress("unixTimeUsec", &m_unixTimeUsec);
       m_LArRecoNDTree->SetBranchAddress("startTime", &m_startTime);
       m_LArRecoNDTree->SetBranchAddress("triggers", &m_triggerType);
       m_LArRecoNDTree->SetBranchAddress("isShower", &m_isShowerVect);
@@ -531,8 +532,8 @@ namespace cafmaker
         trig.triggerType = m_triggerType;
         // unix_ts trigger time (seconds)
         trig.triggerTime_s = m_unixTime;
-        // ts_start ticks (0.1 microseconds) converted to nanoseconds
-        trig.triggerTime_ns = m_startTime * 100;
+        // unix_time_usec ticks (microseconds) converted to nanoseconds
+        trig.triggerTime_ns = m_unixTimeUsec * 1000;
 
         LOG.VERBOSE() << "  added trigger: evtID = " << trig.evtID
                       << ", triggerType = " << trig.triggerType
