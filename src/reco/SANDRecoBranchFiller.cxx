@@ -215,7 +215,7 @@ SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
     : IRecoBranchFiller("SAND")
 {
     std::cerr << "[WARNING] SANDRecoBranchFiller: SAND code is not enabled in this build.\n"
-                 "To enable SAND support, build with 'make ENABLE_STRUCT_DICT=1'.\n";
+                 "To enable SAND support, build with 'make ENABLE_SAND_DICT=1'.\n";
 }
 std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int) const { return {}; }
 void SANDRecoBranchFiller::_FillRecoBranches(const Trigger &, caf::StandardRecord &, const cafmaker::Params &, const TruthMatcher *) const {}
