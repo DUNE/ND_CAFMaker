@@ -11,8 +11,8 @@
 #include "SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 
-// #ifdef ENABLE_SAND
-//#warning Including SANDRecoBranchFiller in build
+#ifdef ENABLE_SAND
+#warning Including SANDRecoBranchFiller in build
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
@@ -29,24 +29,41 @@ namespace cafmaker
         fTriggers(),
         fLastTriggerReqd(fTriggers.end())
   {
+    std::cout << __LINE__ << std::endl;
+    if (SANDRecoFilename.empty()) {
+      std::cerr << "ERROR: SANDRecoBranchFiller: SANDRecoFilename is empty!" << std::endl;
+      SetConfigured(false);
+      return;
+    }
     fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
+    if (!fSANDRecoFile || fSANDRecoFile->IsZombie()) {
+      std::cerr << "ERROR: SANDRecoBranchFiller: Could not open file " << SANDRecoFilename << std::endl;
+      SetConfigured(false);
+      return;
+    }
     NDSANDRecoTree = (TTree *)fSANDRecoFile->Get("tReco");
-    NDSANDEventTree = (TTree *)fSANDRecoFile->Get("tEvent");
+    if (!NDSANDRecoTree)
+    {
+      std::cerr << "Error: NDSANDRecoTree is null. Tree 'tReco' not found in file." << std::endl;
+      fSANDRecoFile->ls(); 
+      SetConfigured(false);
+      return;
+    }
    
-    fEvent = new event;
-    NDSANDEventTree->SetBranchAddress("event", &fEvent);  
-    
-    std::cout<<"Number of entries "<<NDSANDEventTree->GetEntries()<<std::endl;
-     if (!fSANDRecoFile->IsZombie())
-      SetConfigured(true);
+    SetConfigured(true);
   }
 
+  
   void SANDRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                caf::StandardRecord &sr,
                                                const cafmaker::Params &par, const TruthMatcher *truthMatcher) const
   {
-
-
+  
+    if (!NDSANDRecoTree) {
+      std::cerr << "ERROR: SANDRecoBranchFiller: NDSANDRecoTree is null!" << std::endl;
+      return;
+    }
+   
     auto it_start = (fLastTriggerReqd == fTriggers.end()) ? fTriggers.cbegin() : fLastTriggerReqd;
     auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
     if (itTrig == fTriggers.end())
@@ -54,6 +71,7 @@ namespace cafmaker
       LOG.FATAL() << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
       abort();
     }
+    
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
     int event_num = idx;
     NDSANDRecoTree->GetEntry(event_num);
@@ -62,137 +80,67 @@ namespace cafmaker
     
     sr.meta.sand.event = event_num;
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
-    FillInteractions(truthMatcher, sr); 
-    FillECalClusters(truthMatcher, sr);
-
+    std::vector<cluster> cl;
+    std::vector<track> tr;
+    auto pcl = &cl;
+    auto ptr = &tr;
+    NDSANDRecoTree->SetBranchAddress("cluster", &pcl);
+    NDSANDRecoTree->SetBranchAddress("track", &ptr);
+    NDSANDRecoTree->GetEntry(event_num);
+    FillECalClusters(truthMatcher, sr, cl);
+   
+    FillTracks(truthMatcher, sr, tr);
   }
 
-void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
-                                               caf::StandardRecord &sr) const
+  void SANDRecoBranchFiller::FillECalClusters(const TruthMatcher *truthMatch,
+                                              caf::StandardRecord &sr, std::vector<cluster> &cl) const
   {
-    //  now samples contain one neutrino interaction
-    //  per event/trigger 
-    sr.common.ixn.sandreco.reserve(1);
-    sr.common.ixn.nsandreco = 1;
-
-    //         now we have one interaction per event/trigger
-    //         so we simply need to create an SRInteraction and assign a
-    //         dummy id of 1 to it
-
-    caf::SRInteraction interaction;
-    interaction.id  = 1;
-    //std::cout<<"event.x "<<fEvent->x<<std::endl;
-   
-    interaction.vtx  = caf::SRVector3D(fEvent->x,fEvent->y,fEvent->z); 
-    interaction.Enu.calo = fEvent->Enureco;
-    interaction.dir.sandreco_mom.SetXYZ(fEvent->pxnureco,fEvent->pynureco,fEvent->pznureco);
- 
-    int nparticles=fEvent->particles.size(); 
- 
-    interaction.part.nsandreco = nparticles;  
-    interaction.part.sandreco.resize(nparticles);  
-
-    for(int i=0; i<nparticles; i++){
-     if(fEvent->particles.at(i).primary==1) interaction.part.sandreco[i].primary=true;
-     else if (fEvent->particles.at(i).primary==0) interaction.part.sandreco[i].primary=false;
-     interaction.part.sandreco[i].pdg=fEvent->particles.at(i).pdg;
-     interaction.part.sandreco[i].start=caf::SRVector3D(fEvent->particles.at(i).xreco,fEvent->particles.at(i).yreco,fEvent->particles.at(i).zreco);
-     interaction.part.sandreco[i].p=caf::SRVector3D(fEvent->particles.at(i).pxreco,fEvent->particles.at(i).pyreco,fEvent->particles.at(i).pzreco);
+    
+    size_t n_clusters = cl.size();
+    for (const auto &c : cl)
+    {
+      std::cout << "cluster energy: " << c.e << std::endl;
     }
 
-    sr.common.ixn.sandreco.push_back(std::move(interaction));
-}
+    sr.nd.sand.ixn.resize(1);
+    sr.nd.sand.ixn[0].nclusters = n_clusters;
+    sr.nd.sand.ixn[0].ECALClusters.resize(n_clusters);
 
+    for (auto i = 0; i < n_clusters; i++)
+    {
 
-  void SANDRecoBranchFiller::FillECalClusters(const TruthMatcher * truthMatch,
-                                                caf::StandardRecord &sr) const
+      sr.nd.sand.ixn[0].ECALClusters[i].E = cl[i].e;
+      sr.nd.sand.ixn[0].ECALClusters[i].position.SetXYZ(cl[i].x, cl[i].y, cl[i].z);
+
+    }
+    
+
+    cl.clear();
+  }
+
+  void SANDRecoBranchFiller::FillTracks(const TruthMatcher *truthMatch,
+                                        caf::StandardRecord &sr, std::vector<track> &tr) const
   {
 
-      TLeaf* energy = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.e");
-      TLeaf* position_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.x");
-      TLeaf* position_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.y");
-      TLeaf* position_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.z");
-      TLeaf* var_positionx = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.varx");
-      TLeaf* var_positiony = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.vary");
-      TLeaf* var_positionz = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.varz");
-      TLeaf* cluster_time = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.t");
-      TLeaf* apex_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.ax");
-      TLeaf* apex_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.ay");
-      TLeaf* apex_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.az");
-      TLeaf* dir_x = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sx");
-      TLeaf* dir_y = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sy");
-      TLeaf* dir_z = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.sz");
-      TLeaf* id = (TLeaf*) NDSANDRecoTree->GetListOfLeaves()->FindObject("cluster.tid");
-       
-      if (!energy )
-      {
-        std::cerr << "Error: energy leaf not found in cluster" << std::endl;
-        return;
-      }
+    std::cout << __LINE__ << std::endl;
+    size_t n_tracks = tr.size();
+    for (const auto &t : tr)
+    {
+      std::cout << "track initial position: " << t.x0 << ", " << t.y0 << ", " << t.z0 << std::endl;
+      std::cout << "track position center: " << t.yc << ", " << t.zc << std::endl;
+    }
 
-      
-      if (!position_x || !position_y || !position_z)
-      {
-          std::cerr << "Error: position leaf not found in cluster" << std::endl;
-          return;
-      }
-      
-      if (!var_positionx || !var_positiony || !var_positionz)
-      {
-          std::cerr << "Error: var position leaf not found in cluster" << std::endl;
-          return;
-      }
 
-      if (!cluster_time)
-      {
-          std::cerr << "Error: time leaf not found in cluster" << std::endl;
-          return;
-      }
+    sr.nd.sand.ixn.resize(1);
+    sr.nd.sand.ixn[0].ntracks = n_tracks;
+    sr.nd.sand.ixn[0].tracks.resize(n_tracks);
 
-      if (!apex_x || !apex_y || !apex_z)
-      {
-          std::cerr << "Error: apex position leaf not found in cluster" << std::endl;
-          return;
-      }
-
-      if (!dir_x || !dir_y || !dir_z)
-      {
-          std::cerr << "Error: direction leaf not found in cluster" << std::endl;
-          return;
-      }
-      
-      if (!id)
-      {
-          std::cerr << "Error: id leaf not found in cluster" << std::endl;
-          return;
-      }
-
-      size_t n_clusters = energy->GetLen(); //better to use a cluster size 
-      std::cout <<" num clusters: "<< n_clusters << std::endl; 
-      
-      sr.nd.sand.ixn.resize(1);
-      sr.nd.sand.ixn[0].nclusters = n_clusters;
-      sr.nd.sand.ixn[0].ECALClusters.resize(n_clusters);
-      
-      for (size_t i = 0; i < n_clusters; i++)
-      {
-         LOG.VERBOSE() << "  Cluster " << i << ": energy = " << energy->GetValue(i) << " MeV"
-                       << "position x: " << position_x->GetValue(i) << ",position y: " << position_y->GetValue(i) << ", position z:" << position_z->GetValue(i) 
-                       << "var x: " << var_positionx->GetValue(i) << ", var y: " << var_positiony->GetValue(i) << ", var z:" << var_positionz->GetValue(i) 
-                       << "time: "<< cluster_time->GetValue(i) 
-                       << "apex x: " << apex_x->GetValue(i) << ", apex y: " << apex_y->GetValue(i) << ", apex z:" << apex_z->GetValue(i)
-                       << "dir x: " << dir_x->GetValue(i) << ", dir y: " << dir_y->GetValue(i) << ", dir z:" << dir_z->GetValue(i)
-                       << "id: "<< id->GetValue(i) 
-                       << "\n";
-
-        sr.nd.sand.ixn[0].ECALClusters[i].E = energy->GetValue(i);
-        sr.nd.sand.ixn[0].ECALClusters[i].position.SetXYZ(position_x->GetValue(i), position_y->GetValue(i), position_z->GetValue(i));
-        sr.nd.sand.ixn[0].ECALClusters[i].var_position.SetXYZ(var_positionx->GetValue(i), var_positiony->GetValue(i), var_positionz->GetValue(i));
-        sr.nd.sand.ixn[0].ECALClusters[i].time = cluster_time->GetValue(i);
-        sr.nd.sand.ixn[0].ECALClusters[i].start.SetXYZ(apex_x->GetValue(i), apex_y->GetValue(i), apex_z->GetValue(i));
-        sr.nd.sand.ixn[0].ECALClusters[i].direction.SetXYZ(dir_x->GetValue(i), dir_y->GetValue(i), dir_z->GetValue(i));
-        sr.nd.sand.ixn[0].ECALClusters[i].id = id->GetValue(i);
-      }
+    for (int i = 0; i < n_tracks; i++)
+    {
+      sr.nd.sand.ixn[0].tracks[i].end.SetXYZ(0, tr[i].yc, tr[i].zc);
+      sr.nd.sand.ixn[0].tracks[i].start.SetXYZ(tr[i].x0, tr[i].y0, tr[i].z0);
+      sr.nd.sand.ixn[0].tracks[i].qual = tr[i].chi2_cr;
+    }
   }
 
   // todo: this is a placeholder
@@ -200,6 +148,8 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
   {
     std::deque<Trigger> triggers;
     size_t n_entries = NDSANDRecoTree->GetEntries();
+    std::cout << "n entries: " << n_entries << std::endl;
+
     if (fTriggers.empty())
     {
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "\n";
@@ -209,17 +159,16 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
 
       for (size_t i = 0; i < n_entries; i++)
       {
-
+        std::cout << "entry n: " << i << std::endl;
         const int placeholderTriggerType = 0;
         // fixme: this check needs to be fixed when we have trigger type info
+        
         if (triggerType >= 0 && triggerType != placeholderTriggerType)
         {
           LOG.VERBOSE() << "    skipping this event" << "\n";
+          std::cout << "skipping this event" << std::endl;
           continue;
         }
-
-        
-        NDSANDRecoTree->GetEntry(i);
 
         fTriggers.emplace_back();
         Trigger &trig = fTriggers.back();
@@ -238,14 +187,18 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
                       << ", triggerTime_ns=" << trig.triggerTime_ns
                       << "\n";
       }
+     
       fLastTriggerReqd = fTriggers.end(); // since we just modified the list, any iterators have been invalidated
     }
     else
     {
+     
       for (const Trigger &trigger : fTriggers)
       {
         if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+        {
           triggers.push_back(trigger);
+        }
       }
     }
     std::cout<<"Trigger completed!"<<std::endl;
@@ -253,17 +206,18 @@ void SANDRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch,
   }
 }
 
-// #else // ENABLE_SAND
-
-//#warning Not configured to build SANDRecoBranchFiller. Must set SANDRECO_INC and SANDRECO_LIB environment variables
-/*
-namespace
+#else
+#include "reco/SANDRecoBranchFiller.h"
+#include <deque>
+#include <iostream>
+namespace cafmaker {
+SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
+    : IRecoBranchFiller("SAND")
 {
-  void error_msg()
-  {
-    std::cerr << "\n\nSAND Reco support was not enabled in your build. \n"
-              << " Either avoid setting `nd_cafmaker.CAFMakerSettings.SANDRecoFile` in your FCL\n"
-              << " or set $SANDRECO_INC and $SANDRECO_LIB in your environment and do a clean rebuild of ND_CAFMaker...\n";
-  }
-}*/
-// #endif // ENABLE_SAND
+    std::cerr << "[WARNING] SANDRecoBranchFiller: SAND code is not enabled in this build.\n"
+                 "To enable SAND support, build with 'make ENABLE_STRUCT_DICT=1'.\n";
+}
+std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int) const { return {}; }
+void SANDRecoBranchFiller::_FillRecoBranches(const Trigger &, caf::StandardRecord &, const cafmaker::Params &, const TruthMatcher *) const {}
+}
+#endif
