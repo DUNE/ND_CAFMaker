@@ -357,7 +357,6 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
                       << " I was given) that did not match across fillers.  Is that consistent with your expectations?\n";
     }
   }
-
   return ret;
 }
 
@@ -380,7 +379,14 @@ void loop(CAF &caf,
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
   {
     if (filler->FillerType() != cafmaker::RecoFillerType::BaseReco) continue; //We don't want to store a trigger from a Matcher algorithm
-    triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+    std::deque<cafmaker::Trigger> TriggerList = filler->GetTriggers(par().cafmaker().triggerType());
+    if (TriggerList.size() == 0)
+    {
+      cafmaker::LOG_S("loop()").WARNING() << "Requested Filler "<<filler.get()->GetName()<<" has no trigger of requested type "<<par().cafmaker().triggerType()
+                << " so it will not be stored, please make sure you wanted to have it as input\n";
+      continue;
+    }
+    triggersByRBF.insert({filler.get(), TriggerList});
   }
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
@@ -400,12 +406,11 @@ void loop(CAF &caf,
     std::cerr << "Requested number of events (" << N << ") is non-positive!  Abort.\n";
     abort();
   }
-
+  
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
-
+  
   cafmaker::IFBeam beamManager(groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
-
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
   for( int ii = start; ii < start + N; ++ii )
