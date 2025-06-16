@@ -67,6 +67,8 @@ namespace cafmaker
     fhicl::Atom<float> mx2_2x2_offsetY {fhicl::Name("Mx2_2x2_offsetY"), fhicl::Comment("Mx2 - 2x2 offset in Y direction in cm"), 218.};
     fhicl::Atom<float> mx2_2x2_offsetZ {fhicl::Name("Mx2_2x2_offsetZ"), fhicl::Comment("Mx2 - 2x2 offset in Z direction in cm"), 6913.};
 
+    fhicl::Atom<int> triggerType { fhicl::Name("TriggerType"), fhicl::Comment("Trigger type to be loaded by the CAFMaker"), -1};
+
 
     // Track matching criteria (default values for 2x2 based on DOCDB 31970)
     fhicl::Atom<float> trackMatchExtrapolatedZ { fhicl::Name("TrackMatchExtrapolatedZ"), fhicl::Comment("Z position where the track transversal displacement is computed when doing matching"), -70};
