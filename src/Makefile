@@ -97,3 +97,4 @@ clean:
 	rm -f $(BINS)
 	rm -f $(wildcard AutoDict_*)
 	rm -f $(LIBDIR)/StructDict.cxx $(LIBDIR)/StructDict.o $(LIBDIR)/libStruct.so $(LIBDIR)/libStruct_rdict.pcm
+	rm -f $(DEPSDIR)/struct.h $(DEPSDIR)/StructLinkDef.h

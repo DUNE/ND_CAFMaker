@@ -3,7 +3,7 @@
 nd_cafmaker: @local::standard_nd_cafmaker
 
 
-nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-SANDtracker.1.reco.root"
+#nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-SANDtracker.1.reco.root"
 #nd_cafmaker.CAFMakerSettings.GHEPFiles: ["/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-SANDtracker.1.ghep.root"]
-nd_cafmaker.CAFMakerSettings.OutputFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/MicroProdN4p1_NDComplex_FHC.spine.full.light.0002509.MLRECO_SPINE_CAF_withsand.root"
+nd_cafmaker.CAFMakerSettings.OutputFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/MicroProdN4p1_NDComplex_FHC.spine.full.light.0002509.MLRECO_SPINE_NOsand.root"
 nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/pnfs/dune/persistent/physicsgroups/dunendsim/abooth/nd-production/MicroProdN4p1/run-mlreco/MicroProdN4p1_NDComplex_FHC.spine.full.light/MLRECO_SPINE/0002000/MicroProdN4p1_NDComplex_FHC.spine.full.light.0002509.MLRECO_SPINE.hdf5"

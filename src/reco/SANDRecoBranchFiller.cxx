@@ -74,8 +74,6 @@ namespace cafmaker
     
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
     int event_num = idx;
-    NDSANDRecoTree->GetEntry(event_num);
-    NDSANDEventTree->GetEntry(event_num);
     
     sr.meta.sand.event = event_num;
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
@@ -86,20 +84,21 @@ namespace cafmaker
     NDSANDRecoTree->SetBranchAddress("cluster", &pcl);
     NDSANDRecoTree->SetBranchAddress("track", &ptr);
     NDSANDRecoTree->GetEntry(event_num);
+
     FillECalClusters(truthMatcher, sr, cl);
    
     FillTracks(truthMatcher, sr, tr);
+   
   }
 
   void SANDRecoBranchFiller::FillECalClusters(const TruthMatcher *truthMatch,
                                               caf::StandardRecord &sr, std::vector<cluster> &cl) const
   {
-    
+   
     size_t n_clusters = cl.size();
-    for (const auto &c : cl)
-    {
+   
       std::cout << "number of clusters: " << n_clusters << std::endl;
-    }
+  
 
     sr.nd.sand.ixn.resize(1);
     sr.nd.sand.ixn[0].nclusters = n_clusters;
@@ -126,10 +125,8 @@ namespace cafmaker
   {
 
     size_t n_tracks = tr.size();
-     for (const auto &t : tr)
-     {
+     
        std::cout << "number of tracks: " <<  n_tracks << std::endl;
-     }
 
 
     sr.nd.sand.ixn.resize(1);
@@ -141,6 +138,7 @@ namespace cafmaker
       sr.nd.sand.ixn[0].tracks[i].start.SetXYZ(tr[i].x0, tr[i].y0, tr[i].z0);
       sr.nd.sand.ixn[0].tracks[i].qual = tr[i].chi2_cr;
     }
+    tr.clear();
   }
 
   // todo: this is a placeholder
