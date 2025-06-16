@@ -158,7 +158,7 @@ namespace cafmaker
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
 
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
-
+    idx = fEntryMap[idx];
     //Fill ND-LAr specific info in the meta branch
     H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
     sr.meta.lar2x2.enabled = true;
@@ -818,7 +818,8 @@ namespace cafmaker
     triggerMap[SPINE2x2::kLightTrigger] = 2;
     triggerMap[SPINE2x2::kSelfTrigger] = 3;
     triggerMap[SPINE2x2::kMC] = 1;
-
+    int iTrigger = 0;
+    int entry = -1;
     if (fTriggers.empty())
     {
       auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
@@ -826,11 +827,14 @@ namespace cafmaker
       fTriggers.reserve(triggersIn.size());
       for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
+        entry +=1;
         if (triggerType >= 0 &&  triggerMap[trigger.type] != triggerType)
         {
           LOG.VERBOSE() << "    skipping trigger ID=" << trigger.id << "\n";
           continue;
         }
+
+        fEntryMap[iTrigger] = entry;                                                                                                                                                                 iTrigger+=1;
 
         fTriggers.emplace_back();
         Trigger & trig = fTriggers.back();

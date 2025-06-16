@@ -229,7 +229,7 @@ namespace cafmaker
 
 
     // Get nth entry from tree
-    MnvRecoTree->GetEntry(idx);  
+    MnvRecoTree->GetEntry(fEntryMap[idx]);  
     
     //Fill MINERvA specific info in the meta branch
     sr.meta.minerva.enabled = true;
@@ -543,6 +543,7 @@ namespace cafmaker
     //Do Trigger Map For consistency with the other branch fillers.
     std::map<int, int> triggerMap;
     triggerMap[Mx2::kBeamTrigger] = 1;
+    int iTrigger = 0;
 
     if (fTriggers.empty())
     {
@@ -561,6 +562,9 @@ namespace cafmaker
           LOG.VERBOSE() << "    skipping trigger ID=" << Mx2::kBeamTrigger << "\n";
           continue;
         }
+        
+        fEntryMap[iTrigger] = entry;
+        iTrigger+=1;
 
         fTriggers.emplace_back();
 

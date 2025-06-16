@@ -153,8 +153,7 @@ namespace cafmaker
       bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
-
-      
+      mutable std::map<int,int> fEntryMap; 
   };
 
 }

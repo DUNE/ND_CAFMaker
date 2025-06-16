@@ -83,7 +83,7 @@ namespace cafmaker
 		  << ", internal evt idx = " << idx << ".\n";
 
     // Get the event entry
-    m_LArRecoNDTree->GetEntry(idx);
+    m_LArRecoNDTree->GetEntry(fEntryMap[idx]);
 
     // Set the event and run numbers
     sr.meta.nd_lar.enabled = true;
@@ -482,7 +482,8 @@ namespace cafmaker
 	triggerMap[Pandora2x2::kLightTrigger] = 2;
 	triggerMap[Pandora2x2::kSelfTrigger] = 3;
 	triggerMap[Pandora2x2::kMC] = 1;
-	
+  int iTrigger = 0;
+
     if (m_Triggers.empty())
     {
 	const int nEvents = m_LArRecoNDTree->GetEntries();
@@ -494,18 +495,21 @@ namespace cafmaker
 	{
 	    m_LArRecoNDTree->GetEntry(entry);
 	    
-	    m_Triggers.emplace_back();
-	    Trigger &trig = m_Triggers.back();
-	    // Event number
-	    trig.evtID = m_eventId;
+		  if (triggerType>=0 && triggerMap[m_triggerType] != triggerType) // skip if not the right type
+	  	{
+	  		LOG.VERBOSE() << "    skipping trigger ID=" << m_triggerType << "\n";
+	  		continue;
+	  	}
 
-		if (triggerType>=0 && triggerMap[m_triggerType] != triggerType) // skip if not the right type
-		{
-			LOG.VERBOSE() << "    skipping trigger ID=" << m_triggerType << "\n";
-			continue;
-		}
-		
-		trig.triggerType = triggerMap[m_triggerType];
+      fEntryMap[iTrigger] = entry;
+      iTrigger+=1;
+
+      m_Triggers.emplace_back();
+      Trigger &trig = m_Triggers.back();
+      // Event number
+      trig.evtID = m_eventId;
+
+	  	trig.triggerType = triggerMap[m_triggerType];
 	    // unix_ts trigger time (seconds)
 	    trig.triggerTime_s = m_unixTime;
 	    // ts_start ticks (0.1 microseconds) converted to nanoseconds

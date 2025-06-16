@@ -10,6 +10,7 @@
 #define ND_CAFMAKER_MLNDLARRECOBRANCHFILLER_H
 
 #include <unordered_map>
+#include <map>
 #include <typeindex>
 
 #include "reco/IRecoBranchFiller.h"
@@ -87,7 +88,7 @@ namespace cafmaker
       NDLArDLPH5DatasetReader fDSReader;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
-
+      mutable std::map<int, int> fEntryMap;
       
 
       
