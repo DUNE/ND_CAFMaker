@@ -63,6 +63,11 @@ namespace cafmaker
               max_time = std::max(max_time, trigger_time + dt);
           }
       }
+      if (min_time == std::numeric_limits<double>::max() || max_time == std::numeric_limits<double>::lowest())
+      {
+        std::cerr<<"No beam trigger loaded, are you sure you want to use IFBeam database? \n";
+        return;
+      }
       std::string min_time_iso = util::toISO8601(min_time);
       std::string max_time_iso = util::toISO8601(max_time);
       std::string url = createUrl(min_time_iso, max_time_iso);
@@ -71,7 +76,7 @@ namespace cafmaker
       CURL* curl;
       CURLcode res;
       std::string readBuffer;
-  
+    
       std::cout << "Fetching beam information from: " << url << "\n";
       curl = curl_easy_init();
       if (curl) {
