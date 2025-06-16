@@ -29,7 +29,7 @@ namespace cafmaker
         fTriggers(),
         fLastTriggerReqd(fTriggers.end())
   {
-    std::cout << __LINE__ << std::endl;
+  
     if (SANDRecoFilename.empty()) {
       std::cerr << "ERROR: SANDRecoBranchFiller: SANDRecoFilename is empty!" << std::endl;
       SetConfigured(false);
@@ -76,7 +76,6 @@ namespace cafmaker
     int event_num = idx;
     NDSANDRecoTree->GetEntry(event_num);
     NDSANDEventTree->GetEntry(event_num);
-    std::cout<<"Fatta entry"<<std::endl;
     
     sr.meta.sand.event = event_num;
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
@@ -99,7 +98,7 @@ namespace cafmaker
     size_t n_clusters = cl.size();
     for (const auto &c : cl)
     {
-      std::cout << "cluster energy: " << c.e << std::endl;
+      std::cout << "number of clusters: " << n_clusters << std::endl;
     }
 
     sr.nd.sand.ixn.resize(1);
@@ -111,10 +110,14 @@ namespace cafmaker
 
       sr.nd.sand.ixn[0].ECALClusters[i].E = cl[i].e;
       sr.nd.sand.ixn[0].ECALClusters[i].position.SetXYZ(cl[i].x, cl[i].y, cl[i].z);
-
+      sr.nd.sand.ixn[0].ECALClusters[i].var_position.SetXYZ(cl[i].varx, cl[i].vary, cl[i].varz);
+      sr.nd.sand.ixn[0].ECALClusters[i].time = cl[i].t; 
+      sr.nd.sand.ixn[0].ECALClusters[i].start.SetXYZ(cl[i].ax, cl[i].ay, cl[i].az);
+      sr.nd.sand.ixn[0].ECALClusters[i].direction.SetXYZ(cl[i].sx, cl[i].sy, cl[i].sz);
+      sr.nd.sand.ixn[0].ECALClusters[i].num_cells = cl[i].reco_cells.size();
+      sr.nd.sand.ixn[0].ECALClusters[i].id = cl[i].tid;
     }
     
-
     cl.clear();
   }
 
@@ -122,13 +125,11 @@ namespace cafmaker
                                         caf::StandardRecord &sr, std::vector<track> &tr) const
   {
 
-    std::cout << __LINE__ << std::endl;
     size_t n_tracks = tr.size();
-    for (const auto &t : tr)
-    {
-      std::cout << "track initial position: " << t.x0 << ", " << t.y0 << ", " << t.z0 << std::endl;
-      std::cout << "track position center: " << t.yc << ", " << t.zc << std::endl;
-    }
+     for (const auto &t : tr)
+     {
+       std::cout << "number of tracks: " <<  n_tracks << std::endl;
+     }
 
 
     sr.nd.sand.ixn.resize(1);
@@ -137,7 +138,6 @@ namespace cafmaker
 
     for (int i = 0; i < n_tracks; i++)
     {
-      sr.nd.sand.ixn[0].tracks[i].end.SetXYZ(0, tr[i].yc, tr[i].zc);
       sr.nd.sand.ixn[0].tracks[i].start.SetXYZ(tr[i].x0, tr[i].y0, tr[i].z0);
       sr.nd.sand.ixn[0].tracks[i].qual = tr[i].chi2_cr;
     }
