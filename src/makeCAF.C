@@ -126,14 +126,16 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   std::cout << "Filling Reco info for the following cases:\n";
 
-  // first: we do SAND or ND-LAr reco
+  
   std::string ndlarFile;
-  std::string sandFile;
   if (par().cafmaker().ndlarRecoFile(ndlarFile))
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
     std::cout << "   ND-LAr (Deep-Learn-Physics ML)\n";
-  } else if (par().cafmaker().sandRecoFile(sandFile))
+  } 
+  
+  std::string sandFile;
+  if (par().cafmaker().sandRecoFile(sandFile))
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
     std::cout << "   SAND\n";
@@ -447,7 +449,10 @@ void loop(CAF &caf,
 int main( int argc, char const *argv[] )
 {
   progopt::variables_map vars = parseCmdLine(argc, argv);
-
+if (!vars.count("fcl")) {
+    std::cerr << "Error: --fcl option is required." << std::endl;
+    return 1;
+}
   cafmaker::Params par = parseConfig(vars["fcl"].as<std::string>(), vars);
 
   cafmaker::Logger::THRESHOLD logThresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
