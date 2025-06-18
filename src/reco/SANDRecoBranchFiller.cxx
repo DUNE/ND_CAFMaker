@@ -96,9 +96,6 @@ namespace cafmaker
   {
    
     size_t n_clusters = cl.size();
-   
-      std::cout << "number of clusters: " << n_clusters << std::endl;
-  
 
     sr.nd.sand.ixn.resize(1);
     sr.nd.sand.ixn[0].nclusters = n_clusters;
@@ -125,8 +122,6 @@ namespace cafmaker
   {
 
     size_t n_tracks = tr.size();
-     
-       std::cout << "number of tracks: " <<  n_tracks << std::endl;
 
 
     sr.nd.sand.ixn.resize(1);
@@ -146,7 +141,6 @@ namespace cafmaker
   {
     std::deque<Trigger> triggers;
     size_t n_entries = NDSANDRecoTree->GetEntries();
-    std::cout << "n entries: " << n_entries << std::endl;
 
     if (fTriggers.empty())
     {
@@ -157,7 +151,6 @@ namespace cafmaker
 
       for (size_t i = 0; i < n_entries; i++)
       {
-        std::cout << "entry n: " << i << std::endl;
         const int placeholderTriggerType = 0;
         // fixme: this check needs to be fixed when we have trigger type info
         
