@@ -535,14 +535,20 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  std::deque<Trigger> MINERvARecoBranchFiller::GetTriggers(int triggerType) const
+  bool MINERvARecoBranchFiller::IsBeamTrigger(int triggerType) const
+  {
+    //Check if the trigger is a beam trigger -- By construction Mx2 is always a beam trigger. 
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------
+  std::deque<Trigger> MINERvARecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     //Just read the branches of interest
     std::deque<Trigger> triggers;
 
     //Do Trigger Map For consistency with the other branch fillers.
-    std::map<int, int> triggerMap;
-    triggerMap[Mx2::kBeamTrigger] = 1;
+
     int iTrigger = 0;
 
     if (fTriggers.empty())
@@ -557,9 +563,9 @@ namespace cafmaker
       {
 
         MnvRecoTree->GetEntry(entry);
-        if (triggerType>=0 && triggerMap[Mx2::kBeamTrigger] != triggerType) 
+        if ((triggerType>=0 && ev_trigger_type != triggerType) || (beamOnly && !IsBeamTrigger(ev_trigger_type))) 
         {
-          LOG.VERBOSE() << "    skipping trigger ID=" << Mx2::kBeamTrigger << "\n";
+          LOG.VERBOSE() << "    skipping trigger ID=" << ev_trigger_type << "\n";
           continue;
         }
         
@@ -573,7 +579,7 @@ namespace cafmaker
         trig.evtID = Long_t(ev_gl_gate);
 
         
-        trig.triggerType = triggerMap[Mx2::kBeamTrigger];
+        trig.triggerType = ev_trigger_type;
         trig.triggerTime_s = ev_gps_time_sec;
         trig.triggerTime_ns = ev_gps_time_usec * 1000.;
 

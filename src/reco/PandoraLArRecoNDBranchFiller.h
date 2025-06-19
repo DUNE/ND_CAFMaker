@@ -22,20 +22,15 @@
 namespace cafmaker
 {
 
-  namespace Pandora2x2 // FSD or NDLAr might have different trigger coding.
-  {
-    const int kBeamTrigger = 5;
-    const int kLightTrigger = 6;
-    const int kSelfTrigger = std::numeric_limits<int>::max();
-    const int kMC = 1;
-  };
   class PandoraLArRecoNDBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
       PandoraLArRecoNDBranchFiller(const std::string &pandoraLArRecoNDFilename,
 				   const float LArDensity = 1.3973);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
+
+      bool IsBeamTrigger(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
@@ -84,7 +79,7 @@ namespace cafmaker
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
-      mutable std::map<int, int> fEntryMap;
+      mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
       const float m_LArDensity;
   };
 

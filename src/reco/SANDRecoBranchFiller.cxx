@@ -112,7 +112,7 @@ namespace cafmaker
   }
 
   // todo: this is a placeholder
-  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType) const
+  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     return std::deque<Trigger>();
   }

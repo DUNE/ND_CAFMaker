@@ -808,16 +808,20 @@ namespace cafmaker
     }
     
   }
+
   // ------------------------------------------------------------------------------
-  std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
+  bool MLNDLArRecoBranchFiller::IsBeamTrigger(int triggerType) const
   {
-    
-    //Do Trigger Map.
-    std::map<int, int> triggerMap;
-    triggerMap[SPINE2x2::kBeamTrigger] = 1;
-    triggerMap[SPINE2x2::kLightTrigger] = 2;
-    triggerMap[SPINE2x2::kSelfTrigger] = 3;
-    triggerMap[SPINE2x2::kMC] = 1;
+    if (triggerType == 5 || triggerType == 1) //io_group = 5 for beam trigger and 1 for MC in Flow
+    {
+      return true;
+    }
+    return false;
+  }
+
+  // ------------------------------------------------------------------------------
+  std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
+  {
     int iTrigger = 0;
     int entry = -1;
     if (fTriggers.empty())
@@ -828,7 +832,7 @@ namespace cafmaker
       for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
         entry +=1;
-        if (triggerType >= 0 &&  triggerMap[trigger.type] != triggerType)
+        if ((triggerType >= 0 &&  trigger.type != triggerType) || (beamOnly && !IsBeamTrigger(trigger.type)))
         {
           LOG.VERBOSE() << "    skipping trigger ID=" << trigger.id << "\n";
           continue;
@@ -840,7 +844,7 @@ namespace cafmaker
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
         
-        trig.triggerType = triggerMap[trigger.type];
+        trig.triggerType = trigger.type;
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
 

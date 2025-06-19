@@ -24,13 +24,6 @@ namespace caf
 
 namespace cafmaker
 {
-  namespace SPINE2x2 // FSD or NDLAr might have different trigger coding.
-  {
-    const int kBeamTrigger = 5;
-    const int kLightTrigger = 6;
-    const int kSelfTrigger = std::numeric_limits<int>::max();
-    const int kMC = 1;
-  };
 
   /// Fill reco CAF branches using an H5 "summary" file from the ML reco.
   class MLNDLArRecoBranchFiller : public IRecoBranchFiller
@@ -38,7 +31,9 @@ namespace cafmaker
     public:
       MLNDLArRecoBranchFiller(const std::string &h5filename);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
+
+      bool IsBeamTrigger(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
@@ -88,7 +83,7 @@ namespace cafmaker
       NDLArDLPH5DatasetReader fDSReader;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
-      mutable std::map<int, int> fEntryMap;
+      mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
       
 
       
