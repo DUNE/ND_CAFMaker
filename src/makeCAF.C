@@ -275,9 +275,12 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
       if (fillerTrigPair.first != seedFillerIt->first)
       {
         auto& refTrigger = trigGroup.front().second;
-        auto it_trig = std::find_if(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), [ &refTrigger](const cafmaker::Trigger& t)
+        auto& refRBF = trigGroup.front().first;
+        auto& testRBF = fillerTrigPair.first;
+        //We only want to match together trigger of the same type or beam triggers;
+        auto it_trig = std::find_if(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), [ &refTrigger, &refRBF, &testRBF](const cafmaker::Trigger& t)
         {
-              return t.triggerType == refTrigger.triggerType;
+              return (t.triggerType == refTrigger.triggerType || (testRBF->IsBeamTrigger(t.triggerType) && refRBF->IsBeamTrigger(refTrigger.triggerType)));
           });
 
         if(it_trig != fillerTrigPair.second.end()){
@@ -379,7 +382,7 @@ void loop(CAF &caf,
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
   {
     if (filler->FillerType() != cafmaker::RecoFillerType::BaseReco) continue; //We don't want to store a trigger from a Matcher algorithm
-    std::deque<cafmaker::Trigger> TriggerList = filler->GetTriggers(par().cafmaker().triggerType());
+    std::deque<cafmaker::Trigger> TriggerList = filler->GetTriggers(par().cafmaker().triggerType(), par().cafmaker().loadBeamOnly());
     if (TriggerList.size() == 0)
     {
       cafmaker::LOG_S("loop()").WARNING() << "Requested Filler "<<filler.get()->GetName()<<" has no trigger of requested type "<<par().cafmaker().triggerType()
