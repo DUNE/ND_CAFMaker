@@ -838,12 +838,12 @@ namespace cafmaker
           continue;
         }
 
-        fEntryMap[iTrigger] = entry;                                                                                                                                                                 iTrigger+=1;
+        fEntryMap[iTrigger] = entry;
+        iTrigger+=1;
 
         fTriggers.emplace_back();
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
-        
         trig.triggerType = trigger.type;
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
