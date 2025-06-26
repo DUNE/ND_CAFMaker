@@ -52,6 +52,7 @@ namespace cafmaker
       int m_run;
       int m_subRun;
       int m_unixTime;
+      int m_unixTimeUsec;
       int m_startTime;
       int m_triggerType;
       std::vector<int> *m_isShowerVect = nullptr;
