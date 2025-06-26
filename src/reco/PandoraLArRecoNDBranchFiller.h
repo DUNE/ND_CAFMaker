@@ -26,7 +26,7 @@ namespace cafmaker
   {
     public:
       PandoraLArRecoNDBranchFiller(const std::string &pandoraLArRecoNDFilename,
-				   const float LArDensity = 1.3973);
+           const float LArDensity = 1.3973);
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
@@ -36,14 +36,14 @@ namespace cafmaker
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
-			     caf::StandardRecord &sr,
-			     const cafmaker::Params &par,
-			     const TruthMatcher *truthMatch = nullptr) const override;
+           caf::StandardRecord &sr,
+           const cafmaker::Params &par,
+           const TruthMatcher *truthMatch = nullptr) const override;
 
       void FillTracks(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-		      std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+          std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
       void FillShowers(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-		       std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+           std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
       
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
