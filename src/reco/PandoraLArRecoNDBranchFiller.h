@@ -21,26 +21,29 @@
 
 namespace cafmaker
 {
+
   class PandoraLArRecoNDBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
       PandoraLArRecoNDBranchFiller(const std::string &pandoraLArRecoNDFilename,
-				   const float LArDensity = 1.3973);
+           const float LArDensity = 1.3973);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
+
+      bool IsBeamTrigger(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
-			     caf::StandardRecord &sr,
-			     const cafmaker::Params &par,
-			     const TruthMatcher *truthMatch = nullptr) const override;
+           caf::StandardRecord &sr,
+           const cafmaker::Params &par,
+           const TruthMatcher *truthMatch = nullptr) const override;
 
       void FillTracks(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-		      std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+          std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
       void FillShowers(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-		       std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+           std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
       
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
@@ -76,6 +79,7 @@ namespace cafmaker
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
+      mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
       const float m_LArDensity;
   };
 

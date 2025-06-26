@@ -10,6 +10,7 @@
 #define ND_CAFMAKER_MLNDLARRECOBRANCHFILLER_H
 
 #include <unordered_map>
+#include <map>
 #include <typeindex>
 
 #include "reco/IRecoBranchFiller.h"
@@ -30,10 +31,13 @@ namespace cafmaker
     public:
       MLNDLArRecoBranchFiller(const std::string &h5filename);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
+
+      bool IsBeamTrigger(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
+      
 
     protected:
       void _FillRecoBranches(const Trigger &trigger,
@@ -79,6 +83,10 @@ namespace cafmaker
       NDLArDLPH5DatasetReader fDSReader;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
+      mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
+      
+
+      
   };  // class MLNDLArRecoBranchFiller
 
 } // namespace cafmaker

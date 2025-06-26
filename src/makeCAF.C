@@ -274,12 +274,34 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
       //  map if it's empty, per below)
       if (fillerTrigPair.first != seedFillerIt->first)
       {
+        auto& refTrigger = trigGroup.front().second;
+        auto& refRBF = trigGroup.front().first;
+        auto& testRBF = fillerTrigPair.first;
+        //We only want to match together trigger of the same type or beam triggers;
+        auto it_trig = std::find_if(fillerTrigPair.second.begin(), fillerTrigPair.second.end(), [ &refTrigger, &refRBF, &testRBF](const cafmaker::Trigger& t)
+        {
+              return (t.triggerType == refTrigger.triggerType || (testRBF->IsBeamTrigger(t.triggerType) && refRBF->IsBeamTrigger(refTrigger.triggerType)));
+          });
+
+        if(it_trig != fillerTrigPair.second.end()){
+            if (it_trig != fillerTrigPair.second.begin()) {
+                //Move the trigger to the front 
+                cafmaker::Trigger temp = std::move(*it_trig);
+                fillerTrigPair.second.erase(it_trig);
+                fillerTrigPair.second.push_front(std::move(temp));
+            }
+        }
+        else continue; //Not found any trigger that match with ref trigger type
+      
         const auto & trig = fillerTrigPair.second.front();
         ss << "       " << fillerTrigPair.first->GetName() << ", " << trig.evtID;
 
         // we will only take at most one trigger from each of the other streams.
         // since the seed was the earliest one out of all the triggers,
         // we only need to check the first one in each other stream
+
+
+        
         if (doTriggersMatch( trigGroup.front().second, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
           ss << " -->  MATCHES\n";
@@ -338,7 +360,6 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
                       << " I was given) that did not match across fillers.  Is that consistent with your expectations?\n";
     }
   }
-
   return ret;
 }
 
@@ -361,7 +382,14 @@ void loop(CAF &caf,
   for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
   {
     if (filler->FillerType() != cafmaker::RecoFillerType::BaseReco) continue; //We don't want to store a trigger from a Matcher algorithm
-    triggersByRBF.insert({filler.get(), filler->GetTriggers()});
+    std::deque<cafmaker::Trigger> TriggerList = filler->GetTriggers(par().cafmaker().triggerType(), par().cafmaker().loadBeamOnly());
+    if (TriggerList.size() == 0)
+    {
+      cafmaker::LOG_S("loop()").WARNING() << "Requested Filler "<<filler.get()->GetName()<<" has no trigger of requested type "<<par().cafmaker().triggerType()
+                << " so it will not be stored, please make sure you wanted to have it as input\n";
+      continue;
+    }
+    triggersByRBF.insert({filler.get(), TriggerList});
   }
   std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
@@ -381,12 +409,11 @@ void loop(CAF &caf,
     std::cerr << "Requested number of events (" << N << ") is non-positive!  Abort.\n";
     abort();
   }
-
+  
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
-
+  
   cafmaker::IFBeam beamManager(groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
-
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
   for( int ii = start; ii < start + N; ++ii )

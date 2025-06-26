@@ -131,7 +131,7 @@ namespace cafmaker
 
 
 
-  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType) const
+  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     std::deque<Trigger> triggers;
     int lastSpillNo = -99999999;

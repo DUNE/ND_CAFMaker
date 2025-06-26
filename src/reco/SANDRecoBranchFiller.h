@@ -21,7 +21,7 @@ namespace cafmaker
     public:
       SANDRecoBranchFiller(const std::string &SANDRecoFilename);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 

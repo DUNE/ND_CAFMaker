@@ -229,7 +229,7 @@ namespace cafmaker
 
 
     // Get nth entry from tree
-    MnvRecoTree->GetEntry(idx);  
+    MnvRecoTree->GetEntry(fEntryMap[idx]);  
     
     //Fill MINERvA specific info in the meta branch
     sr.meta.minerva.enabled = true;
@@ -535,31 +535,50 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  std::deque<Trigger> MINERvARecoBranchFiller::GetTriggers(int triggerType) const
+  bool MINERvARecoBranchFiller::IsBeamTrigger(int triggerType) const
+  {
+    //Check if the trigger is a beam trigger -- By construction Mx2 is always a beam trigger. 
+    return true;
+  }
+
+  // ------------------------------------------------------------------------------
+  std::deque<Trigger> MINERvARecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     //Just read the branches of interest
-
     std::deque<Trigger> triggers;
+
+    //Do Trigger Map For consistency with the other branch fillers.
+
+    int iTrigger = 0;
+
     if (fTriggers.empty())
     {
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << MnvRecoTree->GetEntries() << " MINERvA Tree:\n";
       fTriggers.reserve(MnvRecoTree->GetEntries());
       unsigned long int t0_minerva;
+      MnvRecoTree->GetEntry(0);
+      t0_minerva = ev_gps_time_sec;
+      
       for (int entry = 0; entry < MnvRecoTree->GetEntries(); entry++)
       {
 
-
         MnvRecoTree->GetEntry(entry);
-        if (entry == 0) t0_minerva = ev_gps_time_sec;
-
+        if ((triggerType>=0 && ev_trigger_type != triggerType) || (beamOnly && !IsBeamTrigger(ev_trigger_type))) 
+        {
+          LOG.VERBOSE() << "    skipping trigger ID=" << ev_trigger_type << "\n";
+          continue;
+        }
+        
+        fEntryMap[iTrigger] = entry;
+        iTrigger+=1;
 
         fTriggers.emplace_back();
+
         Trigger & trig = fTriggers.back();
 
         trig.evtID = Long_t(ev_gl_gate);
 
-
-        // todo: these are placeholder values until we can propagate enough info through the reco files
+        
         trig.triggerType = ev_trigger_type;
         trig.triggerTime_s = ev_gps_time_sec;
         trig.triggerTime_ns = ev_gps_time_usec * 1000.;

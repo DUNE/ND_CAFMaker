@@ -16,8 +16,9 @@ namespace cafmaker
 {
   class TruthMatcher;
 
-  struct Trigger
-  {
+  struct Trigger{
+
+
     long int          evtID;
     int               triggerType;
     unsigned long int triggerTime_s;
@@ -63,7 +64,13 @@ namespace cafmaker
       ///
       /// \param  triggerType   (Detector-specific) type of trigger to select.  <0 means "all"
       /// \return List of selected triggers (a std::deque because we're always working at the beginning or end)
-      virtual std::deque<Trigger> GetTriggers(int triggerType=-1) const = 0;
+      virtual std::deque<Trigger> GetTriggers(int triggerType=-1, bool beamOnly = false) const = 0;
+
+      /// \brief Returns a bool if the trigger considered is a beam trigger.
+      ///
+      /// \param trigger The testTrigger to check.
+      /// \return 
+      virtual bool IsBeamTrigger(int) const { return false; }
 
 
       /// What type of IRecoBranchFiller is this?

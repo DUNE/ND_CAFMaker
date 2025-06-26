@@ -28,7 +28,7 @@ namespace cafmaker
     public:
       TMSRecoBranchFiller(const std::string & tmsRecoFilename);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 

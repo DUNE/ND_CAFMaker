@@ -19,7 +19,7 @@ namespace cafmaker
     public:
       NDLArTMSMatchRecoFiller();
 
-      std::deque<Trigger> GetTriggers(int triggerType) const override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::Matcher; }
 

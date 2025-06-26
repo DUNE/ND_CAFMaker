@@ -80,7 +80,7 @@ namespace cafmaker
   }
 
   // todo: this is a placeholder
-  std::deque<Trigger> NDLArTMSMatchRecoFiller::GetTriggers(int triggerType) const
+  std::deque<Trigger> NDLArTMSMatchRecoFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     return std::deque<Trigger>();
   }

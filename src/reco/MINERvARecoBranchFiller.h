@@ -30,17 +30,21 @@ namespace caf
 
 namespace cafmaker
 {
+
   class MINERvARecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
       MINERvARecoBranchFiller(const std::string & minervaRecoFilename, float X_offset, float Y_offset, float Z_offset);
 
-      std::deque<Trigger> GetTriggers(int triggerType) const  override;
+      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const  override;
+
+      bool IsBeamTrigger(int triggerType) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
 
       ~MINERvARecoBranchFiller();
+
 
     private:
       void _FillRecoBranches(const Trigger &trigger,
@@ -147,6 +151,7 @@ namespace cafmaker
       bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
+      mutable std::map<int,int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
   };
 
 }

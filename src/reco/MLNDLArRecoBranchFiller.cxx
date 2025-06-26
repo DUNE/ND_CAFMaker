@@ -158,7 +158,7 @@ namespace cafmaker
     std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
 
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
-
+    idx = fEntryMap[idx];
     //Fill ND-LAr specific info in the meta branch
     H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
     sr.meta.lar2x2.enabled = true;
@@ -808,9 +808,22 @@ namespace cafmaker
     }
     
   }
+
   // ------------------------------------------------------------------------------
-  std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType) const
+  bool MLNDLArRecoBranchFiller::IsBeamTrigger(int triggerType) const
   {
+    if (triggerType == 5 || triggerType == 1) //io_group = 5 for beam trigger and 1 for MC in Flow
+    {
+      return true;
+    }
+    return false;
+  }
+
+  // ------------------------------------------------------------------------------
+  std::deque<Trigger> MLNDLArRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
+  {
+    int iTrigger = 0;
+    int entry = -1;
     if (fTriggers.empty())
     {
       auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
@@ -818,18 +831,19 @@ namespace cafmaker
       fTriggers.reserve(triggersIn.size());
       for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
       {
-        const int placeholderTriggerType = 0;
-        // fixme: this check needs to be fixed when we have trigger type info
-        if (triggerType >= 0 && triggerType != placeholderTriggerType)
+        entry +=1;
+        if ((triggerType >= 0 &&  trigger.type != triggerType) || (beamOnly && !IsBeamTrigger(trigger.type)))
         {
           LOG.VERBOSE() << "    skipping trigger ID=" << trigger.id << "\n";
           continue;
         }
 
+        fEntryMap[iTrigger] = entry;
+        iTrigger+=1;
+
         fTriggers.emplace_back();
         Trigger & trig = fTriggers.back();
         trig.evtID = trigger.id;
-
         trig.triggerType = trigger.type;
         trig.triggerTime_s = trigger.time_s;
         trig.triggerTime_ns = trigger.time_ns;
