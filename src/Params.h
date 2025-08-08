@@ -67,6 +67,18 @@ namespace cafmaker
     fhicl::Atom<float> mx2_2x2_offsetY {fhicl::Name("Mx2_2x2_offsetY"), fhicl::Comment("Mx2 - 2x2 offset in Y direction in cm"), 218.};
     fhicl::Atom<float> mx2_2x2_offsetZ {fhicl::Name("Mx2_2x2_offsetZ"), fhicl::Comment("Mx2 - 2x2 offset in Z direction in cm"), 6913.};
 
+    //HACK MINERvA 2X2 alignment translation and rotation correction 
+    fhicl::Atom<float> mx2_2x2_correction_usX {fhicl::Name("Mx2_2x2_correctionUsX"), fhicl::Comment("HACK correction to Mx2 - 2x2 offset in X direction in cm for the Upstream modules"), -6.5};
+    fhicl::Atom<float> mx2_2x2_correction_usY {fhicl::Name("Mx2_2x2_correctionUsY"), fhicl::Comment("HACK correction to Mx2 - 2x2 offset in Y direction in cm for the Upstream modules"), 4.65};
+    fhicl::Atom<float> mx2_2x2_correction_usZ {fhicl::Name("Mx2_2x2_correctionUsZ"), fhicl::Comment("HACK correction to Mx2 - 2x2 offset in Z direction in cm for the Upstream modules"), 0.};
+
+    fhicl::Atom<float> mx2_2x2_correction_dsX {fhicl::Name("Mx2_2x2_correctionDsX"), fhicl::Comment("HACK correction to Mx2 - 2x2 offset in X direction in cm for the Upstream modules"), -8.5};
+    fhicl::Atom<float> mx2_2x2_correction_dsY {fhicl::Name("Mx2_2x2_correctionDsY"), fhicl::Comment("HACK correction to Mx2 - 2x2 offset in Y direction in cm for the Upstream modules"), 3.15};
+    fhicl::Atom<float> mx2_2x2_correction_dsZ {fhicl::Name("Mx2_2x2_correctionDsZ"), fhicl::Comment("HACK correction to Mx2 - 2x2 offset in Z direction in cm for the Upstream modules"), 20};
+
+    fhicl::Atom<float> mx2_2x2_correction_ThetaX {fhicl::Name("Mx2_2x2_thetaX"), fhicl::Comment("HACK correction to Mx2 - 2x2 Rotation around the Y axis (thetaX) in rad"), 0.011};
+    fhicl::Atom<float> mx2_2x2_correction_ThetaY {fhicl::Name("Mx2_2x2_thetaY"), fhicl::Comment("HACK correction to Mx2 - 2x2 Rotation around the X axis (thetaY) in rad"), 0.002};
+
     fhicl::Atom<int> triggerType { fhicl::Name("TriggerType"), fhicl::Comment("Trigger type to be loaded by the CAFMaker"), -1};
     fhicl::Atom<bool> loadBeamOnly { fhicl::Name("LoadBeamOnly"), fhicl::Comment("Load beam trigger only in the CAFMaker"), false};
 

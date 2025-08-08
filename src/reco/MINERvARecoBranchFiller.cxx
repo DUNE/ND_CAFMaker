@@ -12,7 +12,8 @@ namespace cafmaker
   }
 
 
-  MINERvARecoBranchFiller::MINERvARecoBranchFiller(const std::string &minervaRecoFilename, float X_offset, float Y_offset, float Z_offset)
+  MINERvARecoBranchFiller::MINERvARecoBranchFiller(const std::string &minervaRecoFilename, float X_offset, float Y_offset, float Z_offset,
+    /*Hack parameter*/  float X_translation_US, float Y_translation_US, float Z_translation_US, float X_translation_DS, float Y_translation_DS, float Z_translation_DS, float ThetaX, float ThetaY )
   : IRecoBranchFiller("MINERvA"),
     fTriggers(),
     fLastTriggerReqd(fTriggers.end())
@@ -29,7 +30,17 @@ namespace cafmaker
         throw;
       }
 
-     
+     //HACK WHILE WE DO NOT HAVE THE GEOMETRY FIXED
+      correctionUS_X = X_translation_US;
+      correctionUS_Y = Y_translation_US;
+      correctionUS_Z = Z_translation_US;
+      correctionDS_X = X_translation_DS;
+      correctionDS_Y = Y_translation_DS;
+      correctionDS_Z = Z_translation_DS;
+
+      correctionThetaX = ThetaX;
+      correctionThetaY = ThetaY;
+
 
       MnvRecoTree->SetBranchAddress("ev_trigger_type", &ev_trigger_type);
       MnvRecoTree->SetBranchAddress("ev_gl_gate", &ev_gl_gate);
@@ -278,11 +289,82 @@ namespace cafmaker
       // Save first and last hit in track
       // MINERvA Reco info is saved in mm whereas CAFs use cm as default -> do conversion here
       // We offset positions in MINERvA reconstruction so we reofset them here.
-      my_track.start = caf::SRVector3D(trk_node_X[i][0]/10.  - offsetX/10. ,trk_node_Y[i][0]/10. - offsetY/10., trk_node_Z[i][0]/10. - offsetZ/10.);
-      my_track.end   = caf::SRVector3D(trk_node_X[i][trk_nodes[i] -1]/10.  - offsetX/10. ,trk_node_Y[i][trk_nodes[i] -1]/10. - offsetY/10., trk_node_Z[i][trk_nodes[i] -1]/10. - offsetZ/10.);
+      double off_start_x = offsetX/10.;
+      double off_start_y = offsetY/10.;
+      double off_start_z = offsetZ/10.;
+
+      double off_end_x = offsetX/10.;
+      double off_end_y = offsetY/10.;
+      double off_end_z = offsetZ/10.;
+
+      double t_startX = trk_node_X[i][0]/10.  - off_start_x;
+      double t_endX = trk_node_X[i][trk_nodes[i] -1]/10.  - off_end_x;
+
+      double t_startY = trk_node_Y[i][0]/10.  - off_start_y;
+      double t_endY = trk_node_Y[i][trk_nodes[i] -1]/10.  - off_end_y;
+
+      double t_startZ = trk_node_Z[i][0]/10.  - off_start_z;
+      double t_endZ = trk_node_Z[i][trk_nodes[i] -1]/10.  - off_end_z;
+      
+
+      //HACK ALIGNMENT PROCESS TO CORRECT Mx2 2x2 ALIGNMENT -- TEMPORARY BEFORE THE ADDITION OF GDML MODIFICATION
+      if (is_data)
+      {
+        if (t_startZ <0)
+        {
+          t_startX += correctionUS_X;
+          t_startY += correctionUS_Y;
+          t_startZ += correctionUS_Z;
+        }
+        else
+        {
+          t_startX += correctionDS_X;
+          t_startY += correctionDS_Y;
+          t_startZ += correctionDS_Z;
+        }
+
+        if (t_endZ<0)
+        {
+          t_endX += correctionUS_X;
+          t_endY += correctionUS_Y;
+          t_endZ += correctionUS_Z;
+        }
+        else
+        {
+          t_endX += correctionDS_X;
+          t_endY += correctionDS_Y;
+          t_endZ += correctionDS_Z;
+        }
+
+
+
+        double x_s = t_startX;
+        double x_e = t_endX;
+
+        double y_s = t_startY;
+        double y_e = t_endY;
+
+        double z_s = t_startZ;
+        double z_e = t_endZ;
+
+        //Rotation
+
+        t_startX -= z_s * correctionThetaX;
+        t_endX -= z_e * correctionThetaX;
+
+        t_startY += z_s * correctionThetaY;
+        t_endY += z_e * correctionThetaY;
+
+        t_startZ += x_s * correctionThetaX - y_s * correctionThetaY;
+        t_endZ  += x_e * correctionThetaX - y_e * correctionThetaY;      
+      }
+
+      my_track.start = caf::SRVector3D(t_startX, t_startY, t_startZ);
+      my_track.end = caf::SRVector3D(t_endX, t_endY, t_endZ);
+
+      my_track.len_cm  = sqrt(pow(t_startX - t_endX,2)+pow(t_startY - t_endY,2)+pow(t_startZ - t_endZ,2));
 
       // Track info
-      my_track.len_cm  = sqrt(pow(trk_node_X[i][trk_nodes[i] -1] - trk_node_X[i][0],2)+pow(trk_node_Y[i][trk_nodes[i] -1] - trk_node_Y[i][0],2)+pow(trk_node_Z[i][trk_nodes[i] -1] - trk_node_Z[i][0],2))/10.;
       my_track.qual      = trk_chi2perDof[i];
       //We don't have different track energy definition so we fill both E and Evis for now in case only one of the two is used
       my_track.Evis    = trk_vis_energy[i]/1000.; //In GeV

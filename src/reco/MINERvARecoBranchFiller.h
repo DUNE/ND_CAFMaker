@@ -34,7 +34,7 @@ namespace cafmaker
   class MINERvARecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      MINERvARecoBranchFiller(const std::string & minervaRecoFilename, float X_offset, float Y_offset, float Z_offset);
+      MINERvARecoBranchFiller(const std::string & minervaRecoFilename, float X_offset, float Y_offset, float Z_offset, /*Hack parameter*/  float X_translation_US, float Y_translation_US, float Z_translation_US, float X_translation_DS, float Y_translation_DS, float Z_translation_DS, float ThetaX, float ThetaY);
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const  override;
 
@@ -152,6 +152,17 @@ namespace cafmaker
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int,int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
+      
+      // HACK FOR ALIGNMENT CORRECTION 
+      double correctionUS_X;
+      double correctionUS_Y;
+      double correctionUS_Z;
+      double correctionDS_X;
+      double correctionDS_Y;
+      double correctionDS_Z;
+
+      double correctionThetaX;
+      double correctionThetaY;
   };
 
 }
