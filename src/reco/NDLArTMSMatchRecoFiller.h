@@ -27,6 +27,8 @@ namespace cafmaker
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
 
+      bool Spatial_Match(caf::SRTrack track_lar, caf::SRTrack track_tms, double &xthreshold, double &ythreshold) const;
+
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
