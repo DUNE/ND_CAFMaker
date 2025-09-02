@@ -35,6 +35,10 @@ namespace cafmaker
       ~TMSRecoBranchFiller();
 
     private:
+      void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
+      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt, int trkid) const;
+      void FillTrueParticle(caf::SRTrueParticle & srTruePart, int trkid) const;
+
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
@@ -73,9 +77,14 @@ namespace cafmaker
       float _TrackRecoHitPos[100][200][4];
 
       // True particle idx for reco tracks
-      int _RecoTrueVtxId[10];  // Vertex
-      int _RecoTruePartId[10]; // Primary
-      int _RecoTruePartIdSec[10]; //Secondary 
+      int _TrueVtxN;  // N Vertices
+      float _TrueVtxX[5000];  // N Vertices
+      float _TrueVtxY[5000];  // N Vertices
+      float _TrueVtxZ[5000];  // N Vertices
+      int _TrueVtxId[5000];  // Vertex
+      int _RecoTrueVtxId[5000];  // Vertex
+      int _RecoTruePartId[5000]; // Primary
+      int _RecoTruePartIdSec[5000]; //Secondary 
 
       bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;

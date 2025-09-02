@@ -56,8 +56,13 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
 
       // Add Truth tree for the index of the true primary particles
-      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleVtxId", _RecoTrueVtxId);
-      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex", _RecoTruePartId);
+      TMSTrueTree->SetBranchAddress("VertexID",                       _TrueVtxId);
+      TMSTrueTree->SetBranchAddress("TrueVtxN",                       &_TrueVtxN);
+      TMSTrueTree->SetBranchAddress("TrueVtxX",                       _TrueVtxX);
+      TMSTrueTree->SetBranchAddress("TrueVtxY",                       _TrueVtxY);
+      TMSTrueTree->SetBranchAddress("TrueVtxZ",                       _TrueVtxZ);
+      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleVtxId",  _RecoTrueVtxId);
+      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex",  _RecoTruePartId);
       TMSTrueTree->SetBranchAddress("RecoTrackSecondaryParticleIndex", _RecoTruePartIdSec);
 
     } else {
@@ -78,6 +83,73 @@ namespace cafmaker
   }
 
   // ---------------------------------------------------------------------------
+
+  void TMSRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
+                                                int trkid) const
+  {
+    LOG.DEBUG() << "    now copying truth info from TMS TrueInteraction to SRTrueInteraction...\n";
+
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+
+    // here we are converting from mm (units from MINERvA) to cm
+    std::cout << "Filling TrueVtxX[" << trkid << "] with " << _TrueVtxX[trkid]/10. << "cm" << std::endl;
+    ValidateOrCopy(_TrueVtxX[trkid]/10., srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
+    ValidateOrCopy(_TrueVtxY[trkid]/10., srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
+    ValidateOrCopy(_TrueVtxZ[trkid]/10., srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
+
+
+  }
+
+  void TMSRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
+                                             int trkid) const
+  {
+    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+    //ValidateOrCopy(mc_traj_pdg[max_trkid], srTruePart.pdg, 0, "pdg_code");
+
+    //ValidateOrCopy(mc_traj_edepsim_trkid[trkid], srTruePart.G4ID, -1, "SRTrueParticle::track_id");
+    //ValidateOrCopy(mc_traj_parentid[trkid], srTruePart.parent, -1, "SRTrueParticle::parent");
+    //ValidateOrCopy(mc_traj_point_px[trkid][0]/1000., srTruePart.p.px, NaN, "SRTrueParticle::p.px");
+    //ValidateOrCopy(mc_traj_point_py[trkid][0]/1000., srTruePart.p.py, NaN, "SRTrueParticle::p.py");
+    //ValidateOrCopy(mc_traj_point_pz[trkid][0]/1000., srTruePart.p.pz, NaN, "SRTrueParticle::p.pz");
+
+    try
+    {
+      //ValidateOrCopy(mc_traj_point_E[trkid][0] / 1000., srTruePart.p.E, NaN, "SRTrueParticle::p.E");
+      0;
+    }
+    catch (std::runtime_error & e)
+    {
+      auto diff = 10 ; //(mc_traj_point_E[trkid][0] / 1000. - srTruePart.p.E);
+      if (diff < 1) // < 1 MeV
+      {
+        LOG.WARNING() << "True particle energy (track id=" << srTruePart.G4ID << ", pdg=" << srTruePart.pdg << ", stored E=" << srTruePart.p.E << ")"
+                      << " differs by " << diff << " MeV between stored (GENIE?) and ML-reco pass-through values";
+      }
+      else
+        throw e;
+    }
+
+
+
+    // todo: Things do not match yet the exact Genie output, need to work on the Minerva reconstruction output.
+    // For now will assume that if it's a primary and we gor the eventID and trackid right, Genie will have fill it properly
+    // And if it's an important secondary shared by both detectors, MLReco will have filled it.
+    /*
+    ValidateOrCopy(mc_traj_point_x[trkid][0]/10. - offsetX/10., srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
+    ValidateOrCopy(mc_traj_point_y[trkid][0]/10. - offsetY/10., srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
+    ValidateOrCopy(mc_traj_point_z[trkid][0]/10. - offsetZ/10., srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
+
+    ValidateOrCopy(mc_traj_point_x[trkid][1]/10. - offsetX/10., srTruePart.end_pos.x, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(mc_traj_point_y[trkid][1]/10. - offsetY/10., srTruePart.end_pos.y, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(mc_traj_point_z[trkid][1]/10. - offsetZ/10., srTruePart.end_pos.z, NaN, "SRTrueParticle::end_pos.z");
+
+
+    ValidateOrCopy(mc_traj_point_px[trkid][0], srTruePart.p.px, NaN, "SRTrueParticle::end_pos.x");
+    ValidateOrCopy(mc_traj_point_py[trkid][0], srTruePart.p.py, NaN, "SRTrueParticle::end_pos.y");
+    ValidateOrCopy(mc_traj_point_pz[trkid][0], srTruePart.p.pz, NaN, "SRTrueParticle::end_pos.z");
+
+    */
+  }
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
   void TMSRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
@@ -114,12 +186,14 @@ namespace cafmaker
     caf::SRTrueParticle *srTruePart;
     caf::SRTrueInteraction *srTrueInt;
 
+
     unsigned total = 0; // Total number of tracks in the interaction
     interaction.ntracks = 0;
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
+      FillInteractions(truthMatcher, sr);
       if (_nTracks > 0)
       {
         total = interaction.tracks.size();
@@ -153,6 +227,31 @@ namespace cafmaker
       TMSTrueTree->GetEntry(  i); // Load each subsequent entry before loop test condition
     }
   }
+
+  void TMSRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const
+  {
+
+    for (int i_int = 0; i_int<_TrueVtxN; i_int++)
+    {
+      std::cout << "loopy " << i_int << std::endl;
+      //Long_t neutrino_event_id = _TrueVtxId[i_int];//mc_int_edepsimId[i_int];
+      unsigned long int neutrino_event_id = (unsigned long) (_RunNo*1E6 + _TrueVtxId[i_int]);//mc_int_edepsimId[i_int];
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
+      LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
+      for (const caf::SRTrueParticle & part : srTrueInt.prim)
+          LOG.VERBOSE() << "    (prim) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+      for (const caf::SRTrueParticle & part : srTrueInt.prefsi)
+          LOG.VERBOSE() << "    (prefsi) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+      for (const caf::SRTrueParticle & part : srTrueInt.sec)
+          LOG.VERBOSE() << "    (sec) id = " << part.G4ID  << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+
+      //std::cout << "    (prim) id = " << stTrueInt.prim.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
+      // here we need to fill in any additional info
+      // that GENIE didn't know about: e.g., secondary particles made by GEANT4
+      FillTrueInteraction(srTrueInt, i_int);
+    }
+  }
+
 
   // TODO: In future this nastiness will be handled by TMS
   std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
