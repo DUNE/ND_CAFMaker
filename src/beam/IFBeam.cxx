@@ -25,7 +25,7 @@ namespace cafmaker
   	loadBeamSpills(groupedTriggers); // Load all beam spills upon instantiation if data
   }
   
-  std::string IFBeam::createUrl(const std::string& min_time_iso, const std::string& max_time_iso) {
+  std::string IFBeam::createUrl(const std::string potDevice, const std::string& min_time_iso, const std::string& max_time_iso) {
       std::ostringstream url_stream;
       url_stream << "https://dbdata3vm.fnal.gov:9443/ifbeam/data/data?v=" << potDevice
                  << "&e=" << "e,a9"
@@ -50,6 +50,7 @@ namespace cafmaker
   
   void IFBeam::loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers) { //todo: this should return other information as well like horn current, position, etc., querying all devices and storing in a map
       beamSpills.clear();
+      hornCurrent.clear();
       double dt = 5.0; //time window to query before and after first and last spill, respectively
       double ms_to_s = 1e-3;
       double min_time = std::numeric_limits<double>::max();
@@ -70,7 +71,8 @@ namespace cafmaker
       }
       std::string min_time_iso = util::toISO8601(min_time);
       std::string max_time_iso = util::toISO8601(max_time);
-      std::string url = createUrl(min_time_iso, max_time_iso);
+      std::string url = createUrl(potDevice, min_time_iso, max_time_iso);
+      std::string url_hornI_A = createUrl(hornCurrentDeviceA, min_time_iso, max_time_iso);
   
       
       CURL* curl;
@@ -101,13 +103,45 @@ namespace cafmaker
               cafmaker::LOG_S("Fetch beam information").ERROR() << "Failed to parse JSON data: " << e.what() << "\n";
   	    std::abort();
           }
+      }  
+
+      // reading horn current devices
+      CURL* curl_hornI_A;
+      CURLcode res_hornI_A;
+      std::string readBuffer_hornI_A;
+    
+      std::cout << "Fetching beam information from: " << url_hornI_A << "\n";
+      curl_hornI_A = curl_easy_init();
+      if (curl_hornI_A) {
+          curl_easy_setopt(curl_hornI_A, CURLOPT_URL, url_hornI_A.c_str());
+          curl_easy_setopt(curl_hornI_A, CURLOPT_WRITEFUNCTION, util::WriteCallback);
+          curl_easy_setopt(curl_hornI_A, CURLOPT_WRITEDATA, &readBuffer_hornI_A);
+          res_hornI_A = curl_easy_perform(curl_hornI_A);
+          if (res_hornI_A != CURLE_OK) {
+              cafmaker::LOG_S("Fetch beam information").ERROR() << "curl_easy_perform() failed: " << curl_easy_strerror(res) << "\n";
+              std::abort();
+          }
+          curl_easy_cleanup(curl_hornI_A);
+          try {
+              auto json_data = json::parse(readBuffer_hornI_A);
+              for (const auto& spill : json_data["rows"]) {
+                  double time = spill["clock"].get<double>() * ms_to_s;
+                  std::string unit = spill["units"];
+                  double currentA = spill["value"].get<double>() * unitToFactor(unit);
+                  hornCurrent[time] = currentA;
+              }
+          } catch (const json::exception& e) {
+              cafmaker::LOG_S("Fetch beam information").ERROR() << "Failed to parse JSON data: " << e.what() << "\n";
+  	    std::abort();
+          }
       }
   }
   
-  double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
+
+  double IFBeam::getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const BeamSpills& data) {
       double pot = 0.0;
       if (!(groupedTrigger.front().first->IsBeamTrigger(groupedTrigger.front().second.triggerType))) return 0.0;
-      auto it = std::find_if(beamSpills.begin(), beamSpills.end(),
+      auto it = std::find_if(data.begin(), data.end(),
           [par, &groupedTrigger](const auto& spill) {
               return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
                   [par, &spill](const auto& groupedTrigger) {
@@ -115,7 +149,7 @@ namespace cafmaker
                   });
           });
   
-      if (it != beamSpills.end()) {
+      if (it != data.end()) {
           pot = it->second;
       } 
       else {
@@ -125,7 +159,7 @@ namespace cafmaker
           for (auto trig : groupedTrigger) {
               //Only fetch pot for beam trigger. 
               if (!trig.first->IsBeamTrigger(trig.second.triggerType)) return 0;
-              bool matched = std::any_of(beamSpills.cbegin(), beamSpills.cend(),
+              bool matched = std::any_of(data.cbegin(), data.cend(),
                   [par, &trig](const auto& spill) {
                       return std::abs(util::getTriggerTime(trig.second) - spill.first) < par().cafmaker().beamMatchDT();
                   });
@@ -162,4 +196,13 @@ namespace cafmaker
   
      return pot;
   }
+
+
+  double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
+    return getData(par, groupedTrigger, ii, beamSpills);
+  }
+ 
+  double IFBeam::getHornI(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
+    return getData(par, groupedTrigger, ii, hornCurrent);
+  } 
 }

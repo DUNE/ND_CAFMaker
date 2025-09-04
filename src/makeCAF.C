@@ -446,9 +446,11 @@ void loop(CAF &caf,
 
     //Fill POT
     double pot = 0.0;
+    double hornI = 0.0;
     if (useIFBeam)
     {
         pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
+        hornI = beamManager.getHornI(par, groupedTriggers[ii], ii);
     }
     else
     {
@@ -459,6 +461,8 @@ void loop(CAF &caf,
       caf.pot = 0;
     caf.pot += pot;
     caf.sr.beam.pulsepot = pot;
+    caf.sr.beam.hornI = hornI;
+
     caf.fill();
   }
   progBar.Done();
