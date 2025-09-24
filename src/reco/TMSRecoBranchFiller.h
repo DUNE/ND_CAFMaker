@@ -36,8 +36,8 @@ namespace cafmaker
 
     private:
       void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
-      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt, int trkid) const;
-      void FillTrueParticle(caf::SRTrueParticle & srTruePart, int trkid) const;
+      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt, long int trkid) const;
+      void FillTrueParticle(caf::SRTrueParticle & srTruePart, long int trkid) const;
 
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
@@ -47,6 +47,7 @@ namespace cafmaker
       TFile *fTMSRecoFile;
       TTree *TMSRecoTree;
       TTree *TMSTrueTree;
+      TTree *TMSTrueSpill;
 
       // Save the branches that we're reading in
       int   _RunNo;
