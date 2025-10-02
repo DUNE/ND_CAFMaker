@@ -63,15 +63,15 @@ namespace cafmaker
 
     double x1_tms = track_tms.start.x; //cm
     double y1_tms = track_tms.start.y; //cm
-    double xdir1_tms = track_tms.startdir.x;
-    double ydir1_tms = track_tms.startdir.y;
-    double zdir1_tms = track_tms.startdir.z;
+    double xdir1_tms = track_tms.dir.x;
+    double ydir1_tms = track_tms.dir.y;
+    double zdir1_tms = track_tms.dir.z;
 
     //calculate the angle between track start and end directions in both the xz- and yz-planes
-    double theta_x = Angular_Match(track_tms.startdir.x, 0, track_tms.startdir.z, track_lar.enddir.x, 0, track_lar.enddir.z);
-    double theta_y = Angular_Match(0, track_tms.startdir.y, track_tms.startdir.z, 0, track_lar.enddir.y, track_lar.enddir.z);
+    double theta_x = Angular_Match(xidr1_tms, 0, zdir1_tms, xdir2_lar, 0, zdir2_lar);
+    double theta_y = Angular_Match(0,ydir1_tms, zdir1_tms, 0, ydir2_lar, zdir2_lar);
 
-    ang_residual = Angular_Match(track_tms.startdir.x, track_tms.startdir.y, track_tms.startdir.z, track_lar.enddir.x, track_lar.enddir.y, track_lar.enddir.z);
+    ang_residual = Angular_Match(xdir1_tms, ydir1_tms, zdir1_tms, xdir2_lar, ydir2_lar, zdir2_lar);
 
     // Propagate the LAr track into the TMS, by drawing a straight line into the TMS using the 
     // end direction in the LAr. Propagate the track to the same z as the TMS is, and 
