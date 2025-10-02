@@ -68,7 +68,7 @@ namespace cafmaker
     double zdir1_tms = track_tms.dir.z;
 
     //calculate the angle between track start and end directions in both the xz- and yz-planes
-    double theta_x = Angular_Match(xidr1_tms, 0, zdir1_tms, xdir2_lar, 0, zdir2_lar);
+    double theta_x = Angular_Match(xdir1_tms, 0, zdir1_tms, xdir2_lar, 0, zdir2_lar);
     double theta_y = Angular_Match(0,ydir1_tms, zdir1_tms, 0, ydir2_lar, zdir2_lar);
 
     ang_residual = Angular_Match(xdir1_tms, ydir1_tms, zdir1_tms, xdir2_lar, ydir2_lar, zdir2_lar);
