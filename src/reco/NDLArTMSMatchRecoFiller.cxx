@@ -63,7 +63,7 @@ namespace cafmaker
 
     double x1_tms = track_tms.start.x; //cm
     double y1_tms = track_tms.start.y; //cm
-    double xdir1_tms = track_tms.dir.x;
+    double xdir1_tms = track_tms.dir.x; //directional cosines
     double ydir1_tms = track_tms.dir.y;
     double zdir1_tms = track_tms.dir.z;
 
