@@ -51,6 +51,7 @@ namespace cafmaker
 
       // Save the branches that we're reading in
       int   _RunNo;
+      int   _TrueRunNo;
       int   _nLines;
       int   _EventNo;
       int   _SliceNo;
