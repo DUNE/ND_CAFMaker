@@ -5,14 +5,17 @@
 The package has a number of dependencies, all accessible through the `ups` framework at Fermilab and github. 
 The first time you use it'll you'll need to build the dependencies.  Simply run
 ```
-./build.sh
+./build_deps.sh
 ```
 
 For subsequent use, 
 ```
-source ndcaf_setup.sh
+source ndcaf_setup.sh {prof|debug}
 ```
-is sufficient to set up your environment for the common use cases.
+is sufficient to set up your environment for the common use cases.  
+You will need to choose `prof` or `debug` for optimized or debug build, respectively.
+(If you're hacking on the CAFMaker, you probably want `debug`.  If not, `prof` will run faster.)
+
 **If, however, you need to set up a local version of `duneanaobj` for testing purposes, you must edit `ndcaf_setup.sh` before sourcing it.**
 
 ## Inputs
@@ -40,12 +43,12 @@ in the `ND_CAFMaker` folder, which goes through and builds the objects, library 
 # Running
 There is currently only one main executable, `makeCAF`, which is controlled entirely by the input `fhicl` file. To run with the `fhicl` file that was specified under `Inputs`, do
 ```
-./makeCAF --fcl=path_to_your_fhicl_file.fcl
+/path/to/ND_CAFMaker/bin/makeCAF --fcl=path_to_your_fhicl_file.fcl
 ```
 
 You can also override some of the `fhicl` inputs, which are specified by typing 
 ```
-./makeCAF --help
+/path/to/ND_CAFMaker/bin/makeCAF --help
 ```
 and should output
 ```

@@ -1,19 +1,48 @@
+#!/bin/bash
+
+BUILD_QUAL="prof"
+if [ "$1" = "debug" ]; then
+	BUILD_QUAL="debug"
+elif [ "$1" = "prof" ]; then
+	true
+else
+	echo
+	echo "WARNING: build qualifier was unspecified (options: 'prof' or 'debug').  Assuming 'prof' by default!"
+	echo
+fi
+
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
+
+# some dependencies use CMake to build
 setup cmake v3_22_2
-setup gcc v9_3_0
+
+# used for downloading packges (see ndcaf_setup.sh)
 setup pycurl
 setup curl
-setup ifdhc
-setup geant4 v4_11_0_p01c -q e20:debug
-setup dk2nugenie   v01_10_01k -q debug:e20
+
+# used for building the ND_GeomEff dependency
+setup eigen v23_08_01_66e8f 
+
+# note in the following that the "eXX" qualifier
+# implies a particular compiler and GCC toolchain,
+# and needs to be the same throughout where used
+
+# edep-sim has both ROOT and Geant4 dependencies.
+# the upstream ND_Production containers are currently setting up
+# a customized edep-sim version, but it boils down to 3.2.0
+setup edepsim v3_2_0e -q e26:${BUILD_QUAL}
+
+# The base GENIE version is 3.04.00
+setup dk2nugenie   v01_10_01p -q e26:${BUILD_QUAL}
 setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
-setup jobsub_client
-setup eigen v3_3_5
-setup duneanaobj v03_06_01b -q e20:prof
-setup hdf5 v1_10_5a -q e20
-setup fhiclcpp v4_15_03 -q debug:e20
-setup edepsim v3_2_0c -q debug:e20
+
+# duneanaobj contains the 'StandardRecord' specification of the CAF format
+setup duneanaobj v03_11_00 -q e26:${BUILD_QUAL}
+
+# direct dependencies of CAFMaker itself
+setup hdf5 v1_12_2b  -q e26:${BUILD_QUAL}
+setup fhiclcpp v4_18_04 -q e26:${BUILD_QUAL}
 
 export LD_LIBRARY_PATH=$CURL_ROOT/lib:$LD_LIBRARY_PATH
 

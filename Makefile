@@ -11,12 +11,20 @@ INCLUDE += -I$(BOOST_INC)
 INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
 INCLUDE += -I$(FHICLCPP_INC)
+INCLUDE += -I$(NLOHMANN_JSON_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)
 INCLUDE += -I$src
 export LDLIBS += -L$(LOG4CPP_LIB) -llog4cpp
 LDLIBS += -L$(TBB_LIB) -ltbb
 LDLIBS += -L$(LIBXML2_FQ_DIR)/lib -lxml2
-LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp
+
+# the library name is different in debug mode, ugh
+ifeq ($(findstring debug, $(HDF5_FQ_DIR)), debug)
+	LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp_debug
+else
+	LDLIBS += -L$(HDF5_LIB) -lhdf5_cpp
+endif
+
 LDLIBS += -L$(PYTHIA6) -lPythia6
 
 #LDLIBS += -L$(NUSYST)/build/Linux/lib -lsystematicstools_utility -lsystematicstools_interpreters -lsystematicstools_interface -lsystematicstools_systproviders

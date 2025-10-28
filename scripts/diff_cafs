@@ -1,0 +1,148 @@
+#!/usr/bin/env python
+"""
+diff_cafs:   Compare two CAFs, branch by branch
+
+             Shamelessly ripped off of the NOvA version
+             by J. Wolcott <jwolcott@fnal.gov>, Oct 2025
+"""
+
+
+
+import argparse
+
+#usage = "usage: %prog [--tolerance=X] [--ignore=PAT] fileA.caf.root fileB.caf.root "
+parser = argparse.ArgumentParser(description="Prints out all fields that differ")
+parser.add_argument("files", metavar="<FILE>.caf.root", nargs=2, help="2 files to compare")
+parser.add_argument("-t", "--tree-name",                   help="Name of StandardRecord tree to compare", default="cafTree")
+parser.add_argument("-r", "--rec_tree",                    help="Name of 'rec' tree.  Pass empty string for flat CAFs", default="rec")
+parser.add_argument("-T", "--tolerance",   default=1e-20,  help="Tolerance for float comparison", metavar="TOL", type=float)
+parser.add_argument("-i", "--ignore",  action="append",    help="Regex pattern(s) to ignore (specify each one with a separate instance of '-i')",  metavar="PAT", default=[])
+parser.add_argument("-n", "--nevents", dest="nevents",     help="Number of events to compare",    metavar="NEVT", default=-1, type=int)
+parser.add_argument("-l", "--sr-lib-name",                 help="Name of StandardRecord library dictionary to load", default="libduneanaobj_StandardRecord_dict.so")
+parser.add_argument("-L", '--sr-lib-dir',                  help="Directory(/ies separated by ':') to search for the StandardRecord dictionary library (see --sr-lib-name)")
+
+args = parser.parse_args()
+
+import os, sys
+import re
+
+from ROOT import gSystem
+from ROOT import TFile
+from ROOT import TTree
+from ROOT import TVector3
+from ROOT import TLorentzVector
+
+
+import inspect
+import math
+
+ignore_pats = [re.compile(a) for a in args.ignore]
+
+
+if args.sr_lib_dir:
+  os.environ["LD_LIBRARY_PATH"] += args.sr_lib_dir
+
+if gSystem.Load(args.sr_lib_name) < 0:
+  print("ERROR: Could not load StandardRecord library!", file=sys.stderr)
+  print(f"       I tried to load library name '{args.sr_lib_name}'", file=sys.stderr)
+  print(f"       I tried to load with $LD_LIBRARY_PATH '{os.environ['LD_LIBRARY_PATH']}'", file=sys.stderr)
+  sys.exit(1)
+
+fs = []
+trs = []
+
+for i, f in enumerate(args.files):
+  fs.append(TFile.Open(f, 'READ'))
+  if fs[-1].IsZombie():
+    print(f"ERROR: Could not open file '{f}'")
+    sys.exit(1)
+
+  trs.append(fs[-1].Get(args.tree_name))
+  assert trs[-1], f"Could not load tree '{args.tree_name}' from file: '{f}'"
+
+def GetMembers(obj, prefix, res):
+  members = [(br.GetName(), getattr(obj, br.GetName())) for br in obj.GetListOfBranches()] if isinstance(obj, TTree) else inspect.getmembers(obj)
+  for var in members:
+    if var[0].startswith('__') or callable(var[1]): continue
+
+    key = prefix+'.'+var[0]
+    val = var[1]
+
+    if callable(val): continue
+
+    # Debug stack overflows by uncommenting this
+#    print key, val, type(val)
+
+    if isinstance(val, (int, float)):
+      res[key] = val
+    elif 'vector' in str(type(val)):
+      res[key+'.size()'] = val.size()
+      for i in range(0, val.size()):
+        GetMembers(val.at(i), key+'['+str(i)+']', res)
+    elif isinstance(val, TVector3):
+      res[key] = (val.X(), val.Y(), val.Z())
+    elif isinstance(val, TLorentzVector):
+      res[key] = (val.E(), val.X(), val.Y(), val.Z())
+    else:
+      GetMembers(val, key, res)
+
+
+def Equiv(a, b):
+  if isinstance(a, float) and isinstance(b, float):
+    if math.isnan(a) and math.isnan(b): return True
+    if math.isinf(a) and math.isinf(b) and (a > 0) == (b > 0): return True
+    return math.fabs(a-b) < args.tolerance
+
+  if isinstance(a, tuple) and isinstance(b, tuple):
+    if len(a) != len(b): return False
+    for i in range(0, len(a)):
+      if not Equiv(a[i], b[i]): return False
+    return True
+
+  return a == b
+
+
+ret = 0 # zero exit code = success
+
+if len(set(t.GetEntries() for t in trs)) > 1:
+  print('Files have different numbers of entries:', trs[0].GetEntries(), 'vs', trs[1].GetEntries())
+  ret = 1 # coun't differing lengths as failure
+
+count = min(t.GetEntries() for t in trs)
+if args.nevents > 0:
+    count = min(count, args.nevents)
+
+for i in range(0, count):
+  for t in trs: t.GetEntry(i)
+
+  print('Checking record', i)
+
+  resA = {}
+  resB = {}
+  for t, res in zip(trs, (resA, resB)):
+    # special-casing is for flat CAFs
+    GetMembers(getattr(t, args.rec_tree) if hasattr(t, args.rec_tree) else t, args.rec_tree, res)
+
+  # print("resA:", resA)
+  # print("resB:", resB)
+  for key in resB:
+    if any(i.search(key) for i in ignore_pats):
+      continue
+    if not key in resA:
+        print(' ', key, 'in file B not found in file A')
+
+  for key in resA:
+    if any(i.search(key) for i in ignore_pats):
+        continue
+
+    if not key in resB:
+        print(' ', key, 'in file A not found in file B')
+        continue
+
+    valA = resA[key]
+    valB = resB[key]
+    if not Equiv(valA, valB):
+      print(' ', key, 'differs:', valA, 'vs', valB)
+      ret = 1 # return failure exit code
+
+exit(ret)

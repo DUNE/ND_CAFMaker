@@ -101,9 +101,9 @@ namespace cafmaker
             H5DataView<cafmaker::types::dlp::Event> evts = GetProducts<cafmaker::types::dlp::Event>(evtIdx);
 
             H5::DataSet ds_ref;
-            ds_ref.dereference(fInputFile, evts[0].GetRef<T>(), H5R_DATASET_REGION);
+            ds_ref.dereference(fInputFile, &evts[0].GetRef<T>(), H5R_DATASET_REGION);
             // const_cast is necessary because the argument is passed to a void* (that should really be a const void*)...
-            H5::DataSpace ref_region = fInputFile.getRegion(const_cast<hdset_reg_ref_t&>(evts[0].GetRef<T>()));
+            H5::DataSpace ref_region = fInputFile.getRegion(&const_cast<hdset_reg_ref_t&>(evts[0].GetRef<T>()));
 
             std::size_t newSize = ref_region.getSelectNpoints();
             dsBuffer->resize(newSize);

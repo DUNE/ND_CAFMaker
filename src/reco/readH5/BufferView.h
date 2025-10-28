@@ -26,9 +26,18 @@ namespace cafmaker
         : fHandle(handle)
       {}
 
-      class forward_iterator: public std::iterator<std::forward_iterator_tag, T>
+      class forward_iterator
       {
         public:
+          // std::iterator is deprecated, so we don't inherit from it,
+          // but we can ape its functianality easily
+          // see https://stackoverflow.com/a/71188469
+          using iterator_category = std::forward_iterator_tag;
+          using value_type = T;
+          using difference_type = std::ptrdiff_t;
+          using pointer = T*;
+          using reference = T&;
+
           forward_iterator(const BufferView<T> * buffer, long idx = 0) : fBuffer(buffer), fIdx(idx) {}
           forward_iterator& operator++() {fIdx++; return *this;}
           forward_iterator operator++(int) {forward_iterator retval = *this; ++(*this); return retval;}

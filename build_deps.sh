@@ -2,11 +2,16 @@
 
 TOPDIR=${PWD}
 
+build=
+if [[ x$1 == xprof ]] || [[ x$2 == xdebug ]]; then
+	build="$1"
+fi
+
 FORCE=no
-if [[ $# == 1 && x$1 == x-f ]]; then FORCE=yes; fi
+if [[ $# -lt 3 ]] && [[ x$1 == x-f || x$2 == x-f ]]; then FORCE=yes; fi
 
 # set up software
-source ndcaf_setup.sh
+source ndcaf_setup.sh $build
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`
