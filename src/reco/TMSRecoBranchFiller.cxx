@@ -110,8 +110,6 @@ namespace cafmaker
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
     // here we are converting from mm (units from MINERvA) to cm
-    //std::cout << "Filling TrueVtxX[" << trkid << "] with " << _TrueVtxX[trkid]/10. << "cm" << std::endl;
-    //std::cout << "Filling TrueVtxX[" << trkid << "] with " << _TrueVtxX[trkid]/10. << "cm, " << " should be " << srTrueInt.vtx.x << std::endl;
     //ValidateOrCopy((int) trkid, (int) srTrueInt.id, NaN, "SRTrueInteraction::id");
     // TODO: uncomment these?
     //ValidateOrCopy(_TrueVtxX[trkid]/10., srTrueInt.vtx.x, NaN, "SRTrueInteraction::vtx::x");
@@ -121,7 +119,6 @@ namespace cafmaker
     //srTrueInt.vtx.x = _TrueVtxX[trkid]/10.;
     //srTrueInt.vtx.y = _TrueVtxY[trkid]/10.;
     //srTrueInt.vtx.z = _TrueVtxZ[trkid]/10.;
-    //std::cout << "Filling TrueVtxX[" << trkid << "] with " << _TrueVtxX[trkid]/10. << "cm, " << " should be " << srTrueInt.vtx.x << std::endl;
 
 
   }
@@ -209,79 +206,73 @@ namespace cafmaker
     TMSRecoTree->GetEntry(i); // Load first entry for now
     LastSpillNo = _SpillNo;
 
-    //sr.nd.tms.ixn.emplace_back();
-    caf::SRTMSInt interaction;// = sr.nd.tms.ixn.back();
-    caf::TrueParticleID truePartID;
+    caf::SRTMSInt *interaction;// = sr.nd.tms.ixn.back();
+    caf::TrueParticleID *truePartID;
     caf::SRTrueParticle *srTruePart;
-    caf::SRTrueInteraction *srTrueInt;
+    caf::SRTrueInteraction  srTrueInt;
 
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
     // Fill Truth parts first?
-    std::cout << "Spill ";
     for (int i_tru=0; i_tru< TMSTrueSpill->GetEntries(); i_tru++)
     {
       TMSTrueSpill->GetEntry(i_tru); // Keep Truth spill tree in sync with Reco
 
-      std::cout << i_tru << ":" << _TrueVtxN << "  ";
       for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
       {
         unsigned long int neutrino_event_id = (unsigned long) ((_TrueRunNo)*1E6 + _TrueVtxId[i_tvtx]);//mc_int_edepsimId[i_int];
-        caf::SRTrueInteraction & srTrueInt = truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true);
+        srTrueInt = truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true);
         FillTrueInteraction(srTrueInt, i_tvtx); // Does nothing atm anyway
       }
     }
-    std::cout << std::endl << std::endl;
 
     unsigned total = 0; // Total number of tracks in the interaction
-    interaction.ntracks = 0;
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
-    //TMSTrueSpill->GetEntry(i); // Keep Truth spill tree in sync with Reco
-    //
+
     // TODO: Add true info entering TMS
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
-      std::cout << "Spill: " << _SpillNo << " nTracks: " << _nTracks << std::endl;
       if (_nTracks > 0)
       {
-        sr.nd.tms.ixn.emplace_back();
-        interaction = (sr.nd.tms.ixn.back());
-        interaction.tracks.resize(_nTracks);
-        std::cout << "Filling... ";
         for (int j = 0; j < _nTracks; ++j) {
-          std::cout << j << " ";
-          interaction.ntracks++;
-          interaction.tracks[j].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);;
-          interaction.tracks[j].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
-          interaction.tracks[j].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
-          interaction.tracks[j].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
+
+          sr.nd.tms.ixn.emplace_back();
+          interaction = &(sr.nd.tms.ixn.back());
+          interaction->tracks.resize(1);//_nTracks);
+          interaction->ntracks = 1;
+
+          truePartID = new caf::TrueParticleID();
+          srTruePart = new caf::SRTrueParticle();
+
+          //interaction.ntracks++;
+          interaction->tracks[0].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);
+          interaction->tracks[0].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
+          interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
+          interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
           // Track info
-          //interaction..tracks[total+j].len_cm    = tmpLength_cm; //trackVec->Mag(); // TODO: Coming Soon™
-          interaction.tracks[j].len_gcm2  = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
-          interaction.tracks[j].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
-          interaction.tracks[j].Evis      = _TrackEnergyDeposit[j];
+          interaction->tracks[0].len_gcm2  = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
+          interaction->tracks[0].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
+          interaction->tracks[0].Evis      = _TrackEnergyDeposit[j];
 
           // Fill Truth
           // TODO: (unsigned long) (_RunNo*1E6 + _RecoTruePartId[j]) ... what am I smoking.
           // The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that. Long cos it's very long innit. Sorry.
           //srTrueInt = &(truthMatcher->GetTrueInteraction(sr, (unsigned long) (_RunNo*1E6 + _RecoTruePartId[j]), false)); // Pointer to the object
-          srTrueInt = &(truthMatcher->GetTrueInteraction(sr, (unsigned long) ((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
-          truePartID.ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
+          srTrueInt = (truthMatcher->GetTrueInteraction(sr, (unsigned long) ((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
+	        //FillTrueParticle(*srTruePart, (unsigned long) (_RunNo*1E6 + _RecoTruePartId[j])); // Does nothing anyway?
+          truePartID->type = caf::TrueParticleID::kPrimary;
           //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
-          truePartID.type = caf::TrueParticleID::kPrimary;
-          //truePartID.part = ;
+          truePartID->ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
+          srTruePart->interaction_id = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
 
-	        FillTrueParticle(*srTruePart, (unsigned long) (_RunNo*1E6 + _RecoTruePartId[j]));
-          interaction.tracks[j].truth.push_back(std::move(truePartID));
+          interaction->tracks[0].truth.push_back(std::move(*truePartID)); // TODO Unfuck
         }
-        std::cout << " Filled." << std::endl;
       }
 
       TMSRecoTree->GetEntry(++i); // Load each subsequent entry before loop test condition
       TMSTrueTree->GetEntry(  i); // Load each subsequent entry before loop test condition
-      //TMSTrueSpill->GetEntry(  i); // Load each subsequent entry before loop test condition
     }
   }
 
@@ -290,7 +281,6 @@ namespace cafmaker
 
     for (int i_int = 0; i_int<_TrueVtxN; i_int++)
     {
-      //std::cout << "loopy " << i_int << std::endl;
       //Long_t neutrino_event_id = _TrueVtxId[i_int];//mc_int_edepsimId[i_int];
       unsigned long int neutrino_event_id = (unsigned long) (_RunNo*1E6 + _TrueVtxId[i_int]);//mc_int_edepsimId[i_int];
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);//, false);
@@ -302,7 +292,6 @@ namespace cafmaker
       for (const caf::SRTrueParticle & part : srTrueInt.sec)
           LOG.VERBOSE() << "    (sec) id = " << part.G4ID  << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
 
-      //std::cout << "    (prim) id = " << stTrueInt.prim.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
       // here we need to fill in any additional info
       // that GENIE didn't know about: e.g., secondary particles made by GEANT4
       FillTrueInteraction(srTrueInt, i_int);
