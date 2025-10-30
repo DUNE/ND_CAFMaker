@@ -20,13 +20,22 @@ namespace cafmaker
   class IFBeam {
   public:
       using BeamSpills = std::map<double, double>;
+      using BeamInfo = std::map<double, std::vector<double>>;
       using TriggerGroup = std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>;
   
-      IFBeam(const std::vector<TriggerGroup>& groupedTriggers, bool is_data);   
+      IFBeam(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers, bool is_data);   
 
       double getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const BeamSpills& data);
+      std::vector<double> getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const BeamInfo& data);
       double getPOT(const cafmaker::Params& par, const TriggerGroup & groupedTrigger, int ii);
       double getHornI(const cafmaker::Params& par, const TriggerGroup & groupedTrigger, int ii);
+      std::vector<double> getHorizontalPosTGT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
+      std::vector<double> getHorizontalIntTGT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
+      std::vector<double> getHorizontalPos121(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
+      std::vector<double> getVerticalPosTGT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
+      std::vector<double> getVerticalIntTGT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
+      std::vector<double> getVerticalPos121(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
+      std::vector<double> getMultiWireInfo(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii);
    
   
   private:
@@ -45,10 +54,33 @@ namespace cafmaker
       const std::string hornCurrentDeviceD = "E:NSLIND";
       // ________Horn polarity_______________
       // horn polarity E:HRNDIR
+      //__________Beam Position_____________
+      const std::string horizontalPosTGTDevice = "E:HPTGT[]";
+      const std::string horizontalIntTGTDevice = "E:HITGT[]";
+      const std::string horizontalPos121Device = "E:HP121[]";
+      const std::string verticalPosTGTDevice = "E:VPTGT[]";
+      const std::string verticalIntTGTDevice = "E:VITGT[]";
+      const std::string verticalPos121Device = "E:VP121[]";
+      //__________Beam Width________________
+      const std::string multiwireDevice = "E:MTGTDS[]";
+
       BeamSpills beamSpills;
-      BeamSpills hornCurrent;
+      BeamSpills hornCurrentA;
+      BeamSpills hornCurrentB;
+      BeamSpills hornCurrentC;
+      BeamSpills hornCurrentD;
+      BeamSpills hornI; // linear combination
+      BeamInfo horizontalPosTGT;
+      BeamInfo horizontalIntTGT;
+      BeamInfo horizontalPos121;
+      BeamInfo verticalPosTGT;
+      BeamInfo verticalIntTGT;
+      BeamInfo verticalPos121;
+      BeamInfo multiwireInfo;
   
-      void loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers);
+      void retrieveInfoFromDataBase(const std::string url, BeamSpills& data);
+      void retrieveInfoFromDataBase(const std::string url, BeamInfo& data);
+      void loadBeamSpills(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers);
       std::string createUrl(const std::string potDevice, const std::string& min_time_iso, const std::string& max_time_iso);
       double unitToFactor(const std::string& unit);
   };

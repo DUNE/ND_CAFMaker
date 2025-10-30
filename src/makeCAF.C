@@ -413,7 +413,7 @@ void loop(CAF &caf,
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
   
-  cafmaker::IFBeam beamManager(groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
+  cafmaker::IFBeam beamManager(par, groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
   for( int ii = start; ii < start + N; ++ii )
@@ -447,10 +447,24 @@ void loop(CAF &caf,
     //Fill POT
     double pot = 0.0;
     double hornI = 0.0;
+    std::vector<double> horizontalposTGT;
+    std::vector<double> horizontalintTGT;
+    std::vector<double> horizontalpos121;
+    std::vector<double> verticalposTGT;
+    std::vector<double> verticalintTGT;
+    std::vector<double> verticalpos121;
+    std::vector<double> multiwireInfo;
     if (useIFBeam)
     {
         pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
         hornI = beamManager.getHornI(par, groupedTriggers[ii], ii);
+        horizontalposTGT = beamManager.getHorizontalPosTGT(par, groupedTriggers[ii], ii);
+        horizontalintTGT = beamManager.getHorizontalIntTGT(par, groupedTriggers[ii], ii);
+        horizontalpos121 = beamManager.getHorizontalPos121(par, groupedTriggers[ii], ii);
+        verticalposTGT = beamManager.getVerticalPosTGT(par, groupedTriggers[ii], ii);
+        verticalintTGT = beamManager.getVerticalIntTGT(par, groupedTriggers[ii], ii);
+        verticalpos121 = beamManager.getVerticalPos121(par, groupedTriggers[ii], ii);
+        multiwireInfo = beamManager.getMultiWireInfo(par, groupedTriggers[ii], ii);
     }
     else
     {
@@ -462,8 +476,17 @@ void loop(CAF &caf,
     caf.pot += pot;
     caf.sr.beam.pulsepot = pot;
     caf.sr.beam.hornI = hornI;
-
+    caf.sr.beam.horizontalposTGT = horizontalposTGT;
+    caf.sr.beam.horizontalintTGT = horizontalintTGT;
+    caf.sr.beam.horizontalpos121 = horizontalpos121;
+    caf.sr.beam.verticalposTGT = verticalposTGT;
+    caf.sr.beam.verticalintTGT = verticalintTGT;
+    caf.sr.beam.verticalpos121 = verticalpos121;
+    caf.sr.beam.multiwireInfo = multiwireInfo;
+    
+    cafmaker::LOG_S("").INFO() << "Filling caf tree \n";
     caf.fill();
+    cafmaker::LOG_S("").INFO() << "Caf tree filled\n";
   }
   progBar.Done();
 
