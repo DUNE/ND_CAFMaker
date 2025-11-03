@@ -444,9 +444,12 @@ void loop(CAF &caf,
       }
     }
 
-    //Fill POT
-    double pot = 0.0;
-    double hornI = 0.0;
+    //Fill Beam info
+    std::vector<double> potTRTGTD;
+    std::vector<double> potTOR101;
+    std::vector<double> potTR101D;
+    std::vector<double> hornI;
+    std::vector<double> hornDir;
     std::vector<double> horizontalposTGT;
     std::vector<double> horizontalintTGT;
     std::vector<double> horizontalpos121;
@@ -456,26 +459,32 @@ void loop(CAF &caf,
     std::vector<double> multiwireInfo;
     if (useIFBeam)
     {
-        pot = beamManager.getPOT(par, groupedTriggers[ii], ii);
-        hornI = beamManager.getHornI(par, groupedTriggers[ii], ii);
-        horizontalposTGT = beamManager.getHorizontalPosTGT(par, groupedTriggers[ii], ii);
-        horizontalintTGT = beamManager.getHorizontalIntTGT(par, groupedTriggers[ii], ii);
-        horizontalpos121 = beamManager.getHorizontalPos121(par, groupedTriggers[ii], ii);
-        verticalposTGT = beamManager.getVerticalPosTGT(par, groupedTriggers[ii], ii);
-        verticalintTGT = beamManager.getVerticalIntTGT(par, groupedTriggers[ii], ii);
-        verticalpos121 = beamManager.getVerticalPos121(par, groupedTriggers[ii], ii);
-        multiwireInfo = beamManager.getMultiWireInfo(par, groupedTriggers[ii], ii);
+        potTRTGTD = beamManager.getData(par, groupedTriggers[ii], ii, "E:TRTGTD");
+        potTOR101 = beamManager.getData(par, groupedTriggers[ii], ii, "E:TOR101");
+        potTR101D = beamManager.getData(par, groupedTriggers[ii], ii, "E:TR101D");
+        hornI = beamManager.getData(par, groupedTriggers[ii], ii, "E:NSLIN");
+        hornDir = beamManager.getData(par, groupedTriggers[ii], ii, "E:HRNDIR");
+        horizontalposTGT = beamManager.getData(par, groupedTriggers[ii], ii, "E:HPTGT[]");
+        horizontalintTGT = beamManager.getData(par, groupedTriggers[ii], ii, "E:HITGT[]");
+        horizontalpos121 = beamManager.getData(par, groupedTriggers[ii], ii, "E:HP121[]");
+        verticalposTGT = beamManager.getData(par, groupedTriggers[ii], ii, "E:VPTGT[]");
+        verticalintTGT = beamManager.getData(par, groupedTriggers[ii], ii, "E:VITGT[]");
+        verticalpos121 = beamManager.getData(par, groupedTriggers[ii], ii, "E:VP121[]");
+        multiwireInfo = beamManager.getData(par, groupedTriggers[ii], ii, "E:MTGTDS[]");
     }
     else
     {
-	pot = par().runInfo().POTPerSpill() * 1e13;
+	potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
         caf.sr.beam.ismc = true;
     }
     if (std::isnan(caf.pot))
       caf.pot = 0;
-    caf.pot += pot;
-    caf.sr.beam.pulsepot = pot;
-    caf.sr.beam.hornI = hornI;
+    caf.pot += (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
+    caf.sr.beam.pulsepot = (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
+    caf.sr.beam.potTOR101 = (potTOR101.size()==0) ? 0. : potTOR101.at(0);
+    caf.sr.beam.potTR101D = (potTR101D.size()==0) ? 0. : potTR101D.at(0);
+    caf.sr.beam.hornI = (hornI.size()==0) ? 0. : hornI.at(0);
+    caf.sr.beam.hornDir = (hornDir.size()==0) ? 0. : hornDir.at(0);
     caf.sr.beam.horizontalposTGT = horizontalposTGT;
     caf.sr.beam.horizontalintTGT = horizontalintTGT;
     caf.sr.beam.horizontalpos121 = horizontalpos121;
@@ -486,7 +495,6 @@ void loop(CAF &caf,
     
     cafmaker::LOG_S("").INFO() << "Filling caf tree \n";
     caf.fill();
-    cafmaker::LOG_S("").INFO() << "Caf tree filled\n";
   }
   progBar.Done();
 
