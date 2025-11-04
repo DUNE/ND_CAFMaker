@@ -44,19 +44,20 @@ namespace cafmaker
           int exponent = std::stoi(match.str(1));
           return std::pow(10, exponent);
       } else {
-          cafmaker::LOG_S("Fetch beam information").WARNING() << "Unknown unit in beam database: " << unit << "\n";
+          // cafmaker::LOG_S("Fetch beam information").WARNING() << "Unknown unit in beam database: " << unit << "\n";
           return 1.0;
       }
   }
 
   void IFBeam::retrieveInfoFromDataBase(const std::string url, BeamInfo& data) {
 
+      cafmaker::LOG_S("Fetchig beam info from url : ").VERBOSE() << url << "\n";
+
       double ms_to_s = 1e-3;
  
       CURL* curl;
       CURLcode res;
       std::string readBuffer; 
-      std::cout << "Fetching beam information from: " << url << "\n";
       curl = curl_easy_init();
       
       if (curl) {
