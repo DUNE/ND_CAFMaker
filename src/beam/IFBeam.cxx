@@ -44,16 +44,17 @@ namespace cafmaker
           int exponent = std::stoi(match.str(1));
           return std::pow(10, exponent);
       } else {
-          // cafmaker::LOG_S("Fetch beam information").WARNING() << "Unknown unit in beam database: " << unit << "\n";
           return 1.0;
       }
   }
 
-  void IFBeam::retrieveInfoFromDataBase(const std::string url, BeamInfo& data) {
+  IFBeam::BeamInfo IFBeam::retrieveInfoFromDataBase(const std::string url) {
 
       cafmaker::LOG_S("Fetchig beam info from url : ").VERBOSE() << url << "\n";
 
       double ms_to_s = 1e-3;
+
+      BeamInfo data;
  
       CURL* curl;
       CURLcode res;
@@ -72,7 +73,6 @@ namespace cafmaker
           curl_easy_cleanup(curl);
           try {
               auto json_data = json::parse(readBuffer);
-              // std::cout << "readBuffer " << readBuffer << "\n";
               for (const auto& spill : json_data["rows"]) {
                   double time = spill["clock"].get<double>() * ms_to_s;
                   std::string unit = spill["units"];
@@ -94,25 +94,10 @@ namespace cafmaker
   	    std::abort();
           }
       }
+      return data;
   }
 
-  void IFBeam::loadBeamSpills(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers) { //todo: this should return other information as well like horn current, position, etc., querying all devices and storing in a map
-      potTRTGTD.clear();
-      potTOR101.clear();
-      potTR101D.clear();
-      hornCurrentA.clear();
-      hornCurrentB.clear();
-      hornCurrentC.clear();
-      hornCurrentD.clear();
-      hornI.clear();
-      hornDir.clear();
-      horizontalPosTGT.clear();
-      horizontalIntTGT.clear();
-      horizontalPos121.clear();
-      verticalPosTGT.clear();
-      verticalIntTGT.clear();
-      verticalPos121.clear();
-      multiwireInfo.clear();
+  void IFBeam::loadBeamSpills(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers) { 
 
       double dt = 5.0; //time window to query before and after first and last spill, respectively
       double min_time = std::numeric_limits<double>::max();
@@ -134,50 +119,25 @@ namespace cafmaker
       std::string min_time_iso = util::toISO8601(min_time);
       std::string max_time_iso = util::toISO8601(max_time);
 
-      std::string url_potTRTGTD = createUrl(potTRTGTDDevice, min_time_iso, max_time_iso);
-      std::string url_potTOR101 = createUrl(potTOR101Device, min_time_iso, max_time_iso);
-      std::string url_potTR101D = createUrl(potTR101DDevice, min_time_iso, max_time_iso);
-      std::string url_hornI_A = createUrl(hornCurrentDeviceA, min_time_iso, max_time_iso);
-      std::string url_hornI_B = createUrl(hornCurrentDeviceB, min_time_iso, max_time_iso);
-      std::string url_hornI_C = createUrl(hornCurrentDeviceC, min_time_iso, max_time_iso);
-      std::string url_hornI_D = createUrl(hornCurrentDeviceD, min_time_iso, max_time_iso);
-      std::string url_hornDir = createUrl(hornDirDevice, min_time_iso, max_time_iso);
-      std::string url_horizontalPosTGT = createUrl(horizontalPosTGTDevice, min_time_iso, max_time_iso);
-      std::string url_horizontalIntTGT = createUrl(horizontalIntTGTDevice, min_time_iso, max_time_iso);
-      std::string url_horizontalPos121 = createUrl(horizontalPos121Device, min_time_iso, max_time_iso);
-      std::string url_verticalPosTGT = createUrl(verticalPosTGTDevice, min_time_iso, max_time_iso);
-      std::string url_verticalIntTGT = createUrl(verticalIntTGTDevice, min_time_iso, max_time_iso);
-      std::string url_verticalPos121 = createUrl(verticalPos121Device, min_time_iso, max_time_iso);
-      std::string url_multiwire = createUrl(multiwireDevice, min_time_iso, max_time_iso);
-  
-      retrieveInfoFromDataBase(url_potTRTGTD, potTRTGTD);
-      retrieveInfoFromDataBase(url_potTOR101, potTOR101);
-      retrieveInfoFromDataBase(url_potTR101D, potTR101D);
-      retrieveInfoFromDataBase(url_hornI_A, hornCurrentA);
-      retrieveInfoFromDataBase(url_hornI_B, hornCurrentB);
-      retrieveInfoFromDataBase(url_hornI_C, hornCurrentC);
-      retrieveInfoFromDataBase(url_hornI_D, hornCurrentD);
-      retrieveInfoFromDataBase(url_hornDir, hornDir);
-      retrieveInfoFromDataBase(url_horizontalPosTGT, horizontalPosTGT);
-      retrieveInfoFromDataBase(url_horizontalIntTGT, horizontalIntTGT);
-      retrieveInfoFromDataBase(url_horizontalPos121, horizontalPos121);
-      retrieveInfoFromDataBase(url_verticalPosTGT, verticalPosTGT);
-      retrieveInfoFromDataBase(url_verticalIntTGT, verticalIntTGT);
-      retrieveInfoFromDataBase(url_verticalPos121, verticalPos121);
-      retrieveInfoFromDataBase(url_multiwire, multiwireInfo);
+      for (auto& device : deviceMap)
+      {
+        device.second.clear();
+        std::string url_device = createUrl(device.first, min_time_iso, max_time_iso);
+        device.second = retrieveInfoFromDataBase(url_device);
+      }
 
       // see: https://cdcvs.fnal.gov/redmine/projects/novaart/repository/entry/trunk/IFDBSpillInfo/IFDBSpillInfo_module.cc#L685
       // the horn current is calculated as I_horn = (E:NSLINA-(+0.01))/0.9951 + (E:NSLINB-(-0.14))/0.9957 + (E:NSLINC-(-0.05))/0.9965 + (E:NSLIND-(-0.07))/0.9945
       
       double currentA=0.0, currentB=0.0, currentC=0.0, currentD=0.0;
 
-      for(const auto& pairA : hornCurrentA) {
+      for(const auto& pairA : deviceMap["E:NSLINA"]) {
         auto timeA = pairA.first;
         auto currentA = pairA.second.at(0); 
         
         if(currentA == 0.) continue;
 
-        for(const auto& pairB : hornCurrentB) {
+        for(const auto& pairB : deviceMap["E:NSLINB"]) {
           auto timeB = pairB.first;
           if (abs(timeA - timeB) <= par().cafmaker().beamMatchDT()) {
             currentB = pairB.second.at(0);
@@ -187,7 +147,7 @@ namespace cafmaker
 
         if(currentB == 0.) continue;
 
-        for(const auto& pairC : hornCurrentC) {
+        for(const auto& pairC : deviceMap["E:NSLINC"]) {
           auto timeC = pairC.first;
           if (abs(timeA - timeC) <= par().cafmaker().beamMatchDT()) 
           {
@@ -198,7 +158,7 @@ namespace cafmaker
 
         if(currentC == 0.) continue;
 
-        for(const auto& pairD : hornCurrentD) {
+        for(const auto& pairD : deviceMap["E:NSLIND"]) {
           auto timeD = pairD.first;
           if (abs(timeA - timeD) <= par().cafmaker().beamMatchDT()){
             currentD = pairD.second.at(0);
@@ -208,7 +168,7 @@ namespace cafmaker
 
         if(currentD == 0.) continue;
         
-        hornI[timeA] = {(currentA-0.01)/0.9951 + (currentB+0.14)/0.9957 + (currentC+0.05)/0.9965 + (currentD+0.07)/0.9945};
+        deviceMap["E:NSLIN"][timeA] = {(currentA-0.01)/0.9951 + (currentB+0.14)/0.9957 + (currentC+0.05)/0.9965 + (currentD+0.07)/0.9945};
       }
 
   }
@@ -276,43 +236,11 @@ namespace cafmaker
 
   std::vector<double> IFBeam::getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const std::string& deviceName) {
 
-    if(deviceName == potTRTGTDDevice)
-      return getData(par, groupedTrigger, ii, potTRTGTD);
+    if(deviceMap.count(deviceName)>0)
+      return getData(par, groupedTrigger, ii, deviceMap[deviceName]);
 
-    else if(deviceName == potTOR101Device)
-      return getData(par, groupedTrigger, ii, potTOR101);
+    cafmaker::LOG_S("Trying retrieving info from unkwnown device ").WARNING() << deviceName << ", returning empty vector\n";
 
-    else if(deviceName == potTR101DDevice)
-      return getData(par, groupedTrigger, ii, potTR101D);
-
-    else if(deviceName == hornCurrentDevice)
-      return getData(par, groupedTrigger, ii, hornI);
-
-    else if(deviceName == hornDirDevice)
-      return getData(par, groupedTrigger, ii, hornDir);
-
-    else if(deviceName == horizontalPosTGTDevice)
-      return getData(par, groupedTrigger, ii, horizontalPosTGT);
-
-    else if(deviceName == horizontalIntTGTDevice)
-      return getData(par, groupedTrigger, ii, horizontalIntTGT);
-
-    else if(deviceName == horizontalPos121Device)
-      return getData(par, groupedTrigger, ii, horizontalPos121);
-
-    else if(deviceName == verticalPosTGTDevice)
-      return getData(par, groupedTrigger, ii, verticalPosTGT);
-
-    else if(deviceName == verticalIntTGTDevice)
-      return getData(par, groupedTrigger, ii, verticalIntTGT);
-
-    else if(deviceName == verticalPos121Device)
-      return getData(par, groupedTrigger, ii, verticalPos121);
-
-    else if(deviceName == multiwireDevice)
-      return getData(par, groupedTrigger, ii, multiwireInfo);
-
-    else
-      return {0.};
+    return {};
   }
 }
