@@ -58,6 +58,9 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("nuVtxZ", &m_nuVtxZVect);
       m_LArRecoNDTree->SetBranchAddress("isRecoPrimary", &m_isRecoPrimaryVect);
       m_LArRecoNDTree->SetBranchAddress("recoPDG", &m_recoPDGVect);
+      // PANDORA OUTERFACE
+      m_LArRecoNDTree->SetBranchAddress("trackScore", &m_trackScoreVect);
+      
 
       // We have setup the input tree
       SetConfigured(true);

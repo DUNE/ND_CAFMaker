@@ -77,6 +77,8 @@ namespace cafmaker
       std::vector<float> *m_nuVtxZVect = nullptr;
       std::vector<int> *m_isRecoPrimaryVect = nullptr;
       std::vector<int> *m_recoPDGVect = nullptr;
+      // OUTERFACE
+      std::vector<float> *m_trackScoreVect = nullptr;
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
