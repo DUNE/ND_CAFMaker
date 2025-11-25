@@ -58,8 +58,12 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("nuVtxZ", &m_nuVtxZVect);
       m_LArRecoNDTree->SetBranchAddress("isRecoPrimary", &m_isRecoPrimaryVect);
       m_LArRecoNDTree->SetBranchAddress("recoPDG", &m_recoPDGVect);
-      // PANDORA OUTERFACE
+      // TRACK VARIABLES (PANDORA OUTERFACE)
       m_LArRecoNDTree->SetBranchAddress("trackScore", &m_trackScoreVect);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
+      // SHOWER VARIABLES (PANDORA OUTERFACE)
       
 
       // We have setup the input tree
@@ -315,7 +319,27 @@ namespace cafmaker
       // Is reco primary & reco PDG hypothesis
       const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
       trackPart.primary = (isRecoPrimary == 1) ? true : false;
-      trackPart.pdg = (m_recoPDGVect != nullptr) ? (*m_recoPDGVect)[i] : 0;
+      // trackPart.pdg = (m_recoPDGVect != nullptr) ? (*m_recoPDGVect)[i] : 0;
+
+      if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0))
+      {
+        if((*m_trackScoreVect)[i] >= m_TrackShowerCut) // reco particle is a track
+        { // Assign the pdg for the fitting hypotesis that has the lowest chi2
+          // as version 0, the track is chosen between muon and proton
+          // TODO consider also pion and kaons
+          trackPart.pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
+          std::cout << "trackScore is " << (*m_trackScoreVect)[i] << " NDF are "<<(*m_trkfitPID_NDF)[i]<<", muon score is " << (*m_trkfitPID_Mu)[i] << ", proton score is " << (*m_trkfitPID_Pro)[i] << ", assigned pdg is " << trackPart.pdg << "\n";
+        }
+        else
+        { // reco particle is shower
+          // TODO include variables from Paige feature branch
+          trackPart.pdg = -999.;
+        }
+      }
+      else
+      {
+        trackPart.pdg = 0;
+      }
 
       // Add particle to the interaction
       interaction.part.pandora.emplace_back(std::move(trackPart));
