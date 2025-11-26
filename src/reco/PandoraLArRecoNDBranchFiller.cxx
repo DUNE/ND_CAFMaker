@@ -63,17 +63,54 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
-      // m_LArRecoNDTree->SetBranchAddress("trkfitIsContained", &m_trkfitIsContained); // TODO
+      m_LArRecoNDTree->SetBranchAddress("trkfitIsContained", &m_trkfitIsContained); // TODO
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
       m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthMuon", &m_trkfitPFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthProton", &m_trkfitPFromLengthMuon);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitStartDirX);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitStartDirY);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitStartDirZ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitStartX", &m_trkfitStartX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitStartY", &m_trkfitStartY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitStartZ", &m_trkfitStartZ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndX", &m_trkfitEndX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndY", &m_trkfitEndY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndZ", &m_trkfitEndZ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitStartDirX", &m_trkfitStartDirX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitStartDirY", &m_trkfitStartDirY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitStartDirZ", &m_trkfitStartDirZ);
       // SHOWER VARIABLES (PANDORA OUTERFACE)
+      m_LArRecoNDTree->SetBranchAddress("shwrfitLength", &m_shwrfitLength);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidX", &m_shwrfitCentroidX);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidY", &m_shwrfitCentroidY);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidZ", &m_shwrfitCentroidZ);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitStartX", &m_shwrfitStartX);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitStartY", &m_shwrfitStartY);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitStartZ", &m_shwrfitStartZ);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitDirX", &m_shwrfitDirX);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitDirY", &m_shwrfitDirY);
+      m_LArRecoNDTree->SetBranchAddress("shwrfitDirZ", &m_shwrfitDirZ);
+      m_LArRecoNDTree->SetBranchAddress("shwrSliceId", &m_shwrSliceId);
+      m_LArRecoNDTree->SetBranchAddress("shwrClusterId", &m_shwrClusterId);
+      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirX", &m_startTrkSlidingFitDirX);
+      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirY", &m_startTrkSlidingFitDirY); 
+      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirZ", &m_startTrkSlidingFitDirZ);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsX", &m_shwrStartPointsX);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsY", &m_shwrStartPointsY);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsZ", &m_shwrStartPointsZ);
+      m_LArRecoNDTree->SetBranchAddress("shwrdEdx", &m_shwrdEdx);
+      m_LArRecoNDTree->SetBranchAddress("shwrTotalE", &m_shwrTotalE);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsRecoId", &m_shwrStartPointsRecoId);
+      m_LArRecoNDTree->SetBranchAddress("minProjection", &m_minProjection);
+      m_LArRecoNDTree->SetBranchAddress("medianQ", &m_medianQ);
+      m_LArRecoNDTree->SetBranchAddress("chargePerHit", &m_chargePerHit);
+      m_LArRecoNDTree->SetBranchAddress("chargePerHitStartPoints", &m_chargePerHitStartPoints);
+      m_LArRecoNDTree->SetBranchAddress("pitchValue", &m_pitchValue);
+      m_LArRecoNDTree->SetBranchAddress("shwrPCAX", &m_shwrPCAX);
+      m_LArRecoNDTree->SetBranchAddress("shwrPCAY", &m_shwrPCAY);
+      m_LArRecoNDTree->SetBranchAddress("shwrPCAZ", &m_shwrPCAZ);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionX", &m_shwrStartHitPositionX);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionY", &m_shwrStartHitPositionY);
+      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionZ", &m_shwrStartHitPositionZ); 
       
-
       // We have setup the input tree
       SetConfigured(true);
     }
@@ -341,6 +378,12 @@ namespace cafmaker
           int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
           trackPart.pdg = assigned_pdg;
 
+          float trkfitStartX = (*m_trkfitStartX)[i];
+          float trkfitStartY = (*m_trkfitStartY)[i];
+          float trkfitStartZ = (*m_trkfitStartZ)[i];
+          float trkfitEndX = (*m_trkfitEndX)[i];
+          float trkfitEndY = (*m_trkfitEndY)[i];
+          float trkfitEndZ = (*m_trkfitEndZ)[i];
           float trkfitStartDirX = (*m_trkfitStartDirX)[i];
           float trkfitStartDirY = (*m_trkfitStartDirY)[i];
           float trkfitStartDirZ = (*m_trkfitStartDirZ)[i];
@@ -369,8 +412,10 @@ namespace cafmaker
             {
             }
 
-            caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
-            trackPart.p = p;
+            trackPart.start = {trkfitStartX, trkfitStartY, trkfitStartZ};
+            trackPart.end = {trkfitEndX, trkfitEndY, trkfitEndZ};
+            trackPart.p = {trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
+            trackPart.origRecoObjType = RecoObjType::kTrack;
           }
 
           LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
@@ -381,6 +426,14 @@ namespace cafmaker
                       << ", contained ?  "  << trkfitIsContained   
                       << ", Kinetic E  "    << trackPart.E
                       << ", E_method  "     << trackPart.E_method
+                      << ", start = ("      << trackPart.start.X()
+                      << ", "               << trackPart.start.Y()
+                      << ", "               << trackPart.start.Z()
+                      << ")"
+                      << ", end = ("        << trackPart.end.X()
+                      << ", "               << trackPart.end.Y()
+                      << ", "               << trackPart.end.Z()
+                      << ")"
                       << ", momentum = ("   << trackPart.p.X()
                       << ", "               << trackPart.p.Y()
                       << ", "               << trackPart.p.Z()
