@@ -84,6 +84,11 @@ namespace cafmaker
       std::vector<float> *m_trkfitIsContained = nullptr; // TODO : branch not yet in PandoraOuterface
       std::vector<float> *m_trkfitKEFromLengthMuon = nullptr;
       std::vector<float> *m_trkfitKEFromLengthProton = nullptr;
+      std::vector<float> *m_trkfitPFromLengthMuon = nullptr;
+      std::vector<float> *m_trkfitPFromLengthProton = nullptr;
+      std::vector<float> *m_trkfitStartDirX = nullptr;
+      std::vector<float> *m_trkfitStartDirY = nullptr;
+      std::vector<float> *m_trkfitStartDirZ = nullptr;
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches

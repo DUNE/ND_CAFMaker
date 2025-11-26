@@ -66,6 +66,11 @@ namespace cafmaker
       // m_LArRecoNDTree->SetBranchAddress("trkfitIsContained", &m_trkfitIsContained); // TODO
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthMuon", &m_trkfitPFromLengthMuon);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthProton", &m_trkfitPFromLengthMuon);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitStartDirX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitStartDirY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitStartDirZ);
       // SHOWER VARIABLES (PANDORA OUTERFACE)
       
 
@@ -327,7 +332,7 @@ namespace cafmaker
       // assign its energy based on the value of the branches trkfitKEFromLength...
       bool trkfitIsContained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
 
-      if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0)
+      if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0) // trackfit was successfull
       {
         if((*m_trackScoreVect)[i] >= m_TrackShowerCut) // reco particle is a track
         { // Assign the pdg for the fitting hypotesis that has the lowest chi2
@@ -336,20 +341,36 @@ namespace cafmaker
           int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
           trackPart.pdg = assigned_pdg;
 
+          float trkfitStartDirX = (*m_trkfitStartDirX)[i];
+          float trkfitStartDirY = (*m_trkfitStartDirY)[i];
+          float trkfitStartDirZ = (*m_trkfitStartDirZ)[i];
+          float trkfitStartDirMag = sqrt(trkfitStartDirX * trkfitStartDirX + trkfitStartDirY * trkfitStartDirY + trkfitStartDirZ * trkfitStartDirZ);
+
+          trkfitStartDirX /= trkfitStartDirMag;
+          trkfitStartDirY /= trkfitStartDirMag;
+          trkfitStartDirZ /= trkfitStartDirMag;
+          float p_mod = 1.;
+
           if (trkfitIsContained)
           {
             if(assigned_pdg == 13)
             {
+              trackPart.E_method = caf::PartEMethod::kRange;
               trackPart.E = (*m_trkfitKEFromLengthMuon)[i]; // TODO : convert to E
+              p_mod = (*m_trkfitPFromLengthMuon)[i];
             }
             else if (assigned_pdg == 2212)
             {
+              trackPart.E_method = caf::PartEMethod::kRange;
               trackPart.E = (*m_trkfitKEFromLengthProton)[i];
+              p_mod = (*m_trkfitPFromLengthProton)[i];
             }
             else  
             {
             }
 
+            caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
+            trackPart.p = p;
           }
 
           LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
@@ -359,6 +380,11 @@ namespace cafmaker
                       << ", assigned pdg "  << trackPart.pdg 
                       << ", contained ?  "  << trkfitIsContained   
                       << ", Kinetic E  "    << trackPart.E
+                      << ", E_method  "     << trackPart.E_method
+                      << ", momentum = ("   << trackPart.p.X()
+                      << ", "               << trackPart.p.Y()
+                      << ", "               << trackPart.p.Z()
+                      << ")"
                       << "\n";
         }
         else
