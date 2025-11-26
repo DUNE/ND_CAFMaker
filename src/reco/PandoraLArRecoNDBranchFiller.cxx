@@ -63,6 +63,9 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
+      // m_LArRecoNDTree->SetBranchAddress("trkfitIsContained", &m_trkfitIsContained); // TODO
+      m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
+      m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
       // SHOWER VARIABLES (PANDORA OUTERFACE)
       
 
@@ -319,20 +322,49 @@ namespace cafmaker
       // Is reco primary & reco PDG hypothesis
       const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
       trackPart.primary = (isRecoPrimary == 1) ? true : false;
-      // trackPart.pdg = (m_recoPDGVect != nullptr) ? (*m_recoPDGVect)[i] : 0;
 
-      if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0))
+      // TODO : read from a dedicated input branch if the track is contained in which case
+      // assign its energy based on the value of the branches trkfitKEFromLength...
+      bool trkfitIsContained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
+
+      if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0)
       {
         if((*m_trackScoreVect)[i] >= m_TrackShowerCut) // reco particle is a track
         { // Assign the pdg for the fitting hypotesis that has the lowest chi2
           // as version 0, the track is chosen between muon and proton
           // TODO consider also pion and kaons
-          trackPart.pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
-          std::cout << "trackScore is " << (*m_trackScoreVect)[i] << " NDF are "<<(*m_trkfitPID_NDF)[i]<<", muon score is " << (*m_trkfitPID_Mu)[i] << ", proton score is " << (*m_trkfitPID_Pro)[i] << ", assigned pdg is " << trackPart.pdg << "\n";
+          int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
+          trackPart.pdg = assigned_pdg;
+
+          if (trkfitIsContained)
+          {
+            if(assigned_pdg == 13)
+            {
+              trackPart.E = (*m_trkfitKEFromLengthMuon)[i]; // TODO : convert to E
+            }
+            else if (assigned_pdg == 2212)
+            {
+              trackPart.E = (*m_trkfitKEFromLengthProton)[i];
+            }
+            else  
+            {
+            }
+
+          }
+
+          LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
+                      << ", NDF "           << (*m_trkfitPID_NDF)[i]
+                      << ", muon score "    << (*m_trkfitPID_Mu)[i] 
+                      << ", proton score "  << (*m_trkfitPID_Pro)[i] 
+                      << ", assigned pdg "  << trackPart.pdg 
+                      << ", contained ?  "  << trkfitIsContained   
+                      << ", Kinetic E  "    << trackPart.E
+                      << "\n";
         }
         else
         { // reco particle is shower
           // TODO include variables from Paige feature branch
+          // is it a photon or an electron ? 
           trackPart.pdg = -999.;
         }
       }
