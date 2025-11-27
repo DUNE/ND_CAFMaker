@@ -330,8 +330,7 @@ namespace cafmaker
 
       // TODO : read from a dedicated input branch if the track is contained in which case
       // assign its energy based on the value of the branches trkfitKEFromLength...
-      bool trkfitIsContained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
-
+      trackPart.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
       if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0) // trackfit was successfull
       {
         if((*m_trackScoreVect)[i] >= m_TrackShowerCut) // reco particle is a track
@@ -351,7 +350,7 @@ namespace cafmaker
           trkfitStartDirZ /= trkfitStartDirMag;
           float p_mod = 1.;
 
-          if (trkfitIsContained)
+          if (trackPart.contained)
           {
             if(assigned_pdg == 13)
             {
@@ -378,7 +377,7 @@ namespace cafmaker
                       << ", muon score "    << (*m_trkfitPID_Mu)[i] 
                       << ", proton score "  << (*m_trkfitPID_Pro)[i] 
                       << ", assigned pdg "  << trackPart.pdg 
-                      << ", contained ?  "  << trkfitIsContained   
+                      << ", contained ?  "  << trackPart.contained
                       << ", Kinetic E  "    << trackPart.E
                       << ", E_method  "     << trackPart.E_method
                       << ", momentum = ("   << trackPart.p.X()
