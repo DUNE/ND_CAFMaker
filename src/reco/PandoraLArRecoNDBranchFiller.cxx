@@ -411,10 +411,13 @@ namespace cafmaker
             {
             }
 
-            trackPart.start = {trkfitStartX, trkfitStartY, trkfitStartZ};
-            trackPart.end = {trkfitEndX, trkfitEndY, trkfitEndZ};
-            trackPart.p = {trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
-            trackPart.origRecoObjType = RecoObjType::kTrack;
+            caf::SRVector3D start{trkfitStartX, trkfitStartY, trkfitStartZ};
+            caf::SRVector3D end{trkfitEndX, trkfitEndY, trkfitEndZ};
+            caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
+            trackPart.start = start;
+            trackPart.end = end;
+            trackPart.p = p;
+            // trackPart.origRecoObjType = RecoObjType::kTrack;
           }
 
           LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
