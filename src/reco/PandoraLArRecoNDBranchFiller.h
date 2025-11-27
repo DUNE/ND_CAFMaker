@@ -77,6 +77,7 @@ namespace cafmaker
       std::vector<float> *m_nuVtxZVect = nullptr;
       std::vector<int> *m_isRecoPrimaryVect = nullptr;
       std::vector<int> *m_recoPDGVect = nullptr;
+      // TRACK
       std::vector<float> *m_trackScoreVect = nullptr;
       std::vector<float> *m_trkfitPID_Mu = nullptr;
       std::vector<float> *m_trkfitPID_Pro = nullptr;
@@ -86,9 +87,48 @@ namespace cafmaker
       std::vector<float> *m_trkfitKEFromLengthProton = nullptr;
       std::vector<float> *m_trkfitPFromLengthMuon = nullptr;
       std::vector<float> *m_trkfitPFromLengthProton = nullptr;
+      std::vector<float> *m_trkfitStartX = nullptr;
+      std::vector<float> *m_trkfitStartY = nullptr;
+      std::vector<float> *m_trkfitStartZ = nullptr;
+      std::vector<float> *m_trkfitEndX = nullptr;
+      std::vector<float> *m_trkfitEndY = nullptr;
+      std::vector<float> *m_trkfitEndZ = nullptr;
       std::vector<float> *m_trkfitStartDirX = nullptr;
       std::vector<float> *m_trkfitStartDirY = nullptr;
       std::vector<float> *m_trkfitStartDirZ = nullptr;
+      // SHOWER
+      std::vector<float> *m_shwrfitLength = nullptr;
+      std::vector<float> *m_shwrfitCentroidX = nullptr;
+      std::vector<float> *m_shwrfitCentroidY = nullptr;
+      std::vector<float> *m_shwrfitCentroidZ = nullptr;
+      std::vector<float> *m_shwrfitStartX = nullptr;
+      std::vector<float> *m_shwrfitStartY = nullptr;
+      std::vector<float> *m_shwrfitStartZ = nullptr;
+      std::vector<float> *m_shwrfitDirX = nullptr;
+      std::vector<float> *m_shwrfitDirY = nullptr;
+      std::vector<float> *m_shwrfitDirZ = nullptr;
+      std::vector<int> *m_shwrSliceId = nullptr;
+      std::vector<int> *m_shwrClusterId = nullptr;
+      std::vector<float> *m_startTrkSlidingFitDirX = nullptr;
+      std::vector<float> *m_startTrkSlidingFitDirY = nullptr;
+      std::vector<float> *m_startTrkSlidingFitDirZ = nullptr;
+      std::vector<float> *m_shwrStartPointsX = nullptr;
+      std::vector<float> *m_shwrStartPointsY = nullptr;
+      std::vector<float> *m_shwrStartPointsZ = nullptr;
+      std::vector<float> *m_shwrdEdx = nullptr;
+      std::vector<float> *m_shwrTotalE = nullptr;
+      std::vector<int> *m_shwrStartPointsRecoId = nullptr;
+      std::vector<float> *m_minProjection = nullptr;
+      std::vector<float> *m_medianQ = nullptr;
+      std::vector<int> *m_chargePerHit = nullptr;
+      std::vector<float> *m_chargePerHitStartPoints = nullptr;
+      std::vector<int> *m_pitchValue = nullptr;
+      std::vector<float> *m_shwrPCAX = nullptr;
+      std::vector<float> *m_shwrPCAY = nullptr;
+      std::vector<float> *m_shwrPCAZ = nullptr;
+      std::vector<float> *m_shwrStartHitPositionX = nullptr;
+      std::vector<float> *m_shwrStartHitPositionY = nullptr;
+      std::vector<float> *m_shwrStartHitPositionZ = nullptr; 
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
