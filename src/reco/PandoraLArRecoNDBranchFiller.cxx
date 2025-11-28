@@ -365,11 +365,12 @@ namespace cafmaker
       const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
       trackPart.primary = (isRecoPrimary == 1) ? true : false;
 
-      // TODO : read from a dedicated input branch if the track is contained in which case
-      // assign its energy based on the value of the branches trkfitKEFromLength...
-      trackPart.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
       if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0) // trackfit was successfull
       {
+        // TODO : read from a dedicated input branch if the track is contained in which case
+        // assign its energy based on the value of the branches trkfitKEFromLength...
+        trackPart.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
+
         if((*m_trackScoreVect)[i] >= m_TrackShowerCut) // reco particle is a track
         { // Assign the pdg for the fitting hypotesis that has the lowest chi2
           // as version 0, the track is chosen between muon and proton
@@ -395,15 +396,15 @@ namespace cafmaker
 
           if (trackPart.contained)
           {
+            trackPart.E_method = caf::PartEMethod::kRange;
+
             if(assigned_pdg == 13)
             {
-              trackPart.E_method = caf::PartEMethod::kRange;
               trackPart.E = (*m_trkfitKEFromLengthMuon)[i]; // TODO : convert to E
               p_mod = (*m_trkfitPFromLengthMuon)[i];
             }
             else if (assigned_pdg == 2212)
             {
-              trackPart.E_method = caf::PartEMethod::kRange;
               trackPart.E = (*m_trkfitKEFromLengthProton)[i];
               p_mod = (*m_trkfitPFromLengthProton)[i];
             }
@@ -420,37 +421,83 @@ namespace cafmaker
             // trackPart.origRecoObjType = RecoObjType::kTrack;
           }
 
-          LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
-                      << ", NDF "           << (*m_trkfitPID_NDF)[i]
-                      << ", muon score "    << (*m_trkfitPID_Mu)[i] 
-                      << ", proton score "  << (*m_trkfitPID_Pro)[i] 
-                      << ", assigned pdg "  << trackPart.pdg 
-                      << ", contained ?  "  << trackPart.contained
-                      << ", Kinetic E  "    << trackPart.E
-                      << ", E_method  "     << trackPart.E_method
-                      << ", start = ("      << trackPart.start.X()
-                      << ", "               << trackPart.start.Y()
-                      << ", "               << trackPart.start.Z()
-                      << ")"
-                      << ", end = ("        << trackPart.end.X()
-                      << ", "               << trackPart.end.Y()
-                      << ", "               << trackPart.end.Z()
-                      << ")"
-                      << ", momentum = ("   << trackPart.p.X()
-                      << ", "               << trackPart.p.Y()
-                      << ", "               << trackPart.p.Z()
-                      << ")"
-                      << "\n";
         }
-        else
-        { // reco particle is shower
-          // TODO include variables from Paige feature branch
+        else // reco particle is shower
+        { // TODO include variables from Paige feature branch
           // is it a photon or an electron ? 
-          trackPart.pdg = -999.;
+          trackPart.pdg = -999.; // TODO : decide e- or gamma based on the conversion gap == dist start - vertex
+
+          float shwrfitStartX = (*m_shwrfitStartX)[i];
+          float shwrfitStartY = (*m_shwrfitStartY)[i];
+          float shwrfitStartZ = (*m_shwrfitStartZ)[i];
+          float shwrfitDirX = (*m_shwrfitDirX)[i];
+          float shwrfitDirY = (*m_shwrfitDirY)[i];
+          float shwrfitDirZ = (*m_shwrfitDirZ)[i];
+          float shwerLength = (*m_shwrfitLength)[i];
+          float shwrfitEndX = shwrfitStartX + shwrfitDirX * shwerLength;
+          float shwrfitEndY = shwrfitStartY + shwrfitDirY * shwerLength;
+          float shwrfitEndZ = shwrfitStartZ + shwrfitDirZ * shwerLength;
+
+          caf::SRVector3D start{shwrfitStartX, shwrfitStartY, shwrfitStartZ};
+          caf::SRVector3D end{shwrfitEndX, shwrfitEndY, shwrfitEndZ};
+          caf::SRVector3D dir{shwrfitDirX, shwrfitDirY, shwrfitDirZ};
+          trackPart.start = start;    
+          trackPart.end = end;    
+
+          if (trackPart.contained)
+          {
+            trackPart.E_method = caf::PartEMethod::kRange;
+            trackPart.E = (*m_shwrTotalE)[i];
+            trackPart.p = trackPart.E * dir;
+          }
+          else // TODO : shower energy if uncontained
+          {
+          }
+
+          // create standard record shower and fill it 
+          caf::SRShower shower;
+          shower.start = start;
+          shower.direction = dir;
+          shower.Evis = -999; // TODO : fill it with calibrated energy (see Bruce Evis vs Ktrue)
+          // shower.truth = // TODO
+          // shower.truthOverlap = // TODO
+
+          // Add shower to the record
+          // Slice id of the PFO cluster
+          const int sliceId = (m_sliceIdVect != nullptr) ? (*m_sliceIdVect)[i] : 0;
+          // Neutrino index number 0 to N-1 for N neutrinos
+          const int nuIndex = std::distance(uniqueSliceIDs.begin(), std::find(uniqueSliceIDs.begin(),
+                                                                              uniqueSliceIDs.end(), sliceId));
+          sr.nd.lar.pandora[nuIndex].showers.emplace_back(std::move(shower));
+          sr.nd.lar.pandora[nuIndex].nshowers++;
+
         }
+
+        LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
+                    << ", NDF "           << (*m_trkfitPID_NDF)[i]
+                    << ", muon score "    << (*m_trkfitPID_Mu)[i] 
+                    << ", proton score "  << (*m_trkfitPID_Pro)[i] 
+                    << ", assigned pdg "  << trackPart.pdg 
+                    << ", contained ?  "  << trackPart.contained
+                    << ", E  "            << trackPart.E
+                    << ", E_method  "     << trackPart.E_method
+                    << ", start = ("      << trackPart.start.X()
+                    << ", "               << trackPart.start.Y()
+                    << ", "               << trackPart.start.Z()
+                    << ")"
+                    << ", end = ("        << trackPart.end.X()
+                    << ", "               << trackPart.end.Y()
+                    << ", "               << trackPart.end.Z()
+                    << ")"
+                    << ", momentum = ("   << trackPart.p.X()
+                    << ", "               << trackPart.p.Y()
+                    << ", "               << trackPart.p.Z()
+                    << ")"
+                    << "\n";
       }
-      else
+      else // trackfit failed: neither track nor shower
       {
+        LOG.DEBUG() << "trackfit failed for particle number : " << i << ", assigning pdg 0\n";
         trackPart.pdg = 0;
       }
 
