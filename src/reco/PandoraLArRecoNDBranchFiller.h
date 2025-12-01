@@ -83,6 +83,7 @@ namespace cafmaker
       std::vector<float> *m_trkfitPID_Pro = nullptr;
       std::vector<int> *m_trkfitPID_NDF = nullptr;
       std::vector<float> *m_trkfitIsContained = nullptr; // TODO : branch not yet in PandoraOuterface
+      std::vector<float> *m_trkfitLength = nullptr;
       std::vector<float> *m_trkfitKEFromLengthMuon = nullptr;
       std::vector<float> *m_trkfitKEFromLengthProton = nullptr;
       std::vector<float> *m_trkfitPFromLengthMuon = nullptr;

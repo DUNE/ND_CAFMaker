@@ -64,6 +64,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
       m_LArRecoNDTree->SetBranchAddress("trkfitIsContained", &m_trkfitIsContained); // TODO
+      m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
       m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthMuon", &m_trkfitPFromLengthMuon);
@@ -226,29 +227,8 @@ namespace cafmaker
 
       // Create standard record track
       caf::SRTrack track;
-      // Starting position (vertex or first hit location)
-      const float startX = (m_startXVect != nullptr) ? (*m_startXVect)[i] : 0.0;
-      const float startY = (m_startYVect != nullptr) ? (*m_startYVect)[i] : 0.0;
-      const float startZ = (m_startZVect != nullptr) ? (*m_startZVect)[i] : 0.0;
-      const caf::SRVector3D start{startX, startY, startZ};
-      track.start = start;
 
-      // End position
-      const float endX = (m_endXVect != nullptr) ? (*m_endXVect)[i] : 0.0;
-      const float endY = (m_endYVect != nullptr) ? (*m_endYVect)[i] : 0.0;
-      const float endZ = (m_endZVect != nullptr) ? (*m_endZVect)[i] : 0.0;
-      const caf::SRVector3D end{endX, endY, endZ};
-      track.end = end;
-
-      // Principal axis direction
-      const float dirX = (m_dirXVect != nullptr) ? (*m_dirXVect)[i] : 0.0;
-      const float dirY = (m_dirYVect != nullptr) ? (*m_dirYVect)[i] : 0.0;
-      const float dirZ = (m_dirZVect != nullptr) ? (*m_dirZVect)[i] : 0.0;
-      const caf::SRVector3D dir{dirX, dirY, dirZ};
-      track.dir = dir;
-      track.enddir = dir;
-
-      // Energy (GeV)
+      // Energy (GeV) // TODO : what is the reco particle energy if the track isn't contained?
       const float energy = (m_energyVect != nullptr) ? (*m_energyVect)[i] : 0.0;
       track.Evis = energy;
       track.E = energy;
@@ -257,19 +237,8 @@ namespace cafmaker
       const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
       track.qual = n3DHits * 1.0;
 
-      // Cluster length from start and end points
-      const float dX = endX - startX;
-      const float dY = endY - startY;
-      const float dZ = endZ - startZ;
-      track.len_cm = sqrt(dX * dX + dY * dY + dZ * dZ);
-      if (track.len_cm > maxTrackLength)
-      {
-        longestTrackDir = track.dir;
-        maxTrackLength = track.len_cm;
-      }
-
       // Cluster length multiplied by LAr density (g/cm2)
-      track.len_gcm2 = track.len_cm * m_LArDensity;
+      // track.len_gcm2 = track.len_cm * m_LArDensity;
 
       // Use truth matching info from Pandora's LArContent hierarchy tools.
       // For LArRecoND MC SpacePoints, we use the unique file_traj_id's
@@ -343,16 +312,10 @@ namespace cafmaker
 
       // Track reco particle
       caf::SRRecoParticle trackPart;
-
+            
       // Track energy
       trackPart.E = energy;
       trackPart.E_method = caf::PartEMethod::kCalorimetry;
-      // Momentum = energy * direction, ignoring particle rest mass
-      trackPart.p = energy * dir;
-
-      // Start & end points
-      trackPart.start = start;
-      trackPart.end = end;
 
       // Truth info
       trackPart.truth = truePartIDVect;
@@ -418,6 +381,8 @@ namespace cafmaker
             trackPart.start = start;
             trackPart.end = end;
             trackPart.p = p;
+            track.len_cm = (*m_trkfitLength)[i];
+            track.len_gcm2 = track.len_cm * m_LArDensity;
             // trackPart.origRecoObjType = RecoObjType::kTrack;
           }
 
@@ -433,14 +398,16 @@ namespace cafmaker
           float shwrfitDirX = (*m_shwrfitDirX)[i];
           float shwrfitDirY = (*m_shwrfitDirY)[i];
           float shwrfitDirZ = (*m_shwrfitDirZ)[i];
-          float shwerLength = (*m_shwrfitLength)[i];
-          float shwrfitEndX = shwrfitStartX + shwrfitDirX * shwerLength;
-          float shwrfitEndY = shwrfitStartY + shwrfitDirY * shwerLength;
-          float shwrfitEndZ = shwrfitStartZ + shwrfitDirZ * shwerLength;
+          float shwrLength = (*m_shwrfitLength)[i];
+          float shwrfitEndX = shwrfitStartX + shwrfitDirX * shwrLength;
+          float shwrfitEndY = shwrfitStartY + shwrfitDirY * shwrLength;
+          float shwrfitEndZ = shwrfitStartZ + shwrfitDirZ * shwrLength;
 
           caf::SRVector3D start{shwrfitStartX, shwrfitStartY, shwrfitStartZ};
           caf::SRVector3D end{shwrfitEndX, shwrfitEndY, shwrfitEndZ};
           caf::SRVector3D dir{shwrfitDirX, shwrfitDirY, shwrfitDirZ};
+          track.len_cm = shwrLength;
+          track.len_gcm2= track.len_cm * m_LArDensity;
           trackPart.start = start;    
           trackPart.end = end;    
 
