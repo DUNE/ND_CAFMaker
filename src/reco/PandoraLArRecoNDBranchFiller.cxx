@@ -1,6 +1,8 @@
 #include "PandoraLArRecoNDBranchFiller.h"
+#include "duneanaobj/StandardRecord/SREnums.h"
 
 #include "Params.h"
+#include <limits>
 
 namespace cafmaker
 {
@@ -63,7 +65,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
-      m_LArRecoNDTree->SetBranchAddress("trkfitIsContained", &m_trkfitIsContained); // TODO
+      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitIsContained); // TODO
       m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
@@ -195,7 +197,7 @@ namespace cafmaker
     // distinction is made (yet) to identify which are tracks or showers.
     // This also fills in the interaction common variables
     FillTracks(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
-    FillShowers(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
+    // FillShowers(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
 
     // Store the common neutrino interactions
     sr.common.ixn.pandora.reserve(nNeutrinos);
@@ -328,13 +330,15 @@ namespace cafmaker
       const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
       trackPart.primary = (isRecoPrimary == 1) ? true : false;
 
-      if(m_trackScoreVect != nullptr && (*m_trkfitPID_NDF)[i] != 0) // trackfit was successfull
+      if(m_trackScoreVect != nullptr)
       {
         // TODO : read from a dedicated input branch if the track is contained in which case
         // assign its energy based on the value of the branches trkfitKEFromLength...
         trackPart.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
 
-        if((*m_trackScoreVect)[i] >= m_TrackShowerCut) // reco particle is a track
+        std::cout << "score : " << (*m_trackScoreVect)[i] << "\n"; 
+        bool isTrackFitFailed = ((*m_trkfitLength)[i]< std::numeric_limits<float>::epsilon());
+        if((*m_trackScoreVect)[i] >= m_TrackShowerCut && !isTrackFitFailed ) // reco particle is a track and trackfit was succesful
         { // Assign the pdg for the fitting hypotesis that has the lowest chi2
           // as version 0, the track is chosen between muon and proton
           // TODO consider also pion and kaons
@@ -357,40 +361,39 @@ namespace cafmaker
           trkfitStartDirZ /= trkfitStartDirMag;
           float p_mod = 1.;
 
-          if (trackPart.contained)
+          trackPart.E_method = caf::PartEMethod::kRange;
+
+          if(assigned_pdg == 13)
           {
-            trackPart.E_method = caf::PartEMethod::kRange;
-
-            if(assigned_pdg == 13)
-            {
-              trackPart.E = (*m_trkfitKEFromLengthMuon)[i]; // TODO : convert to E
-              p_mod = (*m_trkfitPFromLengthMuon)[i];
-            }
-            else if (assigned_pdg == 2212)
-            {
-              trackPart.E = (*m_trkfitKEFromLengthProton)[i];
-              p_mod = (*m_trkfitPFromLengthProton)[i];
-            }
-            else  
-            {
-            }
-
-            caf::SRVector3D start{trkfitStartX, trkfitStartY, trkfitStartZ};
-            caf::SRVector3D end{trkfitEndX, trkfitEndY, trkfitEndZ};
-            caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
-            trackPart.start = start;
-            trackPart.end = end;
-            trackPart.p = p;
-            track.len_cm = (*m_trkfitLength)[i];
-            track.len_gcm2 = track.len_cm * m_LArDensity;
-            // trackPart.origRecoObjType = RecoObjType::kTrack;
+            trackPart.E = (*m_trkfitKEFromLengthMuon)[i]; // TODO : convert to E
+            p_mod = (*m_trkfitPFromLengthMuon)[i];
+            trackPart.score = (*m_trkfitPID_Mu)[i];
           }
+          else if (assigned_pdg == 2212)
+          {
+            trackPart.E = (*m_trkfitKEFromLengthProton)[i];
+            p_mod = (*m_trkfitPFromLengthProton)[i];
+            trackPart.score = (*m_trkfitPID_Pro)[i];
+          }
+          else  
+          {
+          }
+
+          caf::SRVector3D start{trkfitStartX, trkfitStartY, trkfitStartZ};
+          caf::SRVector3D end{trkfitEndX, trkfitEndY, trkfitEndZ};
+          caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
+          trackPart.start = start;
+          trackPart.end = end;
+          trackPart.p = p;
+          track.len_cm = (*m_trkfitLength)[i];
+          track.len_gcm2 = track.len_cm * m_LArDensity;
+          trackPart.origRecoObjType = RecoObjType::kTrack;
 
         }
         else // reco particle is shower
         { // TODO include variables from Paige feature branch
           // is it a photon or an electron ? 
-          trackPart.pdg = -999.; // TODO : decide e- or gamma based on the conversion gap == dist start - vertex
+          trackPart.pdg = -999; // TODO : decide e- or gamma based on the conversion gap == dist start - vertex, NOTE: if trackfit fails ---> -2212 (following Bruce nomenclature) (*m_trackScoreVect)[i] >= m_TrackShowerCut)
 
           float shwrfitStartX = (*m_shwrfitStartX)[i];
           float shwrfitStartY = (*m_shwrfitStartY)[i];
@@ -410,22 +413,18 @@ namespace cafmaker
           track.len_gcm2= track.len_cm * m_LArDensity;
           trackPart.start = start;    
           trackPart.end = end;    
+          trackPart.origRecoObjType = ((*m_trackScoreVect)[i] >= m_TrackShowerCut) ? RecoObjType::kTrack : RecoObjType::kShower; // track with failed track fit
+          
 
-          if (trackPart.contained)
-          {
-            trackPart.E_method = caf::PartEMethod::kRange;
-            trackPart.E = (*m_shwrTotalE)[i];
-            trackPart.p = trackPart.E * dir;
-          }
-          else // TODO : shower energy if uncontained
-          {
-          }
+          trackPart.E_method = caf::PartEMethod::kRange;
+          trackPart.E = (*m_shwrTotalE)[i]; // TODO : read calibrated energy
+          trackPart.p = trackPart.E * dir;
 
           // create standard record shower and fill it 
           caf::SRShower shower;
           shower.start = start;
           shower.direction = dir;
-          shower.Evis = -999; // TODO : fill it with calibrated energy (see Bruce Evis vs Ktrue)
+          shower.Evis = (*m_shwrTotalE)[i]; 
           // shower.truth = // TODO
           // shower.truthOverlap = // TODO
 
@@ -441,6 +440,8 @@ namespace cafmaker
         }
 
         LOG.DEBUG() << "trackScore "      << (*m_trackScoreVect)[i] 
+                    << ", is track? "       << ((*m_trackScoreVect)[i] > 0.5)
+                    << ", is shower? "      << ((*m_trackScoreVect)[i] < 0.5)
                     << ", NDF "           << (*m_trkfitPID_NDF)[i]
                     << ", muon score "    << (*m_trkfitPID_Mu)[i] 
                     << ", proton score "  << (*m_trkfitPID_Pro)[i] 

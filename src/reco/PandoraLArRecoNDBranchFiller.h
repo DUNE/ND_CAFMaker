@@ -100,7 +100,7 @@ namespace cafmaker
       // SHOWER
       std::vector<float> *m_shwrfitLength = nullptr;
       std::vector<float> *m_shwrfitCentroidX = nullptr;
-      std::vector<float> *m_shwrfitCentroidY = nullptr;
+      std::vector<float> *m_shwrfitCentroidY = nullptr;;
       std::vector<float> *m_shwrfitCentroidZ = nullptr;
       std::vector<float> *m_shwrfitStartX = nullptr;
       std::vector<float> *m_shwrfitStartY = nullptr;
