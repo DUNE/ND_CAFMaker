@@ -1,5 +1,4 @@
 #include "PandoraLArRecoNDBranchFiller.h"
-#include "duneanaobj/StandardRecord/SREnums.h"
 
 #include "Params.h"
 #include <limits>
@@ -70,7 +69,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
       m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthMuon", &m_trkfitPFromLengthMuon);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthProton", &m_trkfitPFromLengthMuon);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthProton", &m_trkfitPFromLengthProton);
       m_LArRecoNDTree->SetBranchAddress("trkfitStartX", &m_trkfitStartX);
       m_LArRecoNDTree->SetBranchAddress("trkfitStartY", &m_trkfitStartY);
       m_LArRecoNDTree->SetBranchAddress("trkfitStartZ", &m_trkfitStartZ);
@@ -222,11 +221,6 @@ namespace cafmaker
 
     for (int i = 0; i < nClusters; i++)
     {
-      // Check that the PFO is a track and not a shower
-      const int isShower = (m_isShowerVect != nullptr) ? (*m_isShowerVect)[i] : 0;
-      if (isShower == 1)
-        continue;
-
       // Create standard record track
       caf::SRTrack track;
 
@@ -238,9 +232,6 @@ namespace cafmaker
       // Total number of 3D hits in the cluster
       const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
       track.qual = n3DHits * 1.0;
-
-      // Cluster length multiplied by LAr density (g/cm2)
-      // track.len_gcm2 = track.len_cm * m_LArDensity;
 
       // Use truth matching info from Pandora's LArContent hierarchy tools.
       // For LArRecoND MC SpacePoints, we use the unique file_traj_id's
@@ -315,10 +306,6 @@ namespace cafmaker
       // Track reco particle
       caf::SRRecoParticle trackPart;
             
-      // Track energy
-      trackPart.E = energy;
-      trackPart.E_method = caf::PartEMethod::kCalorimetry;
-
       // Truth info
       trackPart.truth = truePartIDVect;
       trackPart.truthOverlap = truthOverlap;
@@ -335,13 +322,14 @@ namespace cafmaker
         // TODO : read from a dedicated input branch if the track is contained in which case
         // assign its energy based on the value of the branches trkfitKEFromLength...
         trackPart.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
-
-        std::cout << "score : " << (*m_trackScoreVect)[i] << "\n"; 
-        bool isTrackFitFailed = ((*m_trkfitLength)[i]< std::numeric_limits<float>::epsilon());
+        
+        bool isTrackFitFailed = ((*m_trkfitLength)[i] < std::numeric_limits<float>::epsilon());
+        
         if((*m_trackScoreVect)[i] >= m_TrackShowerCut && !isTrackFitFailed ) // reco particle is a track and trackfit was succesful
         { // Assign the pdg for the fitting hypotesis that has the lowest chi2
           // as version 0, the track is chosen between muon and proton
           // TODO consider also pion and kaons
+          
           int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
           trackPart.pdg = assigned_pdg;
 
@@ -387,10 +375,10 @@ namespace cafmaker
           trackPart.p = p;
           track.len_cm = (*m_trkfitLength)[i];
           track.len_gcm2 = track.len_cm * m_LArDensity;
-          trackPart.origRecoObjType = RecoObjType::kTrack;
+          trackPart.origRecoObjType = caf::RecoObjType::kTrack;
 
         }
-        else // reco particle is shower
+        else // reco particle is shower or track with failed trackfit
         { // TODO include variables from Paige feature branch
           // is it a photon or an electron ? 
           trackPart.pdg = -999; // TODO : decide e- or gamma based on the conversion gap == dist start - vertex, NOTE: if trackfit fails ---> -2212 (following Bruce nomenclature) (*m_trackScoreVect)[i] >= m_TrackShowerCut)
@@ -413,7 +401,7 @@ namespace cafmaker
           track.len_gcm2= track.len_cm * m_LArDensity;
           trackPart.start = start;    
           trackPart.end = end;    
-          trackPart.origRecoObjType = ((*m_trackScoreVect)[i] >= m_TrackShowerCut) ? RecoObjType::kTrack : RecoObjType::kShower; // track with failed track fit
+          trackPart.origRecoObjType = ((*m_trackScoreVect)[i] >= m_TrackShowerCut) ? caf::RecoObjType::kTrack : caf::RecoObjType::kShower; // track with failed track fit
           
 
           trackPart.E_method = caf::PartEMethod::kRange;
@@ -466,6 +454,7 @@ namespace cafmaker
       else // trackfit failed: neither track nor shower
       {
         LOG.DEBUG() << "trackfit failed for particle number : " << i << ", assigning pdg 0\n";
+        // TODO : fill with hierarchy analysis info
         trackPart.pdg = 0;
       }
 
