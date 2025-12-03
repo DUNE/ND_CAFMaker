@@ -40,11 +40,11 @@ namespace cafmaker
            const cafmaker::Params &par,
            const TruthMatcher *truthMatch = nullptr) const override;
 
-      void FillTracks(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-          std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
-      void FillShowers(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
-           std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
-      
+      void FillRecoParticles(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
+          std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const; 
+      bool FillTrack(const int i, caf::SRRecoParticle& recoParticle) const;
+      bool FillShower(const int i, caf::SRRecoParticle& recoParticle) const;
+ 
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
 
@@ -136,6 +136,7 @@ namespace cafmaker
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
       const float m_LArDensity;
       const float m_TrackShowerCut = 0.5; ///< threshold on the trackScore variable to decide if a reco particle is track(>=0.5) or shower(<0.5)
+      const float m_ConversionGapCut = 10.; ///< [mm] threshold on the conversion gap to decide if shower pdg is 22(gamma) or -11 (e-)
   };
 
 }
