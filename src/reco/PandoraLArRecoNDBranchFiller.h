@@ -136,7 +136,7 @@ namespace cafmaker
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
       const float m_LArDensity;
       const float m_TrackShowerCut = 0.5; ///< threshold on the trackScore variable to decide if a reco particle is track(>=0.5) or shower(<0.5)
-      const float m_ConversionGapCut = 10.; ///< [mm] threshold on the conversion gap to decide if shower pdg is 22(gamma) or -11 (e-)
+      const float m_ConversionGapCut = 8.; ///< [cm] threshold on the conversion gap to decide if shower pdg is 22(gamma) or -11 (e-)
   };
 
 }

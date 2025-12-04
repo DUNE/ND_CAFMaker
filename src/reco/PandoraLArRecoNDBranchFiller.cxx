@@ -65,7 +65,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
-      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitIsContained); // TODO
+      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitIsContained);
       m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
@@ -235,13 +235,13 @@ namespace cafmaker
      
      if(assigned_pdg == 13)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i]; // TODO : convert to E
+       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + 105.6583755; // [MeV]
        p_mod = (*m_trkfitPFromLengthMuon)[i];
        recoParticle.score = (*m_trkfitPID_Mu)[i];
      }
      else if (assigned_pdg == 2212)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthProton)[i];
+       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + 938.27208943; // [MeV]
        p_mod = (*m_trkfitPFromLengthProton)[i];
        recoParticle.score = (*m_trkfitPID_Pro)[i];
      }
@@ -252,10 +252,12 @@ namespace cafmaker
      caf::SRVector3D start{trkfitStartX, trkfitStartY, trkfitStartZ};
      caf::SRVector3D end{trkfitEndX, trkfitEndY, trkfitEndZ};
      caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
-     
+
      recoParticle.start = start;
      recoParticle.end = end;
      recoParticle.p = p;
+     recoParticle.contained = false; // TODO read from dedicated branch
+     recoParticle.walldist = -999.; // TODO read from dedicated branch
      recoParticle.origRecoObjType = caf::RecoObjType::kTrack; 
 
      return true;
@@ -272,20 +274,24 @@ namespace cafmaker
      float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
      float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
       
-     if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit
+     if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit: we still want to fill the recoParticle with the shower info (at least we have something)
      {
        recoParticle.pdg = -2212; // still a track --> assign as default antiproton
        recoParticle.origRecoObjType = caf::RecoObjType::kTrack;
-     }else
+       recoParticle.E = (*m_shwrTotalE)[i]; // TODO what rest mass to assign?
+     }
+     else
      {
        recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
-       if (conversionGap > m_ConversionGapCut)
+       if (conversionGap > m_ConversionGapCut) // TODO what is the value of the threshold?
        {
          recoParticle.pdg = 22;
+         recoParticle.E = (*m_shwrTotalE)[i];
        }
        else
        {
          recoParticle.pdg = -11;
+         recoParticle.E = (*m_shwrTotalE)[i] + 0.51099895069;
        }
      }
         
@@ -304,8 +310,9 @@ namespace cafmaker
      recoParticle.E_method = caf::PartEMethod::kRange;
      recoParticle.start = start;    
      recoParticle.end = end;    
-     recoParticle.E = (*m_shwrTotalE)[i]; // TODO : read calibrated energy
      recoParticle.p = recoParticle.E * dir; 
+     recoParticle.contained = false; // TODO read from dedicated branch
+     recoParticle.walldist = -999.; // TODO read from dedicated branch
 
      return true;
   }
@@ -319,9 +326,13 @@ namespace cafmaker
     LOG.VERBOSE() << " Pandora LArRecoND FillTracks using " << nClusters << " PFO clusters\n";
  
     const caf::TrueParticleID nullTrueID;
-    // Direction of the longest track
-    float maxTrackLength{0.0};
+
+    // Value and direction of the longest track, value and direction of the most energetic shower
+    
+    float longestTrack{0.0};
+    float maxShowerE{0.0};
     caf::SRVector3D longestTrackDir; // TODO fill it in the loop below
+    caf::SRVector3D maxShowerEDir;
 
     for (int i = 0; i < nClusters; i++)
     {
@@ -423,17 +434,26 @@ namespace cafmaker
           // Total number of 3D hits in the cluster
           const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
           track.qual = n3DHits * 1.0;
+          track.start = recoParticle.start;
+          track.end = recoParticle.end;
           track.len_cm = (*m_trkfitLength)[i];
           track.len_gcm2 = track.len_cm * m_LArDensity;
           track.truth = truePartIDVect; 
           track.truthOverlap = truthOverlap;
+          track.dir = recoParticle.p.Unit(); // p vector build from trkfitStartDir
+          // track.enddir = ;// TODO fill it
+          
+          if (track.len_cm > longestTrack)
+          {
+            longestTrack = track.len_cm;
+            longestTrackDir = track.dir;
+          }
 
           // Initialise total neutrino energy to zero
           interaction.Enu.calo = track.Evis;
 
           sr.nd.lar.pandora[nuIndex].tracks.emplace_back(std::move(track));
           sr.nd.lar.pandora[nuIndex].ntracks++;
-
 
         }
         else // reco particle is shower or track with failed trackfit
@@ -444,9 +464,15 @@ namespace cafmaker
           caf::SRShower shower;
           shower.Evis = (*m_shwrTotalE)[i]; 
           shower.start = recoParticle.start;
-          shower.direction = (recoParticle.end - recoParticle.start); // TODO normalize
+          shower.direction = recoParticle.p.Unit(); // p build from shwrfitDir
           shower.truth = truePartIDVect;
           shower.truthOverlap = truthOverlap;
+
+          if (shower.Evis > maxShowerE)
+          {
+            maxShowerE = shower.Evis;
+            maxShowerEDir = shower.direction;
+          }
           
           // Update total interaction neutrino energy
           interaction.Enu.calo += shower.Evis;
@@ -497,6 +523,7 @@ namespace cafmaker
 
       // Update interaction longest track direction
       interaction.dir.lngtrk = longestTrackDir;
+      interaction.dir.heshw = maxShowerEDir;
 
     }
   }
