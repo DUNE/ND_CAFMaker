@@ -81,6 +81,9 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitStartDirX", &m_trkfitStartDirX);
       m_LArRecoNDTree->SetBranchAddress("trkfitStartDirY", &m_trkfitStartDirY);
       m_LArRecoNDTree->SetBranchAddress("trkfitStartDirZ", &m_trkfitStartDirZ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitEndDirX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitEndDirY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitEndDirZ);
       // SHOWER VARIABLES (PANDORA OUTERFACE)
       m_LArRecoNDTree->SetBranchAddress("shwrfitLength", &m_shwrfitLength);
       m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidX", &m_shwrfitCentroidX);
@@ -310,7 +313,7 @@ namespace cafmaker
      recoParticle.E_method = caf::PartEMethod::kRange;
      recoParticle.start = start;    
      recoParticle.end = end;    
-     recoParticle.p = recoParticle.E * dir; 
+     recoParticle.p = dir * recoParticle.E; 
      recoParticle.contained = false; // TODO read from dedicated branch
      recoParticle.walldist = -999.; // TODO read from dedicated branch
 
@@ -441,7 +444,8 @@ namespace cafmaker
           track.truth = truePartIDVect; 
           track.truthOverlap = truthOverlap;
           track.dir = recoParticle.p.Unit(); // p vector build from trkfitStartDir
-          // track.enddir = ;// TODO fill it
+          caf::SRVector3D enddir = {(*m_trkfitEndDirX)[i],(*m_trkfitEndDirY)[i],(*m_trkfitEndDirZ)[i]};
+          track.enddir = enddir;
           
           if (track.len_cm > longestTrack)
           {

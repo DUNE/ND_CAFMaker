@@ -98,6 +98,9 @@ namespace cafmaker
       std::vector<float> *m_trkfitStartDirX = nullptr;
       std::vector<float> *m_trkfitStartDirY = nullptr;
       std::vector<float> *m_trkfitStartDirZ = nullptr;
+      std::vector<float> *m_trkfitEndDirX = nullptr;
+      std::vector<float> *m_trkfitEndDirY = nullptr;
+      std::vector<float> *m_trkfitEndDirZ = nullptr;
       // SHOWER
       std::vector<float> *m_shwrfitLength = nullptr;
       std::vector<float> *m_shwrfitCentroidX = nullptr;
