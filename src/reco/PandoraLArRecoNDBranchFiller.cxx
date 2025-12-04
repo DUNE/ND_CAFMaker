@@ -236,13 +236,13 @@ namespace cafmaker
      
      if(assigned_pdg == 13)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + 105.6583755; // [MeV]
+       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + 0.1056583755; // [GeV]
        p_mod = (*m_trkfitPFromLengthMuon)[i];
        recoParticle.score = (*m_trkfitPID_Mu)[i];
      }
      else if (assigned_pdg == 2212)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + 938.27208943; // [MeV]
+       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + 0.93827208943; // [GeV]
        p_mod = (*m_trkfitPFromLengthProton)[i];
        recoParticle.score = (*m_trkfitPID_Pro)[i];
      }
