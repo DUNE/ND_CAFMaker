@@ -66,6 +66,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
       m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitIsContained);
+      m_LArRecoNDTree->SetBranchAddress("trkfitWallDist", &m_trkfitWallDist);
       m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
@@ -256,8 +257,7 @@ namespace cafmaker
      recoParticle.start = start;
      recoParticle.end = end;
      recoParticle.p = p;
-     recoParticle.contained = false; // TODO read from dedicated branch
-     recoParticle.walldist = -999.; // TODO read from dedicated branch
+     recoParticle.walldist = (*m_trkfitWallDist)[i];
      recoParticle.origRecoObjType = caf::RecoObjType::kTrack; 
 
      return true;
