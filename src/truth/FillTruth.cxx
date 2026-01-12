@@ -164,8 +164,9 @@ namespace cafmaker
                                                      << " to account for change in units from m to cm\n";
    nu.vtx = nu_vtx;
 
+    std::cout << "WHAT TIME IS IT ??? " << vtx.T() << "\n";
     // we can't fill the time, however, because that's changed by spill building
-//    nu.time = vtx.T();
+    nu.time = vtx.T();
 
     nu.pdg = in->InitState().ProbePdg();
     nu.pdgorig = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
@@ -235,6 +236,7 @@ namespace cafmaker
 //      part.start_pos = p->X4()->Vect();
       // remaining fields need to be filled in with post-G4 info
 
+
       std::string process;
       if( p->Status() == genie::EGHepStatus::kIStStableFinalState )
       {
@@ -243,6 +245,8 @@ namespace cafmaker
           auto traj = g4event->Trajectories[part.G4ID];
           auto p0 = traj.Points[0];
           part.start_pos = (p0.Position * .1).Vect();
+          std::cout << "HEY EVENT PARTICLE, WHAT TIME IS IT ? " << p0.Position.T() <<", nu time " << nu.time << "\n";
+          part.time = p0.Position.T();
 
           auto pf = traj.Points[traj.Points.size()-1];
           part.end_pos = (pf.Position * .1).Vect();

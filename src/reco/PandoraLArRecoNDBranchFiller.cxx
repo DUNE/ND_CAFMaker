@@ -365,7 +365,9 @@ namespace cafmaker
       {
         truePartID.type = caf::TrueParticleID::kSecondary;
       }
-
+      
+      float true_neutrino_time = -999.;
+      float track_time = -999.;
       if (mcNuId != 0)
       {
         // Get the true interaction in the stack
@@ -376,6 +378,9 @@ namespace cafmaker
         const int srTrueIntIdx = std::distance(sr.mc.nu.begin(), std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), predicate));
         truePartID.ixn = srTrueIntIdx;
 
+        true_neutrino_time = srTrueInt.time;
+        LOG.DEBUG() << "WHAT TIME IS IT AGAIN? " << true_neutrino_time << "\n";
+
         // If the particle is not a primary, we might want to create a new particle if it wasn't created originally
         if (isPrimary != 1)
         {
@@ -383,6 +388,12 @@ namespace cafmaker
           { return part.G4ID == mcId; };
           truePartID.part = std::distance(srTrueInt.sec.begin(),
                                           std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
+
+        }
+        
+        for (auto const& primary: srTrueInt.prim)
+        {
+          if(primary.G4ID == mcId) track_time = primary.time;
         }
       }
 
@@ -446,6 +457,8 @@ namespace cafmaker
           track.dir = recoParticle.p.Unit(); // p vector build from trkfitStartDir
           caf::SRVector3D enddir = {(*m_trkfitEndDirX)[i],(*m_trkfitEndDirY)[i],(*m_trkfitEndDirZ)[i]};
           track.enddir = enddir;
+          // track.time = true_neutrino_time;
+          track.time = track_time;
           
           if (track.len_cm > longestTrack)
           {
