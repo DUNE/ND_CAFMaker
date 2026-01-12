@@ -48,6 +48,18 @@ namespace cafmaker
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
 
+      // CONSTANTS
+      const int m_muonPDG = 13;
+      const int m_protonPDG = 2212;
+      const int m_antiprotonPDG = -2212;
+      const int m_gammaPDG = 22;
+      const int m_electronPDG = 11;
+      const int m_positronPDG = -11;
+      const float m_mMuon = 0.1056583755; // [GeV]
+      const float m_mProton = 0.93827208943; // [GeV]
+      const float m_mElectron = 0.00051099895; // [GeV]                                             
+
+      // BRANCHES NAMES
       int m_eventId;
       int m_run;
       int m_subRun;

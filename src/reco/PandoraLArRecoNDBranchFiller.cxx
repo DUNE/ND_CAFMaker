@@ -215,47 +215,44 @@ namespace cafmaker
      // as version 0, the track is chosen between muon and proton
      // TODO consider also pion and kaons
      
-     int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
+     const int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? m_muonPDG : m_protonPDG;
      recoParticle.pdg = assigned_pdg;
 
-     float trkfitStartX = (*m_trkfitStartX)[i];
-     float trkfitStartY = (*m_trkfitStartY)[i];
-     float trkfitStartZ = (*m_trkfitStartZ)[i];
-     float trkfitEndX = (*m_trkfitEndX)[i];
-     float trkfitEndY = (*m_trkfitEndY)[i];
-     float trkfitEndZ = (*m_trkfitEndZ)[i];
-     float trkfitStartDirX = (*m_trkfitStartDirX)[i];
-     float trkfitStartDirY = (*m_trkfitStartDirY)[i];
-     float trkfitStartDirZ = (*m_trkfitStartDirZ)[i];
-     float trkfitStartDirMag = sqrt(trkfitStartDirX * trkfitStartDirX + trkfitStartDirY * trkfitStartDirY + trkfitStartDirZ * trkfitStartDirZ); 
-     
-     trkfitStartDirX /= trkfitStartDirMag;
-     trkfitStartDirY /= trkfitStartDirMag;
-     trkfitStartDirZ /= trkfitStartDirMag;
+     const float trkfitStartX = (*m_trkfitStartX)[i];
+     const float trkfitStartY = (*m_trkfitStartY)[i];
+     const float trkfitStartZ = (*m_trkfitStartZ)[i];
+     const float trkfitEndX = (*m_trkfitEndX)[i];
+     const float trkfitEndY = (*m_trkfitEndY)[i];
+     const float trkfitEndZ = (*m_trkfitEndZ)[i];
+     const float trkfitStartDirX = (*m_trkfitStartDirX)[i];
+     const float trkfitStartDirY = (*m_trkfitStartDirY)[i];
+     const float trkfitStartDirZ = (*m_trkfitStartDirZ)[i];
+     const float trkfitStartDirMag = sqrt(trkfitStartDirX * trkfitStartDirX + trkfitStartDirY * trkfitStartDirY + trkfitStartDirZ * trkfitStartDirZ); 
      
      float p_mod = 1.; 
      
      recoParticle.E_method = caf::PartEMethod::kRange; 
      
-     if(assigned_pdg == 13)
+     if(m_muonPDG == assigned_pdg)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + 0.1056583755; // [GeV]
+       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + m_mMuon; // [GeV]
        p_mod = (*m_trkfitPFromLengthMuon)[i];
        recoParticle.score = (*m_trkfitPID_Mu)[i];
      }
-     else if (assigned_pdg == 2212)
+     else if (m_protonPDG == assigned_pdg)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + 0.93827208943; // [GeV]
+       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + m_mProton; // [GeV]
        p_mod = (*m_trkfitPFromLengthProton)[i];
        recoParticle.score = (*m_trkfitPID_Pro)[i];
      }
      else  
      {
+       // TODO: to be filled with other particle options once available
      } 
     
      caf::SRVector3D start{trkfitStartX, trkfitStartY, trkfitStartZ};
      caf::SRVector3D end{trkfitEndX, trkfitEndY, trkfitEndZ};
-     caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
+     caf::SRVector3D p{trkfitStartDirX / trkfitStartDirMag * p_mod, trkfitStartDirY / trkfitStartDirMag* p_mod, trkfitStartDirZ / trkfitStartDirMag* p_mod};
 
      recoParticle.start = start;
      recoParticle.end = end;
@@ -269,17 +266,17 @@ namespace cafmaker
  // ------------------------------------------------------------------------------
   bool PandoraLArRecoNDBranchFiller::FillShower(const int i, caf::SRRecoParticle& recoParticle) const
   {
-     float shwrfitStartX = (*m_shwrfitStartX)[i];
-     float shwrfitStartY = (*m_shwrfitStartY)[i];
-     float shwrfitStartZ = (*m_shwrfitStartZ)[i];
-     float vertexX = (m_nuVtxXVect != nullptr) ? (*m_nuVtxXVect)[i] : 0.;
-     float vertexY = (m_nuVtxYVect != nullptr) ? (*m_nuVtxYVect)[i] : 0.;
-     float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
-     float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
+     const float shwrfitStartX = (*m_shwrfitStartX)[i];
+     const float shwrfitStartY = (*m_shwrfitStartY)[i];
+     const float shwrfitStartZ = (*m_shwrfitStartZ)[i];
+     const float vertexX = (m_nuVtxXVect != nullptr) ? (*m_nuVtxXVect)[i] : 0.;
+     const float vertexY = (m_nuVtxYVect != nullptr) ? (*m_nuVtxYVect)[i] : 0.;
+     const float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
+     const float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
       
      if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit: we still want to fill the recoParticle with the shower info (at least we have something)
      {
-       recoParticle.pdg = -2212; // still a track --> assign as default antiproton
+       recoParticle.pdg = m_antiprotonPDG; // still a track --> assign as default antiproton
        recoParticle.origRecoObjType = caf::RecoObjType::kTrack;
        recoParticle.E = (*m_shwrTotalE)[i]; // TODO what rest mass to assign?
      }
@@ -288,13 +285,13 @@ namespace cafmaker
        recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
        if (conversionGap > m_ConversionGapCut) // TODO what is the value of the threshold?
        {
-         recoParticle.pdg = 22;
+         recoParticle.pdg = m_gammaPDG;
          recoParticle.E = (*m_shwrTotalE)[i];
        }
        else
        {
-         recoParticle.pdg = -11;
-         recoParticle.E = (*m_shwrTotalE)[i] + 0.51099895069;
+         recoParticle.pdg = m_electronPDG;
+         recoParticle.E = (*m_shwrTotalE)[i] + m_mElectron * 1e-3; // TODO: check if default units are MeV for this branch.
        }
      }
         
