@@ -65,7 +65,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
-      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitIsContained);
+      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitContained);
       m_LArRecoNDTree->SetBranchAddress("trkfitWallDist", &m_trkfitWallDist);
       m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
@@ -84,6 +84,19 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitEndDirX);
       m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitEndDirY);
       m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitEndDirZ);
+      // track fit calo
+      m_LArRecoNDTree->SetBranchAddress("trkfitTrackCaloE", &m_trkfitTrackCaloE);
+      m_LArRecoNDTree->SetBranchAddress("trkfitVisE", &m_trkfitVisE);
+      m_LArRecoNDTree->SetBranchAddress("trkfitSliceId", &m_trkfitSliceId);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPfoId", &m_trkfitPfoId);
+      m_LArRecoNDTree->SetBranchAddress("trkfitX", &m_trkfitX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitY", &m_trkfitY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitZ", &m_trkfitZ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitQ", &m_trkfitQ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitRR", &m_trkfitRR);
+      m_LArRecoNDTree->SetBranchAddress("trkfitdx", &m_trkfitdx);
+      m_LArRecoNDTree->SetBranchAddress("trkfitdQdx", &m_trkfitdQdx);
+      m_LArRecoNDTree->SetBranchAddress("trkfitdEdx", &m_trkfitdEdx);
       // SHOWER VARIABLES (PANDORA OUTERFACE)
       m_LArRecoNDTree->SetBranchAddress("shwrfitLength", &m_shwrfitLength);
       m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidX", &m_shwrfitCentroidX);
@@ -97,26 +110,8 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("shwrfitDirZ", &m_shwrfitDirZ);
       m_LArRecoNDTree->SetBranchAddress("shwrSliceId", &m_shwrSliceId);
       m_LArRecoNDTree->SetBranchAddress("shwrClusterId", &m_shwrClusterId);
-      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirX", &m_startTrkSlidingFitDirX);
-      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirY", &m_startTrkSlidingFitDirY); 
-      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirZ", &m_startTrkSlidingFitDirZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsX", &m_shwrStartPointsX);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsY", &m_shwrStartPointsY);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsZ", &m_shwrStartPointsZ);
       m_LArRecoNDTree->SetBranchAddress("shwrdEdx", &m_shwrdEdx);
-      m_LArRecoNDTree->SetBranchAddress("shwrTotalE", &m_shwrTotalE);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsRecoId", &m_shwrStartPointsRecoId);
-      m_LArRecoNDTree->SetBranchAddress("minProjection", &m_minProjection);
-      m_LArRecoNDTree->SetBranchAddress("medianQ", &m_medianQ);
-      m_LArRecoNDTree->SetBranchAddress("chargePerHit", &m_chargePerHit);
-      m_LArRecoNDTree->SetBranchAddress("chargePerHitStartPoints", &m_chargePerHitStartPoints);
-      m_LArRecoNDTree->SetBranchAddress("pitchValue", &m_pitchValue);
-      m_LArRecoNDTree->SetBranchAddress("shwrPCAX", &m_shwrPCAX);
-      m_LArRecoNDTree->SetBranchAddress("shwrPCAY", &m_shwrPCAY);
-      m_LArRecoNDTree->SetBranchAddress("shwrPCAZ", &m_shwrPCAZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionX", &m_shwrStartHitPositionX);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionY", &m_shwrStartHitPositionY);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionZ", &m_shwrStartHitPositionZ); 
+      m_LArRecoNDTree->SetBranchAddress("shwrEnergy", &m_shwrEnergy);
       
       // We have setup the input tree
       SetConfigured(true);
@@ -273,25 +268,26 @@ namespace cafmaker
      const float vertexY = (m_nuVtxYVect != nullptr) ? (*m_nuVtxYVect)[i] : 0.;
      const float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
      const float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
+     const float dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[i] : -999.;
       
      if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit: we still want to fill the recoParticle with the shower info (at least we have something)
      {
        recoParticle.pdg = m_antiprotonPDG; // still a track --> assign as default antiproton
        recoParticle.origRecoObjType = caf::RecoObjType::kTrack;
-       recoParticle.E = (*m_shwrTotalE)[i]; // TODO what rest mass to assign?
+       recoParticle.E = (*m_shwrEnergy)[i]; // TODO what rest mass to assign?
      }
      else
      {
        recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
-       if (conversionGap > m_ConversionGapCut) // TODO what is the value of the threshold?
+       if ((conversionGap > m_ConversionGapCut) && (dEdx > m_dEdxShowerCut) ) // TODO (or even delete? ok for v0). Some considerations here: the final decision on gamma vs e- should be left to the analyzer, based on the information propagated to the CAF output. We shouldn't discard any hyphotesis beforehand. Future development will also depend on how we restructure the Standard Reco track,shower,particle classes.Last but not leas, if for any reason vertex is null, m_mElectron is assigned.
        {
          recoParticle.pdg = m_gammaPDG;
-         recoParticle.E = (*m_shwrTotalE)[i];
+         recoParticle.E = (*m_shwrEnergy)[i];
        }
        else
        {
          recoParticle.pdg = m_electronPDG;
-         recoParticle.E = (*m_shwrTotalE)[i] + m_mElectron * 1e-3; // TODO: check if default units are MeV for this branch.
+         recoParticle.E = (*m_shwrEnergy)[i] + m_mElectron * 1e-3; // TODO: check if default units are MeV for this branch.
        }
      }
         
@@ -418,7 +414,7 @@ namespace cafmaker
 
       if(m_trackScoreVect != nullptr)
       {
-        recoParticle.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
+        recoParticle.contained = (m_trkfitContained != nullptr) ? (*m_trkfitContained)[i] : false;
         
         bool isTrackFitFailed = ((*m_trkfitLength)[i] < std::numeric_limits<float>::epsilon());
         
@@ -429,7 +425,7 @@ namespace cafmaker
           // Create standard record track
           caf::SRTrack track;
           track.E = recoParticle.E;
-          track.Evis = recoParticle.E;
+          track.Evis = (m_trkfitVisE != nullptr) ? (*m_trkfitVisE)[i] : -999.;
 
           // Total number of 3D hits in the cluster
           const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
@@ -463,7 +459,7 @@ namespace cafmaker
 
           // create standard record shower and fill it 
           caf::SRShower shower;
-          shower.Evis = (*m_shwrTotalE)[i]; 
+          shower.Evis = (*m_shwrEnergy)[i]; 
           shower.start = recoParticle.start;
           shower.direction = recoParticle.p.Unit(); // p build from shwrfitDir
           shower.truth = truePartIDVect;
