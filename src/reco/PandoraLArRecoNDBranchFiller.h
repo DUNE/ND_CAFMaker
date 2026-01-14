@@ -42,6 +42,10 @@ namespace cafmaker
 
       void FillRecoParticles(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
           std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const; 
+      void FillRecoParticlesDefault(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
+          std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+      bool HasOuterfaceBranches() const;
+      void FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const;
       bool FillTrack(const int i, caf::SRRecoParticle& recoParticle) const;
       bool FillShower(const int i, caf::SRRecoParticle& recoParticle) const;
  
