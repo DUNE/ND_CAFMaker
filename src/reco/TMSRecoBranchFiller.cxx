@@ -116,11 +116,11 @@ namespace cafmaker
 
     int i = trigger.evtID; // pseudo-itterator for ixn
 
-    int LastSpillNo = -999999; //_SpillNo;
+    int LastSpillNo = -999999;
     TMSRecoTree->GetEntry(i); // Load first entry for now
     LastSpillNo = _SpillNo;
 
-    caf::SRTMSInt *interaction;// = sr.nd.tms.ixn.back();
+    caf::SRTMSInt *interaction;
     caf::TrueParticleID *truePartID;
     caf::SRTrueParticle *srTruePart;
     caf::SRTrueInteraction  srTrueInt;
@@ -132,7 +132,7 @@ namespace cafmaker
 
       for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
       {
-        unsigned long int neutrino_event_id = (unsigned long) ((_TrueRunNo)*1E6 + _TrueVtxId[i_tvtx]);//mc_int_edepsimId[i_int];
+        unsigned long int neutrino_event_id = (unsigned long) ((_TrueRunNo)*1E6 + _TrueVtxId[i_tvtx]);
         srTrueInt = truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true);
       }
     }
@@ -145,19 +145,17 @@ namespace cafmaker
     {
       if (_nTracks > 0) // and we have reco tracks
       {
-        //sr.nd.tms.nixn++;
         for (int j = 0; j < _nTracks; ++j) {
-
-          sr.nd.tms.ixn.emplace_back();
           sr.nd.tms.nixn++;
+          sr.nd.tms.ixn.emplace_back();
+
           interaction = &(sr.nd.tms.ixn.back()); // :(
-          interaction->tracks.resize(1);//_nTracks);
+          interaction->tracks.resize(1); // For now 1 track = 1 interaction; implicit assumption it's all (anti-)muons
           interaction->ntracks = 1;
 
           truePartID = new caf::TrueParticleID();
           srTruePart = new caf::SRTrueParticle();
 
-          //interaction.ntracks++;
           interaction->tracks[0].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);
           interaction->tracks[0].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
           interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
@@ -194,8 +192,8 @@ namespace cafmaker
     for (int i_int = 0; i_int<_TrueVtxN; i_int++)
     {
       //Long_t neutrino_event_id = _TrueVtxId[i_int];//mc_int_edepsimId[i_int];
-      unsigned long int neutrino_event_id = (unsigned long) (_RunNo*1E6 + _TrueVtxId[i_int]);//mc_int_edepsimId[i_int];
-      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);//, false);
+      unsigned long int neutrino_event_id = (unsigned long) (_RunNo*1E6 + _TrueVtxId[i_int]);
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
       LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
       for (const caf::SRTrueParticle & part : srTrueInt.prim)
           LOG.VERBOSE() << "    (prim) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
