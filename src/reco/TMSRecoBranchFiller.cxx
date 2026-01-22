@@ -125,8 +125,6 @@ namespace cafmaker
     caf::SRTrueParticle *srTruePart;
     caf::SRTrueInteraction  srTrueInt;
 
-    const auto NaN = std::numeric_limits<float>::signaling_NaN();
-
     // Fill Truth parts first?
     for (int i_tru=0; i_tru< TMSTrueSpill->GetEntries(); i_tru++)
     {
@@ -139,16 +137,15 @@ namespace cafmaker
       }
     }
 
-    unsigned total = 0; // Total number of tracks in the interaction
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
 
     // TODO: Add true info at the face of TMS?
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
-      if (_nTracks > 0)
+      if (_nTracks > 0) // and we have reco tracks
       {
-        sr.nd.tms.nixn++;
+        //sr.nd.tms.nixn++;
         for (int j = 0; j < _nTracks; ++j) {
 
           sr.nd.tms.ixn.emplace_back();
