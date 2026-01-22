@@ -42,12 +42,28 @@ namespace cafmaker
 
       void FillRecoParticles(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
           std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const; 
+      void FillRecoParticlesDefault(caf::StandardRecord &sr, const int nClusters, const std::vector<int> &uniqueSliceIDs,
+          std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch) const;
+      bool HasOuterfaceBranches() const;
+      void FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const;
       bool FillTrack(const int i, caf::SRRecoParticle& recoParticle) const;
       bool FillShower(const int i, caf::SRRecoParticle& recoParticle) const;
  
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
 
+      // CONSTANTS
+      const int m_muonPDG = 13;
+      const int m_protonPDG = 2212;
+      const int m_antiprotonPDG = -2212;
+      const int m_gammaPDG = 22;
+      const int m_electronPDG = 11;
+      const int m_positronPDG = -11;
+      const float m_mMuon = 0.1056583755; // [GeV]
+      const float m_mProton = 0.93827208943; // [GeV]
+      const float m_mElectron = 0.00051099895; // [GeV]                                             
+
+      // BRANCHES NAMES: see https://github.com/brucehoward-physics/LArRecoND/blob/feature/PandoraOuterface_Complete/include/PandoraOuterface.h
       int m_eventId;
       int m_run;
       int m_subRun;
@@ -77,12 +93,15 @@ namespace cafmaker
       std::vector<float> *m_nuVtxZVect = nullptr;
       std::vector<int> *m_isRecoPrimaryVect = nullptr;
       std::vector<int> *m_recoPDGVect = nullptr;
-      // TRACK
       std::vector<float> *m_trackScoreVect = nullptr;
-      std::vector<float> *m_trkfitPID_Mu = nullptr;
-      std::vector<float> *m_trkfitPID_Pro = nullptr;
+      // TRACK VARIABLES
+      std::vector<int> *m_trkfitPID_PDG = nullptr;
       std::vector<int> *m_trkfitPID_NDF = nullptr;
-      std::vector<float> *m_trkfitIsContained = nullptr; 
+      std::vector<float> *m_trkfitPID_Mu = nullptr;
+      std::vector<float> *m_trkfitPID_Pi = nullptr;
+      std::vector<float> *m_trkfitPID_K = nullptr;
+      std::vector<float> *m_trkfitPID_Pro = nullptr;
+      std::vector<float> *m_trkfitContained = nullptr; 
       std::vector<float> *m_trkfitWallDist = nullptr; 
       std::vector<float> *m_trkfitLength = nullptr;
       std::vector<float> *m_trkfitKEFromLengthMuon = nullptr;
@@ -101,7 +120,20 @@ namespace cafmaker
       std::vector<float> *m_trkfitEndDirX = nullptr;
       std::vector<float> *m_trkfitEndDirY = nullptr;
       std::vector<float> *m_trkfitEndDirZ = nullptr;
-      // SHOWER
+      // Track Calo
+      std::vector<float> *m_trkfitTrackCaloE = nullptr;
+      std::vector<float> *m_trkfitVisE = nullptr;
+      std::vector<int> *m_trkfitSliceId = nullptr;
+      std::vector<int> *m_trkfitPfoId = nullptr;
+      std::vector<float> *m_trkfitX = nullptr;
+      std::vector<float> *m_trkfitY = nullptr;
+      std::vector<float> *m_trkfitZ = nullptr;
+      std::vector<float> *m_trkfitQ = nullptr;
+      std::vector<float> *m_trkfitRR = nullptr;
+      std::vector<float> *m_trkfitdx = nullptr;
+      std::vector<float> *m_trkfitdQdx = nullptr;
+      std::vector<float> *m_trkfitdEdx = nullptr;
+      // SHOWER VARIABLES
       std::vector<float> *m_shwrfitLength = nullptr;
       std::vector<float> *m_shwrfitCentroidX = nullptr;
       std::vector<float> *m_shwrfitCentroidY = nullptr;;
@@ -114,26 +146,11 @@ namespace cafmaker
       std::vector<float> *m_shwrfitDirZ = nullptr;
       std::vector<int> *m_shwrSliceId = nullptr;
       std::vector<int> *m_shwrClusterId = nullptr;
-      std::vector<float> *m_startTrkSlidingFitDirX = nullptr;
-      std::vector<float> *m_startTrkSlidingFitDirY = nullptr;
-      std::vector<float> *m_startTrkSlidingFitDirZ = nullptr;
-      std::vector<float> *m_shwrStartPointsX = nullptr;
-      std::vector<float> *m_shwrStartPointsY = nullptr;
-      std::vector<float> *m_shwrStartPointsZ = nullptr;
       std::vector<float> *m_shwrdEdx = nullptr;
-      std::vector<float> *m_shwrTotalE = nullptr;
-      std::vector<int> *m_shwrStartPointsRecoId = nullptr;
-      std::vector<float> *m_minProjection = nullptr;
-      std::vector<float> *m_medianQ = nullptr;
-      std::vector<int> *m_chargePerHit = nullptr;
-      std::vector<float> *m_chargePerHitStartPoints = nullptr;
-      std::vector<int> *m_pitchValue = nullptr;
-      std::vector<float> *m_shwrPCAX = nullptr;
-      std::vector<float> *m_shwrPCAY = nullptr;
-      std::vector<float> *m_shwrPCAZ = nullptr;
-      std::vector<float> *m_shwrStartHitPositionX = nullptr;
-      std::vector<float> *m_shwrStartHitPositionY = nullptr;
-      std::vector<float> *m_shwrStartHitPositionZ = nullptr; 
+      std::vector<float> *m_shwrEnergy = nullptr;
+      std::vector<float> *m_shwrEndX = nullptr;
+      std::vector<float> *m_shwrEndY = nullptr;
+      std::vector<float> *m_shwrEndZ = nullptr;
 
       mutable std::vector<cafmaker::Trigger> m_Triggers;
       mutable decltype(m_Triggers)::const_iterator  m_LastTriggerReqd; ///< the last trigger requested using _FillRecoBranches
@@ -141,6 +158,7 @@ namespace cafmaker
       const float m_LArDensity;
       const float m_TrackShowerCut = 0.5; ///< threshold on the trackScore variable to decide if a reco particle is track(>=0.5) or shower(<0.5)
       const float m_ConversionGapCut = 8.; ///< [cm] threshold on the conversion gap to decide if shower pdg is 22(gamma) or -11 (e-)
+      const float m_dEdxShowerCut = 3.; ///< [MeV] cut on dEdx at the start of the shower: we expect around 2 MeV for an electron and 4 MeV for gamma
   };
 
 }

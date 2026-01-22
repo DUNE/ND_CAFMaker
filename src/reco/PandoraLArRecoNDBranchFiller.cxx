@@ -65,7 +65,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
       m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
-      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitIsContained);
+      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitContained);
       m_LArRecoNDTree->SetBranchAddress("trkfitWallDist", &m_trkfitWallDist);
       m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
       m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
@@ -84,6 +84,19 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitEndDirX);
       m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitEndDirY);
       m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitEndDirZ);
+      // track fit calo
+      m_LArRecoNDTree->SetBranchAddress("trkfitTrackCaloE", &m_trkfitTrackCaloE);
+      m_LArRecoNDTree->SetBranchAddress("trkfitVisE", &m_trkfitVisE);
+      m_LArRecoNDTree->SetBranchAddress("trkfitSliceId", &m_trkfitSliceId);
+      m_LArRecoNDTree->SetBranchAddress("trkfitPfoId", &m_trkfitPfoId);
+      m_LArRecoNDTree->SetBranchAddress("trkfitX", &m_trkfitX);
+      m_LArRecoNDTree->SetBranchAddress("trkfitY", &m_trkfitY);
+      m_LArRecoNDTree->SetBranchAddress("trkfitZ", &m_trkfitZ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitQ", &m_trkfitQ);
+      m_LArRecoNDTree->SetBranchAddress("trkfitRR", &m_trkfitRR);
+      m_LArRecoNDTree->SetBranchAddress("trkfitdx", &m_trkfitdx);
+      m_LArRecoNDTree->SetBranchAddress("trkfitdQdx", &m_trkfitdQdx);
+      m_LArRecoNDTree->SetBranchAddress("trkfitdEdx", &m_trkfitdEdx);
       // SHOWER VARIABLES (PANDORA OUTERFACE)
       m_LArRecoNDTree->SetBranchAddress("shwrfitLength", &m_shwrfitLength);
       m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidX", &m_shwrfitCentroidX);
@@ -97,26 +110,8 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("shwrfitDirZ", &m_shwrfitDirZ);
       m_LArRecoNDTree->SetBranchAddress("shwrSliceId", &m_shwrSliceId);
       m_LArRecoNDTree->SetBranchAddress("shwrClusterId", &m_shwrClusterId);
-      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirX", &m_startTrkSlidingFitDirX);
-      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirY", &m_startTrkSlidingFitDirY); 
-      m_LArRecoNDTree->SetBranchAddress("startTrkSlidingFitDirZ", &m_startTrkSlidingFitDirZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsX", &m_shwrStartPointsX);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsY", &m_shwrStartPointsY);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsZ", &m_shwrStartPointsZ);
       m_LArRecoNDTree->SetBranchAddress("shwrdEdx", &m_shwrdEdx);
-      m_LArRecoNDTree->SetBranchAddress("shwrTotalE", &m_shwrTotalE);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartPointsRecoId", &m_shwrStartPointsRecoId);
-      m_LArRecoNDTree->SetBranchAddress("minProjection", &m_minProjection);
-      m_LArRecoNDTree->SetBranchAddress("medianQ", &m_medianQ);
-      m_LArRecoNDTree->SetBranchAddress("chargePerHit", &m_chargePerHit);
-      m_LArRecoNDTree->SetBranchAddress("chargePerHitStartPoints", &m_chargePerHitStartPoints);
-      m_LArRecoNDTree->SetBranchAddress("pitchValue", &m_pitchValue);
-      m_LArRecoNDTree->SetBranchAddress("shwrPCAX", &m_shwrPCAX);
-      m_LArRecoNDTree->SetBranchAddress("shwrPCAY", &m_shwrPCAY);
-      m_LArRecoNDTree->SetBranchAddress("shwrPCAZ", &m_shwrPCAZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionX", &m_shwrStartHitPositionX);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionY", &m_shwrStartHitPositionY);
-      m_LArRecoNDTree->SetBranchAddress("shwrStartHitPositionZ", &m_shwrStartHitPositionZ); 
+      m_LArRecoNDTree->SetBranchAddress("shwrEnergy", &m_shwrEnergy);
       
       // We have setup the input tree
       SetConfigured(true);
@@ -197,10 +192,24 @@ namespace cafmaker
     sr.nd.lar.pandora.resize(nNeutrinos);
     sr.nd.lar.npandora = sr.nd.lar.pandora.size();
 
-    // Fill track and shower info. Both use the same clusters (PFOs), and no
-    // distinction is made (yet) to identify which are tracks or showers.
-    // This also fills in the interaction common variables
-    FillRecoParticles(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
+    // Check if input file has Pandora Outerface fields. If false, fill
+    // Standard Record classes with default filler
+    const bool inputHasOuterfaceBranches = HasOuterfaceBranches();
+    LOG.VERBOSE() << "Input file has Pandora Outerface branches? " << inputHasOuterfaceBranches << "\n";
+
+    if (inputHasOuterfaceBranches)
+    {
+      // Fill track and shower info. Both use the same clusters (PFOs), and no
+      // distinction is made (yet) to identify which are tracks or showers.
+      // This also fills in the interaction common variables
+      FillRecoParticles(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
+    }
+    else
+    {
+      // TODO : delete this when pandora outerfaces has been merged into LArRecoND main
+      FillRecoParticlesDefault(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
+    }
+
 
     // Store the common neutrino interactions
     sr.common.ixn.pandora.reserve(nNeutrinos);
@@ -209,53 +218,61 @@ namespace cafmaker
       sr.common.ixn.pandora.emplace_back(std::move(interaction));
   }
 
+  bool PandoraLArRecoNDBranchFiller::HasOuterfaceBranches() const
+  { // should come up with something more robust but ok for now? (to be deleted in the future anyway)
+    if (m_trkfitPID_Mu == nullptr &&
+        m_trkfitPID_Pro == nullptr &&
+        m_trkfitPID_NDF == nullptr &&
+        m_shwrfitLength == nullptr &&
+        m_shwrfitStartX == nullptr) return false;
+
+    return true;
+  }
+
   // ------------------------------------------------------------------------------
   bool PandoraLArRecoNDBranchFiller::FillTrack(const int i, caf::SRRecoParticle& recoParticle) const
   {  // Assign the pdg for the fitting hypotesis that has the lowest chi2
      // as version 0, the track is chosen between muon and proton
      // TODO consider also pion and kaons
      
-     int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? 13 : 2212;
+     const int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? m_muonPDG : m_protonPDG;
      recoParticle.pdg = assigned_pdg;
 
-     float trkfitStartX = (*m_trkfitStartX)[i];
-     float trkfitStartY = (*m_trkfitStartY)[i];
-     float trkfitStartZ = (*m_trkfitStartZ)[i];
-     float trkfitEndX = (*m_trkfitEndX)[i];
-     float trkfitEndY = (*m_trkfitEndY)[i];
-     float trkfitEndZ = (*m_trkfitEndZ)[i];
-     float trkfitStartDirX = (*m_trkfitStartDirX)[i];
-     float trkfitStartDirY = (*m_trkfitStartDirY)[i];
-     float trkfitStartDirZ = (*m_trkfitStartDirZ)[i];
-     float trkfitStartDirMag = sqrt(trkfitStartDirX * trkfitStartDirX + trkfitStartDirY * trkfitStartDirY + trkfitStartDirZ * trkfitStartDirZ); 
-     
-     trkfitStartDirX /= trkfitStartDirMag;
-     trkfitStartDirY /= trkfitStartDirMag;
-     trkfitStartDirZ /= trkfitStartDirMag;
+     const float trkfitStartX = (*m_trkfitStartX)[i];
+     const float trkfitStartY = (*m_trkfitStartY)[i];
+     const float trkfitStartZ = (*m_trkfitStartZ)[i];
+     const float trkfitEndX = (*m_trkfitEndX)[i];
+     const float trkfitEndY = (*m_trkfitEndY)[i];
+     const float trkfitEndZ = (*m_trkfitEndZ)[i];
+     const float trkfitStartDirX = (*m_trkfitStartDirX)[i];
+     const float trkfitStartDirY = (*m_trkfitStartDirY)[i];
+     const float trkfitStartDirZ = (*m_trkfitStartDirZ)[i];
+     const float trkfitStartDirMag = sqrt(trkfitStartDirX * trkfitStartDirX + trkfitStartDirY * trkfitStartDirY + trkfitStartDirZ * trkfitStartDirZ); 
      
      float p_mod = 1.; 
      
      recoParticle.E_method = caf::PartEMethod::kRange; 
      
-     if(assigned_pdg == 13)
+     if(m_muonPDG == assigned_pdg)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + 0.1056583755; // [GeV]
+       recoParticle.E = (*m_trkfitKEFromLengthMuon)[i] + m_mMuon; // [GeV]
        p_mod = (*m_trkfitPFromLengthMuon)[i];
        recoParticle.score = (*m_trkfitPID_Mu)[i];
      }
-     else if (assigned_pdg == 2212)
+     else if (m_protonPDG == assigned_pdg)
      {
-       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + 0.93827208943; // [GeV]
+       recoParticle.E = (*m_trkfitKEFromLengthProton)[i] + m_mProton; // [GeV]
        p_mod = (*m_trkfitPFromLengthProton)[i];
        recoParticle.score = (*m_trkfitPID_Pro)[i];
      }
      else  
      {
+       // TODO: to be filled with other particle options once available
      } 
     
      caf::SRVector3D start{trkfitStartX, trkfitStartY, trkfitStartZ};
      caf::SRVector3D end{trkfitEndX, trkfitEndY, trkfitEndZ};
-     caf::SRVector3D p{trkfitStartDirX * p_mod, trkfitStartDirY * p_mod, trkfitStartDirZ * p_mod};
+     caf::SRVector3D p{trkfitStartDirX / trkfitStartDirMag * p_mod, trkfitStartDirY / trkfitStartDirMag* p_mod, trkfitStartDirZ / trkfitStartDirMag* p_mod};
 
      recoParticle.start = start;
      recoParticle.end = end;
@@ -269,32 +286,33 @@ namespace cafmaker
  // ------------------------------------------------------------------------------
   bool PandoraLArRecoNDBranchFiller::FillShower(const int i, caf::SRRecoParticle& recoParticle) const
   {
-     float shwrfitStartX = (*m_shwrfitStartX)[i];
-     float shwrfitStartY = (*m_shwrfitStartY)[i];
-     float shwrfitStartZ = (*m_shwrfitStartZ)[i];
-     float vertexX = (m_nuVtxXVect != nullptr) ? (*m_nuVtxXVect)[i] : 0.;
-     float vertexY = (m_nuVtxYVect != nullptr) ? (*m_nuVtxYVect)[i] : 0.;
-     float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
-     float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
+     const float shwrfitStartX = (*m_shwrfitStartX)[i];
+     const float shwrfitStartY = (*m_shwrfitStartY)[i];
+     const float shwrfitStartZ = (*m_shwrfitStartZ)[i];
+     const float vertexX = (m_nuVtxXVect != nullptr) ? (*m_nuVtxXVect)[i] : 0.;
+     const float vertexY = (m_nuVtxYVect != nullptr) ? (*m_nuVtxYVect)[i] : 0.;
+     const float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
+     const float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
+     const float dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[i] : -999.;
       
      if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit: we still want to fill the recoParticle with the shower info (at least we have something)
      {
-       recoParticle.pdg = -2212; // still a track --> assign as default antiproton
+       recoParticle.pdg = m_antiprotonPDG; // still a track --> assign as default antiproton
        recoParticle.origRecoObjType = caf::RecoObjType::kTrack;
-       recoParticle.E = (*m_shwrTotalE)[i]; // TODO what rest mass to assign?
+       recoParticle.E = (*m_shwrEnergy)[i]; // TODO what rest mass to assign?
      }
      else
      {
        recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
-       if (conversionGap > m_ConversionGapCut) // TODO what is the value of the threshold?
+       if ((conversionGap > m_ConversionGapCut) && (dEdx > m_dEdxShowerCut) ) // TODO (or even delete? ok for v0). Some considerations here: the final decision on gamma vs e- should be left to the analyzer, based on the information propagated to the CAF output. We shouldn't discard any hyphotesis beforehand. Future development will also depend on how we restructure the Standard Reco track,shower,particle classes.Last but not leas, if for any reason vertex is null, m_mElectron is assigned.
        {
-         recoParticle.pdg = 22;
-         recoParticle.E = (*m_shwrTotalE)[i];
+         recoParticle.pdg = m_gammaPDG;
+         recoParticle.E = (*m_shwrEnergy)[i];
        }
        else
        {
-         recoParticle.pdg = -11;
-         recoParticle.E = (*m_shwrTotalE)[i] + 0.51099895069;
+         recoParticle.pdg = m_electronPDG;
+         recoParticle.E = (*m_shwrEnergy)[i] + m_mElectron * 1e-3; // TODO: check if default units are MeV for this branch.
        }
      }
         
@@ -319,6 +337,179 @@ namespace cafmaker
 
      return true;
   }
+
+// ------------------------------------------------------------------------------
+
+ void PandoraLArRecoNDBranchFiller::FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const
+ {
+   const long mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
+   const long mcId = (m_mcLocalIdVect != nullptr) ? (*m_mcLocalIdVect)[i] : 0;
+   const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
+
+   if (isPrimary == 1)
+   {
+     truePartID.type = caf::TrueParticleID::kPrimary;
+     truePartID.part = mcId;
+   }
+   else if (isPrimary == -1)
+   {
+     truePartID.type = caf::TrueParticleID::kUnknown;
+   }
+   else
+   {
+     truePartID.type = caf::TrueParticleID::kSecondary;
+   }
+
+   if (mcNuId != 0)
+   {
+     caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, mcNuId);
+     const auto predicate = [&srTrueInt](const caf::SRTrueInteraction &ixn)
+     { return ixn.id == srTrueInt.id; };
+     // Get the truth interaction index
+     const int srTrueIntIdx = std::distance(sr.mc.nu.begin(), std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(), predicate));
+     truePartID.ixn = srTrueIntIdx;
+
+      // If the particle is not a primary, we might want to create a new particle if it wasn't created originally
+      if (isPrimary != 1)
+      {
+        const auto pred = [&mcId](const caf::SRTrueParticle &part)
+        { return part.G4ID == mcId; };
+        truePartID.part = std::distance(srTrueInt.sec.begin(),
+                                    std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
+      }
+   }
+ }
+
+// ------------------------------------------------------------------------------
+ void PandoraLArRecoNDBranchFiller::FillRecoParticlesDefault(caf::StandardRecord &sr, const int nClusters,
+                                               const std::vector<int> &uniqueSliceIDs,
+                                                std::vector<caf::SRInteraction> &nuInteractions,
+                                                const TruthMatcher *truthMatch) const
+ {
+   LOG.DEBUG() << " Using default Pandora Reco ND branch filler \n";
+   LOG.VERBOSE() << " Pandora LArRecoND FillTracks using " << nClusters << " PFO clusters\n";
+
+    const caf::TrueParticleID nullTrueID;
+    // Direction of the longest track
+    float maxTrackLength{0.0};
+    caf::SRVector3D longestTrackDir; 
+
+    for (int i = 0; i < nClusters; i++)
+    {
+      // Check that the PFO is a track and not a shower
+      const int isShower = (m_isShowerVect != nullptr) ? (*m_isShowerVect)[i] : 0;
+
+      // Starting position (vertex or first hit location)
+      const float startX = (m_startXVect != nullptr) ? (*m_startXVect)[i] : 0.0;
+      const float startY = (m_startYVect != nullptr) ? (*m_startYVect)[i] : 0.0;
+      const float startZ = (m_startZVect != nullptr) ? (*m_startZVect)[i] : 0.0;
+      const caf::SRVector3D start{startX, startY, startZ};
+
+      // End position
+      const float endX = (m_endXVect != nullptr) ? (*m_endXVect)[i] : 0.0;
+      const float endY = (m_endYVect != nullptr) ? (*m_endYVect)[i] : 0.0;
+      const float endZ = (m_endZVect != nullptr) ? (*m_endZVect)[i] : 0.0;
+      const caf::SRVector3D end{endX, endY, endZ};
+
+      // Principal axis direction
+      const float dirX = (m_dirXVect != nullptr) ? (*m_dirXVect)[i] : 0.0;
+      const float dirY = (m_dirYVect != nullptr) ? (*m_dirYVect)[i] : 0.0;
+      const float dirZ = (m_dirZVect != nullptr) ? (*m_dirZVect)[i] : 0.0;
+      const caf::SRVector3D dir{dirX, dirY, dirZ};
+
+      // Energy (GeV)
+      const float energy = (m_energyVect != nullptr) ? (*m_energyVect)[i] : 0.0;
+
+      // Total number of 3D hits in the cluster
+      const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
+
+      // Slice id of the PFO cluster
+      const int sliceId = (m_sliceIdVect != nullptr) ? (*m_sliceIdVect)[i] : 0;
+
+      const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
+
+      const float completeness = (m_completenessVect != nullptr) ? (*m_completenessVect)[i] : 0.0;
+      std::vector<float> truthOverlap;
+      truthOverlap.emplace_back(completeness);
+
+      // Neutrino index number 0 to N-1 for N neutrinos
+      const int nuIndex = std::distance(uniqueSliceIDs.begin(), std::find(uniqueSliceIDs.begin(),
+                                                                          uniqueSliceIDs.end(), sliceId));
+      std::vector<caf::TrueParticleID> truePartIDVect;
+      caf::TrueParticleID truePartID;
+      FillTruthInfo(i, truthMatch, sr, truePartID);
+      truePartIDVect.emplace_back(truePartID);
+
+      if (isShower) // fill SR shower
+      {
+        caf::SRShower shower;
+
+        shower.start = start;
+        shower.direction = dir;
+        shower.Evis = energy;
+        shower.truth = truePartIDVect;
+        shower.truthOverlap = truthOverlap;
+        
+        sr.nd.lar.pandora[nuIndex].showers.emplace_back(std::move(shower));
+        sr.nd.lar.pandora[nuIndex].nshowers++;
+      }
+      else // fill SR track
+      {
+        caf::SRTrack track;
+
+        track.start = start;
+        track.end = end;
+        track.dir = dir;
+        track.enddir = dir;
+        track.Evis = energy;
+        track.E = energy;
+        track.qual = n3DHits * 1.0;
+        track.truth = truePartIDVect;
+        track.truthOverlap = truthOverlap;
+
+        // Cluster length from start and end points
+        const float dX = endX - startX;
+        const float dY = endY - startY;
+        const float dZ = endZ - startZ;
+        track.len_cm = sqrt(dX * dX + dY * dY + dZ * dZ);
+        track.len_gcm2 = track.len_cm * m_LArDensity;
+
+        sr.nd.lar.pandora[nuIndex].tracks.emplace_back(std::move(track));
+        sr.nd.lar.pandora[nuIndex].ntracks++;
+      }
+      
+      // now fill the SR reco particle
+      caf::SRRecoParticle recoParticle;
+
+      recoParticle.E = energy;
+      recoParticle.E_method = caf::PartEMethod::kCalorimetry;
+      recoParticle.p = energy * dir;
+      recoParticle.start = start;
+      recoParticle.end = end;
+      recoParticle.truth = truePartIDVect;
+      recoParticle.truthOverlap = truthOverlap;
+      recoParticle.primary = (isRecoPrimary == 1) ? true : false;
+      recoParticle.pdg = (m_recoPDGVect != nullptr) ? (*m_recoPDGVect)[i] : 0;
+      
+      // Add particle to the interaction
+      caf::SRInteraction &interaction = nuInteractions[nuIndex];
+      interaction.part.pandora.emplace_back(std::move(recoParticle));
+      interaction.part.npandora++;
+
+      // Add track truth info
+      const caf::TrueParticleID nullTrueID;
+      const caf::TrueParticleID trackTrueID = (truePartIDVect.size() > 0) ? truePartIDVect[0] : nullTrueID;
+      const float trackOverlap = (truthOverlap.size() > 0) ? truthOverlap[0] : 0.0;
+      const int trackIxn = trackTrueID.ixn;
+
+      interaction.truth.emplace_back(trackIxn);
+      interaction.truthOverlap.emplace_back(trackOverlap);
+
+      // Update total interaction neutrino energy
+      interaction.Enu.calo += energy;
+
+    }
+ }
  // ------------------------------------------------------------------------------
  void PandoraLArRecoNDBranchFiller::FillRecoParticles(caf::StandardRecord &sr, const int nClusters,
                                                const std::vector<int> &uniqueSliceIDs,
@@ -432,7 +623,7 @@ namespace cafmaker
 
       if(m_trackScoreVect != nullptr)
       {
-        recoParticle.contained = (m_trkfitIsContained != nullptr) ? (*m_trkfitIsContained)[i] : false;
+        recoParticle.contained = (m_trkfitContained != nullptr) ? (*m_trkfitContained)[i] : false;
         
         bool isTrackFitFailed = ((*m_trkfitLength)[i] < std::numeric_limits<float>::epsilon());
         
@@ -443,7 +634,7 @@ namespace cafmaker
           // Create standard record track
           caf::SRTrack track;
           track.E = recoParticle.E;
-          track.Evis = recoParticle.E;
+          track.Evis = (m_trkfitVisE != nullptr) ? (*m_trkfitVisE)[i] : -999.;
 
           // Total number of 3D hits in the cluster
           const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
@@ -479,7 +670,7 @@ namespace cafmaker
 
           // create standard record shower and fill it 
           caf::SRShower shower;
-          shower.Evis = (*m_shwrTotalE)[i]; 
+          shower.Evis = (*m_shwrEnergy)[i]; 
           shower.start = recoParticle.start;
           shower.direction = recoParticle.p.Unit(); // p build from shwrfitDir
           shower.truth = truePartIDVect;
