@@ -48,7 +48,8 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("nTracks",               &_nTracks);
       TMSRecoTree->SetBranchAddress("RunNo",                 &_RunNo);
       TMSRecoTree->SetBranchAddress("nHits",                 _nHitsInTrack);
-      TMSRecoTree->SetBranchAddress("Length",                _TrackLength);
+      TMSRecoTree->SetBranchAddress("Length_3D",             _TrackLength);
+      TMSRecoTree->SetBranchAddress("Length",                _TrackArealDensity);
       TMSRecoTree->SetBranchAddress("Momentum",              _TrackMomentum);
       //TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge); // TODO: Uncomment when Occupancy filled by TMS
       TMSRecoTree->SetBranchAddress("EnergyRange",           _TrackTotalEnergy);
@@ -235,10 +236,12 @@ namespace cafmaker
     {
       if (_nTracks > 0)
       {
+        sr.nd.tms.nixn++;
         for (int j = 0; j < _nTracks; ++j) {
 
           sr.nd.tms.ixn.emplace_back();
-          interaction = &(sr.nd.tms.ixn.back());
+          sr.nd.tms.nixn++;
+          interaction = &(sr.nd.tms.ixn.back()); // :(
           interaction->tracks.resize(1);//_nTracks);
           interaction->ntracks = 1;
 
@@ -252,7 +255,8 @@ namespace cafmaker
           interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
           // Track info
-          interaction->tracks[0].len_gcm2  = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
+          interaction->tracks[0].len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
+          interaction->tracks[0].len_gcm2  = (_TrackArealDensity[j]>0.0) ? _TrackArealDensity[j]/10. : 0.0; // idk why we have negatives
           interaction->tracks[0].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
           interaction->tracks[0].Evis      = _TrackEnergyDeposit[j];
 
