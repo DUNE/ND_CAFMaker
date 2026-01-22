@@ -36,8 +36,6 @@ namespace cafmaker
 
     private:
       void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
-      void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt, long int trkid) const;
-      void FillTrueParticle(caf::SRTrueParticle & srTruePart, long int trkid) const;
 
       void _FillRecoBranches(const Trigger &trigger,
                              caf::StandardRecord &sr,
@@ -75,7 +73,7 @@ namespace cafmaker
       float _DirectionX_Upstream[10];
       float _DirectionZ_Upstream[10];
 
-      // [100][200][4] needs to match TMS reco output (check file if in doubt)
+      // [100][200][4] needs to match TMS reco output (check TMS Reco file if in doubt)
       float _TrackHitPos[100][200][4];
       float _TrackRecoHitPos[100][200][4];
 
