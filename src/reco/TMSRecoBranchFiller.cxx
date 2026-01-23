@@ -116,7 +116,7 @@ namespace cafmaker
 
     int i = trigger.evtID; // pseudo-itterator for ixn
 
-    int LastSpillNo = -999999;
+    int LastSpillNo = -999999; // Starting value, very negative number so next spill number is larger
     TMSRecoTree->GetEntry(i); // Load first entry for now
     LastSpillNo = _SpillNo;
 
@@ -128,7 +128,7 @@ namespace cafmaker
     // Fill Truth parts first?
     for (int i_tru=0; i_tru< TMSTrueSpill->GetEntries(); i_tru++)
     {
-      TMSTrueSpill->GetEntry(i_tru); // Keep Truth spill tree in sync with Reco
+      TMSTrueSpill->GetEntry(i_tru);
 
       for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
       {
@@ -137,6 +137,7 @@ namespace cafmaker
       }
     }
 
+    // the i index is incremented at the end of the following while()
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
 
@@ -168,9 +169,9 @@ namespace cafmaker
           interaction->tracks[0].Evis      = _TrackEnergyDeposit[j];
           //interaction->tracks[0].charge    = _TrackCharge[j]; // TODO: UNCOMMENT BEFORE MERGE, REQUIRES NEW DUNEANAOBJ BUILD
 
-          // Fill Truth
-          // The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
-          // Long cos it's very long innit. Sorry.
+          /*  Fill Truth
+           *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
+           * Long cos it's very long innit. Sorry. */
           srTrueInt = (truthMatcher->GetTrueInteraction(sr, (unsigned long) ((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
           truePartID->type = caf::TrueParticleID::kPrimary;
           //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
@@ -232,17 +233,17 @@ namespace cafmaker
         trig.evtID = entry;
         trig.triggerType = 1; // TODO real number?
 
-        if (entry == 0) // TODO do this less bad
+        if (entry == 0)
           trig.triggerTime_ns = 0;
         else
           trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;
 
-        if (entry == 0) // TODO do this less bad
+        if (entry == 0)
           trig.triggerTime_s = 0;
         else
         {
           trig.triggerTime_s = prev_trig.triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
-          if (trig.triggerTime_ns >= 1E9)
+          if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
           {
             trig.triggerTime_s += 1;
             trig.triggerTime_ns -= 1E9;
