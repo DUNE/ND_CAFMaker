@@ -54,9 +54,10 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
       TMSRecoTree->SetBranchAddress("EnergyRange",           _TrackTotalEnergy);
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
+      TMSRecoTree->SetBranchAddress("Time",                  _TrackTime);
       //TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy); // TODO: Uncomment when Occupancy filled by TMS
 
-      TMSRecoTree->SetBranchAddress("TrackHitPos",            _TrackRecoHitPos);
+      TMSRecoTree->SetBranchAddress("TrackHitPos",           _TrackRecoHitPos);
       TMSRecoTree->SetBranchAddress("StartPos",              _TrackStartPos);
       TMSRecoTree->SetBranchAddress("KalmanPos",             _TrackHitPos);
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
@@ -167,7 +168,10 @@ namespace cafmaker
           interaction->tracks[0].len_gcm2  = (_TrackArealDensity[j]>0.0) ? _TrackArealDensity[j]/10. : 0.0; // idk why we have negatives
           interaction->tracks[0].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
           interaction->tracks[0].Evis      = _TrackEnergyDeposit[j];
-          //interaction->tracks[0].charge    = _TrackCharge[j]; // TODO: UNCOMMENT BEFORE MERGE, REQUIRES NEW DUNEANAOBJ BUILD
+
+          // As of Jan 2026 the Charge attribute in TMS output is the PDG value, -13 for mu+, 13 for mu-.
+          // For CAF files we probably just want a +1 or -1 for the particle charge, so divide by 13 and multiply in a -
+          //interaction->tracks[0].charge    = -1 * _TrackCharge[j]/13; // TODO: UNCOMMENT BEFORE MERGE, REQUIRES NEW DUNEANAOBJ BUILD
 
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
