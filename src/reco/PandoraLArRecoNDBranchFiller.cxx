@@ -533,7 +533,7 @@ namespace cafmaker
         // unix_ts trigger time (seconds)
         trig.triggerTime_s = m_unixTime;
         // unix_time_usec ticks (microseconds) converted to nanoseconds
-        trig.triggerTime_ns = m_unixTimeUsec * 1000;
+        trig.triggerTime_ns = m_startTime * 100;
 
         LOG.VERBOSE() << "  added trigger: evtID = " << trig.evtID
                       << ", triggerType = " << trig.triggerType

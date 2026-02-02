@@ -9,6 +9,7 @@
 #include "util/Logger.h"
 #include "util/IFBeamUtils.h"
 #include <curl/curl.h>
+#include <iostream>
 #include <regex>
 #include <sstream>
 #include <limits>
@@ -20,12 +21,12 @@ namespace cafmaker
 {
 
   
-  IFBeam::IFBeam(const std::vector<TriggerGroup>& groupedTriggers, bool is_data) {
+  IFBeam::IFBeam(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers, bool is_data) {
       if (is_data)
-  	loadBeamSpills(groupedTriggers); // Load all beam spills upon instantiation if data
+  	loadBeamSpills(par, groupedTriggers); // Load all beam spills upon instantiation if data
   }
   
-  std::string IFBeam::createUrl(const std::string& min_time_iso, const std::string& max_time_iso) {
+  std::string IFBeam::createUrl(const std::string potDevice, const std::string& min_time_iso, const std::string& max_time_iso) {
       std::ostringstream url_stream;
       url_stream << "https://dbdata3vm.fnal.gov:9443/ifbeam/data/data?v=" << potDevice
                  << "&e=" << "e,a9"
@@ -43,15 +44,62 @@ namespace cafmaker
           int exponent = std::stoi(match.str(1));
           return std::pow(10, exponent);
       } else {
-          cafmaker::LOG_S("Fetch beam information").WARNING() << "Unknown unit in beam database: " << unit << "\n";
           return 1.0;
       }
   }
-  
-  void IFBeam::loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers) { //todo: this should return other information as well like horn current, position, etc., querying all devices and storing in a map
-      beamSpills.clear();
-      double dt = 5.0; //time window to query before and after first and last spill, respectively
+
+  IFBeam::BeamInfo IFBeam::retrieveInfoFromDataBase(const std::string url) {
+
+      cafmaker::LOG_S("Fetchig beam info from url : ").VERBOSE() << url << "\n";
+
       double ms_to_s = 1e-3;
+
+      BeamInfo data;
+ 
+      CURL* curl;
+      CURLcode res;
+      std::string readBuffer; 
+      curl = curl_easy_init();
+      
+      if (curl) {
+          curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, util::WriteCallback);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+          res = curl_easy_perform(curl);
+          if (res != CURLE_OK) {
+              cafmaker::LOG_S("Fetch beam information").ERROR() << "curl_easy_perform() failed: " << curl_easy_strerror(res) << "\n";
+              std::abort();
+          }
+          curl_easy_cleanup(curl);
+          try {
+              auto json_data = json::parse(readBuffer);
+              for (const auto& spill : json_data["rows"]) {
+                  double time = spill["clock"].get<double>() * ms_to_s;
+                  std::string unit = spill["units"];
+                  auto& c_array = spill["c"];
+
+                  std::vector<double> values;
+                  for (const auto& c_entry : c_array) 
+                  {
+                    if (c_entry["v"].is_number())
+                    {
+                      double this_v = c_entry["v"].get<double>() * unitToFactor(unit);
+                      values.push_back(this_v);
+                    }
+                  }
+                  data[time] = values;
+              }
+          } catch (const json::exception& e) {
+              cafmaker::LOG_S("Fetch beam information").ERROR() << "Failed to parse JSON data: " << e.what() << "\n";
+  	    std::abort();
+          }
+      }
+      return data;
+  }
+
+  void IFBeam::loadBeamSpills(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers) { 
+
+      double dt = 5.0; //time window to query before and after first and last spill, respectively
       double min_time = std::numeric_limits<double>::max();
       double max_time = std::numeric_limits<double>::lowest();
       for (const auto& group : groupedTriggers) {
@@ -70,62 +118,85 @@ namespace cafmaker
       }
       std::string min_time_iso = util::toISO8601(min_time);
       std::string max_time_iso = util::toISO8601(max_time);
-      std::string url = createUrl(min_time_iso, max_time_iso);
-  
-      
-      CURL* curl;
-      CURLcode res;
-      std::string readBuffer;
-    
-      std::cout << "Fetching beam information from: " << url << "\n";
-      curl = curl_easy_init();
-      if (curl) {
-          curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, util::WriteCallback);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-          res = curl_easy_perform(curl);
-          if (res != CURLE_OK) {
-              cafmaker::LOG_S("Fetch beam information").ERROR() << "curl_easy_perform() failed: " << curl_easy_strerror(res) << "\n";
-              std::abort();
-          }
-          curl_easy_cleanup(curl);
-          try {
-              auto json_data = json::parse(readBuffer);
-              for (const auto& spill : json_data["rows"]) {
-                  double time = spill["clock"].get<double>() * ms_to_s;
-                  std::string unit = spill["units"];
-                  double pot = spill["value"].get<double>() * unitToFactor(unit);
-                  beamSpills[time] = pot;
-              }
-          } catch (const json::exception& e) {
-              cafmaker::LOG_S("Fetch beam information").ERROR() << "Failed to parse JSON data: " << e.what() << "\n";
-  	    std::abort();
-          }
+
+      for (auto& device : deviceMap)
+      {
+        device.second.clear();
+        std::string url_device = createUrl(device.first, min_time_iso, max_time_iso);
+        device.second = retrieveInfoFromDataBase(url_device);
       }
+
+      // see: https://cdcvs.fnal.gov/redmine/projects/novaart/repository/entry/trunk/IFDBSpillInfo/IFDBSpillInfo_module.cc#L685
+      // the horn current is calculated as I_horn = (E:NSLINA-(+0.01))/0.9951 + (E:NSLINB-(-0.14))/0.9957 + (E:NSLINC-(-0.05))/0.9965 + (E:NSLIND-(-0.07))/0.9945
+      
+      double currentA=0.0, currentB=0.0, currentC=0.0, currentD=0.0;
+
+      for(const auto& pairA : deviceMap["E:NSLINA"]) {
+        auto timeA = pairA.first;
+        auto currentA = pairA.second.at(0); 
+        
+        if(currentA == 0.) continue;
+
+        for(const auto& pairB : deviceMap["E:NSLINB"]) {
+          auto timeB = pairB.first;
+          if (abs(timeA - timeB) <= par().cafmaker().beamMatchDT()) {
+            currentB = pairB.second.at(0);
+            break;
+          }
+        }
+
+        if(currentB == 0.) continue;
+
+        for(const auto& pairC : deviceMap["E:NSLINC"]) {
+          auto timeC = pairC.first;
+          if (abs(timeA - timeC) <= par().cafmaker().beamMatchDT()) 
+          {
+            currentC = pairC.second.at(0);
+            break;
+          }
+        }
+
+        if(currentC == 0.) continue;
+
+        for(const auto& pairD : deviceMap["E:NSLIND"]) {
+          auto timeD = pairD.first;
+          if (abs(timeA - timeD) <= par().cafmaker().beamMatchDT()){
+            currentD = pairD.second.at(0);
+            break;
+          }
+        }
+
+        if(currentD == 0.) continue;
+        
+        deviceMap["E:NSLIN"][timeA] = {(currentA-0.01)/0.9951 + (currentB+0.14)/0.9957 + (currentC+0.05)/0.9965 + (currentD+0.07)/0.9945};
+      }
+
   }
-  
-  double IFBeam::getPOT(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii) {
-      double pot = 0.0;
-      if (!(groupedTrigger.front().first->IsBeamTrigger(groupedTrigger.front().second.triggerType))) return 0.0;
-      auto it = std::find_if(beamSpills.begin(), beamSpills.end(),
+
+  std::vector<double> IFBeam::getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const BeamInfo& data) {
+
+      std::vector<double> values;
+      if (!(groupedTrigger.front().first->IsBeamTrigger(groupedTrigger.front().second.triggerType))) return {0.0};
+      
+      auto it = std::find_if(data.begin(), data.end(),
           [par, &groupedTrigger](const auto& spill) {
               return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
                   [par, &spill](const auto& groupedTrigger) {
                       return std::abs(util::getTriggerTime(groupedTrigger.second) - spill.first) < par().cafmaker().beamMatchDT();
                   });
           });
-  
-      if (it != beamSpills.end()) {
-          pot = it->second;
+
+      if (it != data.end()) {
+          values = it->second;
       } 
       else {
           bool any_matched = false;
           std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> matched_triggers;
           std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>> unmatched_triggers;
           for (auto trig : groupedTrigger) {
-              //Only fetch pot for beam trigger. 
-              if (!trig.first->IsBeamTrigger(trig.second.triggerType)) return 0;
-              bool matched = std::any_of(beamSpills.cbegin(), beamSpills.cend(),
+              //Only fetch values for beam trigger. 
+              if (!trig.first->IsBeamTrigger(trig.second.triggerType)) return {0.0};
+              bool matched = std::any_of(data.cbegin(), data.cend(),
                   [par, &trig](const auto& spill) {
                       return std::abs(util::getTriggerTime(trig.second) - spill.first) < par().cafmaker().beamMatchDT();
                   });
@@ -160,6 +231,16 @@ namespace cafmaker
           }
       }
   
-     return pot;
+     return values;
+  }
+
+  std::vector<double> IFBeam::getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const std::string& deviceName) {
+
+    if(deviceMap.count(deviceName)>0)
+      return getData(par, groupedTrigger, ii, deviceMap[deviceName]);
+
+    cafmaker::LOG_S("Trying retrieving info from unkwnown device ").WARNING() << deviceName << ", returning empty vector\n";
+
+    return {};
   }
 }
