@@ -46,6 +46,7 @@ namespace cafmaker
       TTree *TMSRecoTree;
       TTree *TMSTrueTree;
       TTree *TMSTrueSpill;
+      TTree *TMSLCTree;
 
       // Save the branches that we're reading in
       int   _RunNo;                      ///< Run Number
@@ -67,6 +68,8 @@ namespace cafmaker
       float _TrackStartDirection[10][3]; ///< Reco. track direction vector at start (x,y,z)
       float _TrackEndDirection[10][3];   ///< Reco. track direction vector at start (x,y,z)
       float _Occupancy[10];              ///< Fraction of true energy deposits included in the reco. track
+
+      double _TMSStartTime[10];
 
       float _DirectionX_Downstream[10];
       float _DirectionZ_Downstream[10];

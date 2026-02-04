@@ -1,4 +1,4 @@
-export CXX = g++
+export CXX = g++ 
 export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2
 export ROOTFLAGS = $(shell root-config --cflags)
 export INCLUDE = -I$(HDF5_INC)
@@ -10,6 +10,7 @@ INCLUDE += -I$(EDEPSIM_INC)/EDepSim
 INCLUDE += -I$(BOOST_INC)
 INCLUDE += -I$(CETLIB_INC)
 INCLUDE += -I$(CETLIB_EXCEPT_INC)
+INCLUDE += -I$(NLOHMANN_JSON_INC)
 INCLUDE += -I$(FHICLCPP_INC)
 INCLUDE += -I$(NLOHMANN_JSON_INC)
 INCLUDE += -I$(DUNEANAOBJ_INC)

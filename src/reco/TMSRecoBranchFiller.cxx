@@ -22,8 +22,15 @@ namespace cafmaker
 
       // Save pointer to input tree
       TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Reco_Tree"));
+      TMSLCTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
       if (!TMSRecoTree) {
         std::cerr << "Did not find TMS reco tree Reco_Tree in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
+        throw;
+      }
+
+      if (!TMSLCTree) {
+        std::cerr << "Did not find TMS reco tree Line_Candidates in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -76,8 +83,12 @@ namespace cafmaker
       TMSTrueSpill->SetBranchAddress("TrueVtxN",                       &_TrueVtxN);
       TMSTrueSpill->SetBranchAddress("RunNo",                          &_TrueRunNo);
 
+      TMSLCTree->SetBranchAddress("TMSStartTime",            &_TMSStartTime); // Temporary for prod n4p1, time avialable in Reco_Tree for future prods
+
     } else {
       fTMSRecoFile = NULL;
+      TMSRecoTree  = NULL;
+      TMSLCTree = NULL;
       std::cerr << "The TMS reco file you provided: " << tmsRecoFilename 
                 << " appears to be a Zombie 🧟" << std::endl;
       throw;
@@ -86,10 +97,12 @@ namespace cafmaker
 
 
   TMSRecoBranchFiller::~TMSRecoBranchFiller() {
-    delete TMSRecoTree;
+    delete TMSRecoTree;    
+    delete TMSLCTree;
     fTMSRecoFile->Close();
     delete fTMSRecoFile;
     TMSRecoTree = NULL;
+    TMSLCTree = NULL;
     fTMSRecoFile = NULL;
   }
 
@@ -119,6 +132,7 @@ namespace cafmaker
 
     int LastSpillNo = -999999; // Starting value, very negative number so next spill number is larger
     TMSRecoTree->GetEntry(i); // Load first entry for now
+    TMSLCTree->GetEntry(i);
     LastSpillNo = _SpillNo;
 
     caf::SRTMSInt *interaction;
@@ -142,11 +156,10 @@ namespace cafmaker
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
 
-    // TODO: Add true info at the face of TMS?
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
-      if (_nTracks > 0) // and we have reco tracks
-      {
+      if (_nTracks > 0)
+      {        
         for (int j = 0; j < _nTracks; ++j) {
           sr.nd.tms.nixn++;
           sr.nd.tms.ixn.emplace_back();
@@ -162,6 +175,8 @@ namespace cafmaker
           interaction->tracks[0].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
           interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
+
+          interaction.tracks[total+j].time    = _TMSStartTime[j]; //Adds time of interaction
 
           // Track info
           interaction->tracks[0].len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
@@ -188,6 +203,8 @@ namespace cafmaker
 
       TMSRecoTree->GetEntry(++i); // Load each subsequent entry before loop test condition
       TMSTrueTree->GetEntry(  i); // Load each subsequent entry before loop test condition, i already incremented
+      TMSLCTree  ->GetEntry(  i);
+
     }
   }
 
