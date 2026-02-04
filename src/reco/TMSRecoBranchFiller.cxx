@@ -61,7 +61,7 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("Charge",                _TrackCharge);
       TMSRecoTree->SetBranchAddress("EnergyRange",           _TrackTotalEnergy);
       TMSRecoTree->SetBranchAddress("EnergyDeposit",         _TrackEnergyDeposit);
-      TMSRecoTree->SetBranchAddress("Time",                  _TrackTime);
+      //TMSRecoTree->SetBranchAddress("Time",                  _TrackTime); // TODO: Uncomment for prod >= n4p2
       //TMSRecoTree->SetBranchAddress("Occupancy",             _Occupancy); // TODO: Uncomment when Occupancy filled by TMS
 
       TMSRecoTree->SetBranchAddress("TrackHitPos",           _TrackRecoHitPos);
@@ -130,14 +130,14 @@ namespace cafmaker
 
     int i = trigger.evtID; // pseudo-itterator for ixn
 
-    int LastSpillNo = -999999; // Starting value, very negative number so next spill number is larger
+    int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
     TMSRecoTree->GetEntry(i); // Load first entry for now
     TMSLCTree->GetEntry(i);
     LastSpillNo = _SpillNo;
 
     caf::SRTMSInt *interaction;
-    caf::TrueParticleID *truePartID;
-    caf::SRTrueParticle *srTruePart;
+    caf::TrueParticleID truePartID;
+    caf::SRTrueParticle srTruePart;
     caf::SRTrueInteraction  srTrueInt;
 
     // Fill Truth parts first?
@@ -147,7 +147,7 @@ namespace cafmaker
 
       for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
       {
-        unsigned long int neutrino_event_id = (unsigned long) ((_TrueRunNo)*1E6 + _TrueVtxId[i_tvtx]);
+        auto neutrino_event_id = static_cast<unsigned long> ((_TrueRunNo)*1E6 + _TrueVtxId[i_tvtx]);
         srTrueInt = truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true);
       }
     }
@@ -168,15 +168,17 @@ namespace cafmaker
           interaction->tracks.resize(1); // For now 1 track = 1 interaction; implicit assumption it's all (anti-)muons
           interaction->ntracks = 1;
 
-          truePartID = new caf::TrueParticleID();
-          srTruePart = new caf::SRTrueParticle();
+          //truePartID = new caf::TrueParticleID();
+          //srTruePart = new caf::SRTrueParticle();
+          //caf::TrueParticleID truePartID;
+          //caf::SRTrueParticle srTruePart;
 
           interaction->tracks[0].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);
           interaction->tracks[0].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
           interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          interaction.tracks[total+j].time    = _TMSStartTime[j]; //Adds time of interaction
+          interaction->tracks[0].time    = _TMSStartTime[j]; //Adds time of interaction // TODO: use _TrackTime after prod n4p1
 
           // Track info
           interaction->tracks[0].len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
@@ -191,13 +193,14 @@ namespace cafmaker
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
-          srTrueInt = (truthMatcher->GetTrueInteraction(sr, (unsigned long) ((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
-          truePartID->type = caf::TrueParticleID::kPrimary;
+          srTrueInt = (truthMatcher->GetTrueInteraction(sr, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
+          truePartID.type = caf::TrueParticleID::kPrimary;
           //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
-          truePartID->ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
-          srTruePart->interaction_id = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
+          truePartID.ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
+          //srTruePart = truthMatcher->GetTrueParticle(sr, srTrueInt, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j]), false, false);
+          srTruePart.interaction_id = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
 
-          interaction->tracks[0].truth.push_back(std::move(*truePartID)); // TODO Unfuck
+          interaction->tracks[0].truth.push_back(std::move(truePartID)); // TODO Unfuck
         }
       }
 
@@ -214,7 +217,7 @@ namespace cafmaker
     for (int i_int = 0; i_int<_TrueVtxN; i_int++)
     {
       //Long_t neutrino_event_id = _TrueVtxId[i_int];//mc_int_edepsimId[i_int];
-      unsigned long int neutrino_event_id = (unsigned long) (_RunNo*1E6 + _TrueVtxId[i_int]);
+      auto neutrino_event_id = static_cast<unsigned long> (_RunNo*1E6 + _TrueVtxId[i_int]);
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
       LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
       for (const caf::SRTrueParticle & part : srTrueInt.prim)

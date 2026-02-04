@@ -70,6 +70,7 @@ namespace cafmaker
       float _Occupancy[10];              ///< Fraction of true energy deposits included in the reco. track
 
       double _TMSStartTime[10];
+      double _TrackTime[10];
 
       float _DirectionX_Downstream[10];
       float _DirectionZ_Downstream[10];
