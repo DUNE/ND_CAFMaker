@@ -168,11 +168,6 @@ namespace cafmaker
           interaction->tracks.resize(1); // For now 1 track = 1 interaction; implicit assumption it's all (anti-)muons
           interaction->ntracks = 1;
 
-          //truePartID = new caf::TrueParticleID();
-          //srTruePart = new caf::SRTrueParticle();
-          //caf::TrueParticleID truePartID;
-          //caf::SRTrueParticle srTruePart;
-
           interaction->tracks[0].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);
           interaction->tracks[0].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
           interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
@@ -197,7 +192,7 @@ namespace cafmaker
           truePartID.type = caf::TrueParticleID::kPrimary;
           //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
           truePartID.ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
-          //srTruePart = truthMatcher->GetTrueParticle(sr, srTrueInt, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j]), false, false);
+          //srTruePart = truthMatcher->GetTrueParticle(sr, srTrueInt, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j]), false, false); // TODO: Why does this segfault?
           srTruePart.interaction_id = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
 
           interaction->tracks[0].truth.push_back(std::move(truePartID)); // TODO Unfuck
