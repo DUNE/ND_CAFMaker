@@ -235,6 +235,7 @@ namespace cafmaker
      // as version 0, the track is chosen between muon and proton
      // TODO consider also pion and kaons
      
+     const float chi2_value = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? (*m_trkfitPID_Mu)[i] : (*m_trkfitPID_Pro)[i];
      const int assigned_pdg = ((*m_trkfitPID_Mu)[i] < (*m_trkfitPID_Pro)[i]) ? m_muonPDG : m_protonPDG;
      recoParticle.pdg = assigned_pdg;
 
@@ -279,12 +280,13 @@ namespace cafmaker
      recoParticle.p = p;
      recoParticle.walldist = (*m_trkfitWallDist)[i];
      recoParticle.origRecoObjType = caf::RecoObjType::kTrack; 
+     recoParticle.score = chi2_value;
 
      return true;
 
  }
  // ------------------------------------------------------------------------------
-  bool PandoraLArRecoNDBranchFiller::FillShower(const int i, caf::SRRecoParticle& recoParticle) const
+  bool PandoraLArRecoNDBranchFiller::FillShower(const int i, caf::SRShower& shower) const
   {
      const float shwrfitStartX = (*m_shwrfitStartX)[i];
      const float shwrfitStartY = (*m_shwrfitStartY)[i];
@@ -294,28 +296,7 @@ namespace cafmaker
      const float vertexZ = (m_nuVtxZVect != nullptr) ? (*m_nuVtxZVect)[i] : 0.;
      const float conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((shwrfitStartX - vertexX),2) + std::pow((shwrfitStartY - vertexY),2) + std::pow((shwrfitStartZ - vertexZ),2)) : -999;
      const float dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[i] : -999.;
-      
-     if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit: we still want to fill the recoParticle with the shower info (at least we have something)
-     {
-       recoParticle.pdg = m_antiprotonPDG; // still a track --> assign as default antiproton
-       recoParticle.origRecoObjType = caf::RecoObjType::kTrack;
-       recoParticle.E = (*m_shwrEnergy)[i]; // TODO what rest mass to assign?
-     }
-     else
-     {
-       recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
-       if ((conversionGap > m_ConversionGapCut) && (dEdx > m_dEdxShowerCut) ) // TODO (or even delete? ok for v0). Some considerations here: the final decision on gamma vs e- should be left to the analyzer, based on the information propagated to the CAF output. We shouldn't discard any hyphotesis beforehand. Future development will also depend on how we restructure the Standard Reco track,shower,particle classes.Last but not leas, if for any reason vertex is null, m_mElectron is assigned.
-       {
-         recoParticle.pdg = m_gammaPDG;
-         recoParticle.E = (*m_shwrEnergy)[i];
-       }
-       else
-       {
-         recoParticle.pdg = m_electronPDG;
-         recoParticle.E = (*m_shwrEnergy)[i] + m_mElectron * 1e-3; // TODO: check if default units are MeV for this branch.
-       }
-     }
-        
+
      float shwrfitDirX = (*m_shwrfitDirX)[i];
      float shwrfitDirY = (*m_shwrfitDirY)[i];
      float shwrfitDirZ = (*m_shwrfitDirZ)[i];
@@ -328,16 +309,19 @@ namespace cafmaker
      caf::SRVector3D end{shwrfitEndX, shwrfitEndY, shwrfitEndZ};
      caf::SRVector3D dir{shwrfitDirX, shwrfitDirY, shwrfitDirZ};
      
-     recoParticle.E_method = caf::PartEMethod::kRange;
-     recoParticle.start = start;    
-     recoParticle.end = end;    
-     recoParticle.p = dir * recoParticle.E; 
-     recoParticle.contained = false; // TODO read from dedicated branch
-     recoParticle.walldist = -999.; // TODO read from dedicated branch
-
+     shower.start = start;    
+     shower.direction = dir;
+     shower.time = -999.; // TODO to be filled at some point
+     shower.Evis = (*m_shwrEnergy)[i];
+     shower.end = end;
+     shower.qual = (*m_trackScoreVect)[i]; // saving the trackScore value as additional reco info. This provides a sort of degree of “shower-likeness” for this SRShower
+     shower.len_cm = shwrLength;
+     shower.len_gcm2 = -999.; // TODO fill this appropriately 
+     shower.dEdx = dEdx;
+     shower.conversionGap = conversionGap;
+     
      return true;
   }
-
 // ------------------------------------------------------------------------------
 
  void PandoraLArRecoNDBranchFiller::FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const
@@ -627,7 +611,7 @@ namespace cafmaker
 
           // Total number of 3D hits in the cluster
           const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
-          track.qual = n3DHits * 1.0;
+          track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of “track-likeness” for this SRTrack
           track.start = recoParticle.start;
           track.end = recoParticle.end;
           track.len_cm = (*m_trkfitLength)[i];
@@ -653,15 +637,40 @@ namespace cafmaker
         }
         else // reco particle is shower or track with failed trackfit
         {
-          FillShower(i, recoParticle);
-
           // create standard record shower and fill it 
           caf::SRShower shower;
-          shower.Evis = (*m_shwrEnergy)[i]; 
-          shower.start = recoParticle.start;
-          shower.direction = recoParticle.p.Unit(); // p build from shwrfitDir
+          FillShower(i, shower);
           shower.truth = truePartIDVect;
           shower.truthOverlap = truthOverlap;
+
+          recoParticle.E_method = caf::PartEMethod::kCalorimetry;
+          recoParticle.start = shower.start;    
+          recoParticle.end = shower.end;    
+          recoParticle.p = shower.direction * shower.Evis; 
+          recoParticle.contained = false; // TODO read from dedicated branch
+          recoParticle.walldist = -999.; // TODO read from dedicated branch
+
+          // assign PDG to recoParticle
+          if ((*m_trackScoreVect)[i] >= m_TrackShowerCut) // track w/ failed trackfit: we still want to fill the recoParticle with the shower info (at least we have something)
+           {
+             recoParticle.pdg = m_antiprotonPDG; // still a track --> assign as default antiproton
+             recoParticle.origRecoObjType = caf::RecoObjType::kTrack;
+             recoParticle.E = (*m_shwrEnergy)[i]; // TODO what rest mass to assign?
+           }
+           else
+           {
+             recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
+             if ((shower.conversionGap > m_ConversionGapCut) && (shower.dEdx > m_dEdxShowerCut) ) // TODO (or even delete? ok for v0). Some considerations here: the final decision on gamma vs e- should be left to the analyzer, based on the information propagated to the CAF output. We shouldn't discard any hyphotesis beforehand. Future development will also depend on how we restructure the Standard Reco track,shower,particle classes.Last but not leas, if for any reason vertex is null, m_mElectron is assigned.
+             {
+               recoParticle.pdg = m_gammaPDG;
+               recoParticle.E = shower.Evis;
+             }
+             else
+             {
+               recoParticle.pdg = m_electronPDG;
+               recoParticle.E = shower.Evis + m_mElectron * 1e-3; // TODO: check if default units are MeV for this branch.
+             }
+           }
 
           if (shower.Evis > maxShowerE)
           {

@@ -47,7 +47,7 @@ namespace cafmaker
       bool HasOuterfaceBranches() const;
       void FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const;
       bool FillTrack(const int i, caf::SRRecoParticle& recoParticle) const;
-      bool FillShower(const int i, caf::SRRecoParticle& recoParticle) const;
+      bool FillShower(const int i, caf::SRShower& shower) const;
  
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
