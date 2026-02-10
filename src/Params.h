@@ -77,6 +77,18 @@ namespace cafmaker
     fhicl::Atom<float> trackMatchdThetaX { fhicl::Name("TrackMatchDeltaThetaX"), fhicl::Comment("Maximum angle difference with respect to X axis [rad]"), .08};
     fhicl::Atom<float> trackMatchdThetaY { fhicl::Name("TrackMatchDeltaThetaY"), fhicl::Comment("Maximum angle difference with respect to Y axis [rad]"), .09};
 
+    // LAr-TMS track matching criteria (default values based on simulation work Quinton Weyrich)
+    fhicl::Atom<double> sigmaX { fhicl::Name("SigmaX"), fhicl::Comment("Standard deviation of x-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 107.317};
+    fhicl::Atom<double> sigmaY { fhicl::Name("SigmaY"), fhicl::Comment("Standard deviation of y-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 70.776};
+    fhicl::Atom<bool> singleAngle { fhicl::Name("SingleAnglreme"), fhicl::Comment("Calculate a single 3D angle between matching tracks (true) or split into x- and y-components"), false};
+    fhicl::Atom<double> sigmaTh { fhicl::Name("SigmaTheta"), fhicl::Comment("Standard deviation of 3D angle between end of Pandora reco track and start of matching TMS reco track [deg]"), 19.3};
+    fhicl::Atom<double> sigmaThX { fhicl::Name("SigmaThetaX"), fhicl::Comment("Standard deviation of angle along x-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 12.12};
+    fhicl::Atom<double> sigmaThY { fhicl::Name("SigmaThetaY"), fhicl::Comment("Standard deviation of angle along y-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 16.85};
+    fhicl::Atom<bool> useTime { fhicl::Name("UseTime"), fhicl::Comment("Include time in track matching calculation"), false};
+    fhicl::Atom<double> meanT { fhicl::Name("MeanT"), fhicl::Comment("Average time difference between recorded Pandora reco track and matching TMS reco track [ns]"), -18.88};
+    fhicl::Atom<double> sigmaT { fhicl::Name("SigmaT"), fhicl::Comment("Standard deviation of time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 8.84};
+    fhicl::Atom<double> fcut { fhicl::Name("fCut"), fhicl::Comment("Maximum permissible match score for the matching, (best choice depends on whether time is included)"), 5.25}; //with time: 59.67
+
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
     fhicl::Atom<std::string> verbosity { fhicl::Name("Verbosity"), fhicl::Comment("Verbosity level of output"), "WARNING" };
   };

@@ -22,8 +22,15 @@ namespace cafmaker
 
       // Save pointer to input tree
       TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Reco_Tree"));
+      TMSLCTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
       if (!TMSRecoTree) {
         std::cerr << "Did not find TMS reco tree Reco_Tree in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
+        throw;
+      }
+
+      if (!TMSLCTree) {
+        std::cerr << "Did not find TMS reco tree Line_Candidates in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -54,14 +61,16 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
       TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
-
-      // Add Truth tree for the index of the true primary particles
+      TMSLCTree->SetBranchAddress("TMSStartTime",            &_TMSStartTime);
+    // Add Truth tree for the index of the true primary particles
       TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleVtxId", _RecoTrueVtxId);
       TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex", _RecoTruePartId);
       TMSTrueTree->SetBranchAddress("RecoTrackSecondaryParticleIndex", _RecoTruePartIdSec);
 
     } else {
       fTMSRecoFile = NULL;
+      TMSRecoTree  = NULL;
+      TMSLCTree = NULL;
       std::cerr << "The TMS reco file you provided: " << tmsRecoFilename 
                 << " appears to be a Zombie 🧟" << std::endl;
       throw;
@@ -70,10 +79,12 @@ namespace cafmaker
 
 
   TMSRecoBranchFiller::~TMSRecoBranchFiller() {
-    delete TMSRecoTree;
+    delete TMSRecoTree;    
+    delete TMSLCTree;
     fTMSRecoFile->Close();
     delete fTMSRecoFile;
     TMSRecoTree = NULL;
+    TMSLCTree = NULL;
     fTMSRecoFile = NULL;
   }
 
@@ -106,10 +117,13 @@ namespace cafmaker
 
     int LastSpillNo = -999999; //_SpillNo;
     TMSRecoTree->GetEntry(i); // Load first entry for now
+    TMSLCTree->GetEntry(i);
     LastSpillNo = _SpillNo;
 
     sr.nd.tms.ixn.emplace_back();
     caf::SRTMSInt& interaction = sr.nd.tms.ixn.back();
+
+    sr.nd.tms.nixn += 1; //Make sure to update nixn
     caf::TrueParticleID truePartID;
     caf::SRTrueParticle *srTruePart;
     caf::SRTrueInteraction *srTrueInt;
@@ -118,10 +132,12 @@ namespace cafmaker
     interaction.ntracks = 0;
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
+    TMSRecoTree->GetEntry(i); 
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
       if (_nTracks > 0)
-      {
+      {        
+
         total = interaction.tracks.size();
         interaction.tracks.resize(_nTracks + interaction.tracks.size());
         for (int j = 0; j < _nTracks; ++j) {
@@ -130,6 +146,8 @@ namespace cafmaker
           interaction.tracks[total+j].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
           interaction.tracks[total+j].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction.tracks[total+j].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
+
+          interaction.tracks[total+j].time    = _TMSStartTime[j]; //Adds time of interaction
 
           // Track info
           //interaction.tracks[total+j].len_cm    = tmpLength_cm; //trackVec->Mag(); // TODO: Coming Soon™
@@ -140,6 +158,7 @@ namespace cafmaker
           // Fill Truth
           // TODO: (unsigned long) (_RunNo*1E6 + _RecoTruePartId[j]) ... what am I smoking.
           // The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that. Long cos it's very long innit. Sorry.
+
           srTrueInt = &(truthMatcher->GetTrueInteraction(sr, (unsigned long) (_RunNo*1E6 + _RecoTruePartId[j]), true)); // Pointer to the object
           truePartID.ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
           //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
@@ -151,6 +170,8 @@ namespace cafmaker
 
       TMSRecoTree->GetEntry(++i); // Load each subsequent entry before loop test condition
       TMSTrueTree->GetEntry(  i); // Load each subsequent entry before loop test condition
+      TMSLCTree->GetEntry(  i);
+
     }
   }
 

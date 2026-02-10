@@ -43,6 +43,7 @@ namespace cafmaker
       TFile *fTMSRecoFile;
       TTree *TMSRecoTree;
       TTree *TMSTrueTree;
+      TTree *TMSLCTree;
 
       // Save the branches that we're reading in
       int   _RunNo;
@@ -62,6 +63,8 @@ namespace cafmaker
       float _TrackStartDirection[10][3];
       float _TrackEndDirection[10][3];
       float _Occupancy[10];
+
+      double _TMSStartTime[10];
 
       float _DirectionX_Downstream[10];
       float _DirectionZ_Downstream[10];
