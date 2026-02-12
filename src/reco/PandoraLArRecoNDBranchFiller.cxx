@@ -53,6 +53,7 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("n3DHits", &m_n3DHitsVect);
       m_LArRecoNDTree->SetBranchAddress("mcNuId", &m_mcNuIdVect);
       m_LArRecoNDTree->SetBranchAddress("mcLocalId", &m_mcLocalIdVect);
+      m_LArRecoNDTree->SetBranchAddress("mcId", &m_mcIdVect);
       m_LArRecoNDTree->SetBranchAddress("isPrimary", &m_isPrimaryVect);
       m_LArRecoNDTree->SetBranchAddress("completeness", &m_completenessVect);
       m_LArRecoNDTree->SetBranchAddress("nuVtxX", &m_nuVtxXVect);
@@ -327,7 +328,8 @@ namespace cafmaker
  void PandoraLArRecoNDBranchFiller::FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const
  {
    const long mcNuId = (m_mcNuIdVect != nullptr) ? (*m_mcNuIdVect)[i] : 0;
-   const long mcId = (m_mcLocalIdVect != nullptr) ? (*m_mcLocalIdVect)[i] : 0;
+   const long mcLocalId = (m_mcLocalIdVect != nullptr) ? (*m_mcLocalIdVect)[i] : 0;
+   const long mcId = (m_mcIdVect != nullptr) ? (*m_mcIdVect)[i] : 0;
    const int isPrimary = (m_isPrimaryVect != nullptr) ? (*m_isPrimaryVect)[i] : -1;
 
    if (isPrimary == 1)
@@ -343,7 +345,8 @@ namespace cafmaker
    {
      truePartID.type = caf::TrueParticleID::kSecondary;
    }
-
+   
+   float track_time = -999.;
    if (mcNuId != 0)
    {
      caf::SRTrueInteraction &srTrueInt = truthMatch->GetTrueInteraction(sr, mcNuId);
@@ -361,6 +364,14 @@ namespace cafmaker
         truePartID.part = std::distance(srTrueInt.sec.begin(),
                                     std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), pred));
       }
+      for (auto const& primary: srTrueInt.prim)
+      {
+          std::cout << "track time " << primary.time << "\n";
+          if(primary.G4ID == mcId) track_time = primary.time;
+      }
+      std::cout << "mcId " << mcId << "\n"; 
+      std::cout << "INSIDE DEFAULT FILLER, WHAT TIME IS IT " << track_time << "\n";
+      throw "";
    }
  }
 

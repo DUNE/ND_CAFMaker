@@ -86,6 +86,7 @@ namespace cafmaker
       std::vector<int> *m_n3DHitsVect = nullptr;
       std::vector<long> *m_mcNuIdVect = nullptr;
       std::vector<long> *m_mcLocalIdVect = nullptr;
+      std::vector<long> *m_mcIdVect = nullptr;
       std::vector<int> *m_isPrimaryVect = nullptr;
       std::vector<float> *m_completenessVect = nullptr;
       std::vector<float> *m_nuVtxXVect = nullptr;
