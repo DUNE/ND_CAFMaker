@@ -65,8 +65,7 @@ To install the library and executables to a custom prefix:
 
 ```
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/path/to/install
-cmake --build build
-cmake --target install
+cmake --build build --target install
 ```
 
 This will place:
