@@ -191,9 +191,9 @@ namespace cafmaker
           srTrueInt = (truthMatcher->GetTrueInteraction(sr, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
           truePartID.type = caf::TrueParticleID::kPrimary;
           //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
-          truePartID.ixn  = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
-          //srTruePart = truthMatcher->GetTrueParticle(sr, srTrueInt, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j]), false, false); // TODO: Why does this segfault?
-          srTruePart.interaction_id = (long int) (_RunNo*1E6 + _RecoTrueVtxId[j]);
+          truePartID.ixn  = static_cast<long>(_RunNo*1E6 + _RecoTrueVtxId[j]);
+          //srTruePart = truthMatcher->GetTrueParticle(sr, srTrueInt, static_cast<long>(_RunNo*1E6 + _RecoTrueVtxId[j]), false, false); // TODO: Why does this segfault?
+          srTruePart.interaction_id = static_cast<long>(_RunNo*1E6 + _RecoTrueVtxId[j]);
 
           interaction->tracks[0].truth.push_back(std::move(truePartID)); // TODO Unfuck
         }
@@ -229,7 +229,7 @@ namespace cafmaker
   std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     std::deque<Trigger> triggers;
-    int lastSpillNo = -99999999;
+    int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
 
     if (fTriggers.empty())
     {
