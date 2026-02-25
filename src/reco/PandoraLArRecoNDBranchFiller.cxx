@@ -301,23 +301,17 @@ namespace cafmaker
      float shwrfitDirY = (*m_shwrfitDirY)[i];
      float shwrfitDirZ = (*m_shwrfitDirZ)[i];
      float shwrLength = (*m_shwrfitLength)[i];
-     float shwrfitEndX = shwrfitStartX + shwrfitDirX * shwrLength;
-     float shwrfitEndY = shwrfitStartY + shwrfitDirY * shwrLength;
-     float shwrfitEndZ = shwrfitStartZ + shwrfitDirZ * shwrLength;
       
      caf::SRVector3D start{shwrfitStartX, shwrfitStartY, shwrfitStartZ};
-     caf::SRVector3D end{shwrfitEndX, shwrfitEndY, shwrfitEndZ};
      caf::SRVector3D dir{shwrfitDirX, shwrfitDirY, shwrfitDirZ};
      
      shower.start = start;    
      shower.direction = dir;
      shower.time = -999.; // TODO to be filled at some point
      shower.Evis = (*m_shwrEnergy)[i];
-     shower.end = end;
      shower.qual = (*m_trackScoreVect)[i]; // saving the trackScore value as additional reco info. This provides a sort of degree of “shower-likeness” for this SRShower
      shower.len_cm = shwrLength;
-     shower.len_gcm2 = -999.; // TODO fill this appropriately 
-     shower.dEdx = dEdx;
+     shower.initial_dEdx = dEdx;
      shower.conversionGap = conversionGap;
      
      return true;
@@ -645,7 +639,6 @@ namespace cafmaker
 
           recoParticle.E_method = caf::PartEMethod::kCalorimetry;
           recoParticle.start = shower.start;    
-          recoParticle.end = shower.end;    
           recoParticle.p = shower.direction * shower.Evis; 
           recoParticle.contained = false; // TODO read from dedicated branch
           recoParticle.walldist = -999.; // TODO read from dedicated branch
@@ -660,7 +653,7 @@ namespace cafmaker
            else
            {
              recoParticle.origRecoObjType = caf::RecoObjType::kShower; 
-             if ((shower.conversionGap > m_ConversionGapCut) && (shower.dEdx > m_dEdxShowerCut) ) // TODO (or even delete? ok for v0). Some considerations here: the final decision on gamma vs e- should be left to the analyzer, based on the information propagated to the CAF output. We shouldn't discard any hyphotesis beforehand. Future development will also depend on how we restructure the Standard Reco track,shower,particle classes.Last but not leas, if for any reason vertex is null, m_mElectron is assigned.
+             if ((shower.conversionGap > m_ConversionGapCut) && (shower.initial_dEdx > m_dEdxShowerCut) ) // TODO (or even delete? ok for v0). Some considerations here: the final decision on gamma vs e- should be left to the analyzer, based on the information propagated to the CAF output. We shouldn't discard any hyphotesis beforehand. Future development will also depend on how we restructure the Standard Reco track,shower,particle classes.Last but not leas, if for any reason vertex is null, m_mElectron is assigned.
              {
                recoParticle.pdg = m_gammaPDG;
                recoParticle.E = shower.Evis;
