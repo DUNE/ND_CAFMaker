@@ -229,7 +229,7 @@ namespace cafmaker
   std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     std::deque<Trigger> triggers;
-    int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
+    int lastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
 
     if (fTriggers.empty())
     {
