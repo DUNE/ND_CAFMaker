@@ -12,7 +12,7 @@
 #include <regex>
 #include <sstream>
 #include <limits>
-#include <nlohmann/json.hpp>
+#include </cvmfs/larsoft.opensciencegrid.org/products/root/v6_28_06b/source/root-6.28.06/builtins/nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
