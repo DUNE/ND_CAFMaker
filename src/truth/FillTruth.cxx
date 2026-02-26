@@ -528,6 +528,7 @@ namespace cafmaker
 
     auto p0 = traj.Points[0];
     part.start_pos = (p0.Position * .1).Vect();
+    part.time = p0.Position.T(); //This time is not behaving correctly, but may be useful for matching if we get time-based matching working
 
     auto pf = traj.Points[traj.Points.size()-1];
     part.end_pos = (pf.Position * .1).Vect();

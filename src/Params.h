@@ -62,6 +62,13 @@ namespace cafmaker
     // 0.1 s is default
     fhicl::Atom<float>  beamMatchDT { fhicl::Name("BeamMatchDeltaT"), fhicl::Comment("Maximum time difference, in s, between triggers and beam"), 0.1 };
     
+    // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future 
+    fhicl::Atom<float> mx2_2x2_offsetX {fhicl::Name("Mx2_2x2_offsetX"), fhicl::Comment("Mx2 - 2x2 offset in X direction in cm"), 0.};
+    fhicl::Atom<float> mx2_2x2_offsetY {fhicl::Name("Mx2_2x2_offsetY"), fhicl::Comment("Mx2 - 2x2 offset in Y direction in cm"), 218.};
+    fhicl::Atom<float> mx2_2x2_offsetZ {fhicl::Name("Mx2_2x2_offsetZ"), fhicl::Comment("Mx2 - 2x2 offset in Z direction in cm"), 6913.};
+
+    fhicl::Atom<int> triggerType { fhicl::Name("TriggerType"), fhicl::Comment("Trigger type to be loaded by the CAFMaker"), -1};
+    fhicl::Atom<bool> loadBeamOnly { fhicl::Name("LoadBeamOnly"), fhicl::Comment("Load beam trigger only in the CAFMaker"), false};
 
     // Track matching criteria (default values for 2x2 based on DOCDB 31970)
     fhicl::Atom<float> trackMatchExtrapolatedZ { fhicl::Name("TrackMatchExtrapolatedZ"), fhicl::Comment("Z position where the track transversal displacement is computed when doing matching"), -70};
@@ -69,6 +76,18 @@ namespace cafmaker
     fhicl::Atom<float> trackMatchdY { fhicl::Name("TrackMatchDeltaY"), fhicl::Comment("Maximum displacement authorised in Y [cm]"), 19};
     fhicl::Atom<float> trackMatchdThetaX { fhicl::Name("TrackMatchDeltaThetaX"), fhicl::Comment("Maximum angle difference with respect to X axis [rad]"), .08};
     fhicl::Atom<float> trackMatchdThetaY { fhicl::Name("TrackMatchDeltaThetaY"), fhicl::Comment("Maximum angle difference with respect to Y axis [rad]"), .09};
+
+    // LAr-TMS track matching criteria (default values based on simulation work Quinton Weyrich)
+    fhicl::Atom<double> sigmaX { fhicl::Name("SigmaX"), fhicl::Comment("Standard deviation of x-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 107.317};
+    fhicl::Atom<double> sigmaY { fhicl::Name("SigmaY"), fhicl::Comment("Standard deviation of y-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 70.776};
+    fhicl::Atom<bool> singleAngle { fhicl::Name("SingleAnglreme"), fhicl::Comment("Calculate a single 3D angle between matching tracks (true) or split into x- and y-components"), false};
+    fhicl::Atom<double> sigmaTh { fhicl::Name("SigmaTheta"), fhicl::Comment("Standard deviation of 3D angle between end of Pandora reco track and start of matching TMS reco track [deg]"), 19.3};
+    fhicl::Atom<double> sigmaThX { fhicl::Name("SigmaThetaX"), fhicl::Comment("Standard deviation of angle along x-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 12.12};
+    fhicl::Atom<double> sigmaThY { fhicl::Name("SigmaThetaY"), fhicl::Comment("Standard deviation of angle along y-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 16.85};
+    fhicl::Atom<bool> useTime { fhicl::Name("UseTime"), fhicl::Comment("Include time in track matching calculation"), false};
+    fhicl::Atom<double> meanT { fhicl::Name("MeanT"), fhicl::Comment("Average time difference between recorded Pandora reco track and matching TMS reco track [ns]"), -18.88};
+    fhicl::Atom<double> sigmaT { fhicl::Name("SigmaT"), fhicl::Comment("Standard deviation of time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 8.84};
+    fhicl::Atom<double> fcut { fhicl::Name("fCut"), fhicl::Comment("Maximum permissible match score for the matching, (best choice depends on whether time is included)"), 5.25}; //with time: 59.67
 
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
     fhicl::Atom<std::string> verbosity { fhicl::Name("Verbosity"), fhicl::Comment("Verbosity level of output"), "WARNING" };

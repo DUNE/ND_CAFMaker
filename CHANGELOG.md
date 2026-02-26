@@ -3,6 +3,24 @@
 
 ##### current
 
+##### [v4.10.0] -- 2025-10-23
+* Upgrade to `e26` build chain ([PR #108](https://github.com/DUNE/ND_CAFMaker/pull/108))
+
+##### [v4.9.0] -- 2025-10-22
+* Patches to Pandora reco filling (PRs [#95](https://github.com/DUNE/ND_CAFMaker/pull/98), [#98](https://github.com/DUNE/ND_CAFMaker/pull/98), [#100](https://github.com/DUNE/ND_CAFMaker/pull/100))
+* Compatibility with MINERvA data (PRs [#96](https://github.com/DUNE/ND_CAFMaker/pull/96), [#99](https://github.com/DUNE/ND_CAFMaker/pull/99))
+* Patches for trigger time filling in 2x2/ND-LAr ([PR #101](https://github.com/DUNE/ND_CAFMaker/pull/101))
+* Fill truth interactions in TMS ([PR #104](https://github.com/DUNE/ND_CAFMaker/pull/104))
+
+##### [v4.8.1] -- 2025-01-15
+* Fuller implementation of Pandora reco filling ([PR #93](https://github.com/DUNE/ND_CAFMaker/pull/93))
+
+##### [v4.8.0] -- 2024-11-19
+* First steps towards Pandora reco ([PR #76](https://github.com/DUNE/ND_CAFMaker/pull/76))
+* Interface for IFBeam ([PR #89](https://github.com/DUNE/ND_CAFMaker/pull/89))
+* Keep up with updates to SPINE reco format ([PR #91](https://github.com/DUNE/ND_CAFMaker/pull/91))
+* Miscellaneous bugfixes from 2x2 MR5, MR6 (PRs [#85(https://github.com/DUNE/ND_CAFMaker/pull/85)], [#91](https://github.com/DUNE/ND_CAFMaker/pull/91), [#92](https://github.com/DUNE/ND_CAFMaker/pull/92))
+
 ##### [v4.7.0] -- 2024-10-16
 * Add TMS Branch reco with updated StandardRecord format with one entry per spill and trigger logic ([PR #87](https://github.com/DUNE/ND_CAFMaker/pull/87))
 * Add track matching logic for 2x2 reconstructions (Pandora, SPINE to MINERvA) ([PR #86](https://github.com/DUNE/ND_CAFMaker/pull/86))

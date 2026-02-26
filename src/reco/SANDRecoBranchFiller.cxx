@@ -137,7 +137,7 @@ namespace cafmaker
   }
 
   // todo: this is a placeholder
-  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType) const
+  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     std::deque<Trigger> triggers;
     size_t n_entries = NDSANDRecoTree->GetEntries();

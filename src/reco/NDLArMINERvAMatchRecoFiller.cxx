@@ -199,7 +199,7 @@ namespace cafmaker
     }
   }
 
-  std::deque<Trigger> NDLArMINERvAMatchRecoFiller::GetTriggers(int triggerType) const
+  std::deque<Trigger> NDLArMINERvAMatchRecoFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
     return std::deque<Trigger>();
   }
