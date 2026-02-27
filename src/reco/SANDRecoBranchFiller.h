@@ -19,41 +19,46 @@ namespace cafmaker
 {
   class SANDRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
-    public:
-      SANDRecoBranchFiller(const std::string &SANDRecoFilename);
+  public:
+    SANDRecoBranchFiller(const std::string &SANDRecoFilename);
 
-      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
+    std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
-      RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
+    RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
-
-    private:
+  private:
 #ifdef ENABLE_SAND
-      void _FillRecoBranches(const Trigger &trigger,
-                             caf::StandardRecord &sr,
-                             const cafmaker::Params &par,
-                             const TruthMatcher *truthMatcher) const override;
-      void FillECalClusters(const TruthMatcher * truthMatch,
-                            caf::StandardRecord &sr, std::vector<cluster> &cl) const;
-      void FillTracks(const TruthMatcher * truthMatch,
-                            caf::StandardRecord &sr, std::vector<track> &tr) const;
-      TFile* fSANDRecoFile;
-      TTree* NDSANDRecoTree;
-      TTree* NDSANDEventTree;
-      
-      struct event* fEvent;
+    void _FillRecoBranches(const Trigger &trigger,
+                           caf::StandardRecord &sr,
+                           const cafmaker::Params &par,
+                           const TruthMatcher *truthMatcher) const override;
 
-      mutable std::vector<cafmaker::Trigger> fTriggers;
-      mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;
- #else
-       void _FillRecoBranches(const Trigger &trigger, caf::StandardRecord &sr, const cafmaker::Params &par, const TruthMatcher *truthMatcher) const override;
-       TFile* fSANDRecoFile;
-       TTree* NDSANDRecoTree;
-       struct event* fEvent;
-       mutable std::vector<cafmaker::Trigger> fTriggers;
-       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;
+    void FillECalClusters(const TruthMatcher * truthMatch,
+                          caf::StandardRecord &sr, std::vector<cluster> &cl) const;
+    void FillTracks(const TruthMatcher * truthMatch,
+                    caf::StandardRecord &sr, std::vector<track> &tr) const;
+
+    TFile* fSANDRecoFile;
+    TTree* NDSANDRecoTree;
+    TTree* NDSANDEventTree;
+    struct event* fEvent;
+
+    mutable std::vector<cafmaker::Trigger> fTriggers;
+    mutable decltype(fTriggers)::const_iterator fLastTriggerReqd;
+
+#else
+    void _FillRecoBranches(const Trigger &trigger, caf::StandardRecord &sr, const cafmaker::Params &par, const TruthMatcher *truthMatcher) const override;
+    // These members exist even when ENABLE_SAND is false
+    // because ROOT needs them to generate the dictionary correctly.
+    TFile* fSANDRecoFile = nullptr;
+    TTree* NDSANDRecoTree = nullptr;
+    TTree* NDSANDEventTree = nullptr;
+    struct event* fEvent = nullptr;
+
+    mutable std::vector<cafmaker::Trigger> fTriggers;
+    mutable decltype(fTriggers)::const_iterator fLastTriggerReqd;
 #endif
   };
 }
 
-#endif // ND_CAFMAKER_SANDRECOBRANCHFILLER_H
+#endif

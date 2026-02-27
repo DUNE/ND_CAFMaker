@@ -6,26 +6,14 @@ OBJS = $(patsubst %.cxx, %.o, $(SOURCES))
 INCLUDE += -I$(SRCDIR) -I$(SRPROXY_INC) -I/usr/include/curl
 LDLIBS += -L$(SANDRECO_LIB) -lStruct -L/usr/lib64 -lcurl
 
-# -------------------------------------------------
-# Enable TMS unless otherwise specified
-# -------------------------------------------------
-
 ENABLE_TMS := 1
 ifneq ($(ENABLE_TMS),1)
   CXXFLAGS += -DDISABLE_TMS
 endif
 
-# -------------------------------------------------
-# Library / binaries
-# -------------------------------------------------
-
 LIBNAME = ND_CAFMaker
 LIBS    = $(LIBDIR)/lib$(LIBNAME).so
 BINS    = $(BINDIR)/makeCAF
-
-# -------------------------------------------------
-# Optional struct dictionary (default OFF)
-# -------------------------------------------------
 
 ENABLE_SAND_DICT ?= 0
 
@@ -37,16 +25,12 @@ STRUCT_DICT_OBJ   = $(LIBDIR)/StructDict.o
 STRUCT_LIB        = $(LIBDIR)/libStruct.so
 STRUCT_PCM        = $(LIBDIR)/libStruct_rdict.pcm
 
-# -------------------------------------------------
-# Tagged SANDRECO version (reproducible)
-# -------------------------------------------------
 
 SANDRECO_TAG  := v02_00_00
 SANDRECO_BASE := https://raw.githubusercontent.com/DUNE/sandreco/$(SANDRECO_TAG)/include
 
 ifeq ($(ENABLE_SAND_DICT),1)
 
-  # Download tagged headers immediately (like before, ma versioned)
   $(shell mkdir -p $(DEPSDIR))
   $(shell wget -N $(SANDRECO_BASE)/struct.h -P $(DEPSDIR))
   $(shell wget -N $(SANDRECO_BASE)/StructLinkDef.h -P $(DEPSDIR))
@@ -66,31 +50,16 @@ endif
 
 RPATH_FLAG = -Wl,-rpath,$(LIBDIR)
 
-# -------------------------------------------------
-# Top-level targets
-# -------------------------------------------------
-
 all: $(BINS)
 
 test: $(BINDIR)/testHDF
 
-# -------------------------------------------------
-# Compile objects
-# -------------------------------------------------
-
 %.o : %.cxx $(if $(wildcard %.h),%.h,)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) -fPIC $(SAND_OPT) -o $@ -c $<
 
-# -------------------------------------------------
-# Build main library
-# -------------------------------------------------
 
 $(LIBDIR)/lib$(LIBNAME).so: $(OBJS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -shared $(RPATH_FLAG) -o $@ $(OBJS)
-
-# -------------------------------------------------
-# ROOT dictionary generation
-# -------------------------------------------------
 
 ifeq ($(ENABLE_SAND_DICT),1)
 
@@ -105,9 +74,6 @@ ifeq ($(ENABLE_SAND_DICT),1)
 
 endif
 
-# -------------------------------------------------
-# Build executables
-# -------------------------------------------------
 
 $(BINDIR)/makeCAF: $(LIBS) makeCAF.C $(DICT_TARGETS)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCLUDE) \
@@ -123,9 +89,9 @@ $(BINDIR)/testHDF: $(LIBS) testHDF.C $(DICT_TARGETS)
 	  $(RPATH_FLAG) \
 	  -o $@ testHDF.C
 
-# -------------------------------------------------
-# Clean
-# -------------------------------------------------
+# should *really* make a .d rule for the objects 
+# to get their dependencies on the headers right, but ... not now 
+
 
 clean:
 	rm -f $(OBJS)
