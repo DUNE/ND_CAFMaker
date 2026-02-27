@@ -34,11 +34,62 @@ To add variables and inspect what is set and how, check `src/Params.h`.
 
 
 ## Building
-Once you've set up your environment, it's just a matter of typing 
+
+### Build environment
+
+The build requires the UPS dependencies provided by the Fermilab software stack.
+The recommended way to get a compatible environment is via the Singularity image:
+
 ```
-make
+singularity shell --bind /cvmfs /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest
 ```
-in the `ND_CAFMaker` folder, which goes through and builds the objects, library and single `makeCAF` executable.
+
+Once inside the container, source the setup script as usual before configuring:
+
+```
+source ndcaf_setup.sh {prof|debug}
+```
+
+### CMake configuration
+
+Once you've set up your environment, configure and build with CMake:
+
+```
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+```
+
+The build products are installed under `build/` by default. The `makeCAF` executable will be at `build/bin/makeCAF`.
+
+### CMake build options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ENABLE_TMS` | `ON` | Enable TMS reconstruction branch filler |
+| `ENABLE_TESTEXE` | `OFF` | Build the `testHDF` test executable |
+| `CMAKE_BUILD_TYPE` | — | Set to `Debug` or `Release` (overrides the `-g -O2` defaults) |
+
+Example: disable TMS and build the test executable:
+
+```
+cmake -S . -B build -DENABLE_TMS=OFF -DENABLE_TESTEXE=ON
+cmake --build build
+```
+
+### Installing
+
+To install the library and executables to a custom prefix:
+
+```
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake --build build --target install
+```
+
+This will place:
+- `libND_CAFMaker.so` → `<prefix>/lib/`
+- `makeCAF` (and optionally `testHDF`) → `<prefix>/bin/`
+
+If no `CMAKE_INSTALL_PREFIX` is given, the default system prefix (`/usr/local`) is used.
 
 # Running
 There is currently only one main executable, `makeCAF`, which is controlled entirely by the input `fhicl` file. To run with the `fhicl` file that was specified under `Inputs`, do
