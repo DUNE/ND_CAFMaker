@@ -35,6 +35,23 @@ To add variables and inspect what is set and how, check `src/Params.h`.
 
 ## Building
 
+### Build environment
+
+The build requires the UPS dependencies provided by the Fermilab software stack.
+The recommended way to get a compatible environment is via the Singularity image:
+
+```
+singularity shell --bind /cvmfs /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest
+```
+
+Once inside the container, source the setup script as usual before configuring:
+
+```
+source ndcaf_setup.sh {prof|debug}
+```
+
+### CMake configuration
+
 Once you've set up your environment, configure and build with CMake:
 
 ```

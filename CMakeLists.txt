@@ -31,79 +31,29 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(ENABLE_TMS "Enable TMS reconstruction branch filler" ON)
 option(ENABLE_TESTEXE "Build the testHDF test executable" OFF)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE
-      RelWithDebInfo
-      CACHE STRING "Build type" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+string(
+  APPEND
+  CMAKE_CXX_FLAGS
+  " -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion"
+  " -Wshadow -Wimplicit-fallthrough -Wextra-semi -Wold-style-cast"
+  " -fno-omit-frame-pointer")
+
+string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=address,undefined")
+
+string(APPEND CMAKE_EXE_LINKER_FLAGS_DEBUG " -fsanitize=address,undefined")
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -D_GLIBCXX_SANITIZE_STD_ALLOCATOR")
 endif()
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_compile_options(-Wall)
 add_compile_definitions(NO_ART)
 
-# cmake-format: off
-# ── UPS package helper ─────────────────────────────────────────────────────────
-# Creates an INTERFACE IMPORTED target from a UPS package located via
-# environment variables set by ndcaf_setup.sh (NOT from system paths).
-#
-# Usage:
-#   find_ups_package(
-#     TARGET_NAME <target>      # e.g. deps::hdf5
-#     [INC_VAR    <env-var>]    # include dir env var, e.g. HDF5_INC
-#     [INC_SUFFIX <subdir>]     # appended to inc dir, e.g. EDepSim
-#     [LIB_VAR    <env-var>]    # lib dir env var, e.g. HDF5_LIB
-#     [LIBS       <lib1> ...]   # library names without lib prefix / .so
-#     [REQUIRED]
-#   )
-# cmake-format: on
+include(cmake/FindUPSPackage.cmake)
 
-function(find_ups_package)
-  cmake_parse_arguments(UPS "REQUIRED" "TARGET_NAME;INC_VAR;INC_SUFFIX;LIB_VAR"
-                        "LIBS" ${ARGN})
-
-  if(NOT UPS_TARGET_NAME)
-    message(FATAL_ERROR "find_ups_package: TARGET_NAME is required")
-  endif()
-
-  if(UPS_INC_VAR)
-    set(_inc_dir "$ENV{${UPS_INC_VAR}}")
-    if(UPS_INC_SUFFIX)
-      set(_inc_dir "${_inc_dir}/${UPS_INC_SUFFIX}")
-    endif()
-  endif()
-
-  set(_libs "")
-  if(UPS_LIB_VAR AND UPS_LIBS)
-    foreach(_lib IN LISTS UPS_LIBS)
-      find_library(
-        _found_${_lib}
-        NAMES ${_lib}
-        PATHS "$ENV{${UPS_LIB_VAR}}"
-        NO_DEFAULT_PATH)
-      if(_found_${_lib})
-        list(APPEND _libs "${_found_${_lib}}")
-      elseif(UPS_REQUIRED)
-        message(
-          FATAL_ERROR
-            "find_ups_package: '${_lib}' not found in $ENV{${UPS_LIB_VAR}}")
-      endif()
-    endforeach()
-  endif()
-
-  add_library(${UPS_TARGET_NAME} INTERFACE IMPORTED)
-  if(_inc_dir)
-    set_target_properties(
-      ${UPS_TARGET_NAME} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${_inc_dir}")
-  endif()
-  if(_libs)
-    set_target_properties(${UPS_TARGET_NAME} PROPERTIES INTERFACE_LINK_LIBRARIES
-                                                        "${_libs}")
-  endif()
-endfunction()
-
-# ROOT — imported targets from ROOTConfig.cmake (ships with ROOT >= 6)
-find_package(ROOT REQUIRED COMPONENTS Core MathMore Geom EGPythia6 GenVector)
-
+# ROOT — always via ROOTConfig.cmake (ships with ROOT >= 6)
+find_package(ROOT 6 REQUIRED COMPONENTS Core MathMore Geom EGPythia6 GenVector)
 add_library(deps::root_glibs INTERFACE IMPORTED)
 set_target_properties(
   deps::root_glibs
@@ -111,21 +61,20 @@ set_target_properties(
     INTERFACE_LINK_LIBRARIES
     "ROOT::Core;ROOT::MathMore;ROOT::Geom;ROOT::EGPythia6;ROOT::GenVector")
 
-# GENIE — uses genie-config --libs
-find_program(GENIE_CONFIG genie-config HINTS "$ENV{GENIE_INC}/../bin" REQUIRED)
+# Versions are pinned by ndcaf_setup.sh; env vars are set by UPS at runtime.
+
+find_program(GENIE_CONFIG genie-config HINTS "$ENV{GENIE_INC}/../bin"
+                                             REQUIRED)
 
 execute_process(
   COMMAND ${GENIE_CONFIG} --libs
   OUTPUT_VARIABLE _genie_libs
   OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 add_library(deps::genie INTERFACE IMPORTED)
-
 set_target_properties(
   deps::genie PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "$ENV{GENIE_INC}/GENIE"
                          INTERFACE_LINK_LIBRARIES "${_genie_libs}")
 
-# HDF5 — library name differs between debug and prof builds
 if("$ENV{HDF5_FQ_DIR}" MATCHES "debug")
   set(_hdf5_lib hdf5_cpp_debug)
 else()
@@ -149,9 +98,9 @@ find_ups_package(
 find_ups_package(
   TARGET_NAME deps::edepsim
   INC_VAR EDEPSIM_INC
-  INC_SUFFIX EDepSim
   LIB_VAR EDEPSIM_LIB
   LIBS edepsim
+  INC_SUFFIX EDepSim
   REQUIRED)
 
 find_ups_package(
@@ -197,7 +146,6 @@ find_ups_package(TARGET_NAME deps::nlohmann INC_VAR NLOHMANN_JSON_INC)
 
 find_ups_package(TARGET_NAME deps::srproxy INC_VAR SRPROXY_INC)
 
-# cetlib + cetlib_except — two env-var pairs merged into one target
 find_library(
   CETLIB_LIB_PATH
   NAMES cetlib
@@ -219,63 +167,49 @@ set_target_properties(
              INTERFACE_LINK_LIBRARIES
              "${CETLIB_LIB_PATH};${CETLIB_EXCEPT_LIB_PATH}")
 
-# libxml2 — LIBXML2_FQ_DIR points to product root, lib is in its lib/ subdir
 find_library(
   LIBXML2_LIB_PATH
   NAMES xml2
   PATHS "$ENV{LIBXML2_FQ_DIR}/lib"
   NO_DEFAULT_PATH)
-
 add_library(deps::libxml2 INTERFACE IMPORTED)
-
 set_target_properties(deps::libxml2 PROPERTIES INTERFACE_LINK_LIBRARIES
                                                "${LIBXML2_LIB_PATH}")
 
-# Pythia6 — PYTHIA6_LIBRARY points directly to the lib dir
 find_library(
   PYTHIA6_LIB_PATH
   NAMES Pythia6
   PATHS "$ENV{PYTHIA6_LIBRARY}"
   NO_DEFAULT_PATH)
-
 add_library(deps::pythia6 INTERFACE IMPORTED)
-
 set_target_properties(deps::pythia6 PROPERTIES INTERFACE_LINK_LIBRARIES
                                                "${PYTHIA6_LIB_PATH}")
 
-# curl — system library
 find_library(
   CURL_LIB_PATH
   NAMES curl
   PATHS /usr/lib64
   NO_DEFAULT_PATH)
-
 add_library(deps::curl INTERFACE IMPORTED)
-
 set_target_properties(
   deps::curl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "/usr/include/curl"
                         INTERFACE_LINK_LIBRARIES "${CURL_LIB_PATH}")
 
-# SANDReco — optional, auto-detected from environment
+# SANDReco — optional, auto-detected from environment (both modes)
 if(DEFINED ENV{SANDRECO_INC} OR DEFINED ENV{SANDRECO_LIB})
   set(SAND_ENABLED TRUE)
-
   find_library(
     SANDRECO_LIB_PATH
     NAMES Struct
     PATHS "$ENV{SANDRECO_LIB}"
     NO_DEFAULT_PATH)
-
   add_library(deps::sand INTERFACE IMPORTED)
-
   set_target_properties(
     deps::sand PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "$ENV{SANDRECO_INC}"
                           INTERFACE_LINK_LIBRARIES "${SANDRECO_LIB_PATH}")
-
   message(STATUS "SANDReco: enabled (SANDRECO_INC=$ENV{SANDRECO_INC})")
 else()
   set(SAND_ENABLED FALSE)
-
   add_library(deps::sand INTERFACE IMPORTED) # no-op target for unconditional
                                              # linking
   message(STATUS "SANDReco: disabled (SANDRECO_INC/LIB not set)")
