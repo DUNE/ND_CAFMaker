@@ -61,8 +61,9 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
       TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
-      TMSLCTree->SetBranchAddress("TMSStartTime",            &_TMSStartTime);
-    // Add Truth tree for the index of the true primary particles
+      TMSRecoTree->SetBranchAddress("TimeSliceStartTime",    &_TMSStartTime);
+      //TMSLCTree->SetBranchAddress("TMSStartTime",            _TMSStartTime);
+      // Add Truth tree for the index of the true primary particles
       TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleVtxId", _RecoTrueVtxId);
       TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex", _RecoTruePartId);
       TMSTrueTree->SetBranchAddress("RecoTrackSecondaryParticleIndex", _RecoTruePartIdSec);
@@ -117,7 +118,7 @@ namespace cafmaker
 
     int LastSpillNo = -999999; //_SpillNo;
     TMSRecoTree->GetEntry(i); // Load first entry for now
-    TMSLCTree->GetEntry(i);
+    //TMSLCTree->GetEntry(i);
     LastSpillNo = _SpillNo;
 
     sr.nd.tms.ixn.emplace_back();
@@ -132,7 +133,7 @@ namespace cafmaker
     interaction.ntracks = 0;
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
-    TMSRecoTree->GetEntry(i); 
+    TMSLCTree->GetEntry(i); 
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
       if (_nTracks > 0)
@@ -147,7 +148,8 @@ namespace cafmaker
           interaction.tracks[total+j].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction.tracks[total+j].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          interaction.tracks[total+j].time    = _TMSStartTime[j]; //Adds time of interaction
+          interaction.tracks[total+j].time    = (double) _TMSStartTime; //Adds time of interaction
+	  std::cout << "TMS FILLER TIME " << interaction.tracks[total+j].time << std::endl;
 
           // Track info
           //interaction.tracks[total+j].len_cm    = tmpLength_cm; //trackVec->Mag(); // TODO: Coming Soon™
