@@ -61,8 +61,8 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
       TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
-      TMSRecoTree->SetBranchAddress("TimeSliceStartTime",    &_TMSStartTime);
-      //TMSLCTree->SetBranchAddress("TMSStartTime",            _TMSStartTime);
+      //TMSRecoTree->SetBranchAddress("TimeSliceStartTime",    &_TimeSliceStartTime);
+      TMSLCTree->SetBranchAddress("TMSStartTime",            _TMSStartTime);
       // Add Truth tree for the index of the true primary particles
       TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleVtxId", _RecoTrueVtxId);
       TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex", _RecoTruePartId);
@@ -148,8 +148,7 @@ namespace cafmaker
           interaction.tracks[total+j].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction.tracks[total+j].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          interaction.tracks[total+j].time    = (double) _TMSStartTime; //Adds time of interaction
-	  std::cout << "TMS FILLER TIME " << interaction.tracks[total+j].time << std::endl;
+          interaction.tracks[total+j].time    = (double) _TMSStartTime[j]; //Adds time of interaction
 
           // Track info
           //interaction.tracks[total+j].len_cm    = tmpLength_cm; //trackVec->Mag(); // TODO: Coming Soon™
