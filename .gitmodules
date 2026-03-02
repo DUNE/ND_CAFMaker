@@ -1,0 +1,3 @@
+[submodule "sandreco/sandreco"]
+	path = sandreco/sandreco
+	url = https://github.com/DUNE/sandreco.git
