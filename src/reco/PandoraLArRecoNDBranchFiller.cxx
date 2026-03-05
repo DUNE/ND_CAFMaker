@@ -30,6 +30,11 @@ namespace cafmaker
         throw;
       }
 
+      // Check if input file has Pandora Outerface fields. If false, fill
+      // Standard Record classes with default filler
+      const bool inputHasOuterfaceBranches = HasOuterfaceBranches();
+      std::cout << "Input file has Pandora Outerface branches? " << inputHasOuterfaceBranches << "\n";
+
       // Set branch addresses
       m_LArRecoNDTree->SetBranchAddress("event", &m_eventId);
       m_LArRecoNDTree->SetBranchAddress("run", &m_run);
@@ -60,58 +65,61 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("nuVtxZ", &m_nuVtxZVect);
       m_LArRecoNDTree->SetBranchAddress("isRecoPrimary", &m_isRecoPrimaryVect);
       m_LArRecoNDTree->SetBranchAddress("recoPDG", &m_recoPDGVect);
-      // TRACK VARIABLES (PANDORA OUTERFACE)
-      m_LArRecoNDTree->SetBranchAddress("trackScore", &m_trackScoreVect);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
-      m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitContained);
-      m_LArRecoNDTree->SetBranchAddress("trkfitWallDist", &m_trkfitWallDist);
-      m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
-      m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
-      m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthMuon", &m_trkfitPFromLengthMuon);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthProton", &m_trkfitPFromLengthProton);
-      m_LArRecoNDTree->SetBranchAddress("trkfitStartX", &m_trkfitStartX);
-      m_LArRecoNDTree->SetBranchAddress("trkfitStartY", &m_trkfitStartY);
-      m_LArRecoNDTree->SetBranchAddress("trkfitStartZ", &m_trkfitStartZ);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndX", &m_trkfitEndX);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndY", &m_trkfitEndY);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndZ", &m_trkfitEndZ);
-      m_LArRecoNDTree->SetBranchAddress("trkfitStartDirX", &m_trkfitStartDirX);
-      m_LArRecoNDTree->SetBranchAddress("trkfitStartDirY", &m_trkfitStartDirY);
-      m_LArRecoNDTree->SetBranchAddress("trkfitStartDirZ", &m_trkfitStartDirZ);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitEndDirX);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitEndDirY);
-      m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitEndDirZ);
-      // track fit calo
-      m_LArRecoNDTree->SetBranchAddress("trkfitTrackCaloE", &m_trkfitTrackCaloE);
-      m_LArRecoNDTree->SetBranchAddress("trkfitVisE", &m_trkfitVisE);
-      m_LArRecoNDTree->SetBranchAddress("trkfitSliceId", &m_trkfitSliceId);
-      m_LArRecoNDTree->SetBranchAddress("trkfitPfoId", &m_trkfitPfoId);
-      m_LArRecoNDTree->SetBranchAddress("trkfitX", &m_trkfitX);
-      m_LArRecoNDTree->SetBranchAddress("trkfitY", &m_trkfitY);
-      m_LArRecoNDTree->SetBranchAddress("trkfitZ", &m_trkfitZ);
-      m_LArRecoNDTree->SetBranchAddress("trkfitQ", &m_trkfitQ);
-      m_LArRecoNDTree->SetBranchAddress("trkfitRR", &m_trkfitRR);
-      m_LArRecoNDTree->SetBranchAddress("trkfitdx", &m_trkfitdx);
-      m_LArRecoNDTree->SetBranchAddress("trkfitdQdx", &m_trkfitdQdx);
-      m_LArRecoNDTree->SetBranchAddress("trkfitdEdx", &m_trkfitdEdx);
-      // SHOWER VARIABLES (PANDORA OUTERFACE)
-      m_LArRecoNDTree->SetBranchAddress("shwrfitLength", &m_shwrfitLength);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidX", &m_shwrfitCentroidX);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidY", &m_shwrfitCentroidY);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidZ", &m_shwrfitCentroidZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitStartX", &m_shwrfitStartX);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitStartY", &m_shwrfitStartY);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitStartZ", &m_shwrfitStartZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitDirX", &m_shwrfitDirX);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitDirY", &m_shwrfitDirY);
-      m_LArRecoNDTree->SetBranchAddress("shwrfitDirZ", &m_shwrfitDirZ);
-      m_LArRecoNDTree->SetBranchAddress("shwrSliceId", &m_shwrSliceId);
-      m_LArRecoNDTree->SetBranchAddress("shwrClusterId", &m_shwrClusterId);
-      m_LArRecoNDTree->SetBranchAddress("shwrdEdx", &m_shwrdEdx);
-      m_LArRecoNDTree->SetBranchAddress("shwrEnergy", &m_shwrEnergy);
+      if (inputHasOuterfaceBranches)
+      {
+        // TRACK VARIABLES (PANDORA OUTERFACE)
+        m_LArRecoNDTree->SetBranchAddress("trackScore", &m_trackScoreVect);
+        m_LArRecoNDTree->SetBranchAddress("trkfitPID_Mu", &m_trkfitPID_Mu);
+        m_LArRecoNDTree->SetBranchAddress("trkfitPID_Pro", &m_trkfitPID_Pro);
+        m_LArRecoNDTree->SetBranchAddress("trkfitPID_NDF", &m_trkfitPID_NDF);
+        m_LArRecoNDTree->SetBranchAddress("trkfitContained", &m_trkfitContained);
+        m_LArRecoNDTree->SetBranchAddress("trkfitWallDist", &m_trkfitWallDist);
+        m_LArRecoNDTree->SetBranchAddress("trkfitLength", &m_trkfitLength);
+        m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthMuon", &m_trkfitKEFromLengthMuon);
+        m_LArRecoNDTree->SetBranchAddress("trkfitKEFromLengthProton", &m_trkfitKEFromLengthProton);
+        m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthMuon", &m_trkfitPFromLengthMuon);
+        m_LArRecoNDTree->SetBranchAddress("trkfitPFromLengthProton", &m_trkfitPFromLengthProton);
+        m_LArRecoNDTree->SetBranchAddress("trkfitStartX", &m_trkfitStartX);
+        m_LArRecoNDTree->SetBranchAddress("trkfitStartY", &m_trkfitStartY);
+        m_LArRecoNDTree->SetBranchAddress("trkfitStartZ", &m_trkfitStartZ);
+        m_LArRecoNDTree->SetBranchAddress("trkfitEndX", &m_trkfitEndX);
+        m_LArRecoNDTree->SetBranchAddress("trkfitEndY", &m_trkfitEndY);
+        m_LArRecoNDTree->SetBranchAddress("trkfitEndZ", &m_trkfitEndZ);
+        m_LArRecoNDTree->SetBranchAddress("trkfitStartDirX", &m_trkfitStartDirX);
+        m_LArRecoNDTree->SetBranchAddress("trkfitStartDirY", &m_trkfitStartDirY);
+        m_LArRecoNDTree->SetBranchAddress("trkfitStartDirZ", &m_trkfitStartDirZ);
+        m_LArRecoNDTree->SetBranchAddress("trkfitEndDirX", &m_trkfitEndDirX);
+        m_LArRecoNDTree->SetBranchAddress("trkfitEndDirY", &m_trkfitEndDirY);
+        m_LArRecoNDTree->SetBranchAddress("trkfitEndDirZ", &m_trkfitEndDirZ);
+        // track fit calo
+        m_LArRecoNDTree->SetBranchAddress("trkfitTrackCaloE", &m_trkfitTrackCaloE);
+        m_LArRecoNDTree->SetBranchAddress("trkfitVisE", &m_trkfitVisE);
+        m_LArRecoNDTree->SetBranchAddress("trkfitSliceId", &m_trkfitSliceId);
+        m_LArRecoNDTree->SetBranchAddress("trkfitPfoId", &m_trkfitPfoId);
+        m_LArRecoNDTree->SetBranchAddress("trkfitX", &m_trkfitX);
+        m_LArRecoNDTree->SetBranchAddress("trkfitY", &m_trkfitY);
+        m_LArRecoNDTree->SetBranchAddress("trkfitZ", &m_trkfitZ);
+        m_LArRecoNDTree->SetBranchAddress("trkfitQ", &m_trkfitQ);
+        m_LArRecoNDTree->SetBranchAddress("trkfitRR", &m_trkfitRR);
+        m_LArRecoNDTree->SetBranchAddress("trkfitdx", &m_trkfitdx);
+        m_LArRecoNDTree->SetBranchAddress("trkfitdQdx", &m_trkfitdQdx);
+        m_LArRecoNDTree->SetBranchAddress("trkfitdEdx", &m_trkfitdEdx);
+        // SHOWER VARIABLES (PANDORA OUTERFACE)
+        m_LArRecoNDTree->SetBranchAddress("shwrfitLength", &m_shwrfitLength);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidX", &m_shwrfitCentroidX);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidY", &m_shwrfitCentroidY);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitCentroidZ", &m_shwrfitCentroidZ);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitStartX", &m_shwrfitStartX);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitStartY", &m_shwrfitStartY);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitStartZ", &m_shwrfitStartZ);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitDirX", &m_shwrfitDirX);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitDirY", &m_shwrfitDirY);
+        m_LArRecoNDTree->SetBranchAddress("shwrfitDirZ", &m_shwrfitDirZ);
+        m_LArRecoNDTree->SetBranchAddress("shwrSliceId", &m_shwrSliceId);
+        m_LArRecoNDTree->SetBranchAddress("shwrClusterId", &m_shwrClusterId);
+        m_LArRecoNDTree->SetBranchAddress("shwrdEdx", &m_shwrdEdx);
+        m_LArRecoNDTree->SetBranchAddress("shwrEnergy", &m_shwrEnergy);
+      }
       
       // We have setup the input tree
       SetConfigured(true);
@@ -192,12 +200,7 @@ namespace cafmaker
     sr.nd.lar.pandora.resize(nNeutrinos);
     sr.nd.lar.npandora = sr.nd.lar.pandora.size();
 
-    // Check if input file has Pandora Outerface fields. If false, fill
-    // Standard Record classes with default filler
-    const bool inputHasOuterfaceBranches = HasOuterfaceBranches();
-    LOG.VERBOSE() << "Input file has Pandora Outerface branches? " << inputHasOuterfaceBranches << "\n";
-
-    if (inputHasOuterfaceBranches)
+    if (HasOuterfaceBranches())
     {
       // Fill track and shower info. Both use the same clusters (PFOs), and no
       // distinction is made (yet) to identify which are tracks or showers.
@@ -220,13 +223,10 @@ namespace cafmaker
 
   bool PandoraLArRecoNDBranchFiller::HasOuterfaceBranches() const
   { // should come up with something more robust but ok for now? (to be deleted in the future anyway)
-    if (m_trkfitPID_Mu == nullptr &&
-        m_trkfitPID_Pro == nullptr &&
-        m_trkfitPID_NDF == nullptr &&
-        m_shwrfitLength == nullptr &&
-        m_shwrfitStartX == nullptr) return false;
-
-    return true;
+    if(m_LArRecoNDTree->GetBranch("trkfitStartX") && m_LArRecoNDTree->GetBranch("shwrfitStartX"))
+        return true;
+    
+    return false;
   }
 
   // ------------------------------------------------------------------------------
