@@ -525,7 +525,7 @@ namespace cafmaker
     caf::SRVector3D maxShowerEDir;
 
     for (int i = 0; i < nClusters; i++)
-      FillClusterDefault(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch, longestTrack, longestTrackDir, maxShowerE, maxShowerEDir);
+      FillClusterDefault(sr, i, uniqueSliceIDs, nuInteractions, truthMatch, longestTrack, longestTrackDir, maxShowerE, maxShowerEDir);
     
  }
  // ------------------------------------------------------------------------------
