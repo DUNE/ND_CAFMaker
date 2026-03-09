@@ -211,7 +211,6 @@ namespace cafmaker
     }
     else
     {
-      // TODO : delete this when pandora outerfaces has been merged into LArRecoND main
       FillRecoParticlesDefault(sr, nClusters, uniqueSliceIDs, nuInteractions, truthMatch);
     }
 
@@ -434,7 +433,7 @@ namespace cafmaker
       shower.start = start;
       shower.direction = dir;
       shower.Evis = energy;
-      shower.initial_dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[iCluster] : -999.;;
+      shower.initial_dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[iCluster] : -999.;
       shower.conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((start.X() - vtxX),2) + std::pow((start.Y() - vtxY),2) + std::pow((start.Z() - vtxZ),2)) : -999;
       shower.len_cm = distStartEnd;
       shower.truth = truePartIDVect;
@@ -506,6 +505,10 @@ namespace cafmaker
     // update total interaction neutrino energy
     interaction.Enu.calo += energy;
 
+    // Update interaction longest track direction
+    interaction.dir.lngtrk = longestTrackDir;
+    interaction.dir.heshw = maxShowerEDir;
+
  }
  
 // ------------------------------------------------------------------------------
@@ -526,7 +529,7 @@ namespace cafmaker
 
     for (int i = 0; i < nClusters; i++)
       FillClusterDefault(sr, i, uniqueSliceIDs, nuInteractions, truthMatch, longestTrack, longestTrackDir, maxShowerE, maxShowerEDir);
-    
+
  }
  // ------------------------------------------------------------------------------
  void PandoraLArRecoNDBranchFiller::FillRecoParticles(caf::StandardRecord &sr, const int nClusters,
@@ -541,6 +544,8 @@ namespace cafmaker
 
     // Value and direction of the longest track, value and direction of the most energetic shower
     float longestTrack{0.0};
+    float longestTrackE{0.0};
+    float longestTrackCaloE{0.0};
     float maxShowerE{0.0};
     caf::SRVector3D longestTrackDir;
     caf::SRVector3D maxShowerEDir;
@@ -655,10 +660,15 @@ namespace cafmaker
           {
             longestTrack = track.len_cm;
             longestTrackDir = track.dir;
+            longestTrackE = track.E;
+            longestTrackCaloE = (m_trkfitTrackCaloE != nullptr) ? (*m_trkfitTrackCaloE)[i] : 0.;
           }
 
           // Initialise total neutrino energy to zero
-          interaction.Enu.calo = track.Evis;
+          interaction.Enu.calo += track.Evis;
+
+          if (abs(recoParticle.pdg) == abs(m_muonPDG)) 
+            interaction.Enu.lep_calo = longestTrackE + longestTrackCaloE;
 
           sr.nd.lar.pandora[nuIndex].tracks.emplace_back(std::move(track));
           sr.nd.lar.pandora[nuIndex].ntracks++;
@@ -713,6 +723,9 @@ namespace cafmaker
           
           // Update total interaction neutrino energy
           interaction.Enu.calo += shower.Evis;
+
+          if (abs(recoParticle.pdg) == m_positronPDG || abs(recoParticle.pdg) == m_gammaPDG)
+            interaction.Enu.lep_calo = maxShowerE;
 
           sr.nd.lar.pandora[nuIndex].showers.emplace_back(std::move(shower));
           sr.nd.lar.pandora[nuIndex].nshowers++;
