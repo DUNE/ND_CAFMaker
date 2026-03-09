@@ -64,7 +64,7 @@ namespace cafmaker
       float _TrackEndDirection[10][3];
       float _Occupancy[10];
 
-      double _TMSStartTime[10];
+      float _TMSStartTime[10];
 
       float _DirectionX_Downstream[10];
       float _DirectionZ_Downstream[10];
