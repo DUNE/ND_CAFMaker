@@ -604,7 +604,6 @@ namespace cafmaker
       else
         track.E = part.mcs_ke / 1000.;
 
-      track.E = part.csda_ke/1000.; //range based energy
       track.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       track.end = caf::SRVector3D(part.end_point[0], part.end_point[1], part.end_point[2]);
       track.dir = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
