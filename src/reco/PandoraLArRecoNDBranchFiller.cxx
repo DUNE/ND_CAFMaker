@@ -403,7 +403,7 @@ namespace cafmaker
     const float dZ = endZ - startZ;
     const float distStartEnd = sqrt(dX * dX + dY * dY + dZ * dZ);
 
-    // Energy Pandora (MeV) --> CAF (GeV)
+    // Energy Pandora default Hierarchy analysis (MeV) --> CAF (GeV)
     const float energy = (m_energyVect != nullptr) ? (*m_energyVect)[iCluster]/1000. : 0.0;
 
     // Total number of 3D hits in the cluster
@@ -667,9 +667,6 @@ namespace cafmaker
           // Initialise total neutrino energy to zero
           interaction.Enu.calo += track.Evis;
 
-          if (abs(recoParticle.pdg) == abs(m_muonPDG)) 
-            interaction.Enu.lep_calo = longestTrackE + longestTrackCaloE;
-
           sr.nd.lar.pandora[nuIndex].tracks.emplace_back(std::move(track));
           sr.nd.lar.pandora[nuIndex].ntracks++;
 
@@ -723,9 +720,6 @@ namespace cafmaker
           
           // Update total interaction neutrino energy
           interaction.Enu.calo += shower.Evis;
-
-          if (abs(recoParticle.pdg) == m_positronPDG || abs(recoParticle.pdg) == m_gammaPDG)
-            interaction.Enu.lep_calo = maxShowerE;
 
           sr.nd.lar.pandora[nuIndex].showers.emplace_back(std::move(shower));
           sr.nd.lar.pandora[nuIndex].nshowers++;
