@@ -182,9 +182,6 @@ namespace cafmaker
       
       matched_tms.push_back(tmsid);
       matched_lar.push_back(larid);
-      std::cout << "-------------------------" << std::endl;
-      std::cout << "Matched LArID " << larid << std::endl;
-      std::cout << "Matched TMSID " << tmsid << std::endl;
       sr.nd.trkmatch.extrap.push_back(track_match); // adds successfully matched pair to StandardRecord of track matches
       sr.nd.trkmatch.nextrap += 1;
     }
@@ -203,20 +200,8 @@ namespace cafmaker
       }
       
       std::vector<double> proj_vec = Project_track(trk,true);
-      std::cout << "Projected LAr track X " << proj_vec[0] << std::endl;
-      std::cout << "TMS track X " << tms_trk.start.x << std::endl;
       double delta_x = tms_trk.start.x - proj_vec[0];
       double delta_y = tms_trk.start.y - proj_vec[1];
-      std::cout << "Delta X " << delta_x << std::endl;
-      std::cout << "Sigma X " << sigma_x << std::endl;
-      std::cout << "X Term " << delta_x/sigma_x << std::endl;
-      std::cout << " " << std::endl;
-      std::cout << "Projected LAr track Y " << proj_vec[1] << std::endl;
-      std::cout << "TMS track Y " << tms_trk.start.y << std::endl;
-      std::cout << "Delta Y " << delta_y << std::endl;
-      std::cout << "Sigma Y " << sigma_y << std::endl;
-      std::cout << "Y Term " << delta_y/sigma_y << std::endl;
-      std::cout << " " << std::endl;
 
       std::vector<double> angles = Angle_between_tracks(tms_trk,trk);
 
@@ -228,24 +213,12 @@ namespace cafmaker
 
       if (single_angle) {
         double angle = angles[2]; // overall angle between LAr and TMS track
-	std::cout << "Single Angle " << angles[2] << std::endl;
-	std::cout << "Sigma Angle " << sigma_angle << std::endl;
-	std::cout << "Angle Term " << angles[2]/sigma_angle << std::endl;
-	std::cout << " " << std::endl;
         matchScore = pow(delta_x/sigma_x,2) + pow(delta_y/sigma_y,2) + pow(angle/sigma_angle,2);
         // matchScore is a weighted sum of x and y distances between tracks (after projection) and angle between them
       }
       else {
         double angle_x = angles[0];
-	std::cout << "X Angle " << angles[0] << std::endl;
-        std::cout << "Sigma Angle X " << sigma_angle_x << std::endl;
-        std::cout << "X Angle Term " << angles[0]/sigma_angle_x << std::endl;
-	std::cout << " " << std::endl;
         double angle_y = angles[1]; // x and y components of LAr and TMS tracks
-	std::cout << "Y Angle " << angles[1] << std::endl;
-        std::cout << "Sigma Angle Y " << sigma_angle_y << std::endl;
-        std::cout << "Y Angle Term " << angles[1]/sigma_angle_y << std::endl;
-	std::cout << " " << std::endl;
         matchScore = pow(delta_x/sigma_x,2) + pow(delta_y/sigma_y,2) + pow(angle_x/sigma_angle_x,2)+ pow(angle_y/sigma_angle_y,2);
         // same as above except there are two angles not just one
       }
@@ -260,27 +233,25 @@ namespace cafmaker
 	const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
 	if (matchedPart != nullptr) {
 	  lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-          std::cout << "LAr Time " << lar_time << std::endl;
 	  // Eventually we'll want to fill the LAr time from the track rather than the particle (trk.time instead of matchedPart->time). 
 	  // But LAr tracks from SPINE don't have their time attribute filled yet, so we use the true particle for now to keep the matcher agnostic to the LAr reco method
 	  double tms_time = tms_trk.time;
-	  std::cout << "TMS Time " << tms_time << std::endl;
           delta_t = tms_time - lar_time;
-	  std::cout << "Delta T " << delta_t << std::endl;
-	  std::cout << "Mean T " << mean_t << std::endl;
-	  std::cout << "Sigma T " << sigma_t << std::endl;
-	  std::cout << "Numerator T " << delta_t-mean_t << std::endl;
-	  std::cout << "T Term " << (delta_t-meant_t)/sigma_t << std::endl;
-	  std::cout << " " << std::endl;
           matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
-	  // Following code is for checking if the particle IDs for matching tracks themselves match. Can be removed after debugging
-	  tOvTMS = tms_trk.truthOverlap;
+	  // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
+	  std::vector<float> tOvTMS = tms_trk.truthOverlap;
 	  std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
 	  int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
 	  caf::TrueParticleID partIDTMS = truIDsTMS[idx_max_TMS];
-	  std::cout << "Matchscore " << matchScore << std::endl;
-	  std::cout << "LAr Particle ID " << partID << std::endl;
-	  std::cout << "TMS Particle ID " << partIDTMS << std::endl;
+	  const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
+	  // TODO: Right now the partIDTMS values are nonsensical and the TMSPart->G4ID is always a null pointer. There are problems bringing TMS truth info into ND-CAFMaker
+	  // Uncomment the following once this has been fixed
+	  //if (TMSPart != nullptr) {
+	    //if (matchedPart->G4ID==TMSPart->G4ID) {
+		// TODO: Add "TrueMatch" boolean attribute to SRNDTrackAssn object and set to true if these G4IDs match 
+	      // }
+	  //  }
+     	 }
       }
 
       caf::SRTMSID tmsid;
@@ -300,10 +271,6 @@ namespace cafmaker
       }
       potential_match.tmsid = tmsid;
       potential_match.larid = larid;
-      std::cout << "LAr ID " << larid << std::endl;
-      std::cout << "TMS ID " << tmsid << std::endl;
-      std::cout << " " << std::endl;
-      std::cout << " " << std::endl;
       potential_match.matchScore = matchScore;
       potential_match.transdispl = sqrt(pow(delta_x,2)+pow(delta_y,2));
       potential_match.angdispl = cos(TMath::Pi()/180.0 * angles[2]);
@@ -375,7 +342,7 @@ namespace cafmaker
           copy(dlpTrkAssns.begin(), dlpTrkAssns.end(), back_inserter(possibleSPINEMatches));
         }
       }
-    }
+    
     if (possiblePandoraMatches.size() > 0) {
       Create_matches(possiblePandoraMatches,sr);
       }
@@ -383,6 +350,7 @@ namespace cafmaker
     if (possibleSPINEMatches.size() > 0) {
       Create_matches(possibleSPINEMatches,sr);
       }
+    }
   }
   // todo: this is a placeholder
   std::deque<Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int triggerType, bool beamOnly) const
