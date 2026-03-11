@@ -183,7 +183,7 @@ namespace cafmaker
 
           // As of Jan 2026 the Charge attribute in TMS output is the PDG value, -13 for mu+, 13 for mu-.
           // For CAF files we probably just want a +1 or -1 for the particle charge, so divide by 13 and multiply in a -
-          //interaction->tracks[0].charge    = -1 * _TrackCharge[j]/13; // TODO: UNCOMMENT BEFORE MERGE, REQUIRES NEW DUNEANAOBJ BUILD
+          interaction->tracks[0].charge    = -1 * _TrackCharge[j]/13;
 
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
