@@ -500,10 +500,12 @@ if (!vars.count("fcl")) {
 
   std::vector<std::string> GHEPFiles;
   std::string edepsimFile;
+  std::string sandFile;
   par().cafmaker().GHEPFiles(GHEPFiles);  // fills the vector in if the key is found
   par().cafmaker().edepsimFile(edepsimFile);  // fills the vector in if the key is found
+  par().cafmaker().sandRecoFile(sandFile);    // fills the vector in if the key is found
 
-  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !GHEPFiles.empty());
+  CAF caf(par().cafmaker().outputFile(), sandFile, par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !GHEPFiles.empty());
 
   loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 
