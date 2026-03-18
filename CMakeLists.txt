@@ -1,28 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
-
-# Derive version from the latest git tag (e.g. v4.9.0 → 4.9.0). Falls back to
-# 0.0.0 when building outside a git repository.
-find_package(Git QUIET)
-if(GIT_FOUND)
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} describe --tags --match "v*" --abbrev=0
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE _git_tag
-    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET
-    RESULT_VARIABLE _git_rc)
-  if(_git_rc EQUAL 0)
-    string(REGEX REPLACE "^v" "" _version "${_git_tag}")
-  else()
-    set(_version "0.0.0")
-  endif()
-else()
-  set(_version "0.0.0")
-endif()
-
-project(
-  ND_CAFMaker
-  VERSION ${_version}
-  LANGUAGES CXX)
+project(ND_CAFMaker LANGUAGES CXX)
+set(${PROJECT_NAME}_CMAKE_PROJECT_VERSION_STRING 5.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
