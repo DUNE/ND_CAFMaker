@@ -41,7 +41,7 @@ set_target_properties(
 
 # Versions are pinned by ndcaf_setup.sh; env vars are set by UPS at runtime.
 
-find_program(GENIE_CONFIG genie-config HINTS "$ENV{GENIE_INC}/../bin"
+find_program(GENIE_CONFIG genie-config HINTS "$ENV{GENIE_FQ_DIR}/bin"
                                              REQUIRED)
 
 execute_process(
@@ -50,7 +50,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 add_library(deps::genie INTERFACE IMPORTED)
 set_target_properties(
-  deps::genie PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "$ENV{GENIE_INC}/GENIE"
+  deps::genie PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "$ENV{GENIE_FQ_DIR}/include/GENIE"
                          INTERFACE_LINK_LIBRARIES "${_genie_libs}")
 
 if("$ENV{HDF5_FQ_DIR}" MATCHES "debug")
