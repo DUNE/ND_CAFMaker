@@ -35,7 +35,7 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
     flatCAFRecord = new flat::Flat<caf::StandardRecord>(flatCAFTree, "rec", "", 0);
   }
   // initialize standard record bits
-  if(cafSR) cafSR->Branch("rec", "caf::StandardRecord", &sr);
+  if(cafSR) cafSR->Branch("rec", "caf::StandardRecord", &sr);      
 
   // initialize geometric efficiency throw results
   geoEffThrowResults = new std::vector< std::vector < std::vector < uint64_t > > >();
