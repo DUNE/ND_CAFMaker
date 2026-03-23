@@ -3,6 +3,13 @@
 
 ##### current
 
+##### [v4.11.0] -- 2026-03-23
+* Additional SAND output ([PR #102](https://github.com/DUNE/ND_CAFMaker/pull/102))
+* ND-LAr <-> TMS matching using timing info (PRs [#105](https://github.com/DUNE/ND_CAFMaker/pull/105), [#127](https://github.com/DUNE/ND_CAFMaker/pull/127))
+* Significant expansion of Pandora output ([PR #110](https://github.com/DUNE/ND_CAFMaker/pull/110))
+* Better TMS truth-matching ([PR #111](https://github.com/DUNE/ND_CAFMaker/pull/111))
+* Make track-based energy estimates for SPINE work the same way as RecoParticles (PRs [#124](https://github.com/DUNE/ND_CAFMaker/pull/124), [#125](https://github.com/DUNE/ND_CAFMaker/pull/125))
+
 ##### [v4.10.0] -- 2025-10-23
 * Upgrade to `e26` build chain ([PR #108](https://github.com/DUNE/ND_CAFMaker/pull/108))
 
