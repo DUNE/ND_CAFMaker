@@ -70,6 +70,8 @@ namespace cafmaker
       TMSRecoTree->SetBranchAddress("EndPos",                _TrackEndPos);
       TMSRecoTree->SetBranchAddress("StartDirection",        _TrackStartDirection);
       TMSRecoTree->SetBranchAddress("EndDirection",          _TrackEndDirection);
+      //TMSRecoTree->SetBranchAddress("TimeSliceStartTime",    &_TimeSliceStartTime);
+      TMSLCTree->SetBranchAddress("TMSStartTime",            _TMSStartTime); // Temporary for prod n4p1, time avialable in Reco_Tree for future prods
 
       // Add Truth tree for the index of the true primary particles
       TMSTrueTree->SetBranchAddress("TrueVtxX",                       _TrueVtxX);
@@ -82,8 +84,6 @@ namespace cafmaker
       TMSTrueSpill->SetBranchAddress("VertexID",                       _TrueVtxId);
       TMSTrueSpill->SetBranchAddress("TrueVtxN",                       &_TrueVtxN);
       TMSTrueSpill->SetBranchAddress("RunNo",                          &_TrueRunNo);
-
-      TMSLCTree->SetBranchAddress("TMSStartTime",            &_TMSStartTime); // Temporary for prod n4p1, time avialable in Reco_Tree for future prods
 
     } else {
       fTMSRecoFile = NULL;
@@ -132,7 +132,6 @@ namespace cafmaker
 
     int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
     TMSRecoTree->GetEntry(i); // Load first entry for now
-    TMSLCTree->GetEntry(i);
     LastSpillNo = _SpillNo;
 
     caf::SRTMSInt *interaction;
@@ -155,7 +154,7 @@ namespace cafmaker
     // the i index is incremented at the end of the following while()
     TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
     TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
-
+    TMSLCTree->GetEntry(i); 
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
       if (_nTracks > 0)
@@ -173,7 +172,7 @@ namespace cafmaker
           interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          interaction->tracks[0].time    = _TMSStartTime[j]; //Adds time of interaction // TODO: use _TrackTime after prod n4p1
+          interaction->tracks[0].time    = static_cast<double>(_TMSStartTime[j]); //Adds time of interaction // TODO: use _TrackTime after prod n4p1
 
           // Track info
           interaction->tracks[0].len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
