@@ -132,7 +132,6 @@ namespace cafmaker
 
     int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
     TMSRecoTree->GetEntry(i); // Load first entry for now
-    //TMSLCTree->GetEntry(i);
     LastSpillNo = _SpillNo;
 
     caf::SRTMSInt *interaction;
