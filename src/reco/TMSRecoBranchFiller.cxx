@@ -172,7 +172,7 @@ namespace cafmaker
           interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          interaction->tracks[0].time    = (double) _TMSStartTime[j]; //Adds time of interaction // TODO: use _TrackTime after prod n4p1
+          interaction->tracks[0].time    = static_cast<double>(_TMSStartTime[j]); //Adds time of interaction // TODO: use _TrackTime after prod n4p1
 
           // Track info
           interaction->tracks[0].len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
