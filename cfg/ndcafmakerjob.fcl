@@ -30,3 +30,4 @@ nd_cafmaker.CAFMakerSettings.EdepsimFile: "/pnfs/dune/persistent/physicsgroups/d
 nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/pnfs/dune/persistent/physicsgroups/dunendsim/abooth/nd-production/MicroProdN4p1/run-mlreco/MicroProdN4p1_NDComplex_FHC.spine.full/MLRECO_SPINE/0002000/0002400/MicroProdN4p1_NDComplex_FHC.spine.full.0002460.MLRECO_SPINE.hdf5"
 nd_cafmaker.CAFMakerSettings.TMSRecoFile:   "/pnfs/dune/persistent/physicsgroups/dunendsim/abooth/nd-production/MicroProdN4p1/run-tms-reco/MicroProdN4p1_NDComplex_FHC.tmsreco.full/TMSRECO/0002000/0002400/MicroProdN4p1_NDComplex_FHC.tmsreco.full.0002460.TMSRECO.root"
 nd_cafmaker.CAFMakerSettings.OutputFile:    "example-CAF.root"
+#nd_cafmaker.CAFMakerSettings.SANDRecoFile: "/exp/dune/app/users/dcasazza/ND_CAFMaker/events-in-SANDtracker.1.reco.root"
