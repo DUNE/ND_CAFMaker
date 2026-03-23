@@ -162,10 +162,10 @@ namespace cafmaker
     LOG_S("TruthMatcher::FillInteraction").VERBOSE() << "Modifying GENIE vertex from (" << vtx.X() << "," << vtx.Y() << "," << vtx.Z() << ")"
                                                      << " to (" << nu_vtx.X() << "," << nu_vtx.Y() << "," << nu_vtx.Z() << ")"
                                                      << " to account for change in units from m to cm\n";
-   nu.vtx = nu_vtx;
+    nu.vtx = nu_vtx;
 
     // we can't fill the time, however, because that's changed by spill building
-//    nu.time = vtx.T();
+    nu.time = vtx.T();
 
     nu.pdg = in->InitState().ProbePdg();
     nu.pdgorig = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
@@ -235,6 +235,7 @@ namespace cafmaker
 //      part.start_pos = p->X4()->Vect();
       // remaining fields need to be filled in with post-G4 info
 
+
       std::string process;
       if( p->Status() == genie::EGHepStatus::kIStStableFinalState )
       {
@@ -243,6 +244,7 @@ namespace cafmaker
           auto traj = g4event->Trajectories[part.G4ID];
           auto p0 = traj.Points[0];
           part.start_pos = (p0.Position * .1).Vect();
+          part.time = p0.Position.T();
 
           auto pf = traj.Points[traj.Points.size()-1];
           part.end_pos = (pf.Position * .1).Vect();
@@ -528,7 +530,6 @@ namespace cafmaker
 
     auto p0 = traj.Points[0];
     part.start_pos = (p0.Position * .1).Vect();
-    part.time = p0.Position.T(); //This time is not behaving correctly, but may be useful for matching if we get time-based matching working
 
     auto pf = traj.Points[traj.Points.size()-1];
     part.end_pos = (pf.Position * .1).Vect();
