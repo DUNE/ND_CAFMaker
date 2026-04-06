@@ -260,7 +260,7 @@ namespace cafmaker
 	  if (TMSPart != nullptr) {
 	    if (matchedPart->G4ID==TMSPart->G4ID) {
 		// TODO: Add "TrueMatch" boolean attribute to the TrackAssn and set to true
-		std::cout << "True Match!" << std::endl; 
+		// std::cout << "True Match!" << std::endl; 
 	       }
 	    }
      	 }
