@@ -3,6 +3,9 @@
 
 ##### current
 
+##### [v4.11.1] -- 2026-04-06
+* Don't assume correct truth-matching for cheated track matching ([PR #131](https://github.com/DUNE/ND_CAFMaker/pull/131))
+
 ##### [v4.11.0] -- 2026-03-23
 * Additional SAND output ([PR #102](https://github.com/DUNE/ND_CAFMaker/pull/102))
 * ND-LAr <-> TMS matching using timing info (PRs [#105](https://github.com/DUNE/ND_CAFMaker/pull/105), [#127](https://github.com/DUNE/ND_CAFMaker/pull/127))
