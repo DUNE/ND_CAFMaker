@@ -229,7 +229,7 @@ namespace cafmaker
 	bool timeFail = false;
 	std::vector<float> tOv = trk.truthOverlap;
 	std::vector<caf::TrueParticleID> truIDs = trk.truth;
-	if (tOv.size() == 0) {
+	if (tOv.empty()) {
 	  timeFail = true;
 	}
 	if (truIDs.size() == 0) {
