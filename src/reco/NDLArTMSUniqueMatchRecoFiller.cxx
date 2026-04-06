@@ -232,7 +232,7 @@ namespace cafmaker
 	if (tOv.empty()) {
 	  timeFail = true;
 	}
-	if (truIDs.size() == 0) {
+	if (truIDs.empty()) {
 	  timeFail = true;
 	}
 	if (truIDs.size() != tOv.size()) {
