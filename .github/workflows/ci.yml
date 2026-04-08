@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (prof)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Apptainer
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get update -qq
+          sudo apt-get install -y apptainer
+
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
+
+      # NOTE: bash -c (no -e) is required. UPS products/setup uses &&/|| chains
+      # that return non-zero when running under sh (e.g. "test $ss = csh && ...").
+      # bash -e would treat those as fatal errors. Interactive singularity shells
+      # work because set -e is off by default. cmake exits are checked explicitly.
+      - name: Build
+        run: |
+          apptainer exec \
+            --bind /cvmfs \
+            --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
+            bash -c "
+              cd '${GITHUB_WORKSPACE}'
+              source ndcaf_setup.sh prof
+              cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || exit \$?
+              cmake --build build -j\$(nproc) || exit \$?
+            " 2>&1
