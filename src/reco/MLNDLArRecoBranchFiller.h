@@ -84,7 +84,7 @@ namespace cafmaker
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
-      
+      mutable std::map<int64_t, std::pair<size_t, size_t>> fParticleMap; ///< key: input SPINE particle ID (used as unique key), value: pair of indices in (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) vectors; main purpose is to enable linkage between low-level <-> high-level recoobjects
 
       
   };  // class MLNDLArRecoBranchFiller

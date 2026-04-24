@@ -171,6 +171,9 @@ namespace cafmaker
     
     sr.meta.lar2x2.readoutstart_s = trigger.triggerTime_s;
     sr.meta.lar2x2.readoutstart_ns = trigger.triggerTime_ns;
+    
+    // reset the map of SPINE particle ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for this entry
+    fParticleMap.clear();
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
@@ -571,8 +574,15 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
-      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.ndlp++;
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the particle within the sr.common.ixn.dlp.part.dlp vector
+      auto prt_idx = sr.common.ixn.dlp[ixn_idx].part.dlp.size();
+      // save the indices for this particle so we can get it back later
+      fParticleMap[part.id] = std::make_pair(ixn_idx, prt_idx);
+      // fill the reco particle
+      sr.common.ixn.dlp[ixn_idx].part.dlp.push_back(std::move(reco_particle));
+      sr.common.ixn.dlp[ixn_idx].part.ndlp++;
 
     }
   }
@@ -686,8 +696,22 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].ntracks++;
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the track within the sr.nd.lar.dlp[ixn_idx].tracks vector (i.e., the number of tracks already there, since we're about to add this one)
+      auto trk_idx = sr.nd.lar.dlp[ixn_idx].tracks.size();
+      // fill the SRRecoParticleID info
+      track.part.ixn = fParticleMap.at(part.id).first; // this is the index of the interaction within the sr.common.ixn.dlp vector
+      track.part.ipart = fParticleMap.at(part.id).second; // this is the index within the vector of particles for this interaction
+      track.part.type = caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE;
+      // get a reference to the right SRRecoParticle and update its recoobj info
+      auto &srPart = sr.common.ixn.dlp.at(fParticleMap.at(part.id).first).part.dlp.at(fParticleMap.at(part.id).second);
+      srPart.recoobj.ixn = ixn_idx;
+      srPart.recoobj.irecoobj = trk_idx;
+      srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPTrack;
+      // fill the track branch
+      sr.nd.lar.dlp[ixn_idx].tracks.push_back(std::move(track));
+      sr.nd.lar.dlp[ixn_idx].ntracks++;
     }
   }
 
