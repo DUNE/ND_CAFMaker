@@ -696,6 +696,7 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
+      
       // index of the interaction within the sr.common.ixn.dlp vector
       auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
       // index of the track within the sr.nd.lar.dlp[ixn_idx].tracks vector (i.e., the number of tracks already there, since we're about to add this one)
@@ -809,8 +810,23 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].nshowers++;
+      
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the shower within the sr.nd.lar.dlp[ixn_idx].showers vector (i.e., the number of showers already there, since we're about to add this one)
+      auto shw_idx = sr.nd.lar.dlp[ixn_idx].showers.size();
+      // fill the SRRecoParticleID info
+      shower.part.ixn = fParticleMap.at(part.id).first; // this is the index of the interaction within the sr.common.ixn.dlp vector
+      shower.part.ipart = fParticleMap.at(part.id).second; // this is the index within the vector of particles for this interaction
+      shower.part.type = caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE;
+      // get a reference to the right SRRecoParticle and update its recoobj info
+      auto &srPart = sr.common.ixn.dlp.at(fParticleMap.at(part.id).first).part.dlp.at(fParticleMap.at(part.id).second);
+      srPart.recoobj.ixn = ixn_idx;
+      srPart.recoobj.irecoobj = shw_idx;
+      srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPShower;
+      // fill the shower branch
+      sr.nd.lar.dlp[ixn_idx].showers.push_back(std::move(shower));
+      sr.nd.lar.dlp[ixn_idx].nshowers++;
 
     }
   }
