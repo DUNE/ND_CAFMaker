@@ -94,7 +94,7 @@ namespace cafmaker
 
           caf::SRRecoParticleID GetRecoParticleID(int64_t partID) const;
 
-          caf::SRRecoParticle& GetRecoParticle(caf::StandardRecord & sr, size_t ixn_idx, size_t prt_idx) const;
+          caf::SRRecoParticle& GetRecoParticle(caf::StandardRecord & sr, int64_t partID) const;
 
           std::pair<size_t, size_t>& operator[](int64_t partID) { return fParticleMap[partID]; }
 

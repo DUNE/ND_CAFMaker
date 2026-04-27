@@ -130,8 +130,15 @@ namespace cafmaker
     return caf::SRRecoParticleID{static_cast<int>(ixn_idx), caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE, static_cast<int>(prt_idx)};
   }
 
-  caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, size_t ixn_idx, size_t prt_idx) const
+  caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, int64_t partID) const
   {
+    if(fParticleMap.find(partID) == fParticleMap.end())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: could not find particle ID " << partID << " in the particle map! Abort.\n";
+      abort();
+    }
+    auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
+
     if(ixn_idx >= sr.common.ixn.dlp.size())
     {
       LOG.FATAL() << "MLNDLArRecoParticleMapper: interaction index " << ixn_idx << " is out of range for sr.common.ixn.dlp with size " << sr.common.ixn.dlp.size() << "! Abort.\n";
@@ -731,7 +738,7 @@ namespace cafmaker
       // fill the SRRecoParticleID info
       track.part = fParticleMapper.GetRecoParticleID(part.id);
       // get a reference to the right SRRecoParticle and update its recoobj info
-      auto &srPart = fParticleMapper.GetRecoParticle(sr, ixn_idx, trk_idx);
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, part.id);
       srPart.recoobj.ixn = ixn_idx;
       srPart.recoobj.irecoobj = trk_idx;
       srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPTrack;
@@ -843,7 +850,7 @@ namespace cafmaker
       // fill the SRRecoParticleID info
       shower.part = fParticleMapper.GetRecoParticleID(part.id);
       // get a reference to the right SRRecoParticle and update its recoobj info
-      auto &srPart = fParticleMapper.GetRecoParticle(sr, ixn_idx, shw_idx);
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, part.id);
       srPart.recoobj.ixn = ixn_idx;
       srPart.recoobj.irecoobj = shw_idx;
       srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPShower;
