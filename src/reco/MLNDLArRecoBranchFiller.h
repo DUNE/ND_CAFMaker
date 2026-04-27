@@ -20,6 +20,8 @@ namespace caf
 {
   class SRTrueInteraction;
   class SRTrueParticle;
+  class SRRecoParticleID;
+  class SRRecoParticle;
 }
 
 namespace cafmaker
@@ -84,7 +86,25 @@ namespace cafmaker
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
-      mutable std::map<int64_t, std::pair<size_t, size_t>> fParticleMap; ///< key: input SPINE particle ID (used as unique key), value: pair of indices in (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) vectors; main purpose is to enable linkage between low-level <-> high-level recoobjects
+
+      class MLNDLArRecoParticleMapper: public Loggable {
+        ///< helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+        public:
+          MLNDLArRecoParticleMapper(cafmaker::Logger::THRESHOLD logThresh=cafmaker::Logger::THRESHOLD::WARNING) : Loggable("MLNDLArRecoParticleMapper", logThresh) {}
+
+          caf::SRRecoParticleID GetRecoParticleID(int64_t partID) const;
+
+          caf::SRRecoParticle& GetRecoParticle(caf::StandardRecord & sr, size_t ixn_idx, size_t prt_idx) const;
+
+          std::pair<size_t, size_t>& operator[](int64_t partID) { return fParticleMap[partID]; }
+
+          void Reset() { fParticleMap.clear(); }
+
+        private:
+          std::map<int64_t, std::pair<size_t, size_t>> fParticleMap;
+      };
+
+      mutable MLNDLArRecoParticleMapper fParticleMapper; ///< helper object to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
 
       
   };  // class MLNDLArRecoBranchFiller

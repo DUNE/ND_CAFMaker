@@ -117,6 +117,23 @@ namespace cafmaker
 
   }
 
+  // ------------------------------------------------------------------------------
+  // helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+  caf::SRRecoParticleID MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticleID(int64_t partID) const
+  {
+    if(fParticleMap.find(partID) == fParticleMap.end())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: could not find particle ID " << partID << " in the particle map! Abort.\n";
+      abort();
+    }
+    auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
+    return caf::SRRecoParticleID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE, prt_idx};
+  }
+
+  caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, size_t ixn_idx, size_t prt_idx) const
+  {
+    return sr.common.ixn.dlp[ixn_idx].part.dlp[prt_idx];
+  }
 
   // ------------------------------------------------------------------------------
   // todo: possibly build some mechanism for customizing the dataset names in the file here
@@ -173,7 +190,7 @@ namespace cafmaker
     sr.meta.lar2x2.readoutstart_ns = trigger.triggerTime_ns;
     
     // reset the map of SPINE particle ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for this entry
-    fParticleMap.clear();
+    fParticleMapper.Reset();
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
@@ -579,7 +596,7 @@ namespace cafmaker
       // index of the particle within the sr.common.ixn.dlp.part.dlp vector
       auto prt_idx = sr.common.ixn.dlp[ixn_idx].part.dlp.size();
       // save the indices for this particle so we can get it back later
-      fParticleMap[part.id] = std::make_pair(ixn_idx, prt_idx);
+      fParticleMapper[part.id] = {ixn_idx, prt_idx};
       // fill the reco particle
       sr.common.ixn.dlp[ixn_idx].part.dlp.push_back(std::move(reco_particle));
       sr.common.ixn.dlp[ixn_idx].part.ndlp++;
@@ -702,11 +719,9 @@ namespace cafmaker
       // index of the track within the sr.nd.lar.dlp[ixn_idx].tracks vector (i.e., the number of tracks already there, since we're about to add this one)
       auto trk_idx = sr.nd.lar.dlp[ixn_idx].tracks.size();
       // fill the SRRecoParticleID info
-      track.part.ixn = fParticleMap.at(part.id).first; // this is the index of the interaction within the sr.common.ixn.dlp vector
-      track.part.ipart = fParticleMap.at(part.id).second; // this is the index within the vector of particles for this interaction
-      track.part.type = caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE;
+      track.part = fParticleMapper.GetRecoParticleID(part.id);
       // get a reference to the right SRRecoParticle and update its recoobj info
-      auto &srPart = sr.common.ixn.dlp.at(fParticleMap.at(part.id).first).part.dlp.at(fParticleMap.at(part.id).second);
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, ixn_idx, trk_idx);
       srPart.recoobj.ixn = ixn_idx;
       srPart.recoobj.irecoobj = trk_idx;
       srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPTrack;
@@ -816,11 +831,9 @@ namespace cafmaker
       // index of the shower within the sr.nd.lar.dlp[ixn_idx].showers vector (i.e., the number of showers already there, since we're about to add this one)
       auto shw_idx = sr.nd.lar.dlp[ixn_idx].showers.size();
       // fill the SRRecoParticleID info
-      shower.part.ixn = fParticleMap.at(part.id).first; // this is the index of the interaction within the sr.common.ixn.dlp vector
-      shower.part.ipart = fParticleMap.at(part.id).second; // this is the index within the vector of particles for this interaction
-      shower.part.type = caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE;
+      shower.part.ixn = fParticleMapper.GetRecoParticleID(part.id);
       // get a reference to the right SRRecoParticle and update its recoobj info
-      auto &srPart = sr.common.ixn.dlp.at(fParticleMap.at(part.id).first).part.dlp.at(fParticleMap.at(part.id).second);
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, ixn_idx, shw_idx);
       srPart.recoobj.ixn = ixn_idx;
       srPart.recoobj.irecoobj = shw_idx;
       srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPShower;
