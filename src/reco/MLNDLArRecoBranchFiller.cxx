@@ -132,7 +132,17 @@ namespace cafmaker
 
   caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, size_t ixn_idx, size_t prt_idx) const
   {
-    return sr.common.ixn.dlp[ixn_idx].part.dlp[prt_idx];
+    if(ixn_idx >= sr.common.ixn.dlp.size())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: interaction index " << ixn_idx << " is out of range for sr.common.ixn.dlp with size " << sr.common.ixn.dlp.size() << "! Abort.\n";
+      abort();
+    }
+    if(prt_idx >= sr.common.ixn.dlp.at(ixn_idx).part.dlp.size())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: particle index " << prt_idx << " is out of range for sr.common.ixn.dlp[" << ixn_idx << "].part.dlp with size " << sr.common.ixn.dlp.at(ixn_idx).part.dlp.size() << "! Abort.\n";
+      abort();
+    }
+    return sr.common.ixn.dlp.at(ixn_idx).part.dlp.at(prt_idx);
   }
 
   // ------------------------------------------------------------------------------
