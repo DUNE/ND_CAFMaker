@@ -426,9 +426,19 @@ namespace cafmaker
     FillTruthInfo(iCluster, truthMatch, sr, truePartID);
     truePartIDVect.emplace_back(truePartID);
 
+    // Instantiate SRRecoParticleID and SRRecoBaseID
+    int ixn_idx = nuIndex;
+    int prt_idx = nuInteractions[nuIndex].part.pandora.size(); // this will be the index of the particle in the interaction's particle vector after we add it
+    caf::SRRecoParticleID recoPartID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kPandora, prt_idx};
+    caf::SRRecoBaseID recoBaseID;
+
     if (isShower) // fill sr shower
     {
       caf::SRShower shower;
+
+      int robj_idx = sr.nd.lar.pandora[nuIndex].showers.size(); // this will be the index of the shower in the interaction's shower vector after we add it
+      recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLARPandoraShower, robj_idx};
+      shower.part = recoPartID;
 
       shower.start = start;
       shower.direction = dir;
@@ -451,6 +461,10 @@ namespace cafmaker
     else // fill sr track
     {
       caf::SRTrack track;
+
+      int robj_idx = sr.nd.lar.pandora[nuIndex].tracks.size(); // this will be the index of the track in the interaction's track vector after we add it
+      recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArPandoraTrack, robj_idx};
+      track.part = recoPartID;
 
       track.start = start;
       track.end = end;
@@ -477,6 +491,8 @@ namespace cafmaker
     
     // now fill the SR reco particle
     caf::SRRecoParticle recoParticle;
+
+    recoParticle.recoobj = recoBaseID;
 
     recoParticle.E = energy;
     recoParticle.E_method = caf::PartEMethod::kCalorimetry;
