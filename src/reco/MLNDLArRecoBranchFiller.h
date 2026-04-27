@@ -87,7 +87,8 @@ namespace cafmaker
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
 
-      class MLNDLArRecoParticleMapper: public Loggable {
+      class MLNDLArRecoParticleMapper: public Loggable 
+      {
         ///< helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
         public:
           MLNDLArRecoParticleMapper(cafmaker::Logger::THRESHOLD logThresh=cafmaker::Logger::THRESHOLD::WARNING) : Loggable("MLNDLArRecoParticleMapper", logThresh) {}
@@ -95,8 +96,6 @@ namespace cafmaker
           caf::SRRecoParticleID GetRecoParticleID(int64_t partID) const;
 
           caf::SRRecoParticle& GetRecoParticle(caf::StandardRecord & sr, int64_t partID) const;
-
-          std::pair<size_t, size_t>& operator[](int64_t partID) { return fParticleMap[partID]; }
 
           void Reset() { fParticleMap.clear(); }
 
