@@ -127,7 +127,7 @@ namespace cafmaker
       abort();
     }
     auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
-    return caf::SRRecoParticleID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE, prt_idx};
+    return caf::SRRecoParticleID{static_cast<int>(ixn_idx), caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE, static_cast<int>(prt_idx)};
   }
 
   caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, size_t ixn_idx, size_t prt_idx) const
@@ -831,7 +831,7 @@ namespace cafmaker
       // index of the shower within the sr.nd.lar.dlp[ixn_idx].showers vector (i.e., the number of showers already there, since we're about to add this one)
       auto shw_idx = sr.nd.lar.dlp[ixn_idx].showers.size();
       // fill the SRRecoParticleID info
-      shower.part.ixn = fParticleMapper.GetRecoParticleID(part.id);
+      shower.part = fParticleMapper.GetRecoParticleID(part.id);
       // get a reference to the right SRRecoParticle and update its recoobj info
       auto &srPart = fParticleMapper.GetRecoParticle(sr, ixn_idx, shw_idx);
       srPart.recoobj.ixn = ixn_idx;
@@ -840,7 +840,6 @@ namespace cafmaker
       // fill the shower branch
       sr.nd.lar.dlp[ixn_idx].showers.push_back(std::move(shower));
       sr.nd.lar.dlp[ixn_idx].nshowers++;
-
     }
   }
 
