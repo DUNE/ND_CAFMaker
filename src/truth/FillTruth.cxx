@@ -669,7 +669,13 @@ namespace cafmaker
       LOG.FATAL() << ss.str();
       throw std::range_error(ss.str());
     }
-    it_tree->second->GetEntry(evtNum);
+    if (it_tree->second->GetEntry(evtNum) == 0)
+    {
+      std::stringstream ss;
+      ss << "Event number " << evtNum << " was not found in run: " << runNum \n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
   }
 
   // ------------------------------------------------------------
