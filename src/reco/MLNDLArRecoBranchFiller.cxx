@@ -118,7 +118,9 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  // helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+  // Helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+  // This method is `const` because it applies to the _mapper_--- we're not changing the mapping---  
+  // but the returned instance is part of the SR itself and can be modified  
   caf::SRRecoParticleID MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticleID(int64_t partID) const
   {
     if(fParticleMap.find(partID) == fParticleMap.end())
