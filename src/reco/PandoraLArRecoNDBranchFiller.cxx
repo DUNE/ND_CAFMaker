@@ -614,7 +614,7 @@ namespace cafmaker
       // Store interaction info
       caf::SRInteraction &interaction = nuInteractions[nuIndex];
 
-      // Track truth info
+      // Truth info
       const caf::TrueParticleID trackTrueID = (truePartIDVect.size() > 0) ? truePartIDVect[0] : nullTrueID;
       const int trackIxn = trackTrueID.ixn;
       const float trackOverlap = (truthOverlap.size() > 0) ? truthOverlap[0] : 0.0;
@@ -759,9 +759,9 @@ namespace cafmaker
         interaction.truth.emplace_back(trackIxn);
         interaction.truthOverlap.emplace_back(trackOverlap);
       }
-      else // m_trackScoreVect is nullptr: use default cluster filling (handles particle creation internally)
+      else // trackfit failed: neither track nor shower
       {
-        LOG.DEBUG() << "m_trackScoreVect is nullptr for particle number : " << i << ", using FillClusterDefault\n";
+        LOG.DEBUG() << "trackfit failed for particle number : " << i << ", assigning pdg 0\n";
         FillClusterDefault(sr, i, uniqueSliceIDs, nuInteractions, truthMatch, longestTrack, longestTrackDir, maxShowerE, maxShowerEDir);
         continue;
       }
