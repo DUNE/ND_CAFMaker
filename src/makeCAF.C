@@ -423,7 +423,15 @@ void loop(CAF &caf,
     std::cerr << "Requested number of events (" << N << ") is non-positive!  Abort.\n";
     abort();
   }
-  
+
+  if (start + N > static_cast<int>(groupedTriggers.size()))
+  {
+    cafmaker::LOG_S("loop()").WARNING() << "Requested number of events (" << N << ") goes beyond the total number of triggers (" << groupedTriggers.size()
+                                        << ") starting from the requested starting event (" << start << "). "
+                                        << "Will only process " << (groupedTriggers.size() - start) << " triggers.\n";
+    N = groupedTriggers.size() - start;
+  }
+
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
   
