@@ -763,7 +763,6 @@ namespace cafmaker
       {
         LOG.DEBUG() << "trackfit failed for particle number : " << i << ", assigning pdg 0\n";
         FillClusterDefault(sr, i, uniqueSliceIDs, nuInteractions, truthMatch, longestTrack, longestTrackDir, maxShowerE, maxShowerEDir);
-        continue;
       }
 
       // Update interaction longest track direction
