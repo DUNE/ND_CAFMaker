@@ -310,7 +310,7 @@ namespace cafmaker
      shower.direction = dir;
      shower.time = -999.; // TODO to be filled at some point
      shower.Evis = (*m_shwrEnergy)[i]/1000.; // [GeV]
-     shower.qual = (*m_trackScoreVect)[i]; // saving the trackScore value as additional reco info. This provides a sort of degree of “shower-likeness” for this SRShower
+     shower.qual = (*m_trackScoreVect)[i]; // saving the trackScore value as additional reco info. This provides a sort of degree of "shower-likeness" for this SRShower
      shower.len_cm = shwrLength;
      shower.initial_dEdx = dEdx;
      shower.conversionGap = conversionGap;
@@ -614,22 +614,23 @@ namespace cafmaker
       // Store interaction info
       caf::SRInteraction &interaction = nuInteractions[nuIndex];
 
-      // Track reco particle
-      caf::SRRecoParticle recoParticle;
-            
       // Truth info
-      recoParticle.truth = truePartIDVect;
-      recoParticle.truthOverlap = truthOverlap;
       const caf::TrueParticleID trackTrueID = (truePartIDVect.size() > 0) ? truePartIDVect[0] : nullTrueID;
       const int trackIxn = trackTrueID.ixn;
       const float trackOverlap = (truthOverlap.size() > 0) ? truthOverlap[0] : 0.0;
 
-      // Is reco primary & reco PDG hypothesis
-      const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
-      recoParticle.primary = (isRecoPrimary == 1) ? true : false;
-
       if (m_trackScoreVect != nullptr)
       {
+        // Track reco particle
+        caf::SRRecoParticle recoParticle;
+              
+        // Truth info
+        recoParticle.truth = truePartIDVect;
+        recoParticle.truthOverlap = truthOverlap;
+
+        // Is reco primary & reco PDG hypothesis
+        const int isRecoPrimary = (m_isRecoPrimaryVect != nullptr) ? (*m_isRecoPrimaryVect)[i] : 0;
+        recoParticle.primary = (isRecoPrimary == 1) ? true : false;
         recoParticle.contained = (m_trkfitContained != nullptr) ? (*m_trkfitContained)[i] : false;
         
         bool isTrackFitFailed = ((*m_trkfitLength)[i] < std::numeric_limits<float>::epsilon());
@@ -645,7 +646,7 @@ namespace cafmaker
 
           // Total number of 3D hits in the cluster
           const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
-          track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of “track-likeness” for this SRTrack
+          track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of "track-likeness" for this SRTrack
           track.start = recoParticle.start;
           track.end = recoParticle.end;
           track.len_cm = (*m_trkfitLength)[i];
@@ -749,20 +750,20 @@ namespace cafmaker
                     << ", "               << recoParticle.p.Z()
                     << ")"
                     << "\n";
+
+        // Add particle to the interaction
+        interaction.part.pandora.emplace_back(std::move(recoParticle));
+        interaction.part.npandora++;
+
+        // Add track truth info
+        interaction.truth.emplace_back(trackIxn);
+        interaction.truthOverlap.emplace_back(trackOverlap);
       }
       else // trackfit failed: neither track nor shower
       {
         LOG.DEBUG() << "trackfit failed for particle number : " << i << ", assigning pdg 0\n";
         FillClusterDefault(sr, i, uniqueSliceIDs, nuInteractions, truthMatch, longestTrack, longestTrackDir, maxShowerE, maxShowerEDir);
       }
-
-      // Add particle to the interaction
-      interaction.part.pandora.emplace_back(std::move(recoParticle));
-      interaction.part.npandora++;
-
-      // Add track truth info
-      interaction.truth.emplace_back(trackIxn);
-      interaction.truthOverlap.emplace_back(trackOverlap);
 
       // Update interaction longest track direction
       interaction.dir.lngtrk = longestTrackDir;
