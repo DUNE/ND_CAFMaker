@@ -73,7 +73,9 @@ See the README there for instructions on how to set it up and modify it.
 
 ## Known Limitations
 
-ROOT's `TTreeFormula` class has an intrinsic limitation: it supports only 2 levels of variable-sized collections. This prevents correct scanning of complex `duneanaobj` fields using `TTree::Scan`. For example, scanning fields like `rec.nd.lar.tracks.truthOverlap` may produce incomplete or incorrect output, with some entries not properly displayed.
+ROOT's `TTreeFormula` class has an intrinsic limitation: it supports only 2 levels of variable-sized collections. This prevents correct scanning of complex `duneanaobj` fields using `TTree::Scan` in 'structured' CAFs (those that directly embed `StandardRecord` objects).  For example, scanning fields like `rec.nd.lar.tracks.truthOverlap` may produce incomplete or incorrect output, with some entries not properly displayed.
+
+Note: the 'flat' CAFs also emitted by the CAFMaker do not suffer from this limitation.
 
 For more details and examples, see [GitHub Issue #142](https://github.com/DUNE/ND_CAFMaker/issues/142).
 
