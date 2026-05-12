@@ -71,6 +71,14 @@ The output contains a number of different `TTree` `ROOT` objects. `cafTree` cont
 The object format for the `StandardRecord` objects is defined in [`duneanaobj`](https://github.com/DUNE/duneanaobj).
 See the README there for instructions on how to set it up and modify it.
 
+## Known Limitations
+
+ROOT's `TTreeFormula` class has an intrinsic limitation: it supports only 2 levels of variable-sized collections. This prevents correct scanning of complex `duneanaobj` fields using `TTree::Scan` in 'structured' CAFs (those that directly embed `StandardRecord` objects).  For example, scanning fields like `rec.nd.lar.tracks.truthOverlap` may produce incomplete or incorrect output, with some entries not properly displayed.
+
+Note: the 'flat' CAFs also emitted by the CAFMaker do not suffer from this limitation.
+
+For more details and examples, see [GitHub Issue #142](https://github.com/DUNE/ND_CAFMaker/issues/142).
+
 ## Using a locally installed `duneanaobj` for testing
 
 `duneanaobj`'s [README](https://github.com/DUNE/duneanaobj/blob/master/README.md) explains how to construct a custom UPS product that can be used in place of the version used by default by `ndcaf_setup.sh`.
