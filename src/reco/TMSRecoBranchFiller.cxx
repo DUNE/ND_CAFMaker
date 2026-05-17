@@ -135,9 +135,6 @@ namespace cafmaker
     LastSpillNo = _SpillNo;
 
     caf::SRTMSInt *interaction;
-    caf::TrueParticleID truePartID;
-    caf::SRTrueParticle srTruePart;
-    caf::SRTrueInteraction  srTrueInt;
 
     // Fill Truth parts first?
     for (int i_tru=0; i_tru< TMSTrueSpill->GetEntries(); i_tru++)
@@ -147,7 +144,7 @@ namespace cafmaker
       for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
       {
         auto neutrino_event_id = static_cast<unsigned long> ((_TrueRunNo)*1E6 + _TrueVtxId[i_tvtx]);
-        srTrueInt = truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true);
+        (void)truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true); // called for side effect of registering the interaction; cast suppresses unused-return-value warning
       }
     }
 
@@ -187,14 +184,25 @@ namespace cafmaker
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
-          srTrueInt = (truthMatcher->GetTrueInteraction(sr, static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j])));//, false)); // Pointer to the object
-          truePartID.type = caf::TrueParticleID::kPrimary;
-          //truePartID.type = is_primary ? caf::TrueParticleID::kPrimary : caf::TrueParticleID::kSecondary; // TODO: Make TMS care about prim/sec tracks
-          truePartID.ixn  = static_cast<long>(_RunNo*1E6 + _RecoTrueVtxId[j]);
-          //srTruePart = truthMatcher->GetTrueParticle(sr, srTrueInt, static_cast<long>(_RunNo*1E6 + _RecoTrueVtxId[j]), false, false); // TODO: Why does this segfault?
-          srTruePart.interaction_id = static_cast<long>(_RunNo*1E6 + _RecoTrueVtxId[j]);
+          const auto genieIxnID = static_cast<unsigned long>((_RunNo%100000)*1E6 + _RecoTrueVtxId[j]);
+          caf::SRTrueInteraction& srTrueInt = truthMatcher->GetTrueInteraction(sr, genieIxnID);
 
-          interaction->tracks[0].truth.push_back(std::move(truePartID)); // TODO Unfuck
+          const int srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
+                                                                  std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
+                                                                               [&srTrueInt](const caf::SRTrueInteraction& ixn)
+                                                                               { return ixn.id == srTrueInt.id; })));
+
+          // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries)
+          const int partG4ID = _RecoTruePartId[j];
+          truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
+          const int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
+                                                                 std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(),
+                                                                              [partG4ID](const caf::SRTrueParticle& part)
+                                                                              { return part.G4ID == partG4ID; })));
+
+          interaction->tracks[0].truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                                                      caf::TrueParticleID::PartType::kPrimary,
+                                                                      truthVecIdx});
         }
       }
 
