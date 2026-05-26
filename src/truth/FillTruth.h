@@ -21,6 +21,7 @@
 #include "util/FloatMath.h"
   //TG4Event
 #include "TG4Event.h"
+#include "TParameter.h"
 
   // fixme: this will need to be put back to the actual response_helper type when DIRT-II finishes model recommendations
 #include <string>
@@ -179,6 +180,8 @@
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
       caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, unsigned long ixnID, bool createNew = true) const;
+      /// Retrieve the POT per spill as true value specified in the edep-sim file
+      const TParameter<double> GetPOTperSpill() const;
       bool HaveGENIE() const;
       bool HaveEDEPSIM() const;
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
@@ -227,6 +230,7 @@
           void SelectEvent(unsigned long int vertex_id);
           const TG4Event * G4Event() const;
           const TTree * GetEdepTree() const;
+          const TParameter<double> GetPOTperSpill() const;
          
           void  LoadTree();
 
@@ -236,6 +240,7 @@
           std::map<unsigned long int, int> fEdepEntries;
           const TG4Event * fG4Event;
           bool f_isTreeLoaded;
+          TParameter<double> f_POTperSpill;
       };
       mutable EdepSimTreeContainer fEdepSimTree;
 

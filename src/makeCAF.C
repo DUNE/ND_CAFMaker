@@ -474,7 +474,8 @@ void loop(CAF &caf,
     }
     else
     {
-	potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
+	// potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
+        potTRTGTD = {truthMatcher.GetPOTperSpill().GetVal()};
         caf.sr.beam.ismc = true;
     }
     if (std::isnan(caf.pot))

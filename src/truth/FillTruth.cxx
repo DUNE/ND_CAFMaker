@@ -465,6 +465,18 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  const TParameter<double> TruthMatcher::GetPOTperSpill() const
+  {
+    if (HaveEDEPSIM())
+    {
+      return fEdepSimTree.GetPOTperSpill();
+    }
+    else
+    {
+      return TParameter<double>("pot_per_spill", 0.0); 
+    }
+  }
+  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
@@ -607,6 +619,11 @@ namespace cafmaker
     else {
       fEdepTree=NULL;
     }
+    // Read TParameter<double> pot_per_spill
+    auto* potParam = dynamic_cast<TParameter<double>*>(fEdepFile->Get("pot_per_spill"));
+    if (potParam) {
+      f_POTperSpill = *potParam;
+    }
     f_isTreeLoaded = false;
   }
 
@@ -648,6 +665,11 @@ namespace cafmaker
   const TTree * TruthMatcher::EdepSimTreeContainer::GetEdepTree() const
   {
     return fEdepTree;
+  }
+  // ------------------------------------------------------------
+  const TParameter<double> TruthMatcher::EdepSimTreeContainer::GetPOTperSpill() const
+  {
+    return f_POTperSpill;
   }
 
   // ------------------------------------------------------------
