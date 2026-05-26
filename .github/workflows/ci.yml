@@ -1,4 +1,4 @@
-name: CI
+name: ND_CAFMaker CI
 
 on:
   pull_request:
@@ -27,7 +27,7 @@ jobs:
       # that return non-zero when running under sh (e.g. "test $ss = csh && ...").
       # bash -e would treat those as fatal errors. Interactive singularity shells
       # work because set -e is off by default. cmake exits are checked explicitly.
-      - name: Build
+      - name: Build, install, and test
         run: |
           apptainer exec \
             --bind /cvmfs \
@@ -35,7 +35,16 @@ jobs:
             /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
             bash -c "
               cd '${GITHUB_WORKSPACE}'
-              source ndcaf_setup.sh prof
+              source ndcaf_setup_deps.sh prof
               cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || exit \$?
               cmake --build build -j\$(nproc) || exit \$?
+              cmake --install build --prefix install || exit \$?
+
+              # Test: sourcing ndcaf_setup.sh from the install tree must put
+              # makeCAF in PATH and let it run --help end-to-end. This catches
+              # regressions in the script split (Commit 1) and the install
+              # layout / RPATH (Commit 3).
+              source install/bin/ndcaf_setup.sh prof || exit \$?
+              command -v makeCAF || { echo 'makeCAF not in PATH'; exit 1; }
+              makeCAF --help || exit \$?
             " 2>&1
