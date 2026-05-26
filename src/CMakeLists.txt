@@ -10,7 +10,7 @@ set(LIB_SOURCES
     reco/NDLArTMSMatchRecoFiller.cxx
     reco/NDLArTMSUniqueMatchRecoFiller.cxx
     reco/PandoraLArRecoNDBranchFiller.cxx
-    reco/SANDRecoBranchFiller.cxx # always compiled; ENABLE_SAND gates behaviout
+    reco/SANDRecoBranchFiller.cxx
     reco/TMSRecoBranchFiller.cxx
     reco/readH5/DatasetBuffer.cxx
     reco/readH5/H5DataView.cxx
@@ -26,10 +26,8 @@ set(LIB_SOURCES
 
 add_library(ND_CAFMaker SHARED ${LIB_SOURCES})
 
-# Expose src/ itself so #include "CAF.h" etc. work for consumers
 target_include_directories(ND_CAFMaker PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
-# Enable SAND code paths only when the library was detected at configure time
 if(SAND_ENABLED)
   target_compile_definitions(ND_CAFMaker PRIVATE ENABLE_SAND)
 endif()
@@ -37,39 +35,49 @@ endif()
 target_link_libraries(
   ND_CAFMaker
   PUBLIC deps::log4cpp
-         deps::tbb
          deps::libxml2
          deps::hdf5
          deps::pythia6
-         deps::duneanaobj
          deps::gsl
          deps::lhapdf
          deps::genie
-         deps::root_glibs
-         deps::boost_po
-         deps::cetlib
-         deps::fhiclcpp
-         deps::edepsim
          deps::nlohmann
          deps::srproxy
          deps::curl
-         deps::sand)
+         ROOT::Core
+         ROOT::MathMore
+         ROOT::Geom
+         ROOT::EGPythia6
+         ROOT::GenVector
+         Boost::program_options
+         fhiclcpp::fhiclcpp
+         fhiclcpp::types
+         EDepSim::edepsim_io
+         duneanaobj::StandardRecord
+         duneanaobj::StandardRecordFlat)
 
-# Executable makeCAF
+# SANDReco is optional — link only when SAND_ENABLED at configure time.
+if(SAND_ENABLED)
+  target_link_libraries(ND_CAFMaker PUBLIC deps::sand)
+endif()
+
 set_source_files_properties(makeCAF.C PROPERTIES LANGUAGE CXX)
 add_executable(makeCAF makeCAF.C)
 target_include_directories(makeCAF PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(makeCAF PRIVATE ND_CAFMaker)
 
-# Executable testHDF (optional, off by default)
-if(ENABLE_TESTEXE)
-  set_source_files_properties(testHDF.C PROPERTIES LANGUAGE CXX)
-  add_executable(testHDF testHDF.C)
-  target_include_directories(testHDF PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-  target_link_libraries(testHDF PRIVATE ND_CAFMaker)
-endif()
+# WARNING: testHDF is currently broken. testHDF.C includes
+# reco/NDLArProductFiller.h and reco/NDLArSummaryH5DatasetReader.h, which no
+# longer exist in the tree, so enabling ENABLE_TESTEXE will fail at compile
+# time. Kept behind the flag (rather than deleted) until someone decides
+# whether to port the test to the current H5 readers or drop it entirely.
+# if(ENABLE_TESTEXE)
+#   set_source_files_properties(testHDF.C PROPERTIES LANGUAGE CXX)
+#   add_executable(testHDF testHDF.C)
+#   target_include_directories(testHDF PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+#   target_link_libraries(testHDF PRIVATE ND_CAFMaker)
+# endif()
 
-# Install rules
 install(TARGETS ND_CAFMaker LIBRARY DESTINATION lib)
 
 install(TARGETS makeCAF RUNTIME DESTINATION bin)
