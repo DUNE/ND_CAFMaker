@@ -204,6 +204,8 @@ namespace cafmaker
       double delta_y = tms_trk.start.y - proj_vec[1];
 
       std::vector<double> angles = Angle_between_tracks(tms_trk,trk);
+      angles[0] = std::copysign(angles[0],delta_x);
+      angles[1] = std::copysign(angles[1],delta_y); // if the TMS track has a larger X or Y value than the projected LAr track, then the X or Y angle is positive. Otherwise, it's negative
 
       double matchScore = std::numeric_limits<double>::max(); // initialize match score to max value
 
