@@ -294,8 +294,9 @@ def validate_entry(root, entry, reports, counters):
                 counters[f"trace_{status}"] += 1
                 if status == "missing-parent" and anc_ref is not None and not args.strict_caf_chain:
                     counters["ancestor_unverified_missing_parent"] += 1
-                    issue(reports, "INFO", entry, ixn_idx, "sec", sec_idx,
-                          f"CAF parent chain is incomplete, so ancestor_id cannot be independently checked from CAF alone: trace={trace}")
+                    if args.verbose:
+                        issue(reports, "INFO", entry, ixn_idx, "sec", sec_idx,
+                              f"CAF parent chain is incomplete, so ancestor_id cannot be independently checked from CAF alone: trace={trace}")
                 else:
                     issue(reports, "ERROR", entry, ixn_idx, "sec", sec_idx,
                           f"could not trace parent chain to a primary: status={status}, trace={trace}")
