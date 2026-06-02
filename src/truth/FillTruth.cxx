@@ -531,6 +531,76 @@ namespace cafmaker
 
       return ancestor;
     }
+
+    bool HasParticleWithG4ID(const std::vector<caf::SRTrueParticle> &collection,
+                             int G4ID)
+    {
+      return std::find_if(collection.begin(), collection.end(),
+                          [G4ID](const caf::SRTrueParticle &part)
+                          {
+                            return part.G4ID == G4ID;
+                          }) != collection.end();
+    }
+
+    void FillParticleFields(caf::SRTrueParticle &part,
+                            const caf::SRTrueInteraction &ixn,
+                            std::size_t nixn,
+                            int G4ID,
+                            const TG4Event *g4event)
+    {
+      auto traj = g4event->Trajectories[G4ID];
+
+      part.G4ID = traj.TrackId;
+      part.interaction_id = ixn.id;
+      part.pdg = traj.PDGCode;
+      part.p = traj.InitialMomentum*0.001;
+
+      part.parent = traj.ParentId;
+      part.ancestor_id = FindPrimaryAncestor(ixn, nixn, G4ID, g4event);
+
+      auto p0 = traj.Points[0];
+      part.start_pos = (p0.Position * .1).Vect();
+
+      auto pf = traj.Points[traj.Points.size()-1];
+      part.end_pos = (pf.Position * .1).Vect();
+    }
+
+    void EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
+                                      std::size_t nixn,
+                                      int G4ID,
+                                      std::vector<caf::SRTrueParticle> &secondaries,
+                                      int &counter,
+                                      const TG4Event *g4event)
+    {
+      if (!g4event) return;
+      if (G4ID < 0 || G4ID >= static_cast<int>(g4event->Trajectories.size())) return;
+
+      int current = g4event->Trajectories[G4ID].ParentId;
+      std::vector<int> visited{G4ID};
+
+      while (current >= 0)
+      {
+        if (std::find(visited.begin(), visited.end(), current) != visited.end())
+          return;
+        visited.push_back(current);
+
+        if (current >= static_cast<int>(g4event->Trajectories.size()))
+          return;
+
+        if (HasParticleWithG4ID(ixn.prim, current))
+          return;
+
+        if (HasParticleWithG4ID(secondaries, current))
+          return;
+
+        const int particle_index = counter;
+        secondaries.emplace_back();
+        counter++;
+
+        FillParticleFields(secondaries.at(particle_index), ixn, nixn, current, g4event);
+        current = g4event->Trajectories[current].ParentId;
+      }
+    }
   }
 
   int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event)
@@ -540,23 +610,12 @@ namespace cafmaker
     int part_index = counter;
     counter++;
 
-    auto traj = g4event->Trajectories[G4ID];
-    caf::SRTrueParticle & part = collection.at(part_index);
+    FillParticleFields(collection.at(part_index), ixn, nixn, G4ID, g4event);
 
-    part.G4ID = traj.TrackId;
-    part.interaction_id = ixn.id;
-    part.pdg = traj.PDGCode;
-    part.p = traj.InitialMomentum*0.001;
+    if (&collection == &ixn.sec)
+      EnsureSecondaryParentClosure(ixn, nixn, G4ID, collection, counter, g4event);
 
-    part.parent = traj.ParentId;
-    part.ancestor_id = FindPrimaryAncestor(ixn, nixn, G4ID, g4event);
-
-    auto p0 = traj.Points[0];
-    part.start_pos = (p0.Position * .1).Vect();
-
-    auto pf = traj.Points[traj.Points.size()-1];
-    part.end_pos = (pf.Position * .1).Vect();
-    return part.ancestor_id.part;
+    return collection.at(part_index).ancestor_id.part;
   }
 
   // ------------------------------------------------------------
