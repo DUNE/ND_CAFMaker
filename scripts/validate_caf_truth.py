@@ -150,13 +150,22 @@ def iter_collection(coll):
 
 
 def build_g4_index(ixn):
-    """Return G4ID -> (collection name, index, particle) for one interaction."""
+    """Return G4ID -> (collection name, index, particle) for one interaction.
+
+    Only prim/sec are used for the CAF-side parent-chain trace. The prefsi
+    collection is GENIE/pre-FSI bookkeeping and, in observed CAFs, can contain
+    placeholder/non-GEANT G4ID values such as repeated -1 entries. Those are
+    still resolvable through ancestor_id.type=prefsi via collection_for_type(),
+    but they should not participate in G4 parent-chain indexing.
+    """
     out = {}
     duplicates = defaultdict(list)
-    for coll_name in ("prim", "prefsi", "sec"):
+    for coll_name in ("prim", "sec"):
         coll = getattr(ixn, coll_name)
         for i, part in iter_collection(coll):
             g4id = int(part.G4ID)
+            if g4id < 0:
+                continue
             if g4id in out:
                 duplicates[g4id].append((coll_name, i))
             else:
