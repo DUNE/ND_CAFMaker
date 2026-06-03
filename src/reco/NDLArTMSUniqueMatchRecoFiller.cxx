@@ -147,7 +147,7 @@ namespace cafmaker
     }
   }
 
-  void NDLArTMSUniqueMatchRecoFiller::Create_matches(std::vector<caf::SRNDTrackAssn> possibleMatches, caf::StandardRecord &sr) const
+  void NDLArTMSUniqueMatchRecoFiller::Create_matches(std::vector<caf::SRNDTrackAssn> possibleMatches, bool Pandora, caf::StandardRecord &sr) const
   {
     std::sort(possibleMatches.begin(),possibleMatches.end(),Track_match_sorter);
 
@@ -184,6 +184,21 @@ namespace cafmaker
       matched_lar.push_back(larid);
       sr.nd.trkmatch.extrap.push_back(track_match); // adds successfully matched pair to StandardRecord of track matches
       sr.nd.trkmatch.nextrap += 1;
+      caf::SRTrack joint_track = track_match.trk;
+      if (Pandora) {
+         lar_track = sr.nd.lar.pandora[larid.ixn].tracks[larid.idx];} // if the Pandora flag is true, then the LAr tracks are listed within sr.nd.lar.pandora
+      else {
+         lar_track = sr.nd.lar.dlp[larid.ixn].tracks[larid.idx];}     // otherwise, they're listed within sr.nd.lar.dlp
+      tms_track = sr.nd.lar.tms.ixn[tmsid.ixn].tracks[tmsid.idx];     // this is the TMS track
+      joint_track.start = lar_track.start;      // starting point of joint track is starting point of LAr track (Pandora or SPINE)
+      joint_track.end = tms_track.end;          // ending point of joint track is ending point of TMS track
+      joint_track.dir = lar_track.dir;          // starting direction of joint track is starting direction of LAr track (Pandora or SPINE)
+      joint_track.enddir = tms_track.enddir;    // end direction of joint track is end direction of TMS track
+      joint_track.time = tms_track.time;        // TODO: once we have reco LAr time working properly for both Pandora and SPINE this should be switched to lar_track.time
+      joint_track.Evis = lar_track.Evis + tms_track.Evis;
+      // TODO: add the rest of the joint_track attributes
+
+
     }
   }
 
@@ -257,11 +272,10 @@ namespace cafmaker
 	  int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
 	  caf::TrueParticleID partIDTMS = truIDsTMS[idx_max_TMS];
 	  const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
-	  // TODO: Right now the partIDTMS values are nonsensical and the TMSPart->G4ID is always a null pointer. There are problems bringing TMS truth info into ND-CAFMaker
-	  // Uncomment the following once this has been fixed
+	  
 	  if (TMSPart != nullptr) {
 	    if (matchedPart->G4ID==TMSPart->G4ID) {
-		// TODO: Add "TrueMatch" boolean attribute to the TrackAssn and set to true
+		potential_match.trueMatch = true; // the two tracks in the match have the same true particle IDs, meaning they come from the same particle so they are a true match to each other
 		// std::cout << "True Match!" << std::endl; 
 	       }
 	    }
@@ -290,16 +304,12 @@ namespace cafmaker
       potential_match.transdispl = sqrt(pow(delta_x,2)+pow(delta_y,2));
       potential_match.angdispl = cos(TMath::Pi()/180.0 * angles[2]);
 
-      caf::SRTrack joint_track = potential_match.trk;
-      joint_track.start = trk.start;
-      joint_track.end = tms_trk.end;
-      joint_track.dir = trk.dir;
-      joint_track.enddir = tms_trk.enddir;
+      potential_match.deltaX = delta_x;
+      potential_match.deltaY = delta_y;
+      potential_match.deltaThetaX = angles[0];
+      potential_match.deltaThetaY = angles[1];
+      potential_match.deltaT = delta_t;
 
-      joint_track.time = tms_trk.time; // TODO: once we have reco LAr time working properly for both Pandora and SPINE this should be switched to trk.time
-
-      joint_track.Evis = trk.Evis + tms_trk.Evis;
-      // TODO: add the rest of the joint_track attributes
       
       potentialMatchList.push_back(potential_match);
     }
@@ -359,11 +369,11 @@ namespace cafmaker
       }
     
     if (possiblePandoraMatches.size() > 0) {
-      Create_matches(possiblePandoraMatches,sr);
+      Create_matches(possiblePandoraMatches,true,sr); // tells the matcher that it's working with Pandora LAr tracks
       }
 
     if (possibleSPINEMatches.size() > 0) {
-      Create_matches(possibleSPINEMatches,sr);
+      Create_matches(possibleSPINEMatches,false,sr); // tells the matcher that it's not working with Pandora LAr tracks (therefore, SPINE tracks)
       }
     }
   }
