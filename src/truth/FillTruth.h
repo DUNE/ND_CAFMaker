@@ -210,6 +210,7 @@
         private:
           const genie::NtpMCEventRecord * fGEvt;
           std::map<unsigned long int, TTree*> fGTrees;
+          std::map<unsigned long int, std::map<unsigned int, long long>> fGEntries;
           std::vector<std::unique_ptr<TFile>> fGFiles;
       };
 

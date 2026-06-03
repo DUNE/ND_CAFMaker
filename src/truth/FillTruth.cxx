@@ -591,6 +591,22 @@ namespace cafmaker
       fGTrees[run] = tree;
       tree->SetBranchAddress("gmcrec", &fGEvt);
 
+      auto & entries = fGEntries[run];
+      for (long long i = 0; i < tree->GetEntries(); ++i)
+      {
+        tree->GetEntry(i);
+        unsigned int eventNum = fGEvt->hdr.ievent;
+        auto [itEntry, inserted] = entries.emplace(eventNum, i);
+        if (!inserted)
+        {
+          std::stringstream msg;
+          msg << "Duplicate GENIE event number " << eventNum << " found for run " << run
+              << " while indexing file '" << fname << "'\n";
+          LOG.FATAL() << msg.str();
+          throw std::runtime_error(msg.str());
+        }
+      }
+
       LOG.INFO() << "Loaded TTree for run " << run << " from file: " << fname << "\n";
     }
   }
@@ -669,12 +685,33 @@ namespace cafmaker
       LOG.FATAL() << ss.str();
       throw std::range_error(ss.str());
     }
-    if (it_tree->second->GetEntry(evtNum) == 0)
+
+    auto it_runEntries = fGEntries.find(runNum);
+    if (it_runEntries == fGEntries.end())
     {
       std::stringstream ss;
-      ss << "Event number " << evtNum << " was not found in run: " << runNum << "\n";
+      ss << "Run number " << runNum << " has no indexed GENIE events\n";
       LOG.FATAL() << ss.str();
       throw std::range_error(ss.str());
+    }
+
+    auto it_entry = it_runEntries->second.find(evtNum);
+    if (it_entry == it_runEntries->second.end())
+    {
+      std::stringstream ss;
+      ss << "GENIE event number " << evtNum << " was not found in run " << runNum << "\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    long long bytesRead = it_tree->second->GetEntry(it_entry->second);
+    if (bytesRead <= 0)
+    {
+      std::stringstream ss;
+      ss << "Failed to read GENIE event number " << evtNum << " in run " << runNum
+         << " from tree entry " << it_entry->second << " (GetEntry returned " << bytesRead << ")\n";
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
     }
   }
 
