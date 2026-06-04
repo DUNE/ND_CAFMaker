@@ -73,17 +73,21 @@ namespace cafmaker
       //TMSRecoTree->SetBranchAddress("TimeSliceStartTime",    &_TimeSliceStartTime);
       TMSLCTree->SetBranchAddress("TMSStartTime",            _TMSStartTime); // Temporary for prod n4p1, time avialable in Reco_Tree for future prods
 
-      // Add Truth tree for the index of the true primary particles
-      TMSTrueTree->SetBranchAddress("TrueVtxX",                       _TrueVtxX);
-      TMSTrueTree->SetBranchAddress("TrueVtxY",                       _TrueVtxY);
-      TMSTrueTree->SetBranchAddress("TrueVtxZ",                       _TrueVtxZ);
-      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleVtxId",  _RecoTrueVtxId);
-      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex",  _RecoTruePartId);
+      // Truth_Info is only used to map reco tracks to truth-particle indices.
+      TMSTrueTree->SetBranchAddress("RecoTrackPrimaryParticleIndex",   _RecoTruePartId);
       TMSTrueTree->SetBranchAddress("RecoTrackSecondaryParticleIndex", _RecoTruePartIdSec);
 
-      TMSTrueSpill->SetBranchAddress("VertexID",                       _TrueVtxId);
-      TMSTrueSpill->SetBranchAddress("TrueVtxN",                       &_TrueVtxN);
-      TMSTrueSpill->SetBranchAddress("RunNo",                          &_TrueRunNo);
+      TMSTrueSpill->SetBranchAddress("SpillNo",                        &_TruthSpillSpillNo);
+      TMSTrueSpill->SetBranchAddress("RunNo",                          &_TruthSpillRunNo);
+      TMSTrueSpill->SetBranchAddress("nTrueParticles",                 &_TruthSpillNTrueParticles);
+      TMSTrueSpill->SetBranchAddress("VertexID",                       _TruthSpillParticleVertexID);
+      TMSTrueSpill->SetBranchAddress("Parent",                         _TruthSpillParent);
+      TMSTrueSpill->SetBranchAddress("BirthPosition",                  _TruthSpillBirthPosition);
+      TMSTrueSpill->SetBranchAddress("TrueVtxN",                       &_TruthSpillTrueVtxN);
+      TMSTrueSpill->SetBranchAddress("TrueVtxID",                      _TruthSpillTrueVtxID);
+      TMSTrueSpill->SetBranchAddress("TrueVtxX",                       _TruthSpillTrueVtxX);
+      TMSTrueSpill->SetBranchAddress("TrueVtxY",                       _TruthSpillTrueVtxY);
+      TMSTrueSpill->SetBranchAddress("TrueVtxZ",                       _TruthSpillTrueVtxZ);
 
     } else {
       fTMSRecoFile = NULL;
@@ -106,16 +110,109 @@ namespace cafmaker
     fTMSRecoFile = NULL;
   }
 
-  unsigned long TMSRecoBranchFiller::ResolveTrueInteractionID(const TruthMatcher * truthMatch,
-                                                              int trueVtxId,
-                                                              double trueVtxX,
-                                                              double trueVtxY,
-                                                              double trueVtxZ) const
+  void TMSRecoBranchFiller::LoadTruthSpillEntry(int spillNo) const
+  {
+    if (fTruthSpillEntryBySpillNo.empty())
+    {
+      for (Long64_t entry = 0; entry < TMSTrueSpill->GetEntries(); ++entry)
+      {
+        TMSTrueSpill->GetEntry(entry);
+        auto [it, inserted] = fTruthSpillEntryBySpillNo.emplace(_TruthSpillSpillNo, entry);
+        if (!inserted && it->second != entry)
+        {
+          std::stringstream ss;
+          ss << "Truth_Spill has multiple entries for SpillNo " << _TruthSpillSpillNo << "\n";
+          throw std::runtime_error(ss.str());
+        }
+      }
+    }
+
+    auto it = fTruthSpillEntryBySpillNo.find(spillNo);
+    if (it == fTruthSpillEntryBySpillNo.end())
+    {
+      std::stringstream ss;
+      ss << "Could not find Truth_Spill entry for SpillNo " << spillNo << "\n";
+      throw std::runtime_error(ss.str());
+    }
+
+    TMSTrueSpill->GetEntry(it->second);
+  }
+
+  unsigned long TMSRecoBranchFiller::ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const
   {
     if (!truthMatch)
       throw std::runtime_error("TMSRecoBranchFiller requires TruthMatcher to resolve true interaction IDs");
+    if (trueVtxIdx < 0 || trueVtxIdx >= _TruthSpillTrueVtxN)
+      throw std::runtime_error("Requested Truth_Spill vertex index is out of range");
 
-    return truthMatch->ResolveVertexID(static_cast<unsigned int>(trueVtxId), trueVtxX, trueVtxY, trueVtxZ);
+    return truthMatch->ResolveVertexID(static_cast<unsigned int>(_TruthSpillTrueVtxID[trueVtxIdx]),
+                                       _TruthSpillTrueVtxX[trueVtxIdx],
+                                       _TruthSpillTrueVtxY[trueVtxIdx],
+                                       _TruthSpillTrueVtxZ[trueVtxIdx]);
+  }
+
+  unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
+  {
+    if (recoTrackIdx < 0)
+      throw std::runtime_error("Requested reco track index is negative");
+
+    int particleIdx = _RecoTruePartId[recoTrackIdx];
+    if (particleIdx < 0 || particleIdx >= _TruthSpillNTrueParticles)
+    {
+      std::stringstream ss;
+      ss << "Reco track " << recoTrackIdx << " maps to invalid Truth_Spill particle index " << particleIdx << "\n";
+      throw std::runtime_error(ss.str());
+    }
+
+    while (_TruthSpillParent[particleIdx] != -1)
+    {
+      int parentIdx = _TruthSpillParent[particleIdx];
+      if (parentIdx < 0 || parentIdx >= _TruthSpillNTrueParticles)
+      {
+        std::stringstream ss;
+        ss << "Truth_Spill particle " << particleIdx << " has out-of-range parent index " << parentIdx << "\n";
+        throw std::runtime_error(ss.str());
+      }
+      particleIdx = parentIdx;
+    }
+
+    const int trueVtxId = _TruthSpillParticleVertexID[particleIdx];
+    const double birthX = _TruthSpillBirthPosition[particleIdx][0];
+    const double birthY = _TruthSpillBirthPosition[particleIdx][1];
+    const double birthZ = _TruthSpillBirthPosition[particleIdx][2];
+
+    constexpr double kVertexMatchToleranceMm = 100.0;
+    int matchedVtxIdx = -1;
+    for (int i = 0; i < _TruthSpillTrueVtxN; ++i)
+    {
+      if (_TruthSpillTrueVtxID[i] != trueVtxId)
+        continue;
+
+      const double dx = _TruthSpillTrueVtxX[i] - birthX;
+      const double dy = _TruthSpillTrueVtxY[i] - birthY;
+      const double dz = _TruthSpillTrueVtxZ[i] - birthZ;
+      const double dist2 = dx*dx + dy*dy + dz*dz;
+      if (dist2 > kVertexMatchToleranceMm * kVertexMatchToleranceMm)
+        continue;
+
+      if (matchedVtxIdx >= 0)
+      {
+        std::stringstream ss;
+        ss << "Reco track " << recoTrackIdx << " matches multiple Truth_Spill vertices for vertex ID " << trueVtxId << "\n";
+        throw std::runtime_error(ss.str());
+      }
+      matchedVtxIdx = i;
+    }
+
+    if (matchedVtxIdx < 0)
+    {
+      std::stringstream ss;
+      ss << "Reco track " << recoTrackIdx << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
+         << trueVtxId << " within " << kVertexMatchToleranceMm << " mm\n";
+      throw std::runtime_error(ss.str());
+    }
+
+    return ResolveTrueInteractionIDFromVertexIndex(truthMatch, matchedVtxIdx);
   }
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
@@ -148,16 +245,11 @@ namespace cafmaker
 
     caf::SRTMSInt *interaction;
 
-    // Fill Truth parts first?
-    for (int i_tru=0; i_tru< TMSTrueSpill->GetEntries(); i_tru++)
+    LoadTruthSpillEntry(LastSpillNo);
+    for (int i_tvtx = 0; i_tvtx < _TruthSpillTrueVtxN; ++i_tvtx)
     {
-      TMSTrueSpill->GetEntry(i_tru);
-
-      for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
-      {
-        auto neutrino_event_id = ResolveTrueInteractionID(truthMatcher, _TrueVtxId[i_tvtx], _TrueVtxX[i_tvtx], _TrueVtxY[i_tvtx], _TrueVtxZ[i_tvtx]);
-        (void)truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true); // called for side effect of registering the interaction; cast suppresses unused-return-value warning
-      }
+      auto neutrino_event_id = ResolveTrueInteractionIDFromVertexIndex(truthMatcher, i_tvtx);
+      (void)truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true); // called for side effect of registering the interaction; cast suppresses unused-return-value warning
     }
 
     // the i index is incremented at the end of the following while()
@@ -196,7 +288,7 @@ namespace cafmaker
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
-          const auto genieIxnID = ResolveTrueInteractionID(truthMatcher, _RecoTrueVtxId[j], _TrueVtxX[j], _TrueVtxY[j], _TrueVtxZ[j]);
+          const auto genieIxnID = ResolveRecoTrackInteractionID(truthMatcher, j);
           caf::SRTrueInteraction& srTrueInt = truthMatcher->GetTrueInteraction(sr, genieIxnID);
 
           const int srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
@@ -228,10 +320,9 @@ namespace cafmaker
   void TMSRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const
   {
 
-    for (int i_int = 0; i_int<_TrueVtxN; i_int++)
+    for (int i_int = 0; i_int < _TruthSpillTrueVtxN; ++i_int)
     {
-      //Long_t neutrino_event_id = _TrueVtxId[i_int];//mc_int_edepsimId[i_int];
-      auto neutrino_event_id = ResolveTrueInteractionID(truthMatch, _TrueVtxId[i_int], _TrueVtxX[i_int], _TrueVtxY[i_int], _TrueVtxZ[i_int]);
+      auto neutrino_event_id = ResolveTrueInteractionIDFromVertexIndex(truthMatch, i_int);
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
       LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
       for (const caf::SRTrueParticle & part : srTrueInt.prim)
