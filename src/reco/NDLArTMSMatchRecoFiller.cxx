@@ -69,7 +69,7 @@ namespace cafmaker
 //          match.larid = ilar;
 //          match.tmsid = itms;
 //          match.transdispl = residual;
-//          match.angdispl = costheta;
+//          match.cosangdispl = costheta;
 //          sr.nd.trkmatch.emplace_back(match);
 //          sr.nd.ntrkmatch += 1;
 //          // Can also have multiple track matches, so don't break at the end of the match
