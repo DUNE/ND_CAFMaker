@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <vector>
 
 #include "fwd.h"
 #include "util/Loggable.h"
@@ -179,9 +180,9 @@
       /// \param createNew  Should a new SRTrueInteraction be made if one corresponding to the given ID is not found?
       /// \return           The caf::SRTrueParticle that was found, or if none found and createNew is true, a new instance
       caf::SRTrueInteraction & GetTrueInteraction(caf::StandardRecord & sr, unsigned long ixnID, bool createNew = true) const;
-      /// Resolve an EDepSim EventId into the legacy packed vertex ID (run*1e6 + event).
-      /// This preserves current CAFMaker conventions, even though the encoding is brittle.
-      unsigned long ResolveVertexID(unsigned int evtNum) const;
+      /// Resolve an EDepSim EventId plus vertex position (mm) into the legacy packed vertex ID
+      /// (run*1e6 + event). This preserves current CAFMaker conventions, even though the encoding is brittle.
+      unsigned long ResolveVertexID(unsigned int evtNum, double x, double y, double z) const;
       bool HaveGENIE() const;
       bool HaveEDEPSIM() const;
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
@@ -225,11 +226,18 @@
       class EdepSimTreeContainer : public cafmaker::Loggable
       {
         public:
+          struct VertexCandidate
+          {
+            unsigned long int vertexID;
+            double x;
+            double y;
+            double z;
+          };
 
           EdepSimTreeContainer(std::string filename);
           void SelectEvent(unsigned long int runNum, unsigned int evtNum);
           void SelectEvent(unsigned long int vertex_id);
-          unsigned long int ResolveVertexID(unsigned int evtNum);
+          unsigned long int ResolveVertexID(unsigned int evtNum, double x, double y, double z);
           const TG4Event * G4Event() const;
           const TTree * GetEdepTree() const;
          
@@ -239,7 +247,7 @@
           TFile * fEdepFile;
           TTree * fEdepTree;
           std::map<unsigned long int, int> fEdepEntries;
-          std::map<unsigned int, unsigned long int> fEventToVertexID;
+          std::map<unsigned int, std::vector<VertexCandidate>> fEventToVertexIDs;
           const TG4Event * fG4Event;
           bool f_isTreeLoaded;
       };

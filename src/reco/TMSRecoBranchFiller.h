@@ -35,7 +35,11 @@ namespace cafmaker
       ~TMSRecoBranchFiller();
 
     private:
-      unsigned long ResolveTrueInteractionID(const TruthMatcher * truthMatch, int trueVtxId) const;
+      unsigned long ResolveTrueInteractionID(const TruthMatcher * truthMatch,
+                                             int trueVtxId,
+                                             double trueVtxX,
+                                             double trueVtxY,
+                                             double trueVtxZ) const;
       void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
 
       void _FillRecoBranches(const Trigger &trigger,

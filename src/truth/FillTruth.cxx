@@ -467,12 +467,12 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  unsigned long TruthMatcher::ResolveVertexID(unsigned int evtNum) const
+  unsigned long TruthMatcher::ResolveVertexID(unsigned int evtNum, double x, double y, double z) const
   {
     if (!HaveEDEPSIM())
       throw std::runtime_error("TruthMatcher::ResolveVertexID() requires an EDepSim file");
 
-    return fEdepSimTree.ResolveVertexID(evtNum);
+    return fEdepSimTree.ResolveVertexID(evtNum, x, y, z);
   }
 
   // ------------------------------------------------------------
@@ -646,16 +646,17 @@ namespace cafmaker
       unsigned long int vertex_id = static_cast<unsigned long int>(fG4Event->RunId) * 1000000ul + static_cast<unsigned long int>(fG4Event->EventId);
       fEdepEntries[vertex_id] = i;
 
-      unsigned int event_id = static_cast<unsigned int>(fG4Event->EventId);
-      auto [it, inserted] = fEventToVertexID.emplace(event_id, vertex_id);
-      if (!inserted && it->second != vertex_id)
+      if (fG4Event->Primaries.empty())
       {
         std::stringstream ss;
-        ss << "EDepSim event ID " << event_id << " maps to multiple packed vertex IDs ("
-           << it->second << " and " << vertex_id << "). TMS resolution by EventId is ambiguous.\n";
+        ss << "EDepSim event with packed vertex ID " << vertex_id << " has no primary vertices\n";
         LOG.FATAL() << ss.str();
         throw std::runtime_error(ss.str());
       }
+
+      const auto & pos = fG4Event->Primaries.front().Position;
+      unsigned int event_id = static_cast<unsigned int>(fG4Event->EventId);
+      fEventToVertexIDs[event_id].push_back(VertexCandidate{vertex_id, pos.X(), pos.Y(), pos.Z()});
     }
   }
 
@@ -667,7 +668,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexID(unsigned int evtNum)
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexID(unsigned int evtNum, double x, double y, double z)
   {
     if (!f_isTreeLoaded)
     {
@@ -675,8 +676,8 @@ namespace cafmaker
       f_isTreeLoaded = true;
     }
 
-    auto it = fEventToVertexID.find(evtNum);
-    if (it == fEventToVertexID.end())
+    auto it = fEventToVertexIDs.find(evtNum);
+    if (it == fEventToVertexIDs.end())
     {
       std::stringstream ss;
       ss << "EDepSim event ID " << evtNum << " was not found while resolving a packed vertex ID\n";
@@ -684,7 +685,46 @@ namespace cafmaker
       throw std::range_error(ss.str());
     }
 
-    return it->second;
+    constexpr double kPositionToleranceMm = 1.0;
+    const VertexCandidate * best = nullptr;
+    double bestDist2 = std::numeric_limits<double>::max();
+    for (const auto & candidate : it->second)
+    {
+      double dx = candidate.x - x;
+      double dy = candidate.y - y;
+      double dz = candidate.z - z;
+      double dist2 = dx*dx + dy*dy + dz*dz;
+      if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
+      {
+        if (best)
+        {
+          std::stringstream ss;
+          ss << "EDepSim event ID " << evtNum << " matches multiple packed vertex IDs within "
+             << kPositionToleranceMm << " mm of TMS truth position (" << x << ", " << y << ", " << z << ")\n";
+          LOG.FATAL() << ss.str();
+          throw std::runtime_error(ss.str());
+        }
+        best = &candidate;
+        bestDist2 = dist2;
+      }
+      else if (!best && dist2 < bestDist2)
+      {
+        bestDist2 = dist2;
+      }
+    }
+
+    if (!best)
+    {
+      std::stringstream ss;
+      ss << "EDepSim event ID " << evtNum << " had " << it->second.size()
+         << " candidate packed vertex IDs, but none matched TMS truth position ("
+         << x << ", " << y << ", " << z << ") within " << kPositionToleranceMm
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n";
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+
+    return best->vertexID;
   }
 
   // ------------------------------------------------------------

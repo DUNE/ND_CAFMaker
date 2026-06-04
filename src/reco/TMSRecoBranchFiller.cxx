@@ -106,12 +106,16 @@ namespace cafmaker
     fTMSRecoFile = NULL;
   }
 
-  unsigned long TMSRecoBranchFiller::ResolveTrueInteractionID(const TruthMatcher * truthMatch, int trueVtxId) const
+  unsigned long TMSRecoBranchFiller::ResolveTrueInteractionID(const TruthMatcher * truthMatch,
+                                                              int trueVtxId,
+                                                              double trueVtxX,
+                                                              double trueVtxY,
+                                                              double trueVtxZ) const
   {
     if (!truthMatch)
       throw std::runtime_error("TMSRecoBranchFiller requires TruthMatcher to resolve true interaction IDs");
 
-    return truthMatch->ResolveVertexID(static_cast<unsigned int>(trueVtxId));
+    return truthMatch->ResolveVertexID(static_cast<unsigned int>(trueVtxId), trueVtxX, trueVtxY, trueVtxZ);
   }
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
@@ -151,7 +155,7 @@ namespace cafmaker
 
       for (int i_tvtx=0; i_tvtx<_TrueVtxN; i_tvtx++)
       {
-        auto neutrino_event_id = ResolveTrueInteractionID(truthMatcher, _TrueVtxId[i_tvtx]);
+        auto neutrino_event_id = ResolveTrueInteractionID(truthMatcher, _TrueVtxId[i_tvtx], _TrueVtxX[i_tvtx], _TrueVtxY[i_tvtx], _TrueVtxZ[i_tvtx]);
         (void)truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true); // called for side effect of registering the interaction; cast suppresses unused-return-value warning
       }
     }
@@ -192,7 +196,7 @@ namespace cafmaker
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
-          const auto genieIxnID = ResolveTrueInteractionID(truthMatcher, _RecoTrueVtxId[j]);
+          const auto genieIxnID = ResolveTrueInteractionID(truthMatcher, _RecoTrueVtxId[j], _TrueVtxX[j], _TrueVtxY[j], _TrueVtxZ[j]);
           caf::SRTrueInteraction& srTrueInt = truthMatcher->GetTrueInteraction(sr, genieIxnID);
 
           const int srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
@@ -227,7 +231,7 @@ namespace cafmaker
     for (int i_int = 0; i_int<_TrueVtxN; i_int++)
     {
       //Long_t neutrino_event_id = _TrueVtxId[i_int];//mc_int_edepsimId[i_int];
-      auto neutrino_event_id = ResolveTrueInteractionID(truthMatch, _TrueVtxId[i_int]);
+      auto neutrino_event_id = ResolveTrueInteractionID(truthMatch, _TrueVtxId[i_int], _TrueVtxX[i_int], _TrueVtxY[i_int], _TrueVtxZ[i_int]);
       caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
       LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
       for (const caf::SRTrueParticle & part : srTrueInt.prim)
