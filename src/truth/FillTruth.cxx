@@ -467,6 +467,15 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  unsigned long TruthMatcher::ResolveVertexID(unsigned int evtNum) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::ResolveVertexID() requires an EDepSim file");
+
+    return fEdepSimTree.ResolveVertexID(evtNum);
+  }
+
+  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
@@ -634,15 +643,48 @@ namespace cafmaker
     for (int i = 0; i<fEdepTree->GetEntries(); i++)
     {
       fEdepTree->GetEntry(i);
-      long int vertex_id = fG4Event->RunId * 1e6 + fG4Event->EventId;                                                                                                                              fEdepEntries[vertex_id] = i;
+      unsigned long int vertex_id = static_cast<unsigned long int>(fG4Event->RunId) * 1000000ul + static_cast<unsigned long int>(fG4Event->EventId);
+      fEdepEntries[vertex_id] = i;
+
+      unsigned int event_id = static_cast<unsigned int>(fG4Event->EventId);
+      auto [it, inserted] = fEventToVertexID.emplace(event_id, vertex_id);
+      if (!inserted && it->second != vertex_id)
+      {
+        std::stringstream ss;
+        ss << "EDepSim event ID " << event_id << " maps to multiple packed vertex IDs ("
+           << it->second << " and " << vertex_id << "). TMS resolution by EventId is ambiguous.\n";
+        LOG.FATAL() << ss.str();
+        throw std::runtime_error(ss.str());
+      }
     }
   }
 
   // ------------------------------------------------------------
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
   {
-    long int vertex_id = runNum * 1e6 + evtNum;
-     SelectEvent(vertex_id); 
+    unsigned long int vertex_id = runNum * 1000000ul + evtNum;
+    SelectEvent(vertex_id);
+  }
+
+  // ------------------------------------------------------------
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexID(unsigned int evtNum)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+
+    auto it = fEventToVertexID.find(evtNum);
+    if (it == fEventToVertexID.end())
+    {
+      std::stringstream ss;
+      ss << "EDepSim event ID " << evtNum << " was not found while resolving a packed vertex ID\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    return it->second;
   }
 
   // ------------------------------------------------------------
