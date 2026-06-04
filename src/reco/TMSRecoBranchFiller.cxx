@@ -145,10 +145,10 @@ namespace cafmaker
     if (trueVtxIdx < 0 || trueVtxIdx >= _TruthSpillTrueVtxN)
       throw std::runtime_error("Requested Truth_Spill vertex index is out of range");
 
-    return truthMatch->ResolveVertexID(static_cast<unsigned int>(_TruthSpillTrueVtxID[trueVtxIdx]),
-                                       _TruthSpillTrueVtxX[trueVtxIdx],
-                                       _TruthSpillTrueVtxY[trueVtxIdx],
-                                       _TruthSpillTrueVtxZ[trueVtxIdx]);
+    return truthMatch->ResolveVertexIDFromRunAndPosition(static_cast<unsigned long>(_TruthSpillRunNo),
+                                                         _TruthSpillTrueVtxX[trueVtxIdx],
+                                                         _TruthSpillTrueVtxY[trueVtxIdx],
+                                                         _TruthSpillTrueVtxZ[trueVtxIdx]);
   }
 
   unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const

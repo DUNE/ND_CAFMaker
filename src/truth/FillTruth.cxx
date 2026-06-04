@@ -476,6 +476,15 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  unsigned long TruthMatcher::ResolveVertexIDFromRunAndPosition(unsigned long baseRunNum, double x, double y, double z) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::ResolveVertexIDFromRunAndPosition() requires an EDepSim file");
+
+    return fEdepSimTree.ResolveVertexIDFromRunAndPosition(baseRunNum, x, y, z);
+  }
+
+  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
@@ -656,7 +665,10 @@ namespace cafmaker
 
       const auto & pos = fG4Event->Primaries.front().Position;
       unsigned int event_id = static_cast<unsigned int>(fG4Event->EventId);
-      fEventToVertexIDs[event_id].push_back(VertexCandidate{vertex_id, pos.X(), pos.Y(), pos.Z()});
+      fEventToVertexIDs[event_id].push_back(VertexCandidate{vertex_id,
+                                                            static_cast<unsigned long int>(fG4Event->RunId),
+                                                            event_id,
+                                                            pos.X(), pos.Y(), pos.Z()});
     }
   }
 
@@ -727,8 +739,84 @@ namespace cafmaker
         double dy = candidate.y - y;
         double dz = candidate.z - z;
         double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
-        ss << "  vertexID=" << candidate.vertexID
+        ss << "  runID=" << candidate.runID << " eventID=" << candidate.eventID
+           << " vertexID=" << candidate.vertexID
            << " pos=(" << candidate.x << ", " << candidate.y << ", " << candidate.z << ")"
+           << " dist_mm=" << dist << "\n";
+      }
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+
+    return best->vertexID;
+  }
+
+  // ------------------------------------------------------------
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexIDFromRunAndPosition(unsigned long int baseRunNum, double x, double y, double z)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+
+    constexpr double kPositionToleranceMm = 1.0;
+    const unsigned long int rockRunNum = baseRunNum + 1000000000ul;
+    const VertexCandidate * best = nullptr;
+    double bestDist2 = std::numeric_limits<double>::max();
+    std::vector<const VertexCandidate*> considered;
+
+    for (const auto & [eventId, candidates] : fEventToVertexIDs)
+    {
+      (void)eventId;
+      for (const auto & candidate : candidates)
+      {
+        if (candidate.runID != baseRunNum && candidate.runID != rockRunNum)
+          continue;
+        considered.push_back(&candidate);
+
+        double dx = candidate.x - x;
+        double dy = candidate.y - y;
+        double dz = candidate.z - z;
+        double dist2 = dx*dx + dy*dy + dz*dz;
+        if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
+        {
+          if (best)
+          {
+            std::stringstream ss;
+            ss << "EDepSim run-filtered resolver for base run " << baseRunNum
+               << " matched multiple packed vertex IDs within " << kPositionToleranceMm
+               << " mm of TMS truth position (" << x << ", " << y << ", " << z << ")\n";
+            LOG.FATAL() << ss.str();
+            throw std::runtime_error(ss.str());
+          }
+          best = &candidate;
+          bestDist2 = dist2;
+        }
+        else if (!best && dist2 < bestDist2)
+        {
+          bestDist2 = dist2;
+        }
+      }
+    }
+
+    if (!best)
+    {
+      std::stringstream ss;
+      ss << "EDepSim run-filtered resolver for base run " << baseRunNum
+         << " considered " << considered.size() << " candidate packed vertex IDs, but none matched TMS truth position ("
+         << x << ", " << y << ", " << z << ") within " << kPositionToleranceMm
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
+         << "Candidates considered:\n";
+      for (const auto * candidate : considered)
+      {
+        double dx = candidate->x - x;
+        double dy = candidate->y - y;
+        double dz = candidate->z - z;
+        double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+        ss << "  runID=" << candidate->runID << " eventID=" << candidate->eventID
+           << " vertexID=" << candidate->vertexID
+           << " pos=(" << candidate->x << ", " << candidate->y << ", " << candidate->z << ")"
            << " dist_mm=" << dist << "\n";
       }
       LOG.FATAL() << ss.str();
