@@ -719,7 +719,18 @@ namespace cafmaker
       ss << "EDepSim event ID " << evtNum << " had " << it->second.size()
          << " candidate packed vertex IDs, but none matched TMS truth position ("
          << x << ", " << y << ", " << z << ") within " << kPositionToleranceMm
-         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n";
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
+         << "Candidates considered:\n";
+      for (const auto & candidate : it->second)
+      {
+        double dx = candidate.x - x;
+        double dy = candidate.y - y;
+        double dz = candidate.z - z;
+        double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+        ss << "  vertexID=" << candidate.vertexID
+           << " pos=(" << candidate.x << ", " << candidate.y << ", " << candidate.z << ")"
+           << " dist_mm=" << dist << "\n";
+      }
       LOG.FATAL() << ss.str();
       throw std::runtime_error(ss.str());
     }
