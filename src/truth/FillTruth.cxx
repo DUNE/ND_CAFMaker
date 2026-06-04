@@ -761,7 +761,8 @@ namespace cafmaker
     }
 
     constexpr double kPositionToleranceMm = 1.0;
-    const unsigned long int rockRunNum = baseRunNum + 1000000000ul;
+    const unsigned long int normalizedRunNum = (baseRunNum >= 1000000000ul) ? (baseRunNum - 1000000000ul) : baseRunNum;
+    const unsigned long int rockRunNum = normalizedRunNum + 1000000000ul;
     const VertexCandidate * best = nullptr;
     double bestDist2 = std::numeric_limits<double>::max();
     std::vector<const VertexCandidate*> considered;
@@ -771,7 +772,7 @@ namespace cafmaker
       (void)eventId;
       for (const auto & candidate : candidates)
       {
-        if (candidate.runID != baseRunNum && candidate.runID != rockRunNum)
+        if (candidate.runID != normalizedRunNum && candidate.runID != rockRunNum)
           continue;
         considered.push_back(&candidate);
 
