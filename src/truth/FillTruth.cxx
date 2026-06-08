@@ -467,6 +467,24 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  unsigned long TruthMatcher::ResolveVertexID(unsigned int evtNum, double x, double y, double z) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::ResolveVertexID() requires an EDepSim file");
+
+    return fEdepSimTree.ResolveVertexID(evtNum, x, y, z);
+  }
+
+  // ------------------------------------------------------------
+  unsigned long TruthMatcher::ResolveVertexIDFromRunAndPosition(unsigned long baseRunNum, double x, double y, double z) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::ResolveVertexIDFromRunAndPosition() requires an EDepSim file");
+
+    return fEdepSimTree.ResolveVertexIDFromRunAndPosition(baseRunNum, x, y, z);
+  }
+
+  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
@@ -634,15 +652,180 @@ namespace cafmaker
     for (int i = 0; i<fEdepTree->GetEntries(); i++)
     {
       fEdepTree->GetEntry(i);
-      long int vertex_id = fG4Event->RunId * 1e6 + fG4Event->EventId;                                                                                                                              fEdepEntries[vertex_id] = i;
+      unsigned long int vertex_id = static_cast<unsigned long int>(fG4Event->RunId) * 1000000ul + static_cast<unsigned long int>(fG4Event->EventId);
+      fEdepEntries[vertex_id] = i;
+
+      if (fG4Event->Primaries.empty())
+      {
+        std::stringstream ss;
+        ss << "EDepSim event with packed vertex ID " << vertex_id << " has no primary vertices\n";
+        LOG.FATAL() << ss.str();
+        throw std::runtime_error(ss.str());
+      }
+
+      const auto & pos = fG4Event->Primaries.front().Position;
+      unsigned int event_id = static_cast<unsigned int>(fG4Event->EventId);
+      fEventToVertexIDs[event_id].push_back(VertexCandidate{vertex_id,
+                                                            static_cast<unsigned long int>(fG4Event->RunId),
+                                                            event_id,
+                                                            pos.X(), pos.Y(), pos.Z()});
     }
   }
 
   // ------------------------------------------------------------
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
   {
-    long int vertex_id = runNum * 1e6 + evtNum;
-     SelectEvent(vertex_id); 
+    unsigned long int vertex_id = runNum * 1000000ul + evtNum;
+    SelectEvent(vertex_id);
+  }
+
+  // ------------------------------------------------------------
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexID(unsigned int evtNum, double x, double y, double z)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+
+    auto it = fEventToVertexIDs.find(evtNum);
+    if (it == fEventToVertexIDs.end())
+    {
+      std::stringstream ss;
+      ss << "EDepSim event ID " << evtNum << " was not found while resolving a packed vertex ID\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    constexpr double kPositionToleranceMm = 1.0;
+    const VertexCandidate * best = nullptr;
+    double bestDist2 = std::numeric_limits<double>::max();
+    for (const auto & candidate : it->second)
+    {
+      double dx = candidate.x - x;
+      double dy = candidate.y - y;
+      double dz = candidate.z - z;
+      double dist2 = dx*dx + dy*dy + dz*dz;
+      if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
+      {
+        if (best)
+        {
+          std::stringstream ss;
+          ss << "EDepSim event ID " << evtNum << " matches multiple packed vertex IDs within "
+             << kPositionToleranceMm << " mm of TMS truth position (" << x << ", " << y << ", " << z << ")\n";
+          LOG.FATAL() << ss.str();
+          throw std::runtime_error(ss.str());
+        }
+        best = &candidate;
+        bestDist2 = dist2;
+      }
+      else if (!best && dist2 < bestDist2)
+      {
+        bestDist2 = dist2;
+      }
+    }
+
+    if (!best)
+    {
+      std::stringstream ss;
+      ss << "EDepSim event ID " << evtNum << " had " << it->second.size()
+         << " candidate packed vertex IDs, but none matched TMS truth position ("
+         << x << ", " << y << ", " << z << ") within " << kPositionToleranceMm
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
+         << "Candidates considered:\n";
+      for (const auto & candidate : it->second)
+      {
+        double dx = candidate.x - x;
+        double dy = candidate.y - y;
+        double dz = candidate.z - z;
+        double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+        ss << "  runID=" << candidate.runID << " eventID=" << candidate.eventID
+           << " vertexID=" << candidate.vertexID
+           << " pos=(" << candidate.x << ", " << candidate.y << ", " << candidate.z << ")"
+           << " dist_mm=" << dist << "\n";
+      }
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+
+    return best->vertexID;
+  }
+
+  // ------------------------------------------------------------
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexIDFromRunAndPosition(unsigned long int baseRunNum, double x, double y, double z)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+
+    constexpr double kPositionToleranceMm = 1.0;
+    const VertexCandidate * best = nullptr;
+    double bestDist2 = std::numeric_limits<double>::max();
+    std::vector<const VertexCandidate*> considered;
+    int nMatchesWithinTolerance = 0;
+
+    for (const auto & [eventId, candidates] : fEventToVertexIDs)
+    {
+      (void)eventId;
+      for (const auto & candidate : candidates)
+      {
+        considered.push_back(&candidate);
+
+        double dx = candidate.x - x;
+        double dy = candidate.y - y;
+        double dz = candidate.z - z;
+        double dist2 = dx*dx + dy*dy + dz*dz;
+        if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
+        {
+          ++nMatchesWithinTolerance;
+          if (!best || dist2 < bestDist2)
+          {
+            best = &candidate;
+            bestDist2 = dist2;
+          }
+        }
+        else if (!best && dist2 < bestDist2)
+        {
+          bestDist2 = dist2;
+        }
+      }
+    }
+
+    if (!best)
+    {
+      std::stringstream ss;
+      ss << "EDepSim position-only resolver for base run " << baseRunNum
+         << " considered " << considered.size() << " candidate packed vertex IDs, but none matched TMS truth position ("
+         << x << ", " << y << ", " << z << ") within " << kPositionToleranceMm
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
+         << "Candidates considered:\n";
+      for (const auto * candidate : considered)
+      {
+        double dx = candidate->x - x;
+        double dy = candidate->y - y;
+        double dz = candidate->z - z;
+        double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+        ss << "  runID=" << candidate->runID << " eventID=" << candidate->eventID
+           << " vertexID=" << candidate->vertexID
+           << " pos=(" << candidate->x << ", " << candidate->y << ", " << candidate->z << ")"
+           << " dist_mm=" << dist << "\n";
+      }
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+
+    if (nMatchesWithinTolerance > 1)
+    {
+      LOG.WARNING() << "EDepSim position-only resolver for base run " << baseRunNum
+                    << " found " << nMatchesWithinTolerance << " packed vertex IDs within "
+                    << kPositionToleranceMm << " mm of TMS truth position ("
+                    << x << ", " << y << ", " << z << "); choosing closest match with vertexID="
+                    << best->vertexID << ".\n";
+    }
+
+    return best->vertexID;
   }
 
   // ------------------------------------------------------------
