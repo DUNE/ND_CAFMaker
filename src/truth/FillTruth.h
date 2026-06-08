@@ -12,9 +12,11 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <sstream>
+#include <tuple>
 #include <vector>
 
 #include "fwd.h"
@@ -254,6 +256,8 @@
           TTree * fEdepTree;
           std::map<unsigned long int, int> fEdepEntries;
           std::map<unsigned int, std::vector<VertexCandidate>> fEventToVertexIDs;
+          std::map<long long, std::vector<const VertexCandidate*>> fVertexCandidatesByYBin;
+          std::map<std::tuple<double, double, double>, unsigned long int> fResolvedVertexIDByPosition;
           const TG4Event * fG4Event;
           bool f_isTreeLoaded;
       };

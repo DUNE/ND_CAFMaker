@@ -31,6 +31,11 @@
 #include "Params.h"
 #include "util/FloatMath.h"
 
+namespace
+{
+  constexpr double kTMSPositionResolverYBinWidthMm = 500.0;
+}
+
 /// duneanaobj not guaranteed to be the same as GENIE scattering types
 caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
 {
@@ -670,6 +675,16 @@ namespace cafmaker
                                                             event_id,
                                                             pos.X(), pos.Y(), pos.Z()});
     }
+
+    for (auto & [eventId, candidates] : fEventToVertexIDs)
+    {
+      (void)eventId;
+      for (auto & candidate : candidates)
+      {
+        const long long yBin = static_cast<long long>(std::floor(candidate.y / kTMSPositionResolverYBinWidthMm));
+        fVertexCandidatesByYBin[yBin].push_back(&candidate);
+      }
+    }
   }
 
   // ------------------------------------------------------------
@@ -760,35 +775,80 @@ namespace cafmaker
       f_isTreeLoaded = true;
     }
 
+    const auto cacheKey = std::make_tuple(x, y, z);
+    auto cacheIt = fResolvedVertexIDByPosition.find(cacheKey);
+    if (cacheIt != fResolvedVertexIDByPosition.end())
+      return cacheIt->second;
+
     constexpr double kPositionToleranceMm = 1.0;
+    const long long yBin = static_cast<long long>(std::floor(y / kTMSPositionResolverYBinWidthMm));
+
     const VertexCandidate * best = nullptr;
     double bestDist2 = std::numeric_limits<double>::max();
     std::vector<const VertexCandidate*> considered;
     int nMatchesWithinTolerance = 0;
 
-    for (const auto & [eventId, candidates] : fEventToVertexIDs)
+    const auto scanCandidates = [&](const std::vector<const VertexCandidate*> & candidates)
     {
-      (void)eventId;
-      for (const auto & candidate : candidates)
+      for (const auto * candidate : candidates)
       {
-        considered.push_back(&candidate);
+        considered.push_back(candidate);
 
-        double dx = candidate.x - x;
-        double dy = candidate.y - y;
-        double dz = candidate.z - z;
+        double dx = candidate->x - x;
+        double dy = candidate->y - y;
+        double dz = candidate->z - z;
         double dist2 = dx*dx + dy*dy + dz*dz;
         if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
         {
           ++nMatchesWithinTolerance;
           if (!best || dist2 < bestDist2)
           {
-            best = &candidate;
+            best = candidate;
             bestDist2 = dist2;
           }
         }
         else if (!best && dist2 < bestDist2)
         {
           bestDist2 = dist2;
+        }
+      }
+    };
+
+    for (long long bin = yBin - 1; bin <= yBin + 1; ++bin)
+    {
+      auto it = fVertexCandidatesByYBin.find(bin);
+      if (it != fVertexCandidatesByYBin.end())
+        scanCandidates(it->second);
+    }
+
+    if (!best)
+    {
+      considered.clear();
+      bestDist2 = std::numeric_limits<double>::max();
+      for (const auto & [eventId, candidates] : fEventToVertexIDs)
+      {
+        (void)eventId;
+        for (const auto & candidate : candidates)
+        {
+          considered.push_back(&candidate);
+
+          double dx = candidate.x - x;
+          double dy = candidate.y - y;
+          double dz = candidate.z - z;
+          double dist2 = dx*dx + dy*dy + dz*dz;
+          if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
+          {
+            ++nMatchesWithinTolerance;
+            if (!best || dist2 < bestDist2)
+            {
+              best = &candidate;
+              bestDist2 = dist2;
+            }
+          }
+          else if (!best && dist2 < bestDist2)
+          {
+            bestDist2 = dist2;
+          }
         }
       }
     }
@@ -825,6 +885,7 @@ namespace cafmaker
                     << best->vertexID << ".\n";
     }
 
+    fResolvedVertexIDByPosition[cacheKey] = best->vertexID;
     return best->vertexID;
   }
 
