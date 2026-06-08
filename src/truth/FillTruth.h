@@ -183,8 +183,8 @@
       /// Resolve an EDepSim EventId plus vertex position (mm) into the legacy packed vertex ID
       /// (run*1e6 + event). This preserves current CAFMaker conventions, even though the encoding is brittle.
       unsigned long ResolveVertexID(unsigned int evtNum, double x, double y, double z) const;
-      /// TMS-specific resolver: use a spill/base run number and vertex position, considering only
-      /// EDepSim candidates from baseRun or baseRun+1e9.
+      /// TMS-specific resolver: use the Truth_Spill vertex position to recover the legacy packed
+      /// vertex ID. The base run number is retained only for diagnostics; matching is position-only.
       unsigned long ResolveVertexIDFromRunAndPosition(unsigned long baseRunNum, double x, double y, double z) const;
       bool HaveGENIE() const;
       bool HaveEDEPSIM() const;

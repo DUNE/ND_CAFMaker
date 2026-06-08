@@ -761,19 +761,16 @@ namespace cafmaker
     }
 
     constexpr double kPositionToleranceMm = 1.0;
-    const unsigned long int normalizedRunNum = (baseRunNum >= 1000000000ul) ? (baseRunNum - 1000000000ul) : baseRunNum;
-    const unsigned long int rockRunNum = normalizedRunNum + 1000000000ul;
     const VertexCandidate * best = nullptr;
     double bestDist2 = std::numeric_limits<double>::max();
     std::vector<const VertexCandidate*> considered;
+    int nMatchesWithinTolerance = 0;
 
     for (const auto & [eventId, candidates] : fEventToVertexIDs)
     {
       (void)eventId;
       for (const auto & candidate : candidates)
       {
-        if (candidate.runID != normalizedRunNum && candidate.runID != rockRunNum)
-          continue;
         considered.push_back(&candidate);
 
         double dx = candidate.x - x;
@@ -782,17 +779,12 @@ namespace cafmaker
         double dist2 = dx*dx + dy*dy + dz*dz;
         if (dist2 <= kPositionToleranceMm * kPositionToleranceMm)
         {
-          if (best)
+          ++nMatchesWithinTolerance;
+          if (!best || dist2 < bestDist2)
           {
-            std::stringstream ss;
-            ss << "EDepSim run-filtered resolver for base run " << baseRunNum
-               << " matched multiple packed vertex IDs within " << kPositionToleranceMm
-               << " mm of TMS truth position (" << x << ", " << y << ", " << z << ")\n";
-            LOG.FATAL() << ss.str();
-            throw std::runtime_error(ss.str());
+            best = &candidate;
+            bestDist2 = dist2;
           }
-          best = &candidate;
-          bestDist2 = dist2;
         }
         else if (!best && dist2 < bestDist2)
         {
@@ -804,7 +796,7 @@ namespace cafmaker
     if (!best)
     {
       std::stringstream ss;
-      ss << "EDepSim run-filtered resolver for base run " << baseRunNum
+      ss << "EDepSim position-only resolver for base run " << baseRunNum
          << " considered " << considered.size() << " candidate packed vertex IDs, but none matched TMS truth position ("
          << x << ", " << y << ", " << z << ") within " << kPositionToleranceMm
          << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
@@ -822,6 +814,15 @@ namespace cafmaker
       }
       LOG.FATAL() << ss.str();
       throw std::runtime_error(ss.str());
+    }
+
+    if (nMatchesWithinTolerance > 1)
+    {
+      LOG.WARNING() << "EDepSim position-only resolver for base run " << baseRunNum
+                    << " found " << nMatchesWithinTolerance << " packed vertex IDs within "
+                    << kPositionToleranceMm << " mm of TMS truth position ("
+                    << x << ", " << y << ", " << z << "); choosing closest match with vertexID="
+                    << best->vertexID << ".\n";
     }
 
     return best->vertexID;
