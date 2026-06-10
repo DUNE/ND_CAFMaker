@@ -587,6 +587,12 @@ namespace cafmaker
         if (current >= static_cast<int>(g4event->Trajectories.size()))
           return;
 
+        // If we have reached a G4 root trajectory but it is not represented in
+        // ixn.prim, stop here and leave the ancestor unknown rather than
+        // inserting that root into the secondary list.
+        if (g4event->Trajectories[current].ParentId < 0)
+          return;
+
         if (HasParticleWithG4ID(ixn.prim, current))
           return;
 
