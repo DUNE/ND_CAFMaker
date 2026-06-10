@@ -286,7 +286,7 @@ namespace cafmaker
       potential_match.larid = larid;
       potential_match.matchScore = matchScore;
       potential_match.transdispl = sqrt(pow(delta_x,2)+pow(delta_y,2));
-      potential_match.angdispl = cos(TMath::Pi()/180.0 * angles[2]);
+      potential_match.cosangdispl = cos(TMath::Pi()/180.0 * angles[2]);
 
       caf::SRTrack joint_track = potential_match.trk;
       joint_track.start = trk.start;
