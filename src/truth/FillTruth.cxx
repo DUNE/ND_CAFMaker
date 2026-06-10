@@ -548,7 +548,7 @@ namespace cafmaker
                             int G4ID,
                             const TG4Event *g4event)
     {
-      auto traj = g4event->Trajectories[G4ID];
+      const auto & traj = g4event->Trajectories[G4ID];
 
       part.G4ID = traj.TrackId;
       part.interaction_id = ixn.id;
@@ -558,10 +558,10 @@ namespace cafmaker
       part.parent = traj.ParentId;
       part.ancestor_id = FindPrimaryAncestor(ixn, nixn, G4ID, g4event);
 
-      auto p0 = traj.Points[0];
+      const auto & p0 = traj.Points[0];
       part.start_pos = (p0.Position * .1).Vect();
 
-      auto pf = traj.Points[traj.Points.size()-1];
+      const auto & pf = traj.Points.back();
       part.end_pos = (pf.Position * .1).Vect();
     }
 
