@@ -7,6 +7,7 @@
 
 #include "FillTruth.h"
 
+#include <cstdlib>
 #include <map>
 #include <regex>
 
@@ -149,21 +150,23 @@ namespace cafmaker
     const unsigned long totalSecondaryAdds = fMaterializationStats.missingSecondaryAdds
                                            + fMaterializationStats.missingSecondaryClosureAdds;
     const unsigned long totalClosureCalls = fMaterializationStats.secondaryClosureCalls;
+    if (!PrintMaterializationStatsEnabled())
+      return;
     if (fMaterializationStats.missingPrimaryAdds == 0 && totalSecondaryAdds == 0 && totalClosureCalls == 0)
       return;
 
-    LOG.WARNING() << "Materialized missing true particles: prim="
-                  << fMaterializationStats.missingPrimaryAdds
-                  << ", sec(requested)=" << fMaterializationStats.missingSecondaryAdds
-                  << ", sec(parent-closure)=" << fMaterializationStats.missingSecondaryClosureAdds
-                  << ", sec(total)=" << totalSecondaryAdds
-                  << "; closure calls=" << totalClosureCalls
-                  << ", resolved(existing prim)=" << fMaterializationStats.secondaryClosureResolvedByExistingPrimary
-                  << ", resolved(existing sec)=" << fMaterializationStats.secondaryClosureResolvedByExistingSecondary
-                  << ", resolved(materialized prim)=" << fMaterializationStats.secondaryClosureResolvedByMaterializedPrimary
-                  << ", aborted(cycle)=" << fMaterializationStats.secondaryClosureAbortedCycle
-                  << ", aborted(out-of-range)=" << fMaterializationStats.secondaryClosureAbortedOutOfRange
-                  << "\n";
+    LOG.INFO() << "TruthMatcher materialization stats: prim(added)="
+               << fMaterializationStats.missingPrimaryAdds
+               << ", sec(requested)=" << fMaterializationStats.missingSecondaryAdds
+               << ", sec(parent-closure)=" << fMaterializationStats.missingSecondaryClosureAdds
+               << ", sec(total)=" << totalSecondaryAdds
+               << "; closure calls=" << totalClosureCalls
+               << ", resolved(existing prim)=" << fMaterializationStats.secondaryClosureResolvedByExistingPrimary
+               << ", resolved(existing sec)=" << fMaterializationStats.secondaryClosureResolvedByExistingSecondary
+               << ", resolved(materialized prim)=" << fMaterializationStats.secondaryClosureResolvedByMaterializedPrimary
+               << ", aborted(cycle)=" << fMaterializationStats.secondaryClosureAbortedCycle
+               << ", aborted(out-of-range)=" << fMaterializationStats.secondaryClosureAbortedOutOfRange
+               << " [set ND_CAFMAKER_STATS=1 to enable]\n";
   }
 
   // --------------------------------------------------------------
@@ -562,6 +565,12 @@ namespace cafmaker
                           {
                             return part.G4ID == G4ID;
                           }) != collection.end();
+    }
+
+    bool PrintMaterializationStatsEnabled()
+    {
+      const char *env = std::getenv("ND_CAFMAKER_STATS");
+      return env && std::string(env) == "1";
     }
 
     void FillParticleFields(caf::SRTrueParticle &part,
