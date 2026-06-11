@@ -132,6 +132,7 @@
                   std::string edepsimFilename,
                    const genie::NtpMCEventRecord *gEvt,
                    std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback);
+      ~TruthMatcher();
 
       /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
@@ -186,7 +187,13 @@
     private:
     static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn);
     // static void FillParticle(caf::SRTrueParticle * part, std::size_t nixn, const TG4Event * g4event);
-    static  int FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event);
+    int FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event) const;
+    void EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
+                                      std::size_t nixn,
+                                      int G4ID,
+                                      std::vector<caf::SRTrueParticle> &secondaries,
+                                      int &counter,
+                                      const TG4Event *g4event) const;
 
 
 
@@ -238,6 +245,14 @@
           bool f_isTreeLoaded;
       };
       mutable EdepSimTreeContainer fEdepSimTree;
+
+      struct MaterializationStats
+      {
+        unsigned long missingPrimaryAdds = 0;
+        unsigned long missingSecondaryAdds = 0;
+        unsigned long missingSecondaryClosureAdds = 0;
+      };
+      mutable MaterializationStats fMaterializationStats;
 
   };
 }

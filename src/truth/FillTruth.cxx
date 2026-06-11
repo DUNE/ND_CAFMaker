@@ -144,6 +144,20 @@ namespace cafmaker
     LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
   }
 
+  TruthMatcher::~TruthMatcher()
+  {
+    const unsigned long totalSecondaryAdds = fMaterializationStats.missingSecondaryAdds
+                                           + fMaterializationStats.missingSecondaryClosureAdds;
+    if (fMaterializationStats.missingPrimaryAdds == 0 && totalSecondaryAdds == 0)
+      return;
+
+    LOG.WARNING() << "Materialized missing true particles: prim="
+                  << fMaterializationStats.missingPrimaryAdds
+                  << ", sec(requested)=" << fMaterializationStats.missingSecondaryAdds
+                  << ", sec(parent-closure)=" << fMaterializationStats.missingSecondaryClosureAdds
+                  << ", sec(total)=" << totalSecondaryAdds << "\n";
+  }
+
   // --------------------------------------------------------------
   void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn)
   {
@@ -565,52 +579,81 @@ namespace cafmaker
       part.end_pos = (pf.Position * .1).Vect();
     }
 
-    void EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
-                                      std::size_t nixn,
-                                      int G4ID,
-                                      std::vector<caf::SRTrueParticle> &secondaries,
-                                      int &counter,
-                                      const TG4Event *g4event)
+  }
+
+  void TruthMatcher::EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
+                                                  std::size_t nixn,
+                                                  int G4ID,
+                                                  std::vector<caf::SRTrueParticle> &secondaries,
+                                                  int &counter,
+                                                  const TG4Event *g4event) const
+  {
+    if (!g4event) return;
+    if (G4ID < 0 || G4ID >= static_cast<int>(g4event->Trajectories.size())) return;
+
+    int current = g4event->Trajectories[G4ID].ParentId;
+    std::vector<int> visited{G4ID};
+    std::vector<int> missingAncestors;
+
+    while (current >= 0)
     {
-      if (!g4event) return;
-      if (G4ID < 0 || G4ID >= static_cast<int>(g4event->Trajectories.size())) return;
+      if (std::find(visited.begin(), visited.end(), current) != visited.end())
+        return;
+      visited.push_back(current);
 
-      int current = g4event->Trajectories[G4ID].ParentId;
-      std::vector<int> visited{G4ID};
+      if (current >= static_cast<int>(g4event->Trajectories.size()))
+        return;
 
-      while (current >= 0)
+      if (HasParticleWithG4ID(ixn.prim, current))
+        break;
+
+      if (HasParticleWithG4ID(secondaries, current))
+        break;
+
+      const auto &traj = g4event->Trajectories[current];
+      if (traj.ParentId < 0)
       {
-        if (std::find(visited.begin(), visited.end(), current) != visited.end())
-          return;
-        visited.push_back(current);
+        LOG.WARNING() << "Materializing missing primary trajectory " << current
+                      << " into prim for interaction " << ixn.id
+                      << " while closing parent chain for secondary trajectory " << G4ID << "\n";
 
-        if (current >= static_cast<int>(g4event->Trajectories.size()))
-          return;
-
-        // If we have reached a G4 root trajectory but it is not represented in
-        // ixn.prim, stop here and leave the ancestor unknown rather than
-        // inserting that root into the secondary list.
-        if (g4event->Trajectories[current].ParentId < 0)
-          return;
-
-        if (HasParticleWithG4ID(ixn.prim, current))
-          return;
-
-        if (HasParticleWithG4ID(secondaries, current))
-          return;
-
-        const int particle_index = counter;
-        secondaries.emplace_back();
-        counter++;
-
-        FillParticleFields(secondaries.at(particle_index), ixn, nixn, current, g4event);
-        current = g4event->Trajectories[current].ParentId;
+        const int particle_index = ixn.nprim;
+        ixn.prim.emplace_back();
+        ixn.nprim++;
+        FillParticleFields(ixn.prim.at(particle_index), ixn, nixn, current, g4event);
+        fMaterializationStats.missingPrimaryAdds++;
+        break;
       }
+
+      missingAncestors.push_back(current);
+      current = traj.ParentId;
+    }
+
+    for (auto it = missingAncestors.rbegin(); it != missingAncestors.rend(); ++it)
+    {
+      LOG.WARNING() << "Materializing missing secondary trajectory " << *it
+                    << " into sec for interaction " << ixn.id
+                    << " while closing parent chain for secondary trajectory " << G4ID << "\n";
+
+      const int particle_index = counter;
+      secondaries.emplace_back();
+      counter++;
+      FillParticleFields(secondaries.at(particle_index), ixn, nixn, *it, g4event);
+      fMaterializationStats.missingSecondaryClosureAdds++;
     }
   }
 
-  int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event)
+  int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event) const
   {
+    const bool isPrimaryCollection = (&collection == &ixn.prim);
+    LOG.WARNING() << "Materializing missing " << (isPrimaryCollection ? "primary" : "secondary")
+                  << " trajectory " << G4ID << " into " << (isPrimaryCollection ? "prim" : "sec")
+                  << " for interaction " << ixn.id << "\n";
+
+    if (isPrimaryCollection)
+      fMaterializationStats.missingPrimaryAdds++;
+    else
+      fMaterializationStats.missingSecondaryAdds++;
 
     collection.emplace_back();
     int part_index = counter;
@@ -618,8 +661,11 @@ namespace cafmaker
 
     FillParticleFields(collection.at(part_index), ixn, nixn, G4ID, g4event);
 
-    if (&collection == &ixn.sec)
+    if (!isPrimaryCollection)
+    {
       EnsureSecondaryParentClosure(ixn, nixn, G4ID, collection, counter, g4event);
+      FillParticleFields(collection.at(part_index), ixn, nixn, G4ID, g4event);
+    }
 
     return collection.at(part_index).ancestor_id.part;
   }
