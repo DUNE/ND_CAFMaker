@@ -251,6 +251,12 @@
         unsigned long missingPrimaryAdds = 0;
         unsigned long missingSecondaryAdds = 0;
         unsigned long missingSecondaryClosureAdds = 0;
+        unsigned long secondaryClosureCalls = 0;
+        unsigned long secondaryClosureResolvedByExistingPrimary = 0;
+        unsigned long secondaryClosureResolvedByExistingSecondary = 0;
+        unsigned long secondaryClosureResolvedByMaterializedPrimary = 0;
+        unsigned long secondaryClosureAbortedCycle = 0;
+        unsigned long secondaryClosureAbortedOutOfRange = 0;
       };
       mutable MaterializationStats fMaterializationStats;
 
