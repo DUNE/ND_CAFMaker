@@ -107,6 +107,11 @@ caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
 
 namespace cafmaker
 {
+  namespace
+  {
+    bool PrintMaterializationStatsEnabled();
+  }
+
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string & fieldName)
   {
