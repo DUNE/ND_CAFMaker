@@ -82,6 +82,7 @@ namespace cafmaker
       TMSTrueSpill->SetBranchAddress("nTrueParticles",                 &_TruthSpillNTrueParticles);
       TMSTrueSpill->SetBranchAddress("VertexID",                       _TruthSpillParticleVertexID);
       TMSTrueSpill->SetBranchAddress("Parent",                         _TruthSpillParent);
+      TMSTrueSpill->SetBranchAddress("TrackId",                        _TruthSpillTrackID);
       TMSTrueSpill->SetBranchAddress("BirthPosition",                  _TruthSpillBirthPosition);
       TMSTrueSpill->SetBranchAddress("TrueVtxN",                       &_TruthSpillTrueVtxN);
       TMSTrueSpill->SetBranchAddress("TrueVtxID",                      _TruthSpillTrueVtxID);
@@ -151,12 +152,12 @@ namespace cafmaker
                                                          _TruthSpillTrueVtxZ[trueVtxIdx]);
   }
 
-  unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
+  int TMSRecoBranchFiller::ResolveRecoTrackTruthParticleIndex(int recoTrackIdx) const
   {
     if (recoTrackIdx < 0)
       throw std::runtime_error("Requested reco track index is negative");
 
-    int particleIdx = _RecoTruePartId[recoTrackIdx];
+    const int particleIdx = _RecoTruePartId[recoTrackIdx];
     if (particleIdx < 0 || particleIdx >= _TruthSpillNTrueParticles)
     {
       std::stringstream ss;
@@ -164,17 +165,54 @@ namespace cafmaker
       throw std::runtime_error(ss.str());
     }
 
+    return particleIdx;
+  }
+
+  int TMSRecoBranchFiller::FindTruthSpillParticleIndex(int vertexId, int trackId) const
+  {
+    for (int i = 0; i < _TruthSpillNTrueParticles; ++i)
+    {
+      if (_TruthSpillParticleVertexID[i] == vertexId && _TruthSpillTrackID[i] == trackId)
+        return i;
+    }
+    return -1;
+  }
+
+  int TMSRecoBranchFiller::ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const
+  {
+    std::vector<int> visited;
     while (_TruthSpillParent[particleIdx] != -1)
     {
-      int parentIdx = _TruthSpillParent[particleIdx];
-      if (parentIdx < 0 || parentIdx >= _TruthSpillNTrueParticles)
+      if (std::find(visited.begin(), visited.end(), particleIdx) != visited.end())
       {
-        std::stringstream ss;
-        ss << "Truth_Spill particle " << particleIdx << " has out-of-range parent index " << parentIdx << "\n";
-        throw std::runtime_error(ss.str());
+        LOG.WARNING() << "TMS reco track " << recoTrackIdx
+                      << " encountered a loop while resolving Truth_Spill parents;"
+                      << " falling back to particle index " << particleIdx << "\n";
+        return particleIdx;
+      }
+      visited.push_back(particleIdx);
+
+      const int parentTrackId = _TruthSpillParent[particleIdx];
+      const int vertexId = _TruthSpillParticleVertexID[particleIdx];
+      const int parentIdx = FindTruthSpillParticleIndex(vertexId, parentTrackId);
+      if (parentIdx < 0)
+      {
+        LOG.WARNING() << "TMS reco track " << recoTrackIdx
+                      << " could not resolve parent track ID " << parentTrackId
+                      << " from Truth_Spill particle index " << particleIdx
+                      << " (vertex ID " << vertexId << ");"
+                      << " falling back to the current particle instead of crashing\n";
+        return particleIdx;
       }
       particleIdx = parentIdx;
     }
+
+    return particleIdx;
+  }
+
+  unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
+  {
+    const int particleIdx = ResolvePrimaryTruthParticleIndex(ResolveRecoTrackTruthParticleIndex(recoTrackIdx), recoTrackIdx);
 
     const int trueVtxId = _TruthSpillParticleVertexID[particleIdx];
     const double birthX = _TruthSpillBirthPosition[particleIdx][0];
@@ -297,7 +335,8 @@ namespace cafmaker
                                                                                { return ixn.id == srTrueInt.id; })));
 
           // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries)
-          const int partG4ID = _RecoTruePartId[j];
+          const int recoTruthParticleIdx = ResolveRecoTrackTruthParticleIndex(j);
+          const int partG4ID = _TruthSpillTrackID[recoTruthParticleIdx];
           truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
           const int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
                                                                  std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(),
