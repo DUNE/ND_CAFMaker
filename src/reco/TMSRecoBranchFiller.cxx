@@ -1,6 +1,9 @@
 #include "TMSRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 
+#include <cmath>
+#include <limits>
+
 /*
  * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Oct 2024
  * Put together mostly from the previous example and the MINERvA RecoBranchFiller
@@ -221,36 +224,49 @@ namespace cafmaker
 
     constexpr double kVertexMatchToleranceMm = 100.0;
     int matchedVtxIdx = -1;
+    int nearestVtxIdx = -1;
+    double nearestDist2 = std::numeric_limits<double>::infinity();
     for (int i = 0; i < _TruthSpillTrueVtxN; ++i)
     {
-      if (_TruthSpillTrueVtxID[i] != trueVtxId)
-        continue;
-
       const double dx = _TruthSpillTrueVtxX[i] - birthX;
       const double dy = _TruthSpillTrueVtxY[i] - birthY;
       const double dz = _TruthSpillTrueVtxZ[i] - birthZ;
       const double dist2 = dx*dx + dy*dy + dz*dz;
+      if (dist2 < nearestDist2)
+      {
+        nearestDist2 = dist2;
+        nearestVtxIdx = i;
+      }
+
+      if (_TruthSpillTrueVtxID[i] != trueVtxId)
+        continue;
       if (dist2 > kVertexMatchToleranceMm * kVertexMatchToleranceMm)
         continue;
 
       if (matchedVtxIdx >= 0)
       {
-        std::stringstream ss;
-        ss << "Reco track " << recoTrackIdx << " matches multiple Truth_Spill vertices for vertex ID " << trueVtxId << "\n";
-        throw std::runtime_error(ss.str());
+        LOG.WARNING() << "Reco track " << recoTrackIdx
+                      << " matched multiple Truth_Spill vertices for vertex ID " << trueVtxId
+                      << "; using the first in-tolerance match instead of crashing\n";
+        continue;
       }
       matchedVtxIdx = i;
     }
 
-    if (matchedVtxIdx < 0)
+    if (matchedVtxIdx >= 0)
+      return ResolveTrueInteractionIDFromVertexIndex(truthMatch, matchedVtxIdx);
+
+    if (nearestVtxIdx >= 0)
     {
-      std::stringstream ss;
-      ss << "Reco track " << recoTrackIdx << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
-         << trueVtxId << " within " << kVertexMatchToleranceMm << " mm\n";
-      throw std::runtime_error(ss.str());
+      LOG.WARNING() << "Reco track " << recoTrackIdx
+                    << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
+                    << trueVtxId << " within " << kVertexMatchToleranceMm << " mm;"
+                    << " falling back to nearest Truth_Spill vertex index " << nearestVtxIdx
+                    << " at distance " << std::sqrt(nearestDist2) << " mm\n";
+      return ResolveTrueInteractionIDFromVertexIndex(truthMatch, nearestVtxIdx);
     }
 
-    return ResolveTrueInteractionIDFromVertexIndex(truthMatch, matchedVtxIdx);
+    throw std::runtime_error("Truth_Spill contains no vertices to resolve reco track interaction ID");
   }
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
