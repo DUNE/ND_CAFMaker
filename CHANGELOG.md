@@ -2,6 +2,18 @@
 [[Format loosely based on <https://keepachangelog.com/en/0.3.0>]]
 
 ##### current
+* Replace the fragile GNU Make build with a proper CMake setup: UPS dependencies are wrapped in `INTERFACE IMPORTED` targets, out-of-source builds are isolated under `build/`, and optional features are exposed as CMake options (`ENABLE_TMS`, `ENABLE_TESTEXE`). `ndcaf_setup.sh` is split into `ndcaf_setup_deps.sh` (build-time) and `ndcaf_setup.sh` (post-install runtime), both installed under `<prefix>/bin/`; UPS products with CMake configs now use `find_package(... CONFIG)` with transitive resolution; `makeCAF` gets `$ORIGIN/../lib` as `INSTALL_RPATH`, dropping the need for `LD_LIBRARY_PATH`; `cfg/` fcl files are installed under `<prefix>/cfg/` and wired into `FHICL_FILE_PATH`.  **Breaking**: source `ndcaf_setup_deps.sh` before building and `<prefix>/bin/ndcaf_setup.sh` after install.([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
+* Add CI via GitHub Actions: Apptainer + CVMFS on SL7 ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
+
+##### [v4.11.1] -- 2026-04-06
+* Don't assume correct truth-matching for cheated track matching ([PR #131](https://github.com/DUNE/ND_CAFMaker/pull/131))
+
+##### [v4.11.0] -- 2026-03-23
+* Additional SAND output ([PR #102](https://github.com/DUNE/ND_CAFMaker/pull/102))
+* ND-LAr <-> TMS matching using timing info (PRs [#105](https://github.com/DUNE/ND_CAFMaker/pull/105), [#127](https://github.com/DUNE/ND_CAFMaker/pull/127))
+* Significant expansion of Pandora output ([PR #110](https://github.com/DUNE/ND_CAFMaker/pull/110))
+* Better TMS truth-matching ([PR #111](https://github.com/DUNE/ND_CAFMaker/pull/111))
+* Make track-based energy estimates for SPINE work the same way as RecoParticles (PRs [#124](https://github.com/DUNE/ND_CAFMaker/pull/124), [#125](https://github.com/DUNE/ND_CAFMaker/pull/125))
 
 ##### [v4.11.1] -- 2026-04-06
 * Don't assume correct truth-matching for cheated track matching ([PR #131](https://github.com/DUNE/ND_CAFMaker/pull/131))

@@ -8,15 +8,19 @@ The first time you use it'll you'll need to build the dependencies.  Simply run
 ./build_deps.sh
 ```
 
-For subsequent use, 
-```
-source ndcaf_setup.sh {prof|debug}
-```
-is sufficient to set up your environment for the common use cases.  
-You will need to choose `prof` or `debug` for optimized or debug build, respectively.
+For subsequent use, two scripts are provided:
+
+- **`ndcaf_setup_deps.sh`** — sets up the UPS dependencies (ROOT, GENIE, edep-sim,
+  duneanaobj, fhiclcpp, HDF5, ...). Source this **before** running `cmake`.
+- **`ndcaf_setup.sh`** — sets up the runtime environment from an installed tree
+  (puts `makeCAF` on `PATH`, `libND_CAFMaker.so` on `LD_LIBRARY_PATH`, and
+  `<prefix>/cfg` on `FHICL_FILE_PATH`). It internally sources `ndcaf_setup_deps.sh`,
+  so users running an installed `makeCAF` only need to source `ndcaf_setup.sh`.
+
+Both scripts take an optional build qualifier (`prof` or `debug`).
 (If you're hacking on the CAFMaker, you probably want `debug`.  If not, `prof` will run faster.)
 
-**If, however, you need to set up a local version of `duneanaobj` for testing purposes, you must edit `ndcaf_setup.sh` before sourcing it.**
+**If, however, you need to set up a local version of `duneanaobj` for testing purposes, you must edit `ndcaf_setup_deps.sh` before sourcing it.**
 
 ## Inputs
 The package is controlled by `fhicl` config files, found in the `cfg` directory. The `cfg/ndcafmakerjob.fcl` shows the basic setup.
@@ -34,21 +38,82 @@ To add variables and inspect what is set and how, check `src/Params.h`.
 
 
 ## Building
-Once you've set up your environment, it's just a matter of typing 
+
+### Build environment
+
+The build requires the UPS dependencies provided by the Fermilab software stack.
+The recommended way to get a compatible environment is via the Singularity image:
+
 ```
-make
+singularity shell --bind /cvmfs /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest
 ```
-in the `ND_CAFMaker` folder, which goes through and builds the objects, library and single `makeCAF` executable.
+
+Once inside the container, source the dependency setup script before configuring:
+
+```
+source ndcaf_setup_deps.sh {prof|debug}
+```
+
+### CMake configuration
+
+Once you've set up your environment, configure and build with CMake.
+From the project root folder:
+
+```
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug # or Release
+cmake --build build 
+```
+
+The build products are installed under `build/` by default. The `makeCAF` executable will be at `build/bin/makeCAF`.
+
+### CMake build options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ENABLE_TMS` | `ON` | Enable TMS reconstruction branch filler |
+| `CMAKE_BUILD_TYPE` | — | Set to `Debug` or `Release` (overrides the `-g -O2` defaults) |
+
+Example: disable TMS and build the test executable:
+
+```
+cmake -S . -B build -DENABLE_TMS=OFF
+cmake --build build
+```
+
+### Installing
+
+To install the library and executables to a custom prefix:
+
+```
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake --build build --target install
+```
+
+This will place:
+- `libND_CAFMaker.so` → `<prefix>/lib/`
+- `makeCAF` (and optionally `testHDF`) → `<prefix>/bin/`
+- `ndcaf_setup.sh`, `ndcaf_setup_deps.sh` → `<prefix>/bin/`
+- the `cfg/` fcl files → `<prefix>/cfg/`
+
+If no `CMAKE_INSTALL_PREFIX` is given, the default system prefix (`/usr/local`) is used.
+
+The installed `makeCAF` is built with `$ORIGIN/../lib` (plus the CVMFS paths
+of all UPS dependencies) in its `RUNPATH`, so it loads `libND_CAFMaker.so`
+without any `LD_LIBRARY_PATH` manipulation. Sourcing `ndcaf_setup.sh` is still
+needed to set up the GCC/UPS runtime environment and to point
+`FHICL_FILE_PATH` at the installed `cfg/` directory.
 
 # Running
-There is currently only one main executable, `makeCAF`, which is controlled entirely by the input `fhicl` file. To run with the `fhicl` file that was specified under `Inputs`, do
+After install, source the runtime setup once per shell to get `makeCAF`
+on your `PATH`:
 ```
-/path/to/ND_CAFMaker/bin/makeCAF --fcl=path_to_your_fhicl_file.fcl
+source <prefix>/bin/ndcaf_setup.sh {prof|debug}
+makeCAF --fcl=path_to_your_fhicl_file.fcl
 ```
 
 You can also override some of the `fhicl` inputs, which are specified by typing 
 ```
-/path/to/ND_CAFMaker/bin/makeCAF --help
+makeCAF --help
 ```
 and should output
 ```
@@ -81,8 +146,8 @@ For more details and examples, see [GitHub Issue #142](https://github.com/DUNE/N
 
 ## Using a locally installed `duneanaobj` for testing
 
-`duneanaobj`'s [README](https://github.com/DUNE/duneanaobj/blob/master/README.md) explains how to construct a custom UPS product that can be used in place of the version used by default by `ndcaf_setup.sh`.
-If you have such a custom version that you wish to use, edit `ndcaf_setup.sh` to add your custom UPS directory to `$PRODUCTS` and to set up the version name for your working copy.
+`duneanaobj`'s [README](https://github.com/DUNE/duneanaobj/blob/master/README.md) explains how to construct a custom UPS product that can be used in place of the version used by default by `ndcaf_setup_deps.sh`.
+If you have such a custom version that you wish to use, edit `ndcaf_setup_deps.sh` to add your custom UPS directory to `$PRODUCTS` and to set up the version name for your working copy.
 Consult the README for more details.
 
 # Contact
