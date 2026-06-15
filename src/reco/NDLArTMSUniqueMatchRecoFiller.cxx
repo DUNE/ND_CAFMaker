@@ -38,7 +38,7 @@ namespace cafmaker
     double x, y, z;
 
     double dir_x, dir_y, dir_z;
-    
+
     double proj_z;
     double proj_x;
     double proj_y;
@@ -108,12 +108,12 @@ namespace cafmaker
     if ((x_start > tms_x_lim1)&&(x_start < tms_x_lim2) &&
         (y_start > tms_y_lim1)&&(y_start < tms_y_lim2) &&
         (z_start > tms_z_lim1)&&(z_start < tms_z_lim1 + tms_z_cutoff) && // checks track begins within fiducial volume and close enough to front
-      
+
         (Project_track(tms_track,false)[0] > lar_x_lim1)&&(Project_track(tms_track,false)[0] < lar_x_lim2) &&
         (Project_track(tms_track,false)[1] > lar_y_lim1)&&(Project_track(tms_track,false)[1] < lar_y_lim2)) // checks that direction would have allowed it to originate from LAr
           {
             return true;
-          } 
+          }
     else {
       return false;
     }
@@ -136,12 +136,12 @@ namespace cafmaker
         (x_end > lar_x_lim1)&&(x_end < lar_x_lim2) &&
         (y_end > lar_y_lim1)&&(y_end < lar_y_lim2) &&
         (z_end > lar_z_lim2 - lar_z_cutoff)&&(z_end < lar_z_lim2) && // checks track ends close enough to back of LAr
-      
+
         (Project_track(lar_track,true)[0] > tms_x_lim1)&&(Project_track(lar_track,true)[0] < tms_x_lim2) &&
         (Project_track(lar_track,true)[1] > tms_y_lim1)&&(Project_track(lar_track,true)[1] < tms_y_lim2)) // checks that direction would allow it to hit TMS
         {
           return true;
-        } 
+        }
     else {
       return false;
     }
@@ -151,7 +151,7 @@ namespace cafmaker
   {
     std::sort(possibleMatches.begin(),possibleMatches.end(),Track_match_sorter);
 
-    std::vector<caf::SRNDLArID> matched_lar; 
+    std::vector<caf::SRNDLArID> matched_lar;
     std::vector<caf::SRTMSID> matched_tms; // stores LAr and TMS indices that have already been matched
 
     for (unsigned int match_idx = 0; match_idx < possibleMatches.size(); match_idx++) {
@@ -179,7 +179,7 @@ namespace cafmaker
       }
       if (seen_tms) {
         continue;}
-      
+
       matched_tms.push_back(tmsid);
       matched_lar.push_back(larid);
       sr.nd.trkmatch.extrap.push_back(track_match); // adds successfully matched pair to StandardRecord of track matches
@@ -198,7 +198,7 @@ namespace cafmaker
       if (!Consider_LAr_track(trk,lar_z_cutoff)) {
         continue; //skips the lar track if it isn't suitable according to the function
       }
-      
+
       std::vector<double> proj_vec = Project_track(trk,true);
       double delta_x = tms_trk.start.x - proj_vec[0];
       double delta_y = tms_trk.start.y - proj_vec[1];
@@ -225,7 +225,7 @@ namespace cafmaker
 
       if (use_time) {
         // this handles time-based matching - using truth-level particle times for now instead of light in LAr
-        
+
 	bool timeFail = false;
 	std::vector<float> tOv = trk.truthOverlap;
 	std::vector<caf::TrueParticleID> truIDs = trk.truth;
@@ -244,7 +244,7 @@ namespace cafmaker
 	const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
 	if (matchedPart != nullptr) {
 	  lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-	  // Eventually we'll want to fill the LAr time from the track rather than the particle (trk.time instead of matchedPart->time). 
+	  // Eventually we'll want to fill the LAr time from the track rather than the particle (trk.time instead of matchedPart->time).
 	  // But LAr tracks from SPINE don't have their time attribute filled yet, so we use the true particle for now to keep the matcher agnostic to the LAr reco method
 	  double tms_time = tms_trk.time;
           delta_t = tms_time - lar_time;
@@ -260,7 +260,7 @@ namespace cafmaker
 	  if (TMSPart != nullptr) {
 	    if (matchedPart->G4ID==TMSPart->G4ID) {
 		// TODO: Add "TrueMatch" boolean attribute to the TrackAssn and set to true
-		// std::cout << "True Match!" << std::endl; 
+		// std::cout << "True Match!" << std::endl;
 	       }
 	    }
      	 }
@@ -286,7 +286,7 @@ namespace cafmaker
       potential_match.larid = larid;
       potential_match.matchScore = matchScore;
       potential_match.transdispl = sqrt(pow(delta_x,2)+pow(delta_y,2));
-      potential_match.cosangdispl = cos(TMath::Pi()/180.0 * angles[2]);
+      potential_match.angdispl = cos(TMath::Pi()/180.0 * angles[2]);
 
       caf::SRTrack joint_track = potential_match.trk;
       joint_track.start = trk.start;
@@ -298,7 +298,7 @@ namespace cafmaker
 
       joint_track.Evis = trk.Evis + tms_trk.Evis;
       // TODO: add the rest of the joint_track attributes
-      
+
       potentialMatchList.push_back(potential_match);
     }
 
@@ -319,12 +319,12 @@ namespace cafmaker
 
     double tms_z_cutoff = 20;
     double lar_z_cutoff = 20; // tracks must overlap last/first 20 cm of the detectors
-    
+
     for (unsigned int ixn_tms = 0; ixn_tms < sr.nd.tms.nixn; ixn_tms++)
     {
       caf::SRTMSInt tms_int = sr.nd.tms.ixn[ixn_tms];
       unsigned int n_tms_tracks = tms_int.ntracks;
-      
+
       for (unsigned int itms = 0; itms < n_tms_tracks; itms++)
       {
         caf::SRTrack tms_trk = tms_int.tracks[itms];
@@ -337,7 +337,7 @@ namespace cafmaker
         {
           caf::SRNDLArInt pan_int = sr.nd.lar.pandora[ixn_pan];
           unsigned int n_pan_tracks = pan_int.ntracks;
-          
+
 	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time
           std::vector<caf::SRNDTrackAssn> panTrkAssns = Compute_match_scores(pan_int, ixn_pan, n_pan_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
 
@@ -348,14 +348,14 @@ namespace cafmaker
         {
           caf::SRNDLArInt dlp_int = sr.nd.lar.dlp[ixn_dlp];
           unsigned int n_dlp_tracks = dlp_int.ntracks;
-	  
-	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time 
+
+	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time
           std::vector<caf::SRNDTrackAssn> dlpTrkAssns = Compute_match_scores(dlp_int, ixn_dlp, n_dlp_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
 
           copy(dlpTrkAssns.begin(), dlpTrkAssns.end(), back_inserter(possibleSPINEMatches));
         }
       }
-    
+
     if (possiblePandoraMatches.size() > 0) {
       Create_matches(possiblePandoraMatches,sr);
       }
