@@ -134,7 +134,7 @@ namespace cafmaker
               match.larid = larid;
               match.minervaid = mnvid;
               match.transdispl = residual;
-              match.cosangdispl = costheta;
+              match.angdispl = costheta;
 
               if (isnan(mult_map_spine[larid].transdispl))
                 mult_map_spine[larid] = match;
@@ -172,7 +172,7 @@ namespace cafmaker
               match.larid = larid;
               match.minervaid = mnvid;
               match.transdispl = residual;
-              match.cosangdispl = costheta;
+              match.angdispl = costheta;
 
               if (isnan(mult_map_pandora[larid].transdispl))
                 mult_map_pandora[larid] = match;
