@@ -56,8 +56,9 @@ target_link_libraries(
          duneanaobj::StandardRecord
          duneanaobj::StandardRecordFlat)
 
-# SANDReco is optional — link only when SAND_ENABLED at configure time.
-if(SAND_ENABLED)
+option(SANDRECO_LEGACY "Enable legacy SAND reco branch filler" OFF)
+if(SANDRECO_LEGACY)
+  target_compile_definitions(ND_CAFMaker PRIVATE ENABLE_SANDRECO_LEGACY)
   target_link_libraries(ND_CAFMaker PUBLIC deps::sand)
 endif()
 
