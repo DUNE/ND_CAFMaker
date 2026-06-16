@@ -9,7 +9,7 @@
 #define IFBEAM_H
 
 #include <Params.h>
-#include "reco/IRecoBranchFiller.h"
+#include "reco/IRecoBranchFiller.h"     
 #include <string>
 #include <map>
 #include <vector>
@@ -19,20 +19,43 @@ namespace cafmaker
 {
   class IFBeam {
   public:
-      using BeamSpills = std::map<double, double>;
+      using BeamInfo = std::map<double, std::vector<double>>;
+      using DeviceMap = std::map<const std::string, BeamInfo>;
       using TriggerGroup = std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>;
   
-      IFBeam(const std::vector<TriggerGroup>& groupedTriggers, bool is_data);   
-  
-      double getPOT(const cafmaker::Params& par, const TriggerGroup & groupedTrigger, int ii);
-   
+      IFBeam(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers, bool is_data);   
+
+      std::vector<double> getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii, const BeamInfo& data);
+      std::vector<double> getData(const cafmaker::Params& par, const TriggerGroup& groupedTrigger, int ii,const std::string& deviceName);
   
   private:
-      const std::string potDevice = "E:TRTGTD";
-      BeamSpills beamSpills;
-  
-      void loadBeamSpills(const std::vector<TriggerGroup>& groupedTriggers);
-      std::string createUrl(const std::string& min_time_iso, const std::string& max_time_iso);
+      DeviceMap deviceMap = {
+      //_________POT _______________________
+        {"E:TRTGTD", {}},
+        {"E:TOR101", {}},
+        {"E:TR101D", {}},
+      //_________Horn Current_______________
+        {"E:NSLINA", {}},
+        {"E:NSLINB", {}},
+        {"E:NSLINC", {}},
+        {"E:NSLIND", {}},
+        {"E:NSLIN", {}},
+      //________Horn polarity_______________
+        {"E:HRNDIR", {}},
+      //__________Beam Position_____________
+        {"E:HPTGT[]", {}},
+        {"E:HITGT[]", {}},
+        {"E:HP121[]", {}},
+        {"E:VPTGT[]", {}},
+        {"E:VITGT[]", {}},
+        {"E:VP121[]", {}},
+      //__________Beam Width________________
+        {"E:MTGTDS[]", {}}
+      };
+
+      BeamInfo retrieveInfoFromDataBase(const std::string url);
+      void loadBeamSpills(const cafmaker::Params& par, const std::vector<TriggerGroup>& groupedTriggers);
+      std::string createUrl(const std::string potDevice, const std::string& min_time_iso, const std::string& max_time_iso);
       double unitToFactor(const std::string& unit);
   };
    
