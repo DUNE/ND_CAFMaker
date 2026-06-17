@@ -127,20 +127,32 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   std::cout << "Filling Reco info for the following cases:\n";
 
-  
   std::string ndlarFile;
   if (par().cafmaker().ndlarRecoFile(ndlarFile))
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
     std::cout << "   ND-LAr (Deep-Learn-Physics ML)\n";
-  } 
-  
-  std::string sandFile;
-  if (par().cafmaker().sandRecoFile(sandFile))
-  {
-    recoFillers.emplace_back(std::make_unique<cafmaker::SANDRecoBranchFiller>(sandFile));
-    std::cout << "   SAND\n";
   }
+
+  #ifdef ENABLE_SANDRECO_LEGACY
+
+  std::string sandFile;
+  if (par().cafmaker().sandRecoFile(sandFile)) {
+    recoFillers.emplace_back(
+      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVersion::legacy>>(sandFile));
+    std::cout << "   SAND (legacy)\n";
+  }
+
+  #else
+
+  std::string sandExpFile;
+  if (par().cafmaker().sandRecoExperimentalFile(sandExpFile)) {
+    recoFillers.emplace_back(
+      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVersion::experimental>>(sandExpFile));
+    std::cout << "   SAND (experimental)\n";
+  }
+
+  #endif
 
   // Pandora LArRecoND
   std::string pandoraFile;
@@ -172,15 +184,15 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
 
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(), 
-                                                                                      par().cafmaker().sigmaY(), 
-                                                                                      par().cafmaker().singleAngle(), 
-                                                                                      par().cafmaker().sigmaTh(), 
-                                                                                      par().cafmaker().sigmaThX(), 
-                                                                                      par().cafmaker().sigmaThY(), 
-                                                                                      par().cafmaker().useTime(), 
-                                                                                      par().cafmaker().meanT(), 
-                                                                                      par().cafmaker().sigmaT(), 
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(),
+                                                                                      par().cafmaker().sigmaY(),
+                                                                                      par().cafmaker().singleAngle(),
+                                                                                      par().cafmaker().sigmaTh(),
+                                                                                      par().cafmaker().sigmaThX(),
+                                                                                      par().cafmaker().sigmaThY(),
+                                                                                      par().cafmaker().useTime(),
+                                                                                      par().cafmaker().meanT(),
+                                                                                      par().cafmaker().sigmaT(),
                                                                                       par().cafmaker().fcut()));
     std::cout << "   ND-LAr + TMS matching\n";
   }
@@ -299,14 +311,14 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 
         if(it_trig != fillerTrigPair.second.end()){
             if (it_trig != fillerTrigPair.second.begin()) {
-                //Move the trigger to the front 
+                //Move the trigger to the front
                 cafmaker::Trigger temp = std::move(*it_trig);
                 fillerTrigPair.second.erase(it_trig);
                 fillerTrigPair.second.push_front(std::move(temp));
             }
         }
         else continue; //Not found any trigger that match with ref trigger type
-      
+
         const auto & trig = fillerTrigPair.second.front();
         ss << "       " << fillerTrigPair.first->GetName() << ", " << trig.evtID;
 
@@ -315,7 +327,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
         // we only need to check the first one in each other stream
 
 
-        
+
         if (doTriggersMatch( trigGroup.front().second, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
           ss << " -->  MATCHES\n";
@@ -434,7 +446,7 @@ void loop(CAF &caf,
 
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
-  
+
   cafmaker::IFBeam beamManager(par, groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
@@ -514,7 +526,7 @@ void loop(CAF &caf,
     caf.sr.beam.verticalintTGT = verticalintTGT;
     caf.sr.beam.verticalpos121 = verticalpos121;
     caf.sr.beam.multiwireInfo = multiwireInfo;
-    
+
     cafmaker::LOG_S("").INFO() << "Filling caf tree \n";
     caf.fill();
   }
