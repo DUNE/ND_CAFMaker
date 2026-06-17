@@ -12,7 +12,6 @@
 #include <functional>
 #include <iostream>
 #include <limits>
-#include <cmath>
 #include <map>
 #include <memory>
 #include <sstream>
