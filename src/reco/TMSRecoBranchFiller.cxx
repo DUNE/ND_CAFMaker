@@ -1,58 +1,8 @@
 #include "TMSRecoBranchFiller.h"
 #include "truth/FillTruth.h"
 
-#include <chrono>
 #include <cmath>
-#include <cstdlib>
 #include <limits>
-#include <string>
-
-namespace
-{
-  bool TMSRecoTimingEnabled()
-  {
-    static const bool enabled = []()
-    {
-      const char * env = std::getenv("ND_CAFMAKER_TIMING");
-      if (!env) return false;
-      const std::string value(env);
-      return !value.empty() && value != "0" && value != "false" && value != "FALSE";
-    }();
-    return enabled;
-  }
-
-  class ScopedTiming
-  {
-    public:
-      ScopedTiming(bool enabled, cafmaker::TMSRecoBranchFiller::TimingSummary & summary)
-        : fEnabled(enabled), fSummary(summary)
-      {
-        if (fEnabled)
-          fStart = std::chrono::steady_clock::now();
-      }
-
-      ~ScopedTiming()
-      {
-        if (!fEnabled) return;
-        ++fSummary.calls;
-        fSummary.totalMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fStart).count();
-      }
-
-    private:
-      bool fEnabled = false;
-      cafmaker::TMSRecoBranchFiller::TimingSummary & fSummary;
-      std::chrono::steady_clock::time_point fStart;
-  };
-
-  void PrintTimingSummaryLine(const char * label, const cafmaker::TMSRecoBranchFiller::TimingSummary & summary)
-  {
-    std::cerr << "  " << label << ": total=" << summary.totalMs << " ms"
-              << ", calls=" << summary.calls;
-    if (summary.calls > 0)
-      std::cerr << ", avg=" << (summary.totalMs / summary.calls) << " ms/call";
-    std::cerr << "\n";
-  }
-}
 
 /*
  * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Oct 2024
@@ -67,8 +17,6 @@ namespace cafmaker
     fTriggers(),
     fLastTriggerReqd(fTriggers.end())
   {
-    fTiming.enabled = TMSRecoTimingEnabled();
-
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
 
@@ -157,57 +105,6 @@ namespace cafmaker
 
 
   TMSRecoBranchFiller::~TMSRecoBranchFiller() {
-    if (fTiming.enabled)
-    {
-      std::cerr << "[ND_CAFMaker timing] TMSRecoBranchFiller summary\n";
-      PrintTimingSummaryLine("LoadTruthSpillEntry", fTiming.loadTruthSpillEntry);
-      PrintTimingSummaryLine("BuildTruthSpillEntryMap", fTiming.buildTruthSpillEntryMap);
-      PrintTimingSummaryLine("ResolveTrueInteractionIDFromVertexIndex", fTiming.resolveTrueInteractionIDFromVertexIndex);
-      PrintTimingSummaryLine("ResolveRecoTrackTruthParticleIndex", fTiming.resolveRecoTrackTruthParticleIndex);
-      PrintTimingSummaryLine("FindTruthSpillParticleIndex", fTiming.findTruthSpillParticleIndex);
-      PrintTimingSummaryLine("ResolvePrimaryTruthParticleIndex", fTiming.resolvePrimaryTruthParticleIndex);
-      PrintTimingSummaryLine("ResolveRecoTrackInteractionID", fTiming.resolveRecoTrackInteractionID);
-      PrintTimingSummaryLine("GetTrueInteraction", fTiming.getTrueInteraction);
-      PrintTimingSummaryLine("GetTrueParticle", fTiming.getTrueParticle);
-      PrintTimingSummaryLine("FindSRTrueInteractionIndex", fTiming.findSRTrueInteractionIndex);
-      PrintTimingSummaryLine("FindSRTrueParticleIndex", fTiming.findSRTrueParticleIndex);
-      PrintTimingSummaryLine("_FillRecoBranches", fTiming.fillRecoBranches);
-      PrintTimingSummaryLine("FillInteractions", fTiming.fillInteractions);
-      PrintTimingSummaryLine("GetTriggers", fTiming.getTriggers);
-      std::cerr << "  BuildTruthSpillEntryMap: entries_scanned=" << fTiming.buildTruthSpillEntryMapEntries
-                << ", map_size=" << fTruthSpillEntryBySpillNo.size() << "\n";
-      std::cerr << "  LoadTruthSpillEntry: misses=" << fTiming.loadTruthSpillEntryMisses << "\n";
-      std::cerr << "  ResolvePrimaryTruthParticleIndex: parent_steps=" << fTiming.resolvePrimaryParentSteps
-                << ", loop_fallbacks=" << fTiming.resolvePrimaryLoopFallbacks
-                << ", missing_parent_fallbacks=" << fTiming.resolvePrimaryMissingParentFallbacks;
-      if (fTiming.resolvePrimaryTruthParticleIndex.calls > 0)
-        std::cerr << ", avg_steps/call="
-                  << (static_cast<double>(fTiming.resolvePrimaryParentSteps) / fTiming.resolvePrimaryTruthParticleIndex.calls);
-      std::cerr << "\n";
-      std::cerr << "  FindTruthSpillParticleIndex: entries_scanned=" << fTiming.findTruthSpillParticleIndexEntriesScanned
-                << ", hits=" << fTiming.findTruthSpillParticleIndexHits;
-      if (fTiming.findTruthSpillParticleIndex.calls > 0)
-        std::cerr << ", avg_entries/call="
-                  << (static_cast<double>(fTiming.findTruthSpillParticleIndexEntriesScanned) / fTiming.findTruthSpillParticleIndex.calls);
-      std::cerr << "\n";
-      std::cerr << "  ResolveRecoTrackInteractionID: vertex_scans=" << fTiming.resolveRecoTrackInteractionVertexScans
-                << ", exact_matches=" << fTiming.resolveRecoTrackInteractionExactMatches
-                << ", nearest_fallbacks=" << fTiming.resolveRecoTrackInteractionNearestFallbacks
-                << ", multi_matches=" << fTiming.resolveRecoTrackInteractionMultiMatches;
-      if (fTiming.resolveRecoTrackInteractionID.calls > 0)
-        std::cerr << ", avg_vertices/call="
-                  << (static_cast<double>(fTiming.resolveRecoTrackInteractionVertexScans) / fTiming.resolveRecoTrackInteractionID.calls);
-      std::cerr << "\n";
-      std::cerr << "  _FillRecoBranches: spills_processed=" << fTiming.fillRecoBranchesSpillsProcessed
-                << ", tracks_processed=" << fTiming.fillRecoBranchesTracksProcessed;
-      if (fTiming.fillRecoBranches.calls > 0)
-        std::cerr << ", avg_tracks/call="
-                  << (static_cast<double>(fTiming.fillRecoBranchesTracksProcessed) / fTiming.fillRecoBranches.calls);
-      std::cerr << "\n";
-      std::cerr << "  GetTriggers: entries_scanned=" << fTiming.getTriggersEntriesScanned
-                << ", triggers_created=" << fTiming.getTriggersCreated << "\n";
-    }
-
     delete TMSRecoTree;    
     delete TMSLCTree;
     fTMSRecoFile->Close();
@@ -219,14 +116,10 @@ namespace cafmaker
 
   void TMSRecoBranchFiller::LoadTruthSpillEntry(int spillNo) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.loadTruthSpillEntry);
-
     if (fTruthSpillEntryBySpillNo.empty())
     {
-      ScopedTiming buildTiming(fTiming.enabled, fTiming.buildTruthSpillEntryMap);
       for (Long64_t entry = 0; entry < TMSTrueSpill->GetEntries(); ++entry)
       {
-        ++fTiming.buildTruthSpillEntryMapEntries;
         TMSTrueSpill->GetEntry(entry);
         auto [it, inserted] = fTruthSpillEntryBySpillNo.emplace(_TruthSpillSpillNo, entry);
         if (!inserted && it->second != entry)
@@ -241,7 +134,6 @@ namespace cafmaker
     auto it = fTruthSpillEntryBySpillNo.find(spillNo);
     if (it == fTruthSpillEntryBySpillNo.end())
     {
-      ++fTiming.loadTruthSpillEntryMisses;
       std::stringstream ss;
       ss << "Could not find Truth_Spill entry for SpillNo " << spillNo << "\n";
       throw std::runtime_error(ss.str());
@@ -252,8 +144,6 @@ namespace cafmaker
 
   unsigned long TMSRecoBranchFiller::ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.resolveTrueInteractionIDFromVertexIndex);
-
     if (!truthMatch)
       throw std::runtime_error("TMSRecoBranchFiller requires TruthMatcher to resolve true interaction IDs");
     if (trueVtxIdx < 0 || trueVtxIdx >= _TruthSpillTrueVtxN)
@@ -267,8 +157,6 @@ namespace cafmaker
 
   int TMSRecoBranchFiller::ResolveRecoTrackTruthParticleIndex(int recoTrackIdx) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.resolveRecoTrackTruthParticleIndex);
-
     if (recoTrackIdx < 0)
       throw std::runtime_error("Requested reco track index is negative");
 
@@ -285,31 +173,21 @@ namespace cafmaker
 
   int TMSRecoBranchFiller::FindTruthSpillParticleIndex(int vertexId, int trackId) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.findTruthSpillParticleIndex);
-
     for (int i = 0; i < _TruthSpillNTrueParticles; ++i)
     {
-      ++fTiming.findTruthSpillParticleIndexEntriesScanned;
       if (_TruthSpillParticleVertexID[i] == vertexId && _TruthSpillTrackID[i] == trackId)
-      {
-        ++fTiming.findTruthSpillParticleIndexHits;
         return i;
-      }
     }
     return -1;
   }
 
   int TMSRecoBranchFiller::ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.resolvePrimaryTruthParticleIndex);
-
     std::vector<int> visited;
     while (_TruthSpillParent[particleIdx] != -1)
     {
-      ++fTiming.resolvePrimaryParentSteps;
       if (std::find(visited.begin(), visited.end(), particleIdx) != visited.end())
       {
-        ++fTiming.resolvePrimaryLoopFallbacks;
         LOG.WARNING() << "TMS reco track " << recoTrackIdx
                       << " encountered a loop while resolving Truth_Spill parents;"
                       << " falling back to particle index " << particleIdx << "\n";
@@ -322,7 +200,6 @@ namespace cafmaker
       const int parentIdx = FindTruthSpillParticleIndex(vertexId, parentTrackId);
       if (parentIdx < 0)
       {
-        ++fTiming.resolvePrimaryMissingParentFallbacks;
         LOG.WARNING() << "TMS reco track " << recoTrackIdx
                       << " could not resolve parent track ID " << parentTrackId
                       << " from Truth_Spill particle index " << particleIdx
@@ -338,8 +215,6 @@ namespace cafmaker
 
   unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.resolveRecoTrackInteractionID);
-
     const int particleIdx = ResolvePrimaryTruthParticleIndex(ResolveRecoTrackTruthParticleIndex(recoTrackIdx), recoTrackIdx);
 
     const int trueVtxId = _TruthSpillParticleVertexID[particleIdx];
@@ -353,7 +228,6 @@ namespace cafmaker
     double nearestDist2 = std::numeric_limits<double>::infinity();
     for (int i = 0; i < _TruthSpillTrueVtxN; ++i)
     {
-      ++fTiming.resolveRecoTrackInteractionVertexScans;
       const double dx = _TruthSpillTrueVtxX[i] - birthX;
       const double dy = _TruthSpillTrueVtxY[i] - birthY;
       const double dz = _TruthSpillTrueVtxZ[i] - birthZ;
@@ -371,7 +245,6 @@ namespace cafmaker
 
       if (matchedVtxIdx >= 0)
       {
-        ++fTiming.resolveRecoTrackInteractionMultiMatches;
         LOG.WARNING() << "Reco track " << recoTrackIdx
                       << " matched multiple Truth_Spill vertices for vertex ID " << trueVtxId
                       << "; using the first in-tolerance match instead of crashing\n";
@@ -381,14 +254,10 @@ namespace cafmaker
     }
 
     if (matchedVtxIdx >= 0)
-    {
-      ++fTiming.resolveRecoTrackInteractionExactMatches;
       return ResolveTrueInteractionIDFromVertexIndex(truthMatch, matchedVtxIdx);
-    }
 
     if (nearestVtxIdx >= 0)
     {
-      ++fTiming.resolveRecoTrackInteractionNearestFallbacks;
       LOG.WARNING() << "Reco track " << recoTrackIdx
                     << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
                     << trueVtxId << " within " << kVertexMatchToleranceMm << " mm;"
@@ -406,7 +275,6 @@ namespace cafmaker
                                               const cafmaker::Params &par,
                                               const TruthMatcher *truthMatcher) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.fillRecoBranches);
 
     sr.meta.tms.enabled = true;
 
@@ -431,15 +299,11 @@ namespace cafmaker
 
     caf::SRTMSInt *interaction;
 
-    ++fTiming.fillRecoBranchesSpillsProcessed;
     LoadTruthSpillEntry(LastSpillNo);
     for (int i_tvtx = 0; i_tvtx < _TruthSpillTrueVtxN; ++i_tvtx)
     {
       auto neutrino_event_id = ResolveTrueInteractionIDFromVertexIndex(truthMatcher, i_tvtx);
-      {
-        ScopedTiming subTiming(fTiming.enabled, fTiming.getTrueInteraction);
-        (void)truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true); // called for side effect of registering the interaction; cast suppresses unused-return-value warning
-      }
+      (void)truthMatcher->GetTrueInteraction(sr, neutrino_event_id, true); // called for side effect of registering the interaction; cast suppresses unused-return-value warning
     }
 
     // the i index is incremented at the end of the following while()
@@ -451,7 +315,6 @@ namespace cafmaker
       if (_nTracks > 0)
       {        
         for (int j = 0; j < _nTracks; ++j) {
-          ++fTiming.fillRecoBranchesTracksProcessed;
           sr.nd.tms.nixn++;
           sr.nd.tms.ixn.emplace_back();
 
@@ -480,37 +343,21 @@ namespace cafmaker
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
           const auto genieIxnID = ResolveRecoTrackInteractionID(truthMatcher, j);
-          caf::SRTrueInteraction* srTrueIntPtr = nullptr;
-          {
-            ScopedTiming subTiming(fTiming.enabled, fTiming.getTrueInteraction);
-            srTrueIntPtr = &truthMatcher->GetTrueInteraction(sr, genieIxnID);
-          }
-          caf::SRTrueInteraction& srTrueInt = *srTrueIntPtr;
+          caf::SRTrueInteraction& srTrueInt = truthMatcher->GetTrueInteraction(sr, genieIxnID);
 
-          int srTrueIntIdx = -1;
-          {
-            ScopedTiming subTiming(fTiming.enabled, fTiming.findSRTrueInteractionIndex);
-            srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
-                                                          std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
-                                                                       [&srTrueInt](const caf::SRTrueInteraction& ixn)
-                                                                       { return ixn.id == srTrueInt.id; })));
-          }
+          const int srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
+                                                                  std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
+                                                                               [&srTrueInt](const caf::SRTrueInteraction& ixn)
+                                                                               { return ixn.id == srTrueInt.id; })));
 
           // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries)
           const int recoTruthParticleIdx = ResolveRecoTrackTruthParticleIndex(j);
           const int partG4ID = _TruthSpillTrackID[recoTruthParticleIdx];
-          {
-            ScopedTiming subTiming(fTiming.enabled, fTiming.getTrueParticle);
-            truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
-          }
-          int truthVecIdx = -1;
-          {
-            ScopedTiming subTiming(fTiming.enabled, fTiming.findSRTrueParticleIndex);
-            truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
-                                                         std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(),
-                                                                      [partG4ID](const caf::SRTrueParticle& part)
-                                                                      { return part.G4ID == partG4ID; })));
-          }
+          truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
+          const int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
+                                                                 std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(),
+                                                                              [partG4ID](const caf::SRTrueParticle& part)
+                                                                              { return part.G4ID == partG4ID; })));
 
           interaction->tracks[0].truth.push_back(caf::TrueParticleID{srTrueIntIdx,
                                                                       caf::TrueParticleID::PartType::kPrimary,
@@ -527,17 +374,11 @@ namespace cafmaker
 
   void TMSRecoBranchFiller::FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.fillInteractions);
 
     for (int i_int = 0; i_int < _TruthSpillTrueVtxN; ++i_int)
     {
       auto neutrino_event_id = ResolveTrueInteractionIDFromVertexIndex(truthMatch, i_int);
-      caf::SRTrueInteraction * srTrueIntPtr = nullptr;
-      {
-        ScopedTiming subTiming(fTiming.enabled, fTiming.getTrueInteraction);
-        srTrueIntPtr = &truthMatch->GetTrueInteraction(sr, neutrino_event_id);
-      }
-      caf::SRTrueInteraction & srTrueInt = *srTrueIntPtr;
+      caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, neutrino_event_id);
       LOG.VERBOSE() << "    --> resulting SRTrueInteraction has the following particles in it:\n";
       for (const caf::SRTrueParticle & part : srTrueInt.prim)
           LOG.VERBOSE() << "    (prim) id = " << part.G4ID << " pdg = " << part.pdg << ", energy = " << part.p.E << "\n";
@@ -552,7 +393,6 @@ namespace cafmaker
   // TODO: In future this nastiness will be handled by TMS
   std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.getTriggers);
     std::deque<Trigger> triggers;
     int lastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
 
@@ -563,7 +403,6 @@ namespace cafmaker
 
       for (int entry = 0; entry < TMSRecoTree->GetEntries(); entry++)
       {
-        ++fTiming.getTriggersEntriesScanned;
         TMSRecoTree->GetEntry(entry);
 
         if (_SpillNo == lastSpillNo)
@@ -571,45 +410,35 @@ namespace cafmaker
 
         lastSpillNo = _SpillNo;
 
-        if (!fTriggers.empty())
-        {
-          Trigger & prev_trig = fTriggers.back(); // trigger before 'trig'
-          fTriggers.emplace_back();               // add new trigger entry (unfilled)
-          Trigger & trig      = fTriggers.back(); // trigger we're working on
+        Trigger & prev_trig = fTriggers.back(); // trigger before 'trig'
+        fTriggers.emplace_back();               // add new trigger entry (unfilled)
+        Trigger & trig      = fTriggers.back(); // trigger we're working on
 
-          trig.evtID = entry;
-          trig.triggerType = 1; // TODO real number?
+        trig.evtID = entry;
+        trig.triggerType = 1; // TODO real number?
 
+        if (entry == 0)
+          trig.triggerTime_ns = 0;
+        else
           trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;
+
+        if (entry == 0)
+          trig.triggerTime_s = 0;
+        else
+        {
           trig.triggerTime_s = prev_trig.triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
           if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
           {
             trig.triggerTime_s += 1;
             trig.triggerTime_ns -= 1E9;
           }
-
-          LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
-                        << ", triggerType=" << trig.triggerType
-                        << ", triggerTime_s=" << trig.triggerTime_s
-                        << ", triggerTime_ns=" << trig.triggerTime_ns
-                        << "\n";
         }
-        else
-        {
-          fTriggers.emplace_back();
-          Trigger & trig = fTriggers.back();
-          trig.evtID = entry;
-          trig.triggerType = 1; // TODO real number?
-          trig.triggerTime_ns = 0;
-          trig.triggerTime_s = 0;
-          LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
-                        << ", triggerType=" << trig.triggerType
-                        << ", triggerTime_s=" << trig.triggerTime_s
-                        << ", triggerTime_ns=" << trig.triggerTime_ns
-                        << "\n";
-        }
-        ++fTiming.getTriggersCreated;
 
+        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                      << ", triggerType=" << trig.triggerType
+                      << ", triggerTime_s=" << trig.triggerTime_s
+                      << ", triggerTime_ns=" << trig.triggerTime_ns
+                      << "\n";
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }

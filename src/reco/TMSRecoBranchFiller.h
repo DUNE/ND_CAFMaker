@@ -8,11 +8,9 @@
 #ifndef ND_CAFMAKER_TMSRECOBRANCHFILLER_H
 #define ND_CAFMAKER_TMSRECOBRANCHFILLER_H
 
-#include <cstddef>
-#include <deque>
 #include <iostream>
+#include <deque>
 #include <map>
-#include <vector>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -36,47 +34,6 @@ namespace cafmaker
       RecoFillerType FillerType() const override { return RecoFillerType::BaseReco; }
 
       ~TMSRecoBranchFiller();
-
-      struct TimingSummary
-      {
-        double totalMs = 0.0;
-        std::size_t calls = 0;
-      };
-
-      struct TimingStats
-      {
-        bool enabled = false;
-        TimingSummary loadTruthSpillEntry;
-        TimingSummary buildTruthSpillEntryMap;
-        TimingSummary resolveTrueInteractionIDFromVertexIndex;
-        TimingSummary resolveRecoTrackTruthParticleIndex;
-        TimingSummary findTruthSpillParticleIndex;
-        TimingSummary resolvePrimaryTruthParticleIndex;
-        TimingSummary resolveRecoTrackInteractionID;
-        TimingSummary getTrueInteraction;
-        TimingSummary getTrueParticle;
-        TimingSummary findSRTrueInteractionIndex;
-        TimingSummary findSRTrueParticleIndex;
-        TimingSummary fillRecoBranches;
-        TimingSummary fillInteractions;
-        TimingSummary getTriggers;
-
-        std::size_t buildTruthSpillEntryMapEntries = 0;
-        std::size_t loadTruthSpillEntryMisses = 0;
-        std::size_t resolvePrimaryParentSteps = 0;
-        std::size_t resolvePrimaryLoopFallbacks = 0;
-        std::size_t resolvePrimaryMissingParentFallbacks = 0;
-        std::size_t findTruthSpillParticleIndexEntriesScanned = 0;
-        std::size_t findTruthSpillParticleIndexHits = 0;
-        std::size_t resolveRecoTrackInteractionVertexScans = 0;
-        std::size_t resolveRecoTrackInteractionExactMatches = 0;
-        std::size_t resolveRecoTrackInteractionNearestFallbacks = 0;
-        std::size_t resolveRecoTrackInteractionMultiMatches = 0;
-        std::size_t fillRecoBranchesTracksProcessed = 0;
-        std::size_t fillRecoBranchesSpillsProcessed = 0;
-        std::size_t getTriggersEntriesScanned = 0;
-        std::size_t getTriggersCreated = 0;
-      };
 
     private:
       void LoadTruthSpillEntry(int spillNo) const;
@@ -156,7 +113,6 @@ namespace cafmaker
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, Long64_t> fTruthSpillEntryBySpillNo;
-      mutable TimingStats fTiming;
 
   };
 
