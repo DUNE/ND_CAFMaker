@@ -27,7 +27,8 @@ namespace cafmaker
   class TMSRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      TMSRecoBranchFiller(const std::string & tmsRecoFilename);
+      TMSRecoBranchFiller(const std::string & tmsRecoFilename,
+                          double vertexMatchToleranceMm);
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
@@ -113,6 +114,7 @@ namespace cafmaker
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, Long64_t> fTruthSpillEntryBySpillNo;
+      double fVertexMatchToleranceMm;
 
   };
 

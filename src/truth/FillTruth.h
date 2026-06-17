@@ -133,7 +133,8 @@
       TruthMatcher(const std::vector<std::string> & ghepFilenames,
                   std::string edepsimFilename,
                    const genie::NtpMCEventRecord *gEvt,
-                   std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback);
+                   std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback,
+                   double positionToleranceMm);
 
       /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
@@ -240,7 +241,8 @@
             double z;
           };
 
-          EdepSimTreeContainer(std::string filename);
+          EdepSimTreeContainer(std::string filename,
+                               double positionToleranceMm);
           void SelectEvent(unsigned long int runNum, unsigned int evtNum);
           void SelectEvent(unsigned long int vertex_id);
           unsigned long int ResolveVertexID(unsigned int evtNum, double x, double y, double z);
@@ -257,6 +259,7 @@
           std::map<unsigned int, std::vector<VertexCandidate>> fEventToVertexIDs;
           std::map<long long, std::vector<const VertexCandidate*>> fVertexCandidatesByYBin;
           std::map<std::tuple<double, double, double>, unsigned long int> fResolvedVertexIDByPosition;
+          double fPositionToleranceMm;
           const TG4Event * fG4Event;
           bool f_isTreeLoaded;
       };

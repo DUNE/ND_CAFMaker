@@ -12,10 +12,12 @@
 namespace cafmaker
 {
 
-  TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename)
+  TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename,
+                                           double vertexMatchToleranceMm)
     : IRecoBranchFiller("TMS"),
     fTriggers(),
-    fLastTriggerReqd(fTriggers.end())
+    fLastTriggerReqd(fTriggers.end()),
+    fVertexMatchToleranceMm(vertexMatchToleranceMm)
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
@@ -222,7 +224,6 @@ namespace cafmaker
     const double birthY = _TruthSpillBirthPosition[particleIdx][1];
     const double birthZ = _TruthSpillBirthPosition[particleIdx][2];
 
-    constexpr double kVertexMatchToleranceMm = 100.0;
     int matchedVtxIdx = -1;
     int nearestVtxIdx = -1;
     double nearestDist2 = std::numeric_limits<double>::infinity();
@@ -240,7 +241,7 @@ namespace cafmaker
 
       if (_TruthSpillTrueVtxID[i] != trueVtxId)
         continue;
-      if (dist2 > kVertexMatchToleranceMm * kVertexMatchToleranceMm)
+      if (dist2 > fVertexMatchToleranceMm * fVertexMatchToleranceMm)
         continue;
 
       if (matchedVtxIdx >= 0)
@@ -260,7 +261,7 @@ namespace cafmaker
     {
       LOG.WARNING() << "Reco track " << recoTrackIdx
                     << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
-                    << trueVtxId << " within " << kVertexMatchToleranceMm << " mm;"
+                    << trueVtxId << " within " << fVertexMatchToleranceMm << " mm;"
                     << " falling back to nearest Truth_Spill vertex index " << nearestVtxIdx
                     << " at distance " << std::sqrt(nearestDist2) << " mm\n";
       return ResolveTrueInteractionIDFromVertexIndex(truthMatch, nearestVtxIdx);
