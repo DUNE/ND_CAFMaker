@@ -482,12 +482,12 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  unsigned long TruthMatcher::ResolveVertexIDFromRunAndPosition(unsigned long baseRunNum, double x, double y, double z) const
+  unsigned long TruthMatcher::ResolveVertexIDFromRunAndPosition(unsigned long runNumForErrMsg, double x, double y, double z) const
   {
     if (!HaveEDEPSIM())
       throw std::runtime_error("TruthMatcher::ResolveVertexIDFromRunAndPosition() requires an EDepSim file");
 
-    return fEdepSimTree.ResolveVertexIDFromRunAndPosition(baseRunNum, x, y, z);
+    return fEdepSimTree.ResolveVertexIDFromRunAndPosition(runNumForErrMsg, x, y, z);
   }
 
   // ------------------------------------------------------------
@@ -769,7 +769,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexIDFromRunAndPosition(unsigned long int baseRunNum, double x, double y, double z)
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexIDFromRunAndPosition(unsigned long int runNumForErrMsg, double x, double y, double z)
   {
     if (!f_isTreeLoaded)
     {
@@ -857,7 +857,7 @@ namespace cafmaker
     if (!best)
     {
       std::stringstream ss;
-      ss << "EDepSim position-only resolver for base run " << baseRunNum
+      ss << "EDepSim position-only resolver for base run " << runNumForErrMsg
          << " considered " << considered.size() << " candidate packed vertex IDs, but none matched TMS truth position ("
          << x << ", " << y << ", " << z << ") within " << fPositionToleranceMm
          << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
@@ -879,7 +879,7 @@ namespace cafmaker
 
     if (nMatchesWithinTolerance > 1)
     {
-      LOG.WARNING() << "EDepSim position-only resolver for base run " << baseRunNum
+      LOG.WARNING() << "EDepSim position-only resolver for base run " << runNumForErrMsg
                     << " found " << nMatchesWithinTolerance << " packed vertex IDs within "
                     << fPositionToleranceMm << " mm of TMS truth position ("
                     << x << ", " << y << ", " << z << "); choosing closest match with vertexID="

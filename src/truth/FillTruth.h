@@ -186,8 +186,8 @@
       /// (run*1e6 + event). This preserves current CAFMaker conventions, even though the encoding is brittle.
       unsigned long ResolveVertexID(unsigned int evtNum, double x, double y, double z) const;
       /// TMS-specific resolver: use the Truth_Spill vertex position to recover the legacy packed
-      /// vertex ID. The base run number is retained only for diagnostics; matching is position-only.
-      unsigned long ResolveVertexIDFromRunAndPosition(unsigned long baseRunNum, double x, double y, double z) const;
+      /// vertex ID. The run number is retained only for diagnostics/error messages; matching is position-only.
+      unsigned long ResolveVertexIDFromRunAndPosition(unsigned long runNumForErrMsg, double x, double y, double z) const;
       bool HaveGENIE() const;
       bool HaveEDEPSIM() const;
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
@@ -246,7 +246,7 @@
           void SelectEvent(unsigned long int runNum, unsigned int evtNum);
           void SelectEvent(unsigned long int vertex_id);
           unsigned long int ResolveVertexID(unsigned int evtNum, double x, double y, double z);
-          unsigned long int ResolveVertexIDFromRunAndPosition(unsigned long int baseRunNum, double x, double y, double z);
+          unsigned long int ResolveVertexIDFromRunAndPosition(unsigned long int runNumForErrMsg, double x, double y, double z);
           const TG4Event * G4Event() const;
           const TTree * GetEdepTree() const;
          
