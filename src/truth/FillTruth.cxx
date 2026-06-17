@@ -7,8 +7,6 @@
 
 #include "FillTruth.h"
 
-#include <chrono>
-#include <cstdlib>
 #include <map>
 #include <regex>
 
@@ -36,42 +34,6 @@
 namespace
 {
   constexpr double kTMSPositionResolverYBinWidthMm = 500.0;
-
-  bool TruthTimingEnabled()
-  {
-    static const bool enabled = []()
-    {
-      const char * env = std::getenv("ND_CAFMAKER_TIMING");
-      if (!env) return false;
-      const std::string value(env);
-      return !value.empty() && value != "0" && value != "false" && value != "FALSE";
-    }();
-    return enabled;
-  }
-
-  class ScopedTiming
-  {
-    public:
-      ScopedTiming(bool enabled, double & totalMs, std::size_t & calls)
-        : fEnabled(enabled), fTotalMs(totalMs), fCalls(calls)
-      {
-        if (fEnabled)
-          fStart = std::chrono::steady_clock::now();
-      }
-
-      ~ScopedTiming()
-      {
-        if (!fEnabled) return;
-        ++fCalls;
-        fTotalMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fStart).count();
-      }
-
-    private:
-      bool fEnabled = false;
-      double & fTotalMs;
-      std::size_t & fCalls;
-      std::chrono::steady_clock::time_point fStart;
-  };
 }
 
 /// duneanaobj not guaranteed to be the same as GENIE scattering types
@@ -676,7 +638,6 @@ namespace cafmaker
   TruthMatcher::EdepSimTreeContainer::EdepSimTreeContainer(std::string filename)
   : cafmaker::Loggable("GTreeContainer")
   {
-    fTiming.enabled = TruthTimingEnabled();
     fEdepFile = TFile::Open(filename.c_str());
     fG4Event = 0;
     if (fEdepFile && !fEdepFile->IsZombie())
@@ -691,34 +652,8 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
-  TruthMatcher::EdepSimTreeContainer::~EdepSimTreeContainer()
-  {
-    if (!fTiming.enabled) return;
-
-    const double loadTreeAvgMs = fTiming.loadTreeCalls ? fTiming.loadTreeMs / fTiming.loadTreeCalls : 0.0;
-    const double resolveVertexIDAvgMs = fTiming.resolveVertexIDCalls ? fTiming.resolveVertexIDMs / fTiming.resolveVertexIDCalls : 0.0;
-    const double resolveRunPosAvgMs = fTiming.resolveRunPosCalls ? fTiming.resolveRunPosMs / fTiming.resolveRunPosCalls : 0.0;
-    const double resolveRunPosAvgCandidates = fTiming.resolveRunPosCalls ? static_cast<double>(fTiming.resolveRunPosCandidatesScanned) / fTiming.resolveRunPosCalls : 0.0;
-
-    std::cerr << "[ND_CAFMaker timing] EdepSimTreeContainer summary\n"
-              << "  LoadTree: calls=" << fTiming.loadTreeCalls
-              << " total_ms=" << fTiming.loadTreeMs
-              << " avg_ms=" << loadTreeAvgMs << "\n"
-              << "  ResolveVertexID: calls=" << fTiming.resolveVertexIDCalls
-              << " total_ms=" << fTiming.resolveVertexIDMs
-              << " avg_ms=" << resolveVertexIDAvgMs << "\n"
-              << "  ResolveVertexIDFromRunAndPosition: calls=" << fTiming.resolveRunPosCalls
-              << " total_ms=" << fTiming.resolveRunPosMs
-              << " avg_ms=" << resolveRunPosAvgMs
-              << " cache_hits=" << fTiming.resolveRunPosCacheHits
-              << " cache_misses=" << fTiming.resolveRunPosCacheMisses
-              << " avg_candidates_scanned=" << resolveRunPosAvgCandidates << "\n";
-  }
-
-  // ------------------------------------------------------------
   void  TruthMatcher::EdepSimTreeContainer::LoadTree()
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.loadTreeMs, fTiming.loadTreeCalls);
     for (int i = 0; i<fEdepTree->GetEntries(); i++)
     {
       fEdepTree->GetEntry(i);
@@ -762,7 +697,6 @@ namespace cafmaker
   // ------------------------------------------------------------
   unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexID(unsigned int evtNum, double x, double y, double z)
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.resolveVertexIDMs, fTiming.resolveVertexIDCalls);
     if (!f_isTreeLoaded)
     {
       LoadTree();
@@ -835,7 +769,6 @@ namespace cafmaker
   // ------------------------------------------------------------
   unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexIDFromRunAndPosition(unsigned long int baseRunNum, double x, double y, double z)
   {
-    ScopedTiming timing(fTiming.enabled, fTiming.resolveRunPosMs, fTiming.resolveRunPosCalls);
     if (!f_isTreeLoaded)
     {
       LoadTree();
@@ -845,11 +778,7 @@ namespace cafmaker
     const auto cacheKey = std::make_tuple(x, y, z);
     auto cacheIt = fResolvedVertexIDByPosition.find(cacheKey);
     if (cacheIt != fResolvedVertexIDByPosition.end())
-    {
-      if (fTiming.enabled) ++fTiming.resolveRunPosCacheHits;
       return cacheIt->second;
-    }
-    if (fTiming.enabled) ++fTiming.resolveRunPosCacheMisses;
 
     constexpr double kPositionToleranceMm = 1.0;
     const long long yBin = static_cast<long long>(std::floor(y / kTMSPositionResolverYBinWidthMm));
@@ -864,7 +793,6 @@ namespace cafmaker
       for (const auto * candidate : candidates)
       {
         considered.push_back(candidate);
-        if (fTiming.enabled) ++fTiming.resolveRunPosCandidatesScanned;
 
         double dx = candidate->x - x;
         double dy = candidate->y - y;
@@ -903,7 +831,6 @@ namespace cafmaker
         for (const auto & candidate : candidates)
         {
           considered.push_back(&candidate);
-          if (fTiming.enabled) ++fTiming.resolveRunPosCandidatesScanned;
 
           double dx = candidate.x - x;
           double dy = candidate.y - y;

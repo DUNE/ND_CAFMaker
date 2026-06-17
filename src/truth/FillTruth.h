@@ -9,7 +9,6 @@
 #define ND_CAFMAKER_FILLTRUTH_H
 
 #include <cmath>
-#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -243,7 +242,6 @@
           };
 
           EdepSimTreeContainer(std::string filename);
-          ~EdepSimTreeContainer();
           void SelectEvent(unsigned long int runNum, unsigned int evtNum);
           void SelectEvent(unsigned long int vertex_id);
           unsigned long int ResolveVertexID(unsigned int evtNum, double x, double y, double z);
@@ -254,27 +252,12 @@
           void  LoadTree();
 
         private:
-          struct TimingStats
-          {
-            bool enabled = false;
-            std::size_t loadTreeCalls = 0;
-            double loadTreeMs = 0.0;
-            std::size_t resolveVertexIDCalls = 0;
-            double resolveVertexIDMs = 0.0;
-            std::size_t resolveRunPosCalls = 0;
-            double resolveRunPosMs = 0.0;
-            std::size_t resolveRunPosCacheHits = 0;
-            std::size_t resolveRunPosCacheMisses = 0;
-            std::size_t resolveRunPosCandidatesScanned = 0;
-          };
-
           TFile * fEdepFile;
           TTree * fEdepTree;
           std::map<unsigned long int, int> fEdepEntries;
           std::map<unsigned int, std::vector<VertexCandidate>> fEventToVertexIDs;
           std::map<long long, std::vector<const VertexCandidate*>> fVertexCandidatesByYBin;
           std::map<std::tuple<double, double, double>, unsigned long int> fResolvedVertexIDByPosition;
-          TimingStats fTiming;
           const TG4Event * fG4Event;
           bool f_isTreeLoaded;
       };
