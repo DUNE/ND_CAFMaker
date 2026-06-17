@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <limits>
+#include <unordered_set>
 
 /*
  * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Oct 2024
@@ -185,17 +186,17 @@ namespace cafmaker
 
   int TMSRecoBranchFiller::ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const
   {
-    std::vector<int> visited;
+    std::unordered_set<int> visited;
     while (_TruthSpillParent[particleIdx] != -1)
     {
-      if (std::find(visited.begin(), visited.end(), particleIdx) != visited.end())
+      if (visited.find(particleIdx) != visited.end())
       {
         LOG.WARNING() << "TMS reco track " << recoTrackIdx
                       << " encountered a loop while resolving Truth_Spill parents;"
                       << " falling back to particle index " << particleIdx << "\n";
         return particleIdx;
       }
-      visited.push_back(particleIdx);
+      visited.insert(particleIdx);
 
       const int parentTrackId = _TruthSpillParent[particleIdx];
       const int vertexId = _TruthSpillParticleVertexID[particleIdx];
