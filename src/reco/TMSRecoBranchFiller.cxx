@@ -412,35 +412,43 @@ namespace cafmaker
 
         lastSpillNo = _SpillNo;
 
-        Trigger & prev_trig = fTriggers.back(); // trigger before 'trig'
-        fTriggers.emplace_back();               // add new trigger entry (unfilled)
-        Trigger & trig      = fTriggers.back(); // trigger we're working on
-
-        trig.evtID = entry;
-        trig.triggerType = 1; // TODO real number?
-
-        if (entry == 0)
-          trig.triggerTime_ns = 0;
-        else
-          trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;
-
-        if (entry == 0)
-          trig.triggerTime_s = 0;
-        else
+        if (!fTriggers.empty())
         {
+          Trigger & prev_trig = fTriggers.back(); // trigger before 'trig'
+          fTriggers.emplace_back();               // add new trigger entry (unfilled)
+          Trigger & trig      = fTriggers.back(); // trigger we're working on
+
+          trig.evtID = entry;
+          trig.triggerType = 1; // TODO real number?
+
+          trig.triggerTime_ns = prev_trig.triggerTime_ns + 2E8 ;
           trig.triggerTime_s = prev_trig.triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
           if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
           {
             trig.triggerTime_s += 1;
             trig.triggerTime_ns -= 1E9;
           }
-        }
 
-        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
-                      << ", triggerType=" << trig.triggerType
-                      << ", triggerTime_s=" << trig.triggerTime_s
-                      << ", triggerTime_ns=" << trig.triggerTime_ns
-                      << "\n";
+          LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                        << ", triggerType=" << trig.triggerType
+                        << ", triggerTime_s=" << trig.triggerTime_s
+                        << ", triggerTime_ns=" << trig.triggerTime_ns
+                        << "\n";
+        }
+        else
+        {
+          fTriggers.emplace_back();
+          Trigger & trig = fTriggers.back();
+          trig.evtID = entry;
+          trig.triggerType = 1; // TODO real number?
+          trig.triggerTime_ns = 0;
+          trig.triggerTime_s = 0;
+          LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                        << ", triggerType=" << trig.triggerType
+                        << ", triggerTime_s=" << trig.triggerTime_s
+                        << ", triggerTime_ns=" << trig.triggerTime_ns
+                        << "\n";
+        }
       }
       fLastTriggerReqd = fTriggers.end();  // since we just modified the list, any iterators have been invalidated
     }
