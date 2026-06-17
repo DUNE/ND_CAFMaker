@@ -455,7 +455,7 @@ namespace cafmaker
 
     for (const Trigger & trigger : fTriggers)
     {
-      if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
+      if (triggerType < 0 || triggerType == trigger.triggerType)
       {
         triggers.push_back(trigger);
       }
