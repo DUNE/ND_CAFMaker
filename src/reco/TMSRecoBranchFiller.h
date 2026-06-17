@@ -88,7 +88,7 @@ namespace cafmaker
       float _DirectionX_Upstream[kTMSMaxTracks];
       float _DirectionZ_Upstream[kTMSMaxTracks];
 
-      float _TrackHitPos[kTMSMaxTracks][kTMSMaxLineHits][3];     ///< Kalman filtered reco. track hit positions (x,y,z)
+      float _TrackHitPos[kTMSMaxTracks][kTMSMaxLineHits][4];     ///< Kalman filtered reco. track hit positions (x,y,z[,compat])
       float _TrackRecoHitPos[kTMSMaxTracks][kTMSMaxLineHits][4]; ///< Reco. track hit positions (x,y,z,t)
 
       // Truth_Info branches used for reco-track -> truth lookup
