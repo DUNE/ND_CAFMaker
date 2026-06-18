@@ -7,6 +7,7 @@
 
 #include "FillTruth.h"
 
+#include <cstdlib>
 #include <map>
 #include <regex>
 
@@ -111,6 +112,11 @@ caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
 
 namespace cafmaker
 {
+  namespace
+  {
+    bool PrintMaterializationStatsEnabled();
+  }
+
   template <>
   void ValidateOrCopy<double, float>(const double & input, float & target, const float & unsetVal, const std::string & fieldName)
   {
@@ -148,6 +154,30 @@ namespace cafmaker
   {
     if (HaveGENIE() && !HaveEDEPSIM())
     LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
+  }
+
+  TruthMatcher::~TruthMatcher()
+  {
+    const unsigned long totalSecondaryAdds = fMaterializationStats.missingSecondaryAdds
+                                           + fMaterializationStats.missingSecondaryClosureAdds;
+    const unsigned long totalClosureCalls = fMaterializationStats.secondaryClosureCalls;
+    if (!PrintMaterializationStatsEnabled())
+      return;
+    if (fMaterializationStats.missingPrimaryAdds == 0 && totalSecondaryAdds == 0 && totalClosureCalls == 0)
+      return;
+
+    LOG.INFO() << "TruthMatcher materialization stats: prim(added)="
+               << fMaterializationStats.missingPrimaryAdds
+               << ", sec(requested)=" << fMaterializationStats.missingSecondaryAdds
+               << ", sec(parent-closure)=" << fMaterializationStats.missingSecondaryClosureAdds
+               << ", sec(total)=" << totalSecondaryAdds
+               << "; closure calls=" << totalClosureCalls
+               << ", resolved(existing prim)=" << fMaterializationStats.secondaryClosureResolvedByExistingPrimary
+               << ", resolved(existing sec)=" << fMaterializationStats.secondaryClosureResolvedByExistingSecondary
+               << ", resolved(materialized prim)=" << fMaterializationStats.secondaryClosureResolvedByMaterializedPrimary
+               << ", aborted(cycle)=" << fMaterializationStats.secondaryClosureAbortedCycle
+               << ", aborted(out-of-range)=" << fMaterializationStats.secondaryClosureAbortedOutOfRange
+               << " [set ND_CAFMAKER_STATS=1 to enable]\n";
   }
 
   // --------------------------------------------------------------
@@ -510,54 +540,191 @@ namespace cafmaker
     fGTrees.SetLogThrehsold(thresh);
   }
 
-  int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event)
+  namespace
   {
+    caf::TrueParticleID FindPrimaryAncestor(const caf::SRTrueInteraction &ixn,
+                                            std::size_t nixn,
+                                            int G4ID,
+                                            const TG4Event *g4event)
+    {
+      caf::TrueParticleID ancestor;
+      ancestor.ixn = nixn;
+
+      if (!g4event) return ancestor;
+
+      int current = G4ID;
+      std::vector<int> visited;
+
+      while (current >= 0)
+      {
+        if (std::find(visited.begin(), visited.end(), current) != visited.end())
+          return ancestor;
+        visited.push_back(current);
+
+        if (current >= static_cast<int>(g4event->Trajectories.size()))
+          return ancestor;
+
+        const int parent = g4event->Trajectories[current].ParentId;
+        if (parent < 0)
+          return ancestor;
+
+        const auto itPrimary = std::find_if(ixn.prim.begin(), ixn.prim.end(),
+                                            [parent](const caf::SRTrueParticle &primary)
+                                            {
+                                              return primary.G4ID == parent;
+                                            });
+        if (itPrimary != ixn.prim.end())
+        {
+          ancestor.type = caf::TrueParticleID::kPrimary;
+          ancestor.part = std::distance(ixn.prim.begin(), itPrimary);
+          return ancestor;
+        }
+
+        current = parent;
+      }
+
+      return ancestor;
+    }
+
+    bool HasParticleWithG4ID(const std::vector<caf::SRTrueParticle> &collection,
+                             int G4ID)
+    {
+      return std::find_if(collection.begin(), collection.end(),
+                          [G4ID](const caf::SRTrueParticle &part)
+                          {
+                            return part.G4ID == G4ID;
+                          }) != collection.end();
+    }
+
+    bool PrintMaterializationStatsEnabled()
+    {
+      const char *env = std::getenv("ND_CAFMAKER_STATS");
+      return env && std::string(env) == "1";
+    }
+
+    void FillParticleFields(caf::SRTrueParticle &part,
+                            const caf::SRTrueInteraction &ixn,
+                            std::size_t nixn,
+                            int G4ID,
+                            const TG4Event *g4event)
+    {
+      const auto & traj = g4event->Trajectories[G4ID];
+
+      part.G4ID = traj.TrackId;
+      part.interaction_id = ixn.id;
+      part.pdg = traj.PDGCode;
+      part.p = traj.InitialMomentum*0.001;
+
+      part.parent = traj.ParentId;
+      part.ancestor_id = FindPrimaryAncestor(ixn, nixn, G4ID, g4event);
+
+      const auto & p0 = traj.Points[0];
+      part.start_pos = (p0.Position * .1).Vect();
+
+      const auto & pf = traj.Points.back();
+      part.end_pos = (pf.Position * .1).Vect();
+    }
+
+  }
+
+  void TruthMatcher::EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
+                                                  std::size_t nixn,
+                                                  int G4ID,
+                                                  std::vector<caf::SRTrueParticle> &secondaries,
+                                                  int &counter,
+                                                  const TG4Event *g4event) const
+  {
+    if (!g4event) return;
+    if (G4ID < 0 || G4ID >= static_cast<int>(g4event->Trajectories.size())) return;
+
+    fMaterializationStats.secondaryClosureCalls++;
+
+    int current = g4event->Trajectories[G4ID].ParentId;
+    std::vector<int> visited{G4ID};
+    std::vector<int> missingAncestors;
+
+    while (current >= 0)
+    {
+      if (std::find(visited.begin(), visited.end(), current) != visited.end())
+      {
+        fMaterializationStats.secondaryClosureAbortedCycle++;
+        return;
+      }
+      visited.push_back(current);
+
+      if (current >= static_cast<int>(g4event->Trajectories.size()))
+      {
+        fMaterializationStats.secondaryClosureAbortedOutOfRange++;
+        return;
+      }
+
+      if (HasParticleWithG4ID(ixn.prim, current))
+      {
+        fMaterializationStats.secondaryClosureResolvedByExistingPrimary++;
+        break;
+      }
+
+      if (HasParticleWithG4ID(secondaries, current))
+      {
+        fMaterializationStats.secondaryClosureResolvedByExistingSecondary++;
+        break;
+      }
+
+      const auto &traj = g4event->Trajectories[current];
+      if (traj.ParentId < 0)
+      {
+        LOG.WARNING() << "Materializing missing primary trajectory " << current
+                      << " into prim for interaction " << ixn.id
+                      << " while closing parent chain for secondary trajectory " << G4ID << "\n";
+
+        const int particle_index = ixn.nprim;
+        ixn.prim.emplace_back();
+        ixn.nprim++;
+        FillParticleFields(ixn.prim.at(particle_index), ixn, nixn, current, g4event);
+        fMaterializationStats.missingPrimaryAdds++;
+        fMaterializationStats.secondaryClosureResolvedByMaterializedPrimary++;
+        break;
+      }
+
+      missingAncestors.push_back(current);
+      current = traj.ParentId;
+    }
+
+    for (auto it = missingAncestors.rbegin(); it != missingAncestors.rend(); ++it)
+    {
+      const int particle_index = counter;
+      secondaries.emplace_back();
+      counter++;
+      FillParticleFields(secondaries.at(particle_index), ixn, nixn, *it, g4event);
+      fMaterializationStats.missingSecondaryClosureAdds++;
+    }
+  }
+
+  int TruthMatcher::FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event) const
+  {
+    const bool isPrimaryCollection = (&collection == &ixn.prim);
+    if (isPrimaryCollection)
+    {
+      LOG.WARNING() << "Materializing missing primary trajectory " << G4ID
+                    << " into prim for interaction " << ixn.id << "\n";
+      fMaterializationStats.missingPrimaryAdds++;
+    }
+    else
+      fMaterializationStats.missingSecondaryAdds++;
 
     collection.emplace_back();
     int part_index = counter;
     counter++;
 
-    auto traj = g4event->Trajectories[G4ID];
-    //Get Ancestor
-    int ancestor_id = traj.ParentId;
-    int ancestor_parent_id = g4event->Trajectories[ancestor_id].ParentId;
-    if (ancestor_parent_id !=-1)
+    FillParticleFields(collection.at(part_index), ixn, nixn, G4ID, g4event);
+
+    if (!isPrimaryCollection)
     {
-      
-      if(auto itPart = std::find_if(collection.begin(),
-                                    collection.end(),
-                                    [ancestor_id](const caf::SRTrueParticle& mypart)
-                                    {
-                                      return mypart.G4ID == ancestor_id;
-                                    }); itPart == collection.end())
-      {
-        
-        ancestor_id = FillParticle(ixn, nixn, ancestor_id, collection, counter, g4event);
-      } 
-      else
-      {
-        ancestor_id = ((*itPart)).ancestor_id.part;
-        // ancestor_id;
-      }
+      EnsureSecondaryParentClosure(ixn, nixn, G4ID, collection, counter, g4event);
+      FillParticleFields(collection.at(part_index), ixn, nixn, G4ID, g4event);
     }
-    caf::SRTrueParticle & part = collection.at(part_index);
 
-    part.G4ID = traj.TrackId;
-    part.interaction_id = ixn.id;
-    part.pdg = traj.PDGCode;
-    part.p = traj.InitialMomentum*0.001;
-
-    part.parent = traj.ParentId;
-
-    part.ancestor_id.ixn = nixn;
-    part.ancestor_id.part = ancestor_id ;
-
-    auto p0 = traj.Points[0];
-    part.start_pos = (p0.Position * .1).Vect();
-
-    auto pf = traj.Points[traj.Points.size()-1];
-    part.end_pos = (pf.Position * .1).Vect();
-    return ancestor_id;
+    return collection.at(part_index).ancestor_id.part;
   }
 
   // ------------------------------------------------------------
