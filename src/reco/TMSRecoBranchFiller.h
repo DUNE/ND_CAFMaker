@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <deque>
+#include <map>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -26,7 +27,8 @@ namespace cafmaker
   class TMSRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
-      TMSRecoBranchFiller(const std::string & tmsRecoFilename);
+      TMSRecoBranchFiller(const std::string & tmsRecoFilename,
+                          double vertexMatchToleranceMm);
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
@@ -35,6 +37,12 @@ namespace cafmaker
       ~TMSRecoBranchFiller();
 
     private:
+      void LoadTruthSpillEntry(int spillNo) const;
+      unsigned long ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const;
+      int ResolveRecoTrackTruthParticleIndex(int recoTrackIdx) const;
+      int FindTruthSpillParticleIndex(int vertexId, int trackId) const;
+      int ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const;
+      unsigned long ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const;
       void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
 
       void _FillRecoBranches(const Trigger &trigger,
@@ -48,52 +56,65 @@ namespace cafmaker
       TTree *TMSTrueSpill;
       TTree *TMSLCTree;
 
+      static constexpr int kTMSMaxTracks = 100;
+      static constexpr int kTMSMaxLineHits = 200;
+      static constexpr int kTMSMaxTrueParticles = 20000;
+      static constexpr int kTMSMaxTrueVertices = 5000;
+
       // Save the branches that we're reading in
       int   _RunNo;                      ///< Run Number
-      int   _TrueRunNo;                  ///< True Run Number
       int   _nLines;                     ///< Number of Hough Lines reconstructed
       int   _EventNo;                    ///< Event Number
       int   _SliceNo;                    ///< (Time) Slide Number
       int   _SpillNo;                    ///< Spill Number
       int   _nTracks;                    ///< Number of tracks in Interaction
-      int   _nHitsInTrack[10];           ///< Numebr of Hits in reco. track
-      int   _TrackCharge[10];            ///< Reconstructed Charge of track
-      float _TrackLength[10];            ///< Length [cm] of the reco. track
-      float _TrackArealDensity[10];      ///< Areal Density [g/cm^2] traversed by the reco. track
-      float _TrackMomentum[10];          ///< Reco. momentum of the track [MeV]
-      float _TrackTotalEnergy[10];       ///< Total reco. track energy [MeV]
-      float _TrackEnergyDeposit[10];     ///< Visible energy of reco. track [MeV]
-      float _TrackStartPos[10][3];       ///< Reco. start position of the track (x,y,z)
-      float _TrackEndPos[10][3];         ///< Reco. end position of the track (x,y,z)
-      float _TrackStartDirection[10][3]; ///< Reco. track direction vector at start (x,y,z)
-      float _TrackEndDirection[10][3];   ///< Reco. track direction vector at start (x,y,z)
-      float _Occupancy[10];              ///< Fraction of true energy deposits included in the reco. track
+      int   _nHitsInTrack[kTMSMaxTracks];           ///< Number of hits in reco. track
+      int   _TrackCharge[kTMSMaxTracks];            ///< Reconstructed charge of track
+      float _TrackLength[kTMSMaxTracks];            ///< Length [cm] of the reco. track
+      float _TrackArealDensity[kTMSMaxTracks];      ///< Areal Density [g/cm^2] traversed by the reco. track
+      float _TrackMomentum[kTMSMaxTracks];          ///< Reco. momentum of the track [MeV]
+      float _TrackTotalEnergy[kTMSMaxTracks];       ///< Total reco. track energy [MeV]
+      float _TrackEnergyDeposit[kTMSMaxTracks];     ///< Visible energy of reco. track [MeV]
+      float _TrackStartPos[kTMSMaxTracks][4];       ///< Reco. start position of the track (x,y,z,t)
+      float _TrackEndPos[kTMSMaxTracks][4];         ///< Reco. end position of the track (x,y,z,t)
+      float _TrackStartDirection[kTMSMaxTracks][3]; ///< Reco. track direction vector at start (x,y,z)
+      float _TrackEndDirection[kTMSMaxTracks][3];   ///< Reco. track direction vector at end (x,y,z)
+      float _Occupancy[kTMSMaxTracks];              ///< Fraction of true energy deposits included in the reco. track
 
-      float _TMSStartTime[10];
-      float _TrackTime[10];
+      float _TMSStartTime[kTMSMaxTracks];
+      float _TrackTime[kTMSMaxTracks];
 
-      float _DirectionX_Downstream[10];
-      float _DirectionZ_Downstream[10];
-      float _DirectionX_Upstream[10];
-      float _DirectionZ_Upstream[10];
+      float _DirectionX_Downstream[kTMSMaxTracks];
+      float _DirectionZ_Downstream[kTMSMaxTracks];
+      float _DirectionX_Upstream[kTMSMaxTracks];
+      float _DirectionZ_Upstream[kTMSMaxTracks];
 
-      // [100][200][4] needs to match TMS reco output (check TMS Reco file if in doubt)
-      float _TrackHitPos[100][200][4];     ///< Array of reco. track hit positions (x,y,z,t)
-      float _TrackRecoHitPos[100][200][4]; ///< Array of Kalman filtered reco. track hit positions (x,y,z,t)
+      float _TrackHitPos[kTMSMaxTracks][kTMSMaxLineHits][4];     ///< Kalman filtered reco. track hit positions (x,y,z[,compat])
+      float _TrackRecoHitPos[kTMSMaxTracks][kTMSMaxLineHits][4]; ///< Reco. track hit positions (x,y,z,t)
 
-      // True particle idx for reco tracks
-      int _TrueVtxN;                ///< N Vertices
-      float _TrueVtxX[5000];        ///< N Vertices
-      float _TrueVtxY[5000];        ///< N Vertices
-      float _TrueVtxZ[5000];        ///< N Vertices
-      int _TrueVtxId[5000];         ///< Vertex
-      int _RecoTrueVtxId[5000];     ///< Vertex
-      int _RecoTruePartId[5000];    ///< Primary
-      int _RecoTruePartIdSec[5000]; ///< Secondary 
+      // Truth_Info branches used for reco-track -> truth lookup
+      int _RecoTruePartId[kTMSMaxTracks];    ///< RecoTrackPrimaryParticleIndex
+      int _RecoTruePartIdSec[kTMSMaxTracks]; ///< RecoTrackSecondaryParticleIndex
+
+      // Truth_Spill branches used as the authoritative truth representation
+      mutable int _TruthSpillSpillNo;
+      mutable int _TruthSpillRunNo;
+      mutable int _TruthSpillNTrueParticles;
+      mutable int _TruthSpillTrueVtxN;
+      mutable int _TruthSpillParticleVertexID[kTMSMaxTrueParticles];
+      mutable int _TruthSpillParent[kTMSMaxTrueParticles];
+      mutable int _TruthSpillTrackID[kTMSMaxTrueParticles];
+      mutable float _TruthSpillBirthPosition[kTMSMaxTrueParticles][4];
+      mutable int _TruthSpillTrueVtxID[kTMSMaxTrueVertices];
+      mutable float _TruthSpillTrueVtxX[kTMSMaxTrueVertices];
+      mutable float _TruthSpillTrueVtxY[kTMSMaxTrueVertices];
+      mutable float _TruthSpillTrueVtxZ[kTMSMaxTrueVertices];
 
       bool is_data;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
+      mutable std::map<int, Long64_t> fTruthSpillEntryBySpillNo;
+      double fVertexMatchToleranceMm;
 
   };
 

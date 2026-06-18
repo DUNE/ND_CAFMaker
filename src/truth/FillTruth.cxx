@@ -32,6 +32,11 @@
 #include "Params.h"
 #include "util/FloatMath.h"
 
+namespace
+{
+  constexpr double kTMSPositionResolverYBinWidthMm = 500.0;
+}
+
 /// duneanaobj not guaranteed to be the same as GENIE scattering types
 caf::ScatteringMode GENIE2CAF(genie::EScatteringType sc)
 {
@@ -140,11 +145,12 @@ namespace cafmaker
   TruthMatcher::TruthMatcher(const std::vector<std::string> & ghepFilenames,
                              std::string edepsimFilename,
                              const genie::NtpMCEventRecord *gEvt,
-                             std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback)
+                             std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback,
+                             double positionToleranceMm)
     : cafmaker::Loggable("TruthMatcher"),
       fGTrees(ghepFilenames, gEvt),
       fGENIEWriterCallback(std::move(genieFillerCallback)),
-      fEdepSimTree(edepsimFilename)
+      fEdepSimTree(edepsimFilename, positionToleranceMm)
   {
     if (HaveGENIE() && !HaveEDEPSIM())
     LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
@@ -497,6 +503,24 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  unsigned long TruthMatcher::ResolveVertexID(unsigned int evtNum, double x, double y, double z) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::ResolveVertexID() requires an EDepSim file");
+
+    return fEdepSimTree.ResolveVertexID(evtNum, x, y, z);
+  }
+
+  // ------------------------------------------------------------
+  unsigned long TruthMatcher::ResolveVertexIDFromRunAndPosition(unsigned long runNumForErrMsg, double x, double y, double z) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::ResolveVertexIDFromRunAndPosition() requires an EDepSim file");
+
+    return fEdepSimTree.ResolveVertexIDFromRunAndPosition(runNumForErrMsg, x, y, z);
+  }
+
+  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
@@ -758,13 +782,31 @@ namespace cafmaker
       fGTrees[run] = tree;
       tree->SetBranchAddress("gmcrec", &fGEvt);
 
+      auto & entries = fGEntries[run];
+      for (long long i = 0; i < tree->GetEntries(); ++i)
+      {
+        tree->GetEntry(i);
+        unsigned int eventNum = fGEvt->hdr.ievent;
+        auto [itEntry, inserted] = entries.emplace(eventNum, i);
+        if (!inserted)
+        {
+          std::stringstream msg;
+          msg << "Duplicate GENIE event number " << eventNum << " found for run " << run
+              << " while indexing file '" << fname << "'\n";
+          LOG.FATAL() << msg.str();
+          throw std::runtime_error(msg.str());
+        }
+      }
+
       LOG.INFO() << "Loaded TTree for run " << run << " from file: " << fname << "\n";
     }
   }
 
   // ------------------------------------------------------------
-  TruthMatcher::EdepSimTreeContainer::EdepSimTreeContainer(std::string filename)
-  : cafmaker::Loggable("GTreeContainer")
+  TruthMatcher::EdepSimTreeContainer::EdepSimTreeContainer(std::string filename,
+                                                           double positionToleranceMm)
+  : cafmaker::Loggable("GTreeContainer"),
+    fPositionToleranceMm(positionToleranceMm)
   {
     fEdepFile = TFile::Open(filename.c_str());
     fG4Event = 0;
@@ -785,15 +827,234 @@ namespace cafmaker
     for (int i = 0; i<fEdepTree->GetEntries(); i++)
     {
       fEdepTree->GetEntry(i);
-      long int vertex_id = fG4Event->RunId * 1e6 + fG4Event->EventId;                                                                                                                              fEdepEntries[vertex_id] = i;
+      unsigned long int vertex_id = static_cast<unsigned long int>(fG4Event->RunId) * 1000000ul + static_cast<unsigned long int>(fG4Event->EventId);
+      fEdepEntries[vertex_id] = i;
+
+      if (fG4Event->Primaries.empty())
+      {
+        std::stringstream ss;
+        ss << "EDepSim event with packed vertex ID " << vertex_id << " has no primary vertices\n";
+        LOG.FATAL() << ss.str();
+        throw std::runtime_error(ss.str());
+      }
+
+      const auto & pos = fG4Event->Primaries.front().Position;
+      unsigned int event_id = static_cast<unsigned int>(fG4Event->EventId);
+      fEventToVertexIDs[event_id].push_back(VertexCandidate{vertex_id,
+                                                            static_cast<unsigned long int>(fG4Event->RunId),
+                                                            event_id,
+                                                            pos.X(), pos.Y(), pos.Z()});
+    }
+
+    for (auto & [eventId, candidates] : fEventToVertexIDs)
+    {
+      (void)eventId;
+      for (auto & candidate : candidates)
+      {
+        const long long yBin = static_cast<long long>(std::floor(candidate.y / kTMSPositionResolverYBinWidthMm));
+        fVertexCandidatesByYBin[yBin].push_back(&candidate);
+      }
     }
   }
 
   // ------------------------------------------------------------
   void TruthMatcher::EdepSimTreeContainer::SelectEvent(unsigned long runNum, unsigned int evtNum)
   {
-    long int vertex_id = runNum * 1e6 + evtNum;
-     SelectEvent(vertex_id); 
+    unsigned long int vertex_id = runNum * 1000000ul + evtNum;
+    SelectEvent(vertex_id);
+  }
+
+  // ------------------------------------------------------------
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexID(unsigned int evtNum, double x, double y, double z)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+
+    auto it = fEventToVertexIDs.find(evtNum);
+    if (it == fEventToVertexIDs.end())
+    {
+      std::stringstream ss;
+      ss << "EDepSim event ID " << evtNum << " was not found while resolving a packed vertex ID\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    const VertexCandidate * best = nullptr;
+    double bestDist2 = std::numeric_limits<double>::max();
+    for (const auto & candidate : it->second)
+    {
+      double dx = candidate.x - x;
+      double dy = candidate.y - y;
+      double dz = candidate.z - z;
+      double dist2 = dx*dx + dy*dy + dz*dz;
+      if (dist2 <= fPositionToleranceMm * fPositionToleranceMm)
+      {
+        if (best)
+        {
+          std::stringstream ss;
+          ss << "EDepSim event ID " << evtNum << " matches multiple packed vertex IDs within "
+             << fPositionToleranceMm << " mm of TMS truth position (" << x << ", " << y << ", " << z << ")\n";
+          LOG.FATAL() << ss.str();
+          throw std::runtime_error(ss.str());
+        }
+        best = &candidate;
+        bestDist2 = dist2;
+      }
+      else if (!best && dist2 < bestDist2)
+      {
+        bestDist2 = dist2;
+      }
+    }
+
+    if (!best)
+    {
+      std::stringstream ss;
+      ss << "EDepSim event ID " << evtNum << " had " << it->second.size()
+         << " candidate packed vertex IDs, but none matched TMS truth position ("
+         << x << ", " << y << ", " << z << ") within " << fPositionToleranceMm
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
+         << "Candidates considered:\n";
+      for (const auto & candidate : it->second)
+      {
+        double dx = candidate.x - x;
+        double dy = candidate.y - y;
+        double dz = candidate.z - z;
+        double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+        ss << "  runID=" << candidate.runID << " eventID=" << candidate.eventID
+           << " vertexID=" << candidate.vertexID
+           << " pos=(" << candidate.x << ", " << candidate.y << ", " << candidate.z << ")"
+           << " dist_mm=" << dist << "\n";
+      }
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+
+    return best->vertexID;
+  }
+
+  // ------------------------------------------------------------
+  unsigned long int TruthMatcher::EdepSimTreeContainer::ResolveVertexIDFromRunAndPosition(unsigned long int runNumForErrMsg, double x, double y, double z)
+  {
+    if (!f_isTreeLoaded)
+    {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+
+    const auto cacheKey = std::make_tuple(x, y, z);
+    auto cacheIt = fResolvedVertexIDByPosition.find(cacheKey);
+    if (cacheIt != fResolvedVertexIDByPosition.end())
+      return cacheIt->second;
+
+    const long long yBin = static_cast<long long>(std::floor(y / kTMSPositionResolverYBinWidthMm));
+
+    const VertexCandidate * best = nullptr;
+    double bestDist2 = std::numeric_limits<double>::max();
+    std::vector<const VertexCandidate*> considered;
+    int nMatchesWithinTolerance = 0;
+
+    const auto scanCandidates = [&](const std::vector<const VertexCandidate*> & candidates)
+    {
+      for (const auto * candidate : candidates)
+      {
+        considered.push_back(candidate);
+
+        double dx = candidate->x - x;
+        double dy = candidate->y - y;
+        double dz = candidate->z - z;
+        double dist2 = dx*dx + dy*dy + dz*dz;
+        if (dist2 <= fPositionToleranceMm * fPositionToleranceMm)
+        {
+          ++nMatchesWithinTolerance;
+          if (!best || dist2 < bestDist2)
+          {
+            best = candidate;
+            bestDist2 = dist2;
+          }
+        }
+        else if (!best && dist2 < bestDist2)
+        {
+          bestDist2 = dist2;
+        }
+      }
+    };
+
+    for (long long bin = yBin - 1; bin <= yBin + 1; ++bin)
+    {
+      auto it = fVertexCandidatesByYBin.find(bin);
+      if (it != fVertexCandidatesByYBin.end())
+        scanCandidates(it->second);
+    }
+
+    if (!best)
+    {
+      considered.clear();
+      bestDist2 = std::numeric_limits<double>::max();
+      for (const auto & [eventId, candidates] : fEventToVertexIDs)
+      {
+        (void)eventId;
+        for (const auto & candidate : candidates)
+        {
+          considered.push_back(&candidate);
+
+          double dx = candidate.x - x;
+          double dy = candidate.y - y;
+          double dz = candidate.z - z;
+          double dist2 = dx*dx + dy*dy + dz*dz;
+          if (dist2 <= fPositionToleranceMm * fPositionToleranceMm)
+          {
+            ++nMatchesWithinTolerance;
+            if (!best || dist2 < bestDist2)
+            {
+              best = &candidate;
+              bestDist2 = dist2;
+            }
+          }
+          else if (!best && dist2 < bestDist2)
+          {
+            bestDist2 = dist2;
+          }
+        }
+      }
+    }
+
+    if (!best)
+    {
+      std::stringstream ss;
+      ss << "EDepSim position-only resolver for base run " << runNumForErrMsg
+         << " considered " << considered.size() << " candidate packed vertex IDs, but none matched TMS truth position ("
+         << x << ", " << y << ", " << z << ") within " << fPositionToleranceMm
+         << " mm. Closest distance was " << std::sqrt(bestDist2) << " mm\n"
+         << "Candidates considered:\n";
+      for (const auto * candidate : considered)
+      {
+        double dx = candidate->x - x;
+        double dy = candidate->y - y;
+        double dz = candidate->z - z;
+        double dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+        ss << "  runID=" << candidate->runID << " eventID=" << candidate->eventID
+           << " vertexID=" << candidate->vertexID
+           << " pos=(" << candidate->x << ", " << candidate->y << ", " << candidate->z << ")"
+           << " dist_mm=" << dist << "\n";
+      }
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+
+    if (nMatchesWithinTolerance > 1)
+    {
+      LOG.WARNING() << "EDepSim position-only resolver for base run " << runNumForErrMsg
+                    << " found " << nMatchesWithinTolerance << " packed vertex IDs within "
+                    << fPositionToleranceMm << " mm of TMS truth position ("
+                    << x << ", " << y << ", " << z << "); choosing closest match with vertexID="
+                    << best->vertexID << ".\n";
+    }
+
+    fResolvedVertexIDByPosition[cacheKey] = best->vertexID;
+    return best->vertexID;
   }
 
   // ------------------------------------------------------------
@@ -836,12 +1097,33 @@ namespace cafmaker
       LOG.FATAL() << ss.str();
       throw std::range_error(ss.str());
     }
-    if (it_tree->second->GetEntry(evtNum) == 0)
+
+    auto it_runEntries = fGEntries.find(runNum);
+    if (it_runEntries == fGEntries.end())
     {
       std::stringstream ss;
-      ss << "Event number " << evtNum << " was not found in run: " << runNum << "\n";
+      ss << "Run number " << runNum << " has no indexed GENIE events\n";
       LOG.FATAL() << ss.str();
       throw std::range_error(ss.str());
+    }
+
+    auto it_entry = it_runEntries->second.find(evtNum);
+    if (it_entry == it_runEntries->second.end())
+    {
+      std::stringstream ss;
+      ss << "GENIE event number " << evtNum << " was not found in run " << runNum << "\n";
+      LOG.FATAL() << ss.str();
+      throw std::range_error(ss.str());
+    }
+
+    long long bytesRead = it_tree->second->GetEntry(it_entry->second);
+    if (bytesRead <= 0)
+    {
+      std::stringstream ss;
+      ss << "Failed to read GENIE event number " << evtNum << " in run " << runNum
+         << " from tree entry " << it_entry->second << " (GetEntry returned " << bytesRead << ")\n";
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
     }
   }
 
