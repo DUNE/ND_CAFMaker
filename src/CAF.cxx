@@ -139,30 +139,11 @@ void CAF::setToBS()
 
 int CAF::StoreGENIEEvent(const genie::NtpMCEventRecord *evtIn)
 {
-  // if the GENIE tree is not already pointing to the given address, we can make it happen,
-  // but it will slow things down
-  if (evtIn != mcrec)
-  {
-    // might be better to throw an exception or something,
-    // since the *user* can't do anything about this,
-    // but all the throw-ing and catch-ing will slow us down even more
-    static bool warned = false;
-    if (!warned)
-    {
-      cafmaker::LOG_S("CAF::StoreGENIEEvent()").WARNING() << "Repeatedly reassigning the target pointer for output GENIE tree will result in significant performance degredation\n";
-      warned = true;
-    }
-
-    genie->SetBranchAddress("genie_record", &evtIn);
-  }
-
+  // The output branch was created against `mcrec`, so just point that member
+  // at the current input record for the duration of this Fill().
+  mcrec = const_cast<genie::NtpMCEventRecord *>(evtIn);
   genie->Fill();
-
-  // now reset the tree
-  if (evtIn != mcrec)
-  {
-    genie->SetBranchAddress("genie_record", &mcrec);
-  }
+  mcrec = nullptr;
 
   return genie->GetEntries()-1;
 }
