@@ -38,7 +38,7 @@ setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
 
 # duneanaobj contains the 'StandardRecord' specification of the CAF format
-setup duneanaobj v03_15_00 -q e26:${BUILD_QUAL}
+setup duneanaobj v04_00_00 -q e26:${BUILD_QUAL}
 
 # direct dependencies of CAFMaker itself
 setup hdf5 v1_12_2b  -q e26:${BUILD_QUAL}
@@ -65,7 +65,7 @@ export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$GENIE_INC/GENIE
 # Add pyGeoEff to pythonpath
 export PYTHONPATH=${PYTHONPATH}:${PWD}/DUNE_ND_GeoEff/lib/
 
-# duneananobj needs to be in the libs too
+# duneanaobj needs to be in the libs too
 export LD_LIBRARY_PATH=${DUNEANAOBJ_LIB}:$LD_LIBRARY_PATH
 # finally, add our lib & bin to the paths
 mydir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"

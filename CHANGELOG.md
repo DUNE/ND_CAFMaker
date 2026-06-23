@@ -1,7 +1,19 @@
 # Changelog
 [[Format loosely based on <https://keepachangelog.com/en/0.3.0>]]
 
+Note that tags as a function of changes are now also being tracked via [milestones](https://github.com/DUNE/ND_CAFMaker/milestones).
+
 ##### current
+
+##### [v5.00.0] -- 2026-06-22
+* 129 fill new reco object parent and corresponding reco particle fields ([PR #129](https://github.com/DUNE/ND_CAFMaker/pull/129))
+
+##### [v4.12.0] -- 2026-06-19
+* Add beam quality info ([PR #109](https://github.com/DUNE/ND_CAFMaker/pull/109))
+* Fix TMS reco truth particle IDs so FindParticle() returns valid pointers ([PR #147](https://github.com/DUNE/ND_CAFMaker/pull/147))
+* Variable name update ([PR #152](https://github.com/DUNE/ND_CAFMaker/pull/152)).
+* 132 Fix SelectEvent by Correctly Mapping Event Num to Entry Num ([PR #151](https://github.com/DUNE/ND_CAFMaker/pull/151))
+* Fixes the connection between primary and secondary particles ([PR #150](https://github.com/DUNE/ND_CAFMaker/pull/150))
 
 ##### [v4.11.1] -- 2026-04-06
 * Don't assume correct truth-matching for cheated track matching ([PR #131](https://github.com/DUNE/ND_CAFMaker/pull/131))
