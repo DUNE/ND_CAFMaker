@@ -1,5 +1,8 @@
 export CXX = g++ 
-export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2
+ifdef SANDRECO_LEGACY
+  SANDRECO_LEGACY_FLAG = -DENABLE_SANDRECO_LEGACY
+endif
+export CXXFLAGS = -g -Wall -fPIC -DNO_ART -O2 $(SANDRECO_LEGACY_FLAG)
 export ROOTFLAGS = $(shell root-config --cflags)
 export INCLUDE = -I$(HDF5_INC)
 INCLUDE += -I$(GENIE_INC)/GENIE
