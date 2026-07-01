@@ -299,8 +299,6 @@ namespace cafmaker
     TMSRecoTree->GetEntry(i); // Load first entry for now
     LastSpillNo = _SpillNo;
 
-    caf::SRTMSInt *interaction;
-
     LoadTruthSpillEntry(LastSpillNo);
     for (int i_tvtx = 0; i_tvtx < _TruthSpillTrueVtxN; ++i_tvtx)
     {
@@ -314,32 +312,39 @@ namespace cafmaker
     TMSLCTree->GetEntry(i); 
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
-      if (_nTracks > 0)
-      {        
+      if (_nTracks < 0)
+      {
+        LOG.WARNING() << "Skipping TMS Reco_Tree entry " << i
+                      << " with negative nTracks = " << _nTracks << "\n";
+      }
+      else
+      {
+        ++sr.nd.tms.nixn;
+        sr.nd.tms.ixn.emplace_back();
+
+        caf::SRTMSInt &interaction = sr.nd.tms.ixn.back();
+        interaction.tracks.resize(_nTracks);
+        interaction.ntracks = _nTracks;
+
         for (int j = 0; j < _nTracks; ++j) {
-          sr.nd.tms.nixn++;
-          sr.nd.tms.ixn.emplace_back();
+          caf::SRTrack &track = interaction.tracks[j];
 
-          interaction = &(sr.nd.tms.ixn.back()); // :(
-          interaction->tracks.resize(1); // For now 1 track = 1 interaction; implicit assumption it's all (anti-)muons
-          interaction->ntracks = 1;
+          track.start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);
+          track.end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
+          track.dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
+          track.enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          interaction->tracks[0].start   = caf::SRVector3D(_TrackStartPos[j][0]/10., _TrackStartPos[j][1]/10., _TrackStartPos[j][2]/10.);
-          interaction->tracks[0].end     = caf::SRVector3D(_TrackEndPos[j][0]/10., _TrackEndPos[j][1]/10., _TrackEndPos[j][2]/10.);
-          interaction->tracks[0].dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
-          interaction->tracks[0].enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
-
-          interaction->tracks[0].time    = static_cast<double>(_TMSStartTime[j]); //Adds time of interaction // TODO: use _TrackTime after prod n4p1
+          track.time    = static_cast<double>(_TMSStartTime[j]); //Adds time of interaction // TODO: use _TrackTime after prod n4p1
 
           // Track info
-          interaction->tracks[0].len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
-          interaction->tracks[0].len_gcm2  = (_TrackArealDensity[j]>0.0) ? _TrackArealDensity[j]/10. : 0.0; // idk why we have negatives
-          interaction->tracks[0].qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
-          interaction->tracks[0].Evis      = _TrackEnergyDeposit[j];
+          track.len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
+          track.len_gcm2  = (_TrackArealDensity[j]>0.0) ? _TrackArealDensity[j]/10. : 0.0; // idk why we have negatives
+          track.qual      = _Occupancy[j]; // TODO: Apparently this is a "track quality", nominally (hits in track)/(total hits)
+          track.Evis      = _TrackEnergyDeposit[j];
 
           // As of Jan 2026 the Charge attribute in TMS output is the PDG value, -13 for mu+, 13 for mu-.
           // For CAF files we probably just want a +1 or -1 for the particle charge, so divide by 13 and multiply in a -
-          interaction->tracks[0].charge    = -1 * _TrackCharge[j]/13;
+          track.charge    = -1 * _TrackCharge[j]/13;
 
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
@@ -361,9 +366,9 @@ namespace cafmaker
                                                                               [partG4ID](const caf::SRTrueParticle& part)
                                                                               { return part.G4ID == partG4ID; })));
 
-          interaction->tracks[0].truth.push_back(caf::TrueParticleID{srTrueIntIdx,
-                                                                      caf::TrueParticleID::PartType::kPrimary,
-                                                                      truthVecIdx});
+          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
+                                                    caf::TrueParticleID::PartType::kPrimary,
+                                                    truthVecIdx});
         }
       }
 
