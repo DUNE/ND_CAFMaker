@@ -20,7 +20,7 @@ namespace cafmaker
 
     // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
     fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
-    
+
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
@@ -43,9 +43,10 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
+    fhicl::OptionalAtom<std::string> sandRecoExperimentalFile { fhicl::Name{"SANDRecoExperimentalFile"}, fhicl::Comment("Input SAND fake_reco CAF .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };
-    
+
     // this is optional by way of the default value. Will result in an extra output file if enabled
     fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
 
@@ -61,8 +62,8 @@ namespace cafmaker
 
     // 0.1 s is default
     fhicl::Atom<float>  beamMatchDT { fhicl::Name("BeamMatchDeltaT"), fhicl::Comment("Maximum time difference, in s, between triggers and beam"), 0.1 };
-    
-    // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future 
+
+    // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future
     fhicl::Atom<float> mx2_2x2_offsetX {fhicl::Name("Mx2_2x2_offsetX"), fhicl::Comment("Mx2 - 2x2 offset in X direction in cm"), 0.};
     fhicl::Atom<float> mx2_2x2_offsetY {fhicl::Name("Mx2_2x2_offsetY"), fhicl::Comment("Mx2 - 2x2 offset in Y direction in cm"), 218.};
     fhicl::Atom<float> mx2_2x2_offsetZ {fhicl::Name("Mx2_2x2_offsetZ"), fhicl::Comment("Mx2 - 2x2 offset in Z direction in cm"), 6913.};
