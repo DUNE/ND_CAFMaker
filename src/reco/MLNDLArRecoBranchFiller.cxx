@@ -117,6 +117,42 @@ namespace cafmaker
 
   }
 
+  // ------------------------------------------------------------------------------
+  // Helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+  // This method is `const` because it applies to the _mapper_--- we're not changing the mapping---  
+  // but the returned instance is part of the SR itself and can be modified  
+  caf::SRRecoParticleID MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticleID(int64_t partID) const
+  {
+    if(fParticleMap.find(partID) == fParticleMap.end())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: could not find particle ID " << partID << " in the particle map! Abort.\n";
+      abort();
+    }
+    auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
+    return caf::SRRecoParticleID{static_cast<int>(ixn_idx), caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE, static_cast<int>(prt_idx)};
+  }
+
+  caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, int64_t partID) const
+  {
+    if(fParticleMap.find(partID) == fParticleMap.end())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: could not find particle ID " << partID << " in the particle map! Abort.\n";
+      abort();
+    }
+    auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
+
+    if(ixn_idx >= sr.common.ixn.dlp.size())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: interaction index " << ixn_idx << " is out of range for sr.common.ixn.dlp with size " << sr.common.ixn.dlp.size() << "! Abort.\n";
+      abort();
+    }
+    if(prt_idx >= sr.common.ixn.dlp.at(ixn_idx).part.dlp.size())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: particle index " << prt_idx << " is out of range for sr.common.ixn.dlp[" << ixn_idx << "].part.dlp with size " << sr.common.ixn.dlp.at(ixn_idx).part.dlp.size() << "! Abort.\n";
+      abort();
+    }
+    return sr.common.ixn.dlp.at(ixn_idx).part.dlp.at(prt_idx);
+  }
 
   // ------------------------------------------------------------------------------
   // todo: possibly build some mechanism for customizing the dataset names in the file here
@@ -171,6 +207,9 @@ namespace cafmaker
     
     sr.meta.lar2x2.readoutstart_s = trigger.triggerTime_s;
     sr.meta.lar2x2.readoutstart_ns = trigger.triggerTime_ns;
+    
+    // reset the map of SPINE particle ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for this entry
+    fParticleMapper.Reset();
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
@@ -571,8 +610,15 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
-      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.ndlp++;
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the particle within the sr.common.ixn.dlp.part.dlp vector
+      auto prt_idx = sr.common.ixn.dlp[ixn_idx].part.dlp.size();
+      // save the indices for this particle so we can get it back later
+      fParticleMapper[part.id] = {ixn_idx, prt_idx};
+      // fill the reco particle
+      sr.common.ixn.dlp[ixn_idx].part.dlp.push_back(std::move(reco_particle));
+      sr.common.ixn.dlp[ixn_idx].part.ndlp++;
 
     }
   }
@@ -686,8 +732,21 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].ntracks++;
+      
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the track within the sr.nd.lar.dlp[ixn_idx].tracks vector (i.e., the number of tracks already there, since we're about to add this one)
+      auto trk_idx = sr.nd.lar.dlp[ixn_idx].tracks.size();
+      // fill the SRRecoParticleID info
+      track.part = fParticleMapper.GetRecoParticleID(part.id);
+      // get a reference to the right SRRecoParticle and update its recoobj info
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, part.id);
+      srPart.recoobj.ixn = ixn_idx;
+      srPart.recoobj.irecoobj = trk_idx;
+      srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPTrack;
+      // fill the track branch
+      sr.nd.lar.dlp[ixn_idx].tracks.push_back(std::move(track));
+      sr.nd.lar.dlp[ixn_idx].ntracks++;
     }
   }
 
@@ -785,9 +844,21 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].nshowers++;
-
+      
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the shower within the sr.nd.lar.dlp[ixn_idx].showers vector (i.e., the number of showers already there, since we're about to add this one)
+      auto shw_idx = sr.nd.lar.dlp[ixn_idx].showers.size();
+      // fill the SRRecoParticleID info
+      shower.part = fParticleMapper.GetRecoParticleID(part.id);
+      // get a reference to the right SRRecoParticle and update its recoobj info
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, part.id);
+      srPart.recoobj.ixn = ixn_idx;
+      srPart.recoobj.irecoobj = shw_idx;
+      srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPShower;
+      // fill the shower branch
+      sr.nd.lar.dlp[ixn_idx].showers.push_back(std::move(shower));
+      sr.nd.lar.dlp[ixn_idx].nshowers++;
     }
   }
 
