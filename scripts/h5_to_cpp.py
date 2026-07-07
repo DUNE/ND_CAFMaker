@@ -281,6 +281,10 @@ class TypeSerializer:
         elif fieldname and fieldname.startswith("is_"):
             cpp_name += "bool"
             h5_name = self.type_string(typ, fieldname=None, which="h5")
+        elif typ.name == "bool":
+            cpp_name += "bool"
+            h5_name = "H5::PredType::STD_U8"
+            h5_name += "BE" if typ.byteorder == ">" else "LE" if typ.byteorder == "<" else sysorder[sys.byteorder]
         elif h5py.check_enum_dtype(typ):
             typenames = fieldname.split("_")
             typename = "".join(t.capitalize() for t in typenames)
