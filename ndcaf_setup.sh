@@ -13,7 +13,7 @@ source "${_setup_dir}/ndcaf_setup_deps.sh" "$@"
 # Put the installed ND_CAFMaker on the user's environment. Paths are derived
 # from this script's location, so any install prefix works.
 export PATH="${_setup_dir}:${PATH}"
-export LD_LIBRARY_PATH="${_setup_dir}/../lib:${LD_LIBRARY_PATH}"
-export FHICL_FILE_PATH="${_setup_dir}/../cfg:${FHICL_FILE_PATH}"
+export LD_LIBRARY_PATH="${_setup_dir}/install/lib:${LD_LIBRARY_PATH}"
+export FHICL_FILE_PATH="${_setup_dir}/install/cfg:${FHICL_FILE_PATH}"
 
 unset _setup_dir
