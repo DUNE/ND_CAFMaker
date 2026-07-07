@@ -6,7 +6,7 @@ Note that tags as a function of changes are now also being tracked via [mileston
 ##### current
 
 ##### [v5.1.0] -- 2026-07-07
-* Replace the fragile GNU Make build with a proper CMake setup: UPS dependencies are wrapped in `INTERFACE IMPORTED` targets, out-of-source builds are isolated under `build/`, and optional features are exposed as CMake options (`ENABLE_TMS`, `ENABLE_TESTEXE`). `ndcaf_setup.sh` is split into `ndcaf_setup_deps.sh` (build-time) and `ndcaf_setup.sh` (post-install runtime), both installed under `<prefix>/bin/`; UPS products with CMake configs now use `find_package(... CONFIG)` with transitive resolution; `makeCAF` gets `$ORIGIN/../lib` as `INSTALL_RPATH`, dropping the need for `LD_LIBRARY_PATH`; `cfg/` fcl files are installed under `<prefix>/cfg/` and wired into `FHICL_FILE_PATH`.  **Breaking**: source `ndcaf_setup_deps.sh` before building and `<prefix>/bin/ndcaf_setup.sh` after install.([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
+* Replace the fragile GNU Make build full CMake setup ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
 * Add CI via GitHub Actions: Apptainer + CVMFS on SL7 ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
 * Group TMS tracks by time slice by @jdkio in ([PR #163](https://github.com/DUNE/ND_CAFMaker/pull/163))
 
