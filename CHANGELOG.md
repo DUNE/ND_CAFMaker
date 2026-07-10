@@ -5,6 +5,9 @@ Note that tags as a function of changes are now also being tracked via [mileston
 
 ##### current
 
+##### [v5.1.1] -- 2026-07-10
+* Update DLP h5 classes by @jacoblarkin ([PR #166](https://github.com/DUNE/ND_CAFMaker/pull/166))
+
 ##### [v5.1.0] -- 2026-07-07
 * Replace the fragile GNU Make build full CMake setup ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
 * Add CI via GitHub Actions: Apptainer + CVMFS on SL7 ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
