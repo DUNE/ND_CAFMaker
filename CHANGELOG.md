@@ -3,6 +3,11 @@
 
 Note that tags as a function of changes are now also being tracked via [milestones](https://github.com/DUNE/ND_CAFMaker/milestones).
 
+## Checklist for release managers when cutting a new release:
+* Update this CHANGELOG.
+* Change the version string in the top-level `CMakeLists.txt`.
+* Use the GitHub "draft a release" page to tag a new version.
+
 ##### current
 
 ##### [v5.1.1] -- 2026-07-10
