@@ -429,7 +429,7 @@ namespace cafmaker
 
     // if we can't find a SRTrueInteraction with matching ID, we may need to make a new one
     if ( auto itIxn = std::find_if(sr.mc.nu.begin(), sr.mc.nu.end(),
-                                   [ixnID](const caf::SRTrueInteraction & ixn) { return static_cast<unsigned long>(ixn.id) == ixnID; });
+                                   [ixnID](const caf::SRTrueInteraction & ix) { return static_cast<unsigned long>(ix.id) == ixnID; });
          itIxn == sr.mc.nu.end() )
     {
       if (!createNew)
