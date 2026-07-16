@@ -253,7 +253,8 @@ namespace cafmaker
   {
     LOG.DEBUG() << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
 
-    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+    // todo: currently unused below...  but left in case the code below comes back
+    // const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
     // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
     // if they originate from outside it, so we can't use them
