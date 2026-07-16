@@ -10,6 +10,7 @@
 #define ND_CAFMAKER_NDLARDLPH5DATASETREADER_H
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <typeinfo>
 #include <typeindex>
@@ -20,7 +21,6 @@
 #include "DLP_h5_classes.h"
 #include "readH5/DatasetBuffer.h"
 #include "readH5/H5DataView.h"
-#include "readH5/IH5Viewer.h"
 
 namespace cafmaker
 {
@@ -35,7 +35,7 @@ namespace cafmaker
   /// it knows that the 'events' dataset is special
   /// (it holds region references to the other datasets)
   /// and because it knows the structured types it's expecting
-  class NDLArDLPH5DatasetReader : public IH5Viewer
+  class NDLArDLPH5DatasetReader
   {
     public:
       NDLArDLPH5DatasetReader(const std::string & h5filename,
@@ -55,14 +55,15 @@ namespace cafmaker
       template <typename T>
       H5DataView<T> GetProducts(long int evtIdx=-1) const
       {
-        // todo: implement a caching mechanism so repeated requests for the same evtIdx don't cause re-reads from the file
-
-        if (fDatasetBuffers.find(typeid(T)) == fDatasetBuffers.end())
-          fDatasetBuffers.emplace(typeid(T), std::make_unique<DatasetBuffer<T>>(fInputFile,
-                                                                                GetDatasetName<T>(),
-                                                                                cafmaker::types::dlp::BuildCompType<T>));
-
-        auto dsBuffer = dynamic_cast<DatasetBuffer<T>*>(fDatasetBuffers.at(typeid(T)).get());
+        // Each read gets its own buffer, which the returned H5DataView co-owns.
+        // The buffer is filled once below and thereafter immutable, 
+        // so views can't dangle or go stale, and holding several at once is fine.
+        // todo: an optional cache keyed by (type, evtIdx) could hand back a
+        //       shared_ptr to an already-read buffer to avoid re-reads -- safe
+        //       to add now precisely because the buffers are immutable.
+        auto dsBuffer = std::make_shared<DatasetBuffer<T>>(fInputFile,
+                                                           GetDatasetName<T>(),
+                                                           cafmaker::types::dlp::BuildCompType<T>);
 
         // the easy case is if the user wants all entries.  no filtering then...
         if (evtIdx < 0)
@@ -127,9 +128,9 @@ namespace cafmaker
           } // else if (T != Event)
         } // else if (evtIdx >= 0)
 
-        H5DataView<T> view = NewView<T>(dsBuffer->bufferaddr());
-
-        return view;
+        // hand the caller a view that shares ownership of this (now immutable) buffer.
+        // (shared_ptr<DatasetBuffer<T>> converts implicitly to shared_ptr<const ...>)
+        return H5DataView<T>(dsBuffer);
       } // H5DataView<T> NDLArDLPH5DatasetReader::GetProducts()
 
 
@@ -139,8 +140,6 @@ namespace cafmaker
       H5::H5File  fInputFile;
 
       std::unordered_map<std::type_index, std::string> fDatasetNames;
-
-      mutable std::unordered_map<std::type_index, std::unique_ptr<DatasetBufferBase>> fDatasetBuffers;
   };
 }
 
