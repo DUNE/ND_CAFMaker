@@ -326,6 +326,8 @@ namespace cafmaker
 
     ValidateOrCopy(truePartPassthrough.orig_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
+    // todo: need to figure out how to translate "1::91" etc. to the enums...
+    /*
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
       // fixme: the process codes don't look like this
@@ -343,8 +345,7 @@ namespace cafmaker
         outType = caf::TrueParticleID::kSecondary;
     };
     
-    // todo: need to figure out how to translate "1::91" etc. to the enums...
-//    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
+     ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process); */
      ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
      ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
      ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
