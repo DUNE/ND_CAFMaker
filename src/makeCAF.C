@@ -25,7 +25,6 @@
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
 
-#include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/NDLArTMSUniqueMatchRecoFiller.h"
 #include "reco/NDLArMINERvAMatchRecoFiller.h"
 #include "reco/PandoraLArRecoNDBranchFiller.h"
@@ -171,9 +170,7 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   // if we did both ND-LAr and TMS, we should try to match them, too
   if ((!ndlarFile.empty() || !pandoraFile.empty()) && !tmsFile.empty())
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
-
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(), 
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(),
                                                                                       par().cafmaker().sigmaY(), 
                                                                                       par().cafmaker().singleAngle(), 
                                                                                       par().cafmaker().sigmaTh(), 
