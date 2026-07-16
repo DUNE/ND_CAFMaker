@@ -15,6 +15,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 
 #include "H5Cpp.h"
 
@@ -56,11 +57,20 @@ namespace cafmaker
       H5DataView<T> GetProducts(long int evtIdx=-1) const
       {
         // Each read gets its own buffer, which the returned H5DataView co-owns.
-        // The buffer is filled once below and thereafter immutable, 
+        // The buffer is filled once below and thereafter immutable,
         // so views can't dangle or go stale, and holding several at once is fine.
-        // todo: an optional cache keyed by (type, evtIdx) could hand back a
-        //       shared_ptr to an already-read buffer to avoid re-reads -- safe
-        //       to add now precisely because the buffers are immutable.
+
+        // We keep the most recent buffer per type, so repeated requests for the
+        // same evtIdx are served without re-reading the file.
+        // In particular, the region-ref branch below fetches the Event product for every non-Event type,
+        // so this collapses those into a single Event read per event.
+        // Only the latest buffer per type is retained, so the cache stays small;
+        // and because buffers are immutable and co-owned by their views,
+        // evicting an entry never disturbs a view that is still holding it.
+        auto cacheKey = std::type_index(typeid(T));
+        if (auto it = fCache.find(cacheKey); it != fCache.end() && it->second.first == evtIdx)
+          return H5DataView<T>(std::static_pointer_cast<const DatasetBuffer<T>>(it->second.second));
+
         auto dsBuffer = std::make_shared<DatasetBuffer<T>>(fInputFile,
                                                            GetDatasetName<T>(),
                                                            cafmaker::types::dlp::BuildCompType<T>);
@@ -128,9 +138,12 @@ namespace cafmaker
           } // else if (T != Event)
         } // else if (evtIdx >= 0)
 
-        // hand the caller a view that shares ownership of this (now immutable) buffer.
+        // hand the caller a view that shares ownership of this (now immutable) buffer,
+        // and retain it as the latest buffer for this type.
         // (shared_ptr<DatasetBuffer<T>> converts implicitly to shared_ptr<const ...>)
-        return H5DataView<T>(dsBuffer);
+        std::shared_ptr<const DatasetBuffer<T>> cachedBuffer = dsBuffer;
+        fCache[cacheKey] = {evtIdx, cachedBuffer};
+        return H5DataView<T>(cachedBuffer);
       } // H5DataView<T> NDLArDLPH5DatasetReader::GetProducts()
 
 
@@ -140,6 +153,11 @@ namespace cafmaker
       H5::H5File  fInputFile;
 
       std::unordered_map<std::type_index, std::string> fDatasetNames;
+
+      /// Most recently read buffer per product type, with the evtIdx it holds.
+      /// Lets repeated requests for the same (type, evtIdx) skip re-reading.
+      mutable std::unordered_map<std::type_index,
+                                 std::pair<long, std::shared_ptr<const DatasetBufferBase>>> fCache;
   };
 }
 
