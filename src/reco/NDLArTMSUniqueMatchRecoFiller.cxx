@@ -85,11 +85,11 @@ namespace cafmaker
 
       double xz_dot_prod = tms_dir_x*lar_dir_x + tms_dir_z*lar_dir_z;
       if (xz_dot_prod != 0) {
-        double xz_dot_prod = xz_dot_prod/(sqrt(pow(tms_dir_x,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_x,2)+pow(lar_dir_z,2)));
+        xz_dot_prod = xz_dot_prod/(sqrt(pow(tms_dir_x,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_x,2)+pow(lar_dir_z,2)));
       }
       double yz_dot_prod = tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
       if (yz_dot_prod != 0) {
-        double yz_dot_prod = yz_dot_prod/(sqrt(pow(tms_dir_y,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_y,2)+pow(lar_dir_z,2)));
+        yz_dot_prod = yz_dot_prod/(sqrt(pow(tms_dir_y,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_y,2)+pow(lar_dir_z,2)));
       }
       double dot_prod = tms_dir_x*lar_dir_x + tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
       double angle_x = 180.0/TMath::Pi() * acos(xz_dot_prod);
