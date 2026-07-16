@@ -114,8 +114,6 @@ namespace cafmaker
           caf::SRNDLArInt dlp = sr.nd.lar.dlp[ixn_dlp];
           for (unsigned int ilar = 0; ilar < dlp.ntracks; ++ilar)
           {
-            dlp.tracks[ilar];
-            Mnv_int.tracks[iminerva];
             double residual = 0;
             double costheta = 0;
             if (Passes_cut(Mnv_int.tracks[iminerva], dlp.tracks[ilar], costheta, residual))
@@ -152,8 +150,6 @@ namespace cafmaker
           caf::SRNDLArInt pandora = sr.nd.lar.pandora[ixn_pandora];
           for (unsigned int ilar = 0; ilar < pandora.ntracks; ++ilar)
           {
-            pandora.tracks[ilar];
-            Mnv_int.tracks[iminerva];
             double residual = 0;
             double costheta = 0;
             if (Passes_cut(Mnv_int.tracks[iminerva], pandora.tracks[ilar], costheta, residual))
