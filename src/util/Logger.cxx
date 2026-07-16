@@ -13,7 +13,7 @@ namespace cafmaker
 
   // -----------------------------------------------------------------------
   Logger::Logger(std::string preamble, THRESHOLD thresh, std::ostream& stream)
-    : fPreamble(std::move(preamble)), fThresh(thresh), fStream(stream)
+    : fPreamble(std::move(preamble)), fStream(stream), fThresh(thresh)
   {
     // will only use colors if stream is a terminal.
     // see https://stackoverflow.com/questions/18081392/discrimination-between-file-and-console-streams
