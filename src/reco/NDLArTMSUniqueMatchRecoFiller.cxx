@@ -311,8 +311,8 @@ namespace cafmaker
   void
   NDLArTMSUniqueMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
-                                             const cafmaker::Params &par,
-                                             const TruthMatcher *truthMatcher) const
+                                             const cafmaker::Params &/*par*/,
+                                             const TruthMatcher */*truthMatcher*/) const
   {
     TRandom3 rng( static_cast<unsigned int>(trigger.triggerTime_ns ));
 
@@ -368,7 +368,7 @@ namespace cafmaker
     }
   }
   // todo: this is a placeholder
-  std::deque<Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int triggerType, bool beamOnly) const
+  std::deque<Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
   {
     return std::deque<Trigger>();
   }

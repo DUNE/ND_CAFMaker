@@ -91,10 +91,10 @@ namespace cafmaker
     return (abs(delta_theta_x) < d_thetax && abs(delta_theta_y) < d_thetay && abs(dist_x) < d_y && abs(dist_y) < d_x);
   }
 
-  void NDLArMINERvAMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
+  void NDLArMINERvAMatchRecoFiller::_FillRecoBranches(const Trigger &/*trigger*/,
                                                       caf::StandardRecord &sr,
-                                                      const cafmaker::Params &par,
-                                                      const TruthMatcher *truthMatcher) const
+                                                      const cafmaker::Params &/*par*/,
+                                                      const TruthMatcher */*truthMatcher*/) const
   {
     // match tracks using the info that should have been filled by the ND-LAr and MINERvA reco filled
 
@@ -195,7 +195,7 @@ namespace cafmaker
     }
   }
 
-  std::deque<Trigger> NDLArMINERvAMatchRecoFiller::GetTriggers(int triggerType, bool beamOnly) const
+  std::deque<Trigger> NDLArMINERvAMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
   {
     return std::deque<Trigger>();
   }

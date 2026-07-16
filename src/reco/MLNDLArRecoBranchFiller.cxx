@@ -178,7 +178,7 @@ namespace cafmaker
   void
   MLNDLArRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
-                                             const cafmaker::Params &par,
+                                             const cafmaker::Params &/*par*/,
                                              const TruthMatcher *truthMatcher) const
 
   {
@@ -248,8 +248,8 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
-                                                    const cafmaker::types::dlp::TrueInteraction & ptTrueInt /* pt = "pass-through" */) const
+  void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & /*srTrueInt*/,
+                                                    const cafmaker::types::dlp::TrueInteraction & /*ptTrueInt*/ /* pt = "pass-through" */) const
   {
     LOG.DEBUG() << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
 
@@ -317,7 +317,7 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
@@ -401,7 +401,7 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
                                                  const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/,
                                                  const TruthMatcher * truthMatch,
                                                  caf::StandardRecord &sr) const
   {

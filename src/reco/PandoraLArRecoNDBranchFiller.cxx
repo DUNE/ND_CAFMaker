@@ -131,7 +131,7 @@ namespace cafmaker
   // Copy all of the Pandora LArRecoND info to the PandoraLArRecoND branch of the StandardRecord object
   void PandoraLArRecoNDBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                        caf::StandardRecord &sr,
-                                                       const cafmaker::Params &par,
+                                                       const cafmaker::Params &/*par*/,
                                                        const TruthMatcher *truthMatch) const
   {
     // Figure out where in our list of triggers this event index is.

@@ -181,7 +181,7 @@ namespace cafmaker
   }
 
   // --------------------------------------------------------------
-  void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn)
+  void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int /*nixn*/)
   {
 
     genie::EventRecord * event = gEvt->event;
