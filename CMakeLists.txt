@@ -43,14 +43,19 @@ find_package(ROOT 6 REQUIRED COMPONENTS Core MathMore Geom EGPythia6 GenVector)
 # UPS ships sqlite as libsqlite3_ups.so (not libsqlite3.so) and the SL7 base
 # image only has libsqlite3.so.0. Pre-populate the FindSQLite3 cache so
 # fhiclcpp -> cetlib's find_dependency(SQLite3) finds the UPS install.
-find_library(SQLite3_LIBRARY
-  NAMES sqlite3_ups
-  PATHS "$ENV{SQLITE_FQ_DIR}/lib"
-  NO_DEFAULT_PATH)
-find_path(SQLite3_INCLUDE_DIR
-  NAMES sqlite3.h
-  PATHS "$ENV{SQLITE_FQ_DIR}/include"
-  NO_DEFAULT_PATH)
+# Under Spack (or any other environment providing a normal libsqlite3.so via
+# CMAKE_PREFIX_PATH), SQLITE_FQ_DIR is unset and the standard find_dependency(SQLite3)
+# lookup triggered by fhiclcpp/cetlib is left to run unmodified.
+if(DEFINED ENV{SQLITE_FQ_DIR})
+  find_library(SQLite3_LIBRARY
+    NAMES sqlite3_ups
+    PATHS "$ENV{SQLITE_FQ_DIR}/lib"
+    NO_DEFAULT_PATH)
+  find_path(SQLite3_INCLUDE_DIR
+    NAMES sqlite3.h
+    PATHS "$ENV{SQLITE_FQ_DIR}/include"
+    NO_DEFAULT_PATH)
+endif()
 
 # Force TBB to be picked up via TBB's own CMake config (it ships TBB::tbb).
 # Without this, fhiclcpp -> find_dependency(TBB) loads Geant4's FindTBB.cmake
@@ -77,9 +82,18 @@ execute_process(
   COMMAND ${GENIE_CONFIG} --libs
   OUTPUT_VARIABLE _genie_libs
   OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(DEFINED ENV{GENIE_FQ_DIR})
+  set(_genie_inc_dir "$ENV{GENIE_FQ_DIR}/include/GENIE")
+else()
+  # Not running under UPS (e.g. Spack build): derive the include dir from
+  # the location of genie-config itself (<prefix>/bin/genie-config).
+  get_filename_component(_genie_bin_dir "${GENIE_CONFIG}" DIRECTORY)
+  get_filename_component(_genie_prefix "${_genie_bin_dir}" DIRECTORY)
+  set(_genie_inc_dir "${_genie_prefix}/include/GENIE")
+endif()
 add_library(deps::genie INTERFACE IMPORTED)
 set_target_properties(
-  deps::genie PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "$ENV{GENIE_FQ_DIR}/include/GENIE"
+  deps::genie PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${_genie_inc_dir}"
                          INTERFACE_LINK_LIBRARIES "${_genie_libs}")
 
 # Side effect of the raw-flag integration above: CMake never sees an absolute
@@ -129,32 +143,47 @@ find_ups_package(TARGET_NAME deps::nlohmann INC_VAR NLOHMANN_JSON_INC)
 
 find_ups_package(TARGET_NAME deps::srproxy INC_VAR SRPROXY_INC)
 
-find_library(
-  LIBXML2_LIB_PATH
-  NAMES xml2
-  PATHS "$ENV{LIBXML2_FQ_DIR}/lib"
-  NO_DEFAULT_PATH)
+if(DEFINED ENV{LIBXML2_FQ_DIR})
+  find_library(
+    LIBXML2_LIB_PATH
+    NAMES xml2
+    PATHS "$ENV{LIBXML2_FQ_DIR}/lib"
+    NO_DEFAULT_PATH)
+else()
+  find_library(LIBXML2_LIB_PATH NAMES xml2)
+endif()
 add_library(deps::libxml2 INTERFACE IMPORTED)
 set_target_properties(deps::libxml2 PROPERTIES INTERFACE_LINK_LIBRARIES
                                                "${LIBXML2_LIB_PATH}")
 
-find_library(
-  PYTHIA6_LIB_PATH
-  NAMES Pythia6
-  PATHS "$ENV{PYTHIA6_LIBRARY}"
-  NO_DEFAULT_PATH)
+if(DEFINED ENV{PYTHIA6_LIBRARY})
+  find_library(
+    PYTHIA6_LIB_PATH
+    NAMES Pythia6
+    PATHS "$ENV{PYTHIA6_LIBRARY}"
+    NO_DEFAULT_PATH)
+else()
+  find_library(PYTHIA6_LIB_PATH NAMES Pythia6)
+endif()
 add_library(deps::pythia6 INTERFACE IMPORTED)
 set_target_properties(deps::pythia6 PROPERTIES INTERFACE_LINK_LIBRARIES
                                                "${PYTHIA6_LIB_PATH}")
 
-find_library(
-  CURL_LIB_PATH
-  NAMES curl
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+# curl — no dedicated UPS product/env var; find_library()/find_path() search
+# default system locations (which include /usr/lib64 on RHEL-family systems)
+# as well as CMAKE_PREFIX_PATH, so this works both on the SL7/UPS base image
+# and in a Spack environment.
+find_library(CURL_LIB_PATH NAMES curl)
+find_path(CURL_INC_PATH NAMES curl/curl.h)
+if(NOT CURL_LIB_PATH)
+  message(FATAL_ERROR "curl library not found. Install curl (e.g. the 'libcurl-devel'/'libcurl-dev' package) or set CMAKE_PREFIX_PATH to its location.")
+endif()
+if(NOT CURL_INC_PATH)
+  message(FATAL_ERROR "curl/curl.h not found. Install curl development headers (e.g. the 'libcurl-devel'/'libcurl-dev' package) or set CMAKE_PREFIX_PATH to their location.")
+endif()
 add_library(deps::curl INTERFACE IMPORTED)
 set_target_properties(
-  deps::curl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "/usr/include/curl"
+  deps::curl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CURL_INC_PATH}"
                         INTERFACE_LINK_LIBRARIES "${CURL_LIB_PATH}")
 
 # SANDReco — optional, auto-detected from environment (both modes)

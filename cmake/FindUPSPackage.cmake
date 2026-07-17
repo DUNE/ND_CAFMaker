@@ -1,7 +1,16 @@
 # cmake-format: off
 # ── find_ups_package ───────────────────────────────────────────────────────────
-# Creates an INTERFACE IMPORTED target from a UPS package located via
-# environment variables set by ndcaf_setup.sh (NOT from system paths).
+# Creates an INTERFACE IMPORTED target for a dependency that ships neither a
+# CMake config package nor a discoverable pkg-config file.
+#
+# Two discovery modes are supported:
+#   - UPS mode (SL7/CVMFS): the package is located via an environment
+#     variable set by ndcaf_setup.sh (e.g. HDF5_LIB), searched with
+#     NO_DEFAULT_PATH so nothing from the system is picked up by accident.
+#   - Standard/Spack mode: when the relevant env var is *not* set, falls
+#     back to a normal find_library()/find_path() search, which honors
+#     CMAKE_PREFIX_PATH (as populated by Spack's dependency environment)
+#     and standard system paths.
 #
 # Usage:
 #   find_ups_package(
@@ -23,26 +32,48 @@ function(find_ups_package)
   endif()
 
   if(UPS_INC_VAR)
-    set(_inc_dir "$ENV{${UPS_INC_VAR}}")
-    if(UPS_INC_SUFFIX)
-      set(_inc_dir "${_inc_dir}/${UPS_INC_SUFFIX}")
+    if(DEFINED ENV{${UPS_INC_VAR}})
+      set(_inc_dir "$ENV{${UPS_INC_VAR}}")
+      if(UPS_INC_SUFFIX)
+        set(_inc_dir "${_inc_dir}/${UPS_INC_SUFFIX}")
+      endif()
     endif()
+    # Not running under UPS (e.g. Spack build): UPS_INC_SUFFIX is a
+    # directory suffix, not a header filename, so it can't be used with
+    # find_path(). Leave _inc_dir unset here; Spack-provided packages are
+    # expected to expose their include dir via CMAKE_PREFIX_PATH/CPATH
+    # (or a proper CMake config), so the compiler picks it up without
+    # needing an explicit INTERFACE_INCLUDE_DIRECTORIES entry.
   endif()
 
   set(_libs "")
   if(UPS_LIB_VAR AND UPS_LIBS)
     foreach(_lib IN LISTS UPS_LIBS)
-      find_library(
-        _found_${_lib}
-        NAMES ${_lib}
-        PATHS "$ENV{${UPS_LIB_VAR}}"
-        NO_DEFAULT_PATH)
+      if(DEFINED ENV{${UPS_LIB_VAR}})
+        find_library(
+          _found_${_lib}
+          NAMES ${_lib}
+          PATHS "$ENV{${UPS_LIB_VAR}}"
+          NO_DEFAULT_PATH)
+      else()
+        # Not running under UPS (e.g. Spack build): search
+        # CMAKE_PREFIX_PATH and system locations instead.
+        find_library(_found_${_lib} NAMES ${_lib})
+      endif()
       if(_found_${_lib})
         list(APPEND _libs "${_found_${_lib}}")
       elseif(UPS_REQUIRED)
-        message(
-          FATAL_ERROR
-            "find_ups_package: '${_lib}' not found in $ENV{${UPS_LIB_VAR}}")
+        if(DEFINED ENV{${UPS_LIB_VAR}})
+          message(
+            FATAL_ERROR
+              "find_ups_package: '${_lib}' not found under $ENV{${UPS_LIB_VAR}}"
+          )
+        else()
+          message(
+            FATAL_ERROR
+              "find_ups_package: '${_lib}' not found (set the ${UPS_LIB_VAR} environment variable, or populate CMAKE_PREFIX_PATH)"
+          )
+        endif()
       endif()
     endforeach()
   endif()

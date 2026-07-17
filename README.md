@@ -54,6 +54,19 @@ Once inside the container, source the dependency setup script before configuring
 source ndcaf_setup_deps.sh {prof|debug}
 ```
 
+#### Building with Spack instead of UPS
+
+`CMakeLists.txt` and `cmake/FindUPSPackage.cmake` also support locating
+dependencies without UPS: any dependency whose UPS `*_FQ_DIR`/`*_LIBRARY`
+environment variable is unset falls back to a normal CMake search that
+honors `CMAKE_PREFIX_PATH`. This lets the project be built inside a Spack
+environment (e.g. on AlmaLinux 9) that provides `root`, `edep-sim`,
+`duneanaobj`, `fhiclcpp`, `hdf5`, `log4cpp`, `gsl`, `lhapdf`, `genie`,
+`libxml2`, `pythia6`, and `curl` on `CMAKE_PREFIX_PATH`/`PATH`, instead of
+sourcing `ndcaf_setup_deps.sh`. A Spack package definition for `ND_CAFMaker`
+itself lives in the [`DUNE/dune_spack`](https://github.com/DUNE/dune_spack)
+repository, not here.
+
 ### CMake configuration
 
 Once you've set up your environment, configure and build with CMake.
