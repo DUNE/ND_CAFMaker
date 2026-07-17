@@ -176,10 +176,17 @@ set_target_properties(deps::pythia6 PROPERTIES INTERFACE_LINK_LIBRARIES
 find_library(CURL_LIB_PATH NAMES curl)
 find_path(CURL_INC_PATH NAMES curl/curl.h)
 if(NOT CURL_LIB_PATH)
-  message(FATAL_ERROR "curl library not found. Install curl (e.g. the 'libcurl-devel'/'libcurl-dev' package) or set CMAKE_PREFIX_PATH to its location.")
+  message(
+    FATAL_ERROR
+      "curl library not found. Install curl (e.g. 'libcurl-devel'/'libcurl-dev', "
+      "or 'spack install curl') or set CMAKE_PREFIX_PATH to its location.")
 endif()
 if(NOT CURL_INC_PATH)
-  message(FATAL_ERROR "curl/curl.h not found. Install curl development headers (e.g. the 'libcurl-devel'/'libcurl-dev' package) or set CMAKE_PREFIX_PATH to their location.")
+  message(
+    FATAL_ERROR
+      "curl/curl.h not found. Install curl development headers (e.g. "
+      "'libcurl-devel'/'libcurl-dev', or 'spack install curl') or set "
+      "CMAKE_PREFIX_PATH to their location.")
 endif()
 add_library(deps::curl INTERFACE IMPORTED)
 set_target_properties(

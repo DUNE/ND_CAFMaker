@@ -7,10 +7,16 @@
 #   - UPS mode (SL7/CVMFS): the package is located via an environment
 #     variable set by ndcaf_setup.sh (e.g. HDF5_LIB), searched with
 #     NO_DEFAULT_PATH so nothing from the system is picked up by accident.
-#   - Standard/Spack mode: when the relevant env var is *not* set, falls
-#     back to a normal find_library()/find_path() search, which honors
+#   - Standard/Spack mode: when the relevant env var is *not* set, library
+#     lookups fall back to a normal find_library() search, which honors
 #     CMAKE_PREFIX_PATH (as populated by Spack's dependency environment)
-#     and standard system paths.
+#     and standard system paths. Include-dir lookups (INC_VAR/INC_SUFFIX),
+#     however, are simply skipped in this mode: INC_SUFFIX is a directory
+#     suffix rather than a header filename, so it can't be passed to
+#     find_path(). Callers relying on INC_VAR/INC_SUFFIX in Spack mode must
+#     ensure the include dir is already visible to the compiler (e.g. via
+#     CMAKE_PREFIX_PATH/CPATH, or because the dependency ships a proper
+#     CMake config target instead of going through find_ups_package()).
 #
 # Usage:
 #   find_ups_package(
@@ -37,13 +43,14 @@ function(find_ups_package)
       if(UPS_INC_SUFFIX)
         set(_inc_dir "${_inc_dir}/${UPS_INC_SUFFIX}")
       endif()
+    else()
+      # Not running under UPS (e.g. Spack build): UPS_INC_SUFFIX is a
+      # directory suffix, not a header filename, so it can't be used with
+      # find_path(). Leave _inc_dir unset here; Spack-provided packages are
+      # expected to expose their include dir via CMAKE_PREFIX_PATH/CPATH
+      # (or a proper CMake config), so the compiler picks it up without
+      # needing an explicit INTERFACE_INCLUDE_DIRECTORIES entry.
     endif()
-    # Not running under UPS (e.g. Spack build): UPS_INC_SUFFIX is a
-    # directory suffix, not a header filename, so it can't be used with
-    # find_path(). Leave _inc_dir unset here; Spack-provided packages are
-    # expected to expose their include dir via CMAKE_PREFIX_PATH/CPATH
-    # (or a proper CMake config), so the compiler picks it up without
-    # needing an explicit INTERFACE_INCLUDE_DIRECTORIES entry.
   endif()
 
   set(_libs "")
