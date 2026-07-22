@@ -7,7 +7,6 @@ set(LIB_SOURCES
     reco/MLNDLArRecoBranchFiller.cxx
     reco/NDLArDLPH5DatasetReader.cxx
     reco/NDLArMINERvAMatchRecoFiller.cxx
-    reco/NDLArTMSMatchRecoFiller.cxx
     reco/NDLArTMSUniqueMatchRecoFiller.cxx
     reco/PandoraLArRecoNDBranchFiller.cxx
     reco/SANDRecoBranchFiller.cxx

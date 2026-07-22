@@ -178,7 +178,7 @@ namespace cafmaker
   void
   MLNDLArRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
-                                             const cafmaker::Params &par,
+                                             const cafmaker::Params &/*par*/,
                                              const TruthMatcher *truthMatcher) const
 
   {
@@ -248,12 +248,13 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
-                                                    const cafmaker::types::dlp::TrueInteraction & ptTrueInt /* pt = "pass-through" */) const
+  void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & /*srTrueInt*/,
+                                                    const cafmaker::types::dlp::TrueInteraction & /*ptTrueInt*/ /* pt = "pass-through" */) const
   {
     LOG.DEBUG() << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
 
-    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+    // todo: currently unused below...  but left in case the code below comes back
+    // const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
     // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
     // if they originate from outside it, so we can't use them
@@ -317,7 +318,7 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
@@ -325,6 +326,8 @@ namespace cafmaker
 
     ValidateOrCopy(truePartPassthrough.orig_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
+    // todo: need to figure out how to translate "1::91" etc. to the enums...
+    /*
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
       // fixme: the process codes don't look like this
@@ -342,8 +345,7 @@ namespace cafmaker
         outType = caf::TrueParticleID::kSecondary;
     };
     
-    // todo: need to figure out how to translate "1::91" etc. to the enums...
-//    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
+     ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process); */
      ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
      ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
      ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
@@ -401,7 +403,7 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
                                                  const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/,
                                                  const TruthMatcher * truthMatch,
                                                  caf::StandardRecord &sr) const
   {
@@ -573,7 +575,7 @@ namespace cafmaker
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
-                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& p) { return p.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.track_id;
           caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.track_id, srPartCmp, true, (!truthMatch->HaveGENIE()))
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.track_id, srPartCmp, false, true);
@@ -695,7 +697,7 @@ namespace cafmaker
     	  
            
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
-                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& p) { return p.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.track_id;
 
           // we want to make sure the particle is created, if it isn't there,
@@ -809,7 +811,7 @@ namespace cafmaker
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
     	    bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
-                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& p) { return p.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.track_id;
           // we don't actually need the return value here for anything,
           // but we do want the TruthMatcher to *create* a new particle when that's appropriate

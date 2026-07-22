@@ -91,10 +91,10 @@ namespace cafmaker
     return (abs(delta_theta_x) < d_thetax && abs(delta_theta_y) < d_thetay && abs(dist_x) < d_y && abs(dist_y) < d_x);
   }
 
-  void NDLArMINERvAMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
+  void NDLArMINERvAMatchRecoFiller::_FillRecoBranches(const Trigger &/*trigger*/,
                                                       caf::StandardRecord &sr,
-                                                      const cafmaker::Params &par,
-                                                      const TruthMatcher *truthMatcher) const
+                                                      const cafmaker::Params &/*par*/,
+                                                      const TruthMatcher */*truthMatcher*/) const
   {
     // match tracks using the info that should have been filled by the ND-LAr and MINERvA reco filled
 
@@ -114,8 +114,6 @@ namespace cafmaker
           caf::SRNDLArInt dlp = sr.nd.lar.dlp[ixn_dlp];
           for (unsigned int ilar = 0; ilar < dlp.ntracks; ++ilar)
           {
-            dlp.tracks[ilar];
-            Mnv_int.tracks[iminerva];
             double residual = 0;
             double costheta = 0;
             if (Passes_cut(Mnv_int.tracks[iminerva], dlp.tracks[ilar], costheta, residual))
@@ -152,8 +150,6 @@ namespace cafmaker
           caf::SRNDLArInt pandora = sr.nd.lar.pandora[ixn_pandora];
           for (unsigned int ilar = 0; ilar < pandora.ntracks; ++ilar)
           {
-            pandora.tracks[ilar];
-            Mnv_int.tracks[iminerva];
             double residual = 0;
             double costheta = 0;
             if (Passes_cut(Mnv_int.tracks[iminerva], pandora.tracks[ilar], costheta, residual))
@@ -199,7 +195,7 @@ namespace cafmaker
     }
   }
 
-  std::deque<Trigger> NDLArMINERvAMatchRecoFiller::GetTriggers(int triggerType, bool beamOnly) const
+  std::deque<Trigger> NDLArMINERvAMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
   {
     return std::deque<Trigger>();
   }
