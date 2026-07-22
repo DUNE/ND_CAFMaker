@@ -15,6 +15,10 @@ diff_cafs_uproot:  Compare two (structured) CAFs branch-by-branch using uproot.
       2. If paired, which branch(es) differ?
          -> per-branch comparison, plus a diff of the branch-name sets themselves.
 
+    Batch mode: hand sets of files to -A/-B (paired by a key in the filename,
+    default the last run of digits) and add --summary for one compact line per
+    pair plus a cross-file aggregate of which branches differ, in how many pairs.
+
     Needs:  uproot, awkward, numpy   (no ROOT, no duneanaobj)
 
     Written by Claude Code (Anthropic, Claude Opus 4.8),
@@ -23,13 +27,25 @@ diff_cafs_uproot:  Compare two (structured) CAFs branch-by-branch using uproot.
 
 import argparse
 import hashlib
+import os.path
 import re
 import sys
 from collections import defaultdict, deque
 
 parser = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument("files", metavar="<FILE>.caf.root", nargs=2, help="2 files to compare")
+parser.add_argument("files", metavar="<FILE>.caf.root", nargs="*",
+                    help="2 files to compare (single-pair mode); omit if using -A/-B")
+parser.add_argument("-A", "--files-a", nargs="+", metavar="FILE",
+                    help="Set of 'A' files (batch mode); paired with -B by filename key")
+parser.add_argument("-B", "--files-b", nargs="+", metavar="FILE",
+                    help="Set of 'B' files (batch mode); paired with -A by filename key")
+parser.add_argument("--pair-regex", default=r"\d+", metavar="RE",
+                    help="Regex whose LAST match in each basename is the pairing key "
+                         r"(default: '\d+', i.e. the last run of digits)")
+parser.add_argument("--summary", action="store_true",
+                    help="One compact line per pair instead of the full report; with "
+                         "many pairs, also prints a cross-file aggregate at the end.")
 parser.add_argument("-t", "--tree-name", default="cafTree",
                     help="Name of the StandardRecord tree (default: cafTree)")
 parser.add_argument("-T", "--tolerance", default=0.0, type=float, metavar="TOL",
@@ -44,6 +60,17 @@ parser.add_argument("--id-branches", default=None, metavar="A,B,C",
                          "Omit for positional alignment (record i vs record i).")
 parser.add_argument("--max-print", default=40, type=int,
                     help="Cap on how many branch names to list per category")
+parser.add_argument("--check-schema", action="store_true",
+                    help="Compare on-disk TStreamerInfo class versions between the "
+                         "files. A version mismatch means the two CAFs were written "
+                         "with different duneanaobj schemas (comparison confounded).")
+parser.add_argument("--show-values", action="store_true",
+                    help="For differing branches, print the actual old-vs-new values "
+                         "of the first few differing records (numeric drift vs a "
+                         "structural reshuffle look very different).")
+parser.add_argument("--max-values", default=3, type=int,
+                    help="With --show-values, how many differing records to show per "
+                         "branch (default: 3)")
 args = parser.parse_args()
 
 try:
@@ -62,9 +89,19 @@ def ignored(name):
 def open_tree(path):
     f = uproot.open(path)
     if args.tree_name not in f:
-        sys.exit("ERROR: no tree '%s' in %s (have: %s)"
-                 % (args.tree_name, path, ", ".join(f.keys(recursive=False))))
+        raise ValueError("no tree '%s' (have: %s)"
+                         % (args.tree_name, ", ".join(f.keys(recursive=False))))
     return f[args.tree_name]
+
+
+def streamer_versions(tree):
+    """{classname: sorted list of on-disk class versions} from the file's
+    TStreamerInfo.  None if uproot doesn't expose it in this version."""
+    try:
+        streamers = tree.file.streamers      # {classname: {version: streamer}}
+    except Exception:
+        return None
+    return {cname: sorted(vers.keys()) for cname, vers in streamers.items()}
 
 
 def leaf_keys(tree):
@@ -91,98 +128,15 @@ def capped(names):
     return names[:args.max_print] + ["... (+%d more)" % (len(names) - args.max_print)]
 
 
-# ---------------------------------------------------------------- load & inventory
-
-treeA, treeB = open_tree(args.files[0]), open_tree(args.files[1])
-nA, nB = treeA.num_entries, treeB.num_entries
-print("File A: %s  (%d records)" % (args.files[0], nA))
-print("File B: %s  (%d records)" % (args.files[1], nB))
-
-leavesA, uninterpA = leaf_keys(treeA)
-leavesB, uninterpB = leaf_keys(treeB)
-setA, setB = set(leavesA), set(leavesB)
-
-onlyA, onlyB = setA - setB, setB - setA
-if onlyA or onlyB:
-    print("\n=== branch-set differences (a likely source of a size delta) ===")
-    if onlyA:
-        print("  only in A (%d): %s" % (len(onlyA), ", ".join(capped(onlyA))))
-    if onlyB:
-        print("  only in B (%d): %s" % (len(onlyB), ", ".join(capped(onlyB))))
-else:
-    print("\nBranch-name sets are identical (%d leaf branches each)." % len(setA))
-
-if uninterpA or uninterpB:
-    print("\nBranches uproot could not interpret (skipped, not compared):")
-    print("  A: %s" % ", ".join(capped(uninterpA)) if uninterpA else "  A: none")
-    print("  B: %s" % ", ".join(capped(uninterpB)) if uninterpB else "  B: none")
-
-common = sorted((setA & setB) - {k for k in (setA & setB) if ignored(k)})
-
-
-# ---------------------------------------------------------------- alignment
-
 def read_ids(tree, keys):
     cols = []
     for k in keys:
         try:
             cols.append(ak.to_numpy(tree[k].array()).tolist())
         except Exception:
-            sys.exit("ERROR: id branch '%s' is not a flat per-record scalar; "
-                     "choose scalar branches for --id-branches." % k)
+            raise ValueError("id branch '%s' is not a flat per-record scalar" % k)
     return list(zip(*cols))
 
-
-if not args.id_branches:
-    n = min(nA, nB)
-    idxA = idxB = np.arange(n)
-    print("\n=== alignment: POSITIONAL (record i vs record i), %d records ===" % n)
-    print("    (pass --id-branches to align on an event key instead)")
-    if nA != nB:
-        print("  WARNING: record counts differ (%d vs %d); positional compare is "
-              "meaningful only if the shorter is a true prefix of the longer." % (nA, nB))
-else:
-    id_keys = args.id_branches.split(",")
-    absent = [k for k in id_keys if k not in setA or k not in setB]
-    if absent:
-        sys.exit("ERROR: id branch(es) not present in both files: %s" % ", ".join(absent))
-    print("\n=== alignment: keyed on %s ===" % ", ".join(id_keys))
-    idsA, idsB = read_ids(treeA, id_keys), read_ids(treeB, id_keys)
-
-    posB = defaultdict(deque)
-    for j, k in enumerate(idsB):
-        posB[k].append(j)
-    dupB = sum(1 for v in posB.values() if len(v) > 1)
-
-    idxA, idxB, missing = [], [], 0
-    for i, k in enumerate(idsA):
-        dq = posB.get(k)
-        if dq:
-            idxA.append(i)
-            idxB.append(dq.popleft())
-        else:
-            missing += 1
-    idxA, idxB = np.array(idxA, dtype=int), np.array(idxB, dtype=int)
-    leftoverB = sum(len(dq) for dq in posB.values())
-
-    print("  matched %d records; %d only in A, %d only in B"
-          % (len(idxA), missing, leftoverB))
-    if dupB:
-        print("  note: %d id-key(s) repeat; duplicates aligned in encounter order "
-              "(a fully non-unique key thus degrades to positional)." % dupB)
-    if len(idxA) == 0:
-        print("\n>>> No records share an id key. The files are NOT paired "
-              "(different events / inputs). Stopping.")
-        sys.exit(1)
-
-if args.nevents > 0 and len(idxA) > args.nevents:
-    idxA, idxB = idxA[:args.nevents], idxB[:args.nevents]
-
-print("Comparing %d aligned records across %d common leaf branches."
-      % (len(idxA), len(common)))
-
-
-# ---------------------------------------------------------------- value comparison
 
 def per_record_ok(mask):
     """Reduce a (possibly jagged) boolean array to one bool per record."""
@@ -212,98 +166,406 @@ def deep_equal(x, y, tol):
     return x == y
 
 
-def raw_fingerprint(branch):
-    """Hash of the branch's decompressed serialized bytes across all baskets.
-    Boundary-independent (hashes payloads only), needs no interpretation, and
-    never touches the StandardRecord dictionary -- our fallback for branches
-    uproot can't decode."""
-    h = hashlib.sha1()
-    for i in range(branch.num_baskets):
-        h.update(np.asarray(branch.basket(i).data, dtype=np.uint8).tobytes())
-    return h.digest()
+def record_fingerprints(branch):
+    """One hash per record, over that record's serialized payload sliced by the
+    per-entry byte offsets.  Slicing per entry (rather than hashing whole baskets)
+    makes it independent of how entries were packed into baskets -- so it reflects
+    content, not layout -- and it lets us localize a difference to specific
+    records.  Needs no interpretation and never touches the SR dictionary.
+    Returns a list of length branch.num_entries, or None if it can't be sliced."""
+    fps = []
+    try:
+        for i in range(branch.num_baskets):
+            bk = branch.basket(i)
+            data = np.asarray(bk.data, dtype=np.uint8)
+            offs = bk.byte_offsets
+            if offs is None:                      # fixed-width entries, no offset array
+                n = bk.num_entries
+                if n <= 0:
+                    continue
+                if len(data) % n != 0:
+                    return None                   # can't cleanly split -> give up
+                bounds = list(range(0, len(data) + 1, len(data) // n))
+            else:
+                bounds = np.asarray(offs).tolist()
+            for j in range(len(bounds) - 1):
+                fps.append(hashlib.sha1(data[bounds[j]:bounds[j + 1]].tobytes()).digest())
+    except Exception:
+        return None
+    return fps
 
 
 def compare(a, b, tol):
-    """(n_differing_records, note). A non-empty note means the branch genuinely
-    could not be read; a differing multiplicity is a real difference, not a skip."""
+    """(n_differing, note, diff_positions). A non-empty note means the branch
+    genuinely could not be read; a differing multiplicity is a real difference,
+    not a skip.  diff_positions are indices into the aligned record list."""
     try:
         combined = (a == b) | ((a != a) & (b != b))      # equal, or both NaN
         if tol > 0:
             combined = combined | (abs(a - b) <= tol)
         ok = per_record_ok(combined)
-        return int((~ok).sum()), ""
+        pos = np.where(~ok)[0]
+        return len(pos), "", pos
     except Exception:
         pass  # usually a per-record length mismatch; count it exactly below
     try:
         la, lb = ak.to_list(a), ak.to_list(b)
-    except Exception as e:
-        return None, "uninterpretable (%s)" % type(e).__name__
-    ndiff = sum(0 if deep_equal(x, y, tol) else 1 for x, y in zip(la, lb))
-    return ndiff, ""
+    except Exception as exc:
+        return None, "uninterpretable (%s)" % type(exc).__name__, None
+    pos = [i for i, (x, y) in enumerate(zip(la, lb)) if not deep_equal(x, y, tol)]
+    return len(pos), "", np.array(pos, dtype=int)
 
 
-differing, uncomparable = [], []
-for key in common:
+def align_records(treeA, treeB, nA, nB, setA, setB):
+    """Return (idxA, idxB, info) mapping aligned record k -> file record indices."""
+    if not args.id_branches:
+        n = min(nA, nB)
+        return (np.arange(n), np.arange(n),
+                {"mode": "positional", "n": n, "nA": nA, "nB": nB,
+                 "count_mismatch": nA != nB, "unpaired": n == 0})
+
+    id_keys = args.id_branches.split(",")
+    absent = [k for k in id_keys if k not in setA or k not in setB]
+    if absent:
+        raise ValueError("id branch(es) not in both files: %s" % ", ".join(absent))
+    idsA, idsB = read_ids(treeA, id_keys), read_ids(treeB, id_keys)
+
+    posB = defaultdict(deque)
+    for j, k in enumerate(idsB):
+        posB[k].append(j)
+    dup = sum(1 for v in posB.values() if len(v) > 1)
+
+    idxA, idxB, missing = [], [], 0
+    for i, k in enumerate(idsA):
+        dq = posB.get(k)
+        if dq:
+            idxA.append(i)
+            idxB.append(dq.popleft())
+        else:
+            missing += 1
+    leftover = sum(len(dq) for dq in posB.values())
+    return (np.array(idxA, dtype=int), np.array(idxB, dtype=int),
+            {"mode": "keyed", "n": len(idxA), "missing": missing, "leftover": leftover,
+             "dup": dup, "id_keys": id_keys, "unpaired": len(idxA) == 0})
+
+
+def compare_pair(pathA, pathB):
+    """Do all the work for one file pair and return a result dict (no printing)."""
+    r = {"pathA": pathA, "pathB": pathB, "key": pair_key(pathA), "error": None}
     try:
-        a = treeA[key].array()[idxA]
-        b = treeB[key].array()[idxB]
-    except Exception as e:
-        uncomparable.append((key, "read failed (%s)" % type(e).__name__))
-        continue
-    ndiff, note = compare(a, b, args.tolerance)
-    if note:
-        uncomparable.append((key, note))
-    elif ndiff:
-        differing.append((key, ndiff))
+        treeA, treeB = open_tree(pathA), open_tree(pathB)
+    except Exception as exc:
+        r["error"] = "open failed (%s)" % exc
+        return r
+    nA, nB = treeA.num_entries, treeB.num_entries
+    r["nA"], r["nB"] = nA, nB
 
+    r["schema"] = None
+    if args.check_schema:
+        svA, svB = streamer_versions(treeA), streamer_versions(treeB)
+        if svA is None or svB is None:
+            r["schema"] = {"available": False}
+        else:
+            mism = [c for c in (set(svA) & set(svB)) if svA[c] != svB[c]]
+            oa, ob = sorted(set(svA) - set(svB)), sorted(set(svB) - set(svA))
+            r["schema"] = {"available": True, "nclasses": len(svA), "mismatch": mism,
+                           "onlyA": oa, "onlyB": ob, "svA": svA, "svB": svB,
+                           "identical": not (mism or oa or ob)}
 
-# ---------------------------------------------------------------- report
+    leavesA, uninterpA = leaf_keys(treeA)
+    leavesB, uninterpB = leaf_keys(treeB)
+    setA, setB = set(leavesA), set(leavesB)
+    r["nleaves"] = len(setA)
+    r["onlyA_branches"], r["onlyB_branches"] = sorted(setA - setB), sorted(setB - setA)
+    r["uninterpA"], r["uninterpB"] = uninterpA, uninterpB
+    common = sorted((setA & setB) - {k for k in (setA & setB) if ignored(k)})
+    r["n_common"] = len(common)
 
-# fall back to raw serialized bytes for branches uproot couldn't decode.
-# only valid comparing whole files positionally with equal counts: the
-# fingerprint spans every record, so it matches the aligned comparison only then.
-raw_agree, raw_differ = [], []
-safe_for_raw = (not args.id_branches) and (nA == nB)
-if uncomparable and safe_for_raw:
-    remaining = []
-    for key, note in uncomparable:
+    try:
+        idxA, idxB, align = align_records(treeA, treeB, nA, nB, setA, setB)
+    except Exception as exc:
+        r["error"] = "alignment failed (%s)" % exc
+        return r
+    r["align"] = align
+    r["differing"], r["raw_differ"], r["raw_agree"], r["uncomparable"] = [], [], [], []
+    r["diff_samples"], r["n_val_agree"] = {}, 0
+    if align.get("unpaired"):
+        r["idxA"] = r["idxB"] = np.array([], dtype=int)
+        return r
+    if args.nevents > 0 and len(idxA) > args.nevents:
+        idxA, idxB = idxA[:args.nevents], idxB[:args.nevents]
+    r["idxA"], r["idxB"] = idxA, idxB
+
+    differing, uncomparable, diff_samples = [], [], {}
+    for key in common:
         try:
-            same = raw_fingerprint(treeA[key]) == raw_fingerprint(treeB[key])
-        except Exception as e:
-            remaining.append((key, note + "; raw bytes unreadable too (%s)"
-                              % type(e).__name__))
+            a = treeA[key].array()[idxA]
+            b = treeB[key].array()[idxB]
+        except Exception as exc:
+            uncomparable.append((key, "read failed (%s)" % type(exc).__name__))
             continue
-        (raw_agree if same else raw_differ).append(key)
-    uncomparable = remaining
+        ndiff, note, pos = compare(a, b, args.tolerance)
+        if note:
+            uncomparable.append((key, note))
+        elif ndiff:
+            differing.append((key, ndiff))
+            if args.show_values:
+                diff_samples[key] = (a, b, pos)
 
-n_val_agree = (len(common) - len(differing) - len(uncomparable)
-               - len(raw_agree) - len(raw_differ))
+    raw_agree, raw_differ = [], []
+    if uncomparable:
+        remaining = []
+        for key, note in uncomparable:
+            fpA, fpB = record_fingerprints(treeA[key]), record_fingerprints(treeB[key])
+            if fpA is None or fpB is None:
+                remaining.append((key, note + "; raw bytes not sliceable either"))
+                continue
+            try:
+                pos = np.array([k for k in range(len(idxA))
+                                if fpA[int(idxA[k])] != fpB[int(idxB[k])]], dtype=int)
+            except IndexError:
+                remaining.append((key, note + "; record/fingerprint count mismatch"))
+                continue
+            if len(pos):
+                raw_differ.append((key, len(pos), pos))
+            else:
+                raw_agree.append(key)
+        uncomparable = remaining
 
-print("\n=== results ===")
-print("%d common leaf branches:" % len(common))
-print("  %4d agreed (value comparison)" % n_val_agree)
-if raw_agree or raw_differ:
-    print("  %4d agreed (raw serialized bytes; uproot couldn't decode these)"
-          % len(raw_agree))
-print("  %4d differ" % (len(differing) + len(raw_differ)))
-print("  %4d could not be compared at all" % len(uncomparable))
+    r["differing"], r["raw_differ"], r["raw_agree"] = differing, raw_differ, raw_agree
+    r["uncomparable"], r["diff_samples"] = uncomparable, diff_samples
+    r["n_val_agree"] = (len(common) - len(differing) - len(uncomparable)
+                        - len(raw_agree) - len(raw_differ))
+    return r
 
-if differing or raw_differ:
-    print("\nDIFFERING branches:")
-    for key, ndiff in sorted(differing, key=lambda kv: (-kv[1], kv[0])):
-        print("  %-58s %d/%d records" % (key, ndiff, len(idxA)))
-    for key in sorted(raw_differ):
-        print("  %-58s (raw bytes differ)" % key)
-else:
-    print("\nNo differences in any branch that could be compared. ✓")
 
-if uncomparable:
-    why = "" if safe_for_raw else (" (raw-byte fallback skipped: needs whole-file "
-                                   "positional mode with equal record counts)")
-    print("\nCould not compare %d branch(es)%s:" % (len(uncomparable), why))
-    for key, note in sorted(uncomparable)[:args.max_print]:
-        print("  %-58s %s" % (key, note))
-    if len(uncomparable) > args.max_print:
-        print("  ... (+%d more)" % (len(uncomparable) - args.max_print))
+# ---------------------------------------------------------------- reporting
 
-sys.exit(1 if (differing or raw_differ or onlyA or onlyB) else 0)
+def trunc(x, n=240):
+    s = repr(x)
+    return s if len(s) <= n else s[:n] + " ...(%d chars total)" % len(s)
+
+
+def diff_pairs(r):
+    """[(branch, n_records)] for both value and raw-byte differences."""
+    return ([(k, n) for k, n in r.get("differing", [])] +
+            [(k, n) for k, n, _ in r.get("raw_differ", [])])
+
+
+def print_verbose(r):
+    print("File A: %s  (%s records)" % (r["pathA"], r.get("nA", "?")))
+    print("File B: %s  (%s records)" % (r["pathB"], r.get("nB", "?")))
+    if r["error"]:
+        print("  ERROR: %s" % r["error"])
+        return
+
+    s = r["schema"]
+    if s is not None:
+        print("\n=== schema (TStreamerInfo class versions) ===")
+        if not s.get("available"):
+            print("  (uproot did not expose streamer info; cannot check)")
+        elif s["identical"]:
+            print("  identical: %d classes, same versions in both files. ✓" % s["nclasses"])
+            print("  (so a duneanaobj-schema difference is ruled out as the cause)")
+        else:
+            for c in sorted(s["mismatch"]):
+                print("  version differs: %-45s A=%s B=%s" % (c, s["svA"][c], s["svB"][c]))
+            if s["onlyA"]:
+                print("  classes only in A: %s" % ", ".join(s["onlyA"][:args.max_print]))
+            if s["onlyB"]:
+                print("  classes only in B: %s" % ", ".join(s["onlyB"][:args.max_print]))
+            print("  >>> schemas differ: this comparison is confounded by a "
+                  "different duneanaobj (not just the code change).")
+
+    if r["onlyA_branches"] or r["onlyB_branches"]:
+        print("\n=== branch-set differences (a likely source of a size delta) ===")
+        if r["onlyA_branches"]:
+            print("  only in A (%d): %s"
+                  % (len(r["onlyA_branches"]), ", ".join(capped(r["onlyA_branches"]))))
+        if r["onlyB_branches"]:
+            print("  only in B (%d): %s"
+                  % (len(r["onlyB_branches"]), ", ".join(capped(r["onlyB_branches"]))))
+    else:
+        print("\nBranch-name sets are identical (%d leaf branches each)." % r["nleaves"])
+
+    if r["uninterpA"] or r["uninterpB"]:
+        print("\nBranches uproot could not interpret (skipped, not compared):")
+        print("  A: %s" % ", ".join(capped(r["uninterpA"])) if r["uninterpA"] else "  A: none")
+        print("  B: %s" % ", ".join(capped(r["uninterpB"])) if r["uninterpB"] else "  B: none")
+
+    al = r["align"]
+    if al["mode"] == "positional":
+        print("\n=== alignment: POSITIONAL (record i vs record i), %d records ===" % al["n"])
+        print("    (pass --id-branches to align on an event key instead)")
+        if al["count_mismatch"]:
+            print("  WARNING: record counts differ (%d vs %d); positional compare is "
+                  "meaningful only if the shorter is a true prefix of the longer."
+                  % (al["nA"], al["nB"]))
+    else:
+        print("\n=== alignment: keyed on %s ===" % ", ".join(al["id_keys"]))
+        print("  matched %d records; %d only in A, %d only in B"
+              % (al["n"], al["missing"], al["leftover"]))
+        if al["dup"]:
+            print("  note: %d id-key(s) repeat; duplicates aligned in encounter order "
+                  "(a fully non-unique key thus degrades to positional)." % al["dup"])
+    if al.get("unpaired"):
+        print("\n>>> No records aligned. The files are NOT paired (different events / inputs).")
+        return
+    print("Comparing %d aligned records across %d common leaf branches."
+          % (len(r["idxA"]), r["n_common"]))
+
+    print("\n=== results ===")
+    print("%d common leaf branches:" % r["n_common"])
+    print("  %4d agreed (value comparison)" % r["n_val_agree"])
+    if r["raw_agree"] or r["raw_differ"]:
+        print("  %4d agreed (raw serialized bytes; uproot couldn't decode these)"
+              % len(r["raw_agree"]))
+    print("  %4d differ" % (len(r["differing"]) + len(r["raw_differ"])))
+    print("  %4d could not be compared at all" % len(r["uncomparable"]))
+
+    if r["differing"] or r["raw_differ"]:
+        print("\nDIFFERING branches:")
+        for key, ndiff in sorted(r["differing"], key=lambda kv: (-kv[1], kv[0])):
+            print("  %-58s %d/%d records" % (key, ndiff, len(r["idxA"])))
+        for key, ndiff, _ in sorted(r["raw_differ"], key=lambda kv: (-kv[1], kv[0])):
+            print("  %-58s %d/%d records (raw bytes)" % (key, ndiff, len(r["idxA"])))
+    else:
+        print("\nNo differences in any branch that could be compared. ✓")
+
+    if r["uncomparable"]:
+        print("\nCould not compare %d branch(es):" % len(r["uncomparable"]))
+        for key, note in sorted(r["uncomparable"])[:args.max_print]:
+            print("  %-58s %s" % (key, note))
+        if len(r["uncomparable"]) > args.max_print:
+            print("  ... (+%d more)" % (len(r["uncomparable"]) - args.max_print))
+
+    if args.show_values and (r["differing"] or r["raw_differ"]):
+        print("\n=== sample differing values ===")
+        for key, _ in sorted(r["differing"]):
+            a, b, pos = r["diff_samples"][key]
+            print("\n%s  (%d differing record(s))" % (key, len(pos)))
+            for p in pos[:args.max_values]:
+                print("  record  A#%d / B#%d" % (r["idxA"][p], r["idxB"][p]))
+                print("    A: %s" % trunc(ak.to_list(a[p])))
+                print("    B: %s" % trunc(ak.to_list(b[p])))
+        for key, ndiff, pos in sorted(r["raw_differ"]):
+            recs = ", ".join("A#%d/B#%d" % (r["idxA"][p], r["idxB"][p])
+                             for p in pos[:args.max_values])
+            more = "" if ndiff <= args.max_values else " ..."
+            print("\n%s  (raw bytes differ in %d record(s); uproot can't decode values)"
+                  % (key, ndiff))
+            print("    records: %s%s" % (recs, more))
+
+
+def summary_line(r):
+    if r["error"]:
+        return "%-16s ERROR     %s" % (r["key"], r["error"])
+    if r["align"].get("unpaired"):
+        return "%-16s UNPAIRED" % r["key"]
+    tags = []
+    if r["onlyA_branches"] or r["onlyB_branches"]:
+        tags.append("branch-set-diff")
+    if r["schema"] and r["schema"].get("available") and not r["schema"]["identical"]:
+        tags.append("schema-diff")
+    diffs = diff_pairs(r)
+    if not diffs and not tags:
+        return "%-16s ok" % r["key"]
+    shown = sorted(diffs, key=lambda kv: (-kv[1], kv[0]))[:args.max_print]
+    parts = " ".join("%s(%d)" % (k.split("/")[-1], n) for k, n in shown)
+    prefix = (" ".join(tags) + "  ") if tags else ""
+    return "%-16s DIFF      %s%s" % (r["key"], prefix, parts)
+
+
+def print_aggregate(results):
+    agg = defaultdict(lambda: [0, 0])       # branch -> [n_pairs, n_records]
+    identical = unpaired = errored = 0
+    for r in results:
+        if r["error"]:
+            errored += 1
+            continue
+        if r["align"].get("unpaired"):
+            unpaired += 1
+            continue
+        diffs = diff_pairs(r)
+        if not diffs and not (r["onlyA_branches"] or r["onlyB_branches"]):
+            identical += 1
+        for k, n in diffs:
+            agg[k][0] += 1
+            agg[k][1] += n
+
+    print("\n=== aggregate over %d pair(s) ===" % len(results))
+    if agg:
+        print("  branches differing, by (# pairs, total records):")
+        for k, (npairs, nrec) in sorted(agg.items(),
+                                        key=lambda kv: (-kv[1][0], -kv[1][1], kv[0])):
+            print("  %-58s %4d pairs  %6d records" % (k, npairs, nrec))
+    print("  pairs with no differences: %d/%d" % (identical, len(results)))
+    if unpaired:
+        print("  pairs UNPAIRED: %d" % unpaired)
+    if errored:
+        print("  pairs ERRORED: %d" % errored)
+
+
+# ---------------------------------------------------------------- driver
+
+def pair_key(path):
+    matches = re.findall(args.pair_regex, os.path.basename(path))
+    return matches[-1] if matches else os.path.basename(path)
+
+
+def build_pairs():
+    if args.files_a or args.files_b:
+        if not (args.files_a and args.files_b):
+            sys.exit("ERROR: -A/--files-a and -B/--files-b must be given together.")
+        if args.files:
+            sys.exit("ERROR: don't mix positional files with -A/-B.")
+        bykey = defaultdict(list)
+        for p in args.files_b:
+            bykey[pair_key(p)].append(p)
+        pairs, unmatchedA = [], []
+        for pa in sorted(args.files_a):
+            lst = bykey.get(pair_key(pa))
+            if lst:
+                pairs.append((pa, lst.pop(0)))
+            else:
+                unmatchedA.append(pa)
+        unmatchedB = [p for v in bykey.values() for p in v]
+        print("Pairing %d A-file(s) with %d B-file(s) by filename key '%s':"
+              % (len(args.files_a), len(args.files_b), args.pair_regex))
+        for pa, pb in pairs:
+            print("  %s  <->  %s" % (os.path.basename(pa), os.path.basename(pb)))
+        if unmatchedA:
+            print("  UNMATCHED in A: %s" % ", ".join(os.path.basename(p) for p in unmatchedA))
+        if unmatchedB:
+            print("  UNMATCHED in B: %s" % ", ".join(os.path.basename(p) for p in unmatchedB))
+        if not pairs:
+            sys.exit("ERROR: no A/B files paired up by key.")
+        return pairs, bool(unmatchedA or unmatchedB)
+
+    if len(args.files) != 2:
+        sys.exit("ERROR: give exactly 2 files, or use -A/-B for sets.")
+    return [(args.files[0], args.files[1])], False
+
+
+pairs, unmatched = build_pairs()
+results = []
+for pathA, pathB in pairs:
+    r = compare_pair(pathA, pathB)
+    results.append(r)
+    if args.summary:
+        print(summary_line(r))
+    else:
+        if len(pairs) > 1:
+            print("\n" + "=" * 72)
+        print_verbose(r)
+
+if len(pairs) > 1:
+    print_aggregate(results)
+
+bad = unmatched
+for r in results:
+    if r["error"] or r.get("align", {}).get("unpaired"):
+        bad = True
+    elif r.get("onlyA_branches") or r.get("onlyB_branches") or diff_pairs(r):
+        bad = True
+sys.exit(1 if bad else 0)
