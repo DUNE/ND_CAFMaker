@@ -516,24 +516,26 @@ namespace cafmaker
       reco_particle.p.x = part.momentum[0]/1000.;
       reco_particle.p.y = part.momentum[1]/1000.;
       reco_particle.p.z = part.momentum[2]/1000.;
+      float KE_MeV;
       if(part.shape == types::dlp::Shape::kTrack)
       {
         if(part.is_contained)
         {
-          reco_particle.E = part.csda_ke/1000.;
+          KE_MeV = part.csda_ke;
           reco_particle.E_method = caf::PartEMethod::kRange;
         }
         else
         {
-      	  reco_particle.E = part.mcs_ke/1000.;
+      	  KE_MeV = part.mcs_ke;
     	    reco_particle.E_method = caf::PartEMethod::kMCS;
         }
       }
       else
       {
-        reco_particle.E = part.calo_ke/1000.;
+        KE_MeV = part.calo_ke;
         reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       }
+      reco_particle.E = (KE_MeV + static_cast<float>(part.mass)) / 1000.f;
 
       if (part.match_ids.size())
       {
