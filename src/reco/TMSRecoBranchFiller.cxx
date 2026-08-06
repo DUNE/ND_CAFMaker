@@ -274,7 +274,7 @@ namespace cafmaker
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
   void TMSRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                               caf::StandardRecord &sr,
-                                              const cafmaker::Params &par,
+                                              const cafmaker::Params &/*par*/,
                                               const TruthMatcher *truthMatcher) const
   {
 
@@ -398,7 +398,7 @@ namespace cafmaker
 
 
   // TODO: In future this nastiness will be handled by TMS
-  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
+  std::deque<Trigger> TMSRecoBranchFiller::GetTriggers(int triggerType, bool /*beamOnly*/) const
   {
     std::deque<Trigger> triggers;
     int lastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger

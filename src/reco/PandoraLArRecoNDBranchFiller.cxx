@@ -131,7 +131,7 @@ namespace cafmaker
   // Copy all of the Pandora LArRecoND info to the PandoraLArRecoND branch of the StandardRecord object
   void PandoraLArRecoNDBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                        caf::StandardRecord &sr,
-                                                       const cafmaker::Params &par,
+                                                       const cafmaker::Params &/*par*/,
                                                        const TruthMatcher *truthMatch) const
   {
     // Figure out where in our list of triggers this event index is.
@@ -559,8 +559,6 @@ namespace cafmaker
 
     // Value and direction of the longest track, value and direction of the most energetic shower
     float longestTrack{0.0};
-    float longestTrackE{0.0};
-    float longestTrackCaloE{0.0};
     float maxShowerE{0.0};
     caf::SRVector3D longestTrackDir;
     caf::SRVector3D maxShowerEDir;
@@ -669,8 +667,6 @@ namespace cafmaker
           recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArPandoraTrack, robj_idx};
           track.part = recoPartID;
 
-          // Total number of 3D hits in the cluster
-          const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
           track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of "track-likeness" for this SRTrack
           track.start = recoParticle.start;
           track.end = recoParticle.end;
@@ -686,8 +682,6 @@ namespace cafmaker
           {
             longestTrack = track.len_cm;
             longestTrackDir = track.dir;
-            longestTrackE = track.E;
-            longestTrackCaloE = (m_trkfitTrackCaloE != nullptr) ? (*m_trkfitTrackCaloE)[i] : 0.;
           }
 
           // Initialise total neutrino energy to zero

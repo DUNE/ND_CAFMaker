@@ -210,7 +210,7 @@ namespace cafmaker
   // here we copy all the MINERvA reco into the SRMINERvA branch of the StandardRecord object.
   void MINERvARecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                 caf::StandardRecord &sr,
-                                                const cafmaker::Params &par,
+                                                const cafmaker::Params &/*par*/,
                                                 const TruthMatcher *truthMatch) const
   {
 
@@ -535,7 +535,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  bool MINERvARecoBranchFiller::IsBeamTrigger(int triggerType) const
+  bool MINERvARecoBranchFiller::IsBeamTrigger(int /* triggerType */) const
   {
     //Check if the trigger is a beam trigger -- By construction Mx2 is always a beam trigger. 
     return true;

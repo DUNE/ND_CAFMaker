@@ -11,7 +11,7 @@ option(ENABLE_TESTEXE "Build the testHDF test executable" OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra")
+string(APPEND CMAKE_CXX_FLAGS " -Wall -Wextra -Werror")
 
 string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=address,undefined")
 
