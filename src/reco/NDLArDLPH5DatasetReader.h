@@ -10,17 +10,18 @@
 #define ND_CAFMAKER_NDLARDLPH5DATASETREADER_H
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 
 #include "H5Cpp.h"
 
 #include "DLP_h5_classes.h"
 #include "readH5/DatasetBuffer.h"
 #include "readH5/H5DataView.h"
-#include "readH5/IH5Viewer.h"
 
 namespace cafmaker
 {
@@ -35,7 +36,7 @@ namespace cafmaker
   /// it knows that the 'events' dataset is special
   /// (it holds region references to the other datasets)
   /// and because it knows the structured types it's expecting
-  class NDLArDLPH5DatasetReader : public IH5Viewer
+  class NDLArDLPH5DatasetReader
   {
     public:
       NDLArDLPH5DatasetReader(const std::string & h5filename,
@@ -55,14 +56,24 @@ namespace cafmaker
       template <typename T>
       H5DataView<T> GetProducts(long int evtIdx=-1) const
       {
-        // todo: implement a caching mechanism so repeated requests for the same evtIdx don't cause re-reads from the file
+        // Each read gets its own buffer, which the returned H5DataView co-owns.
+        // The buffer is filled once below and thereafter immutable,
+        // so views can't dangle or go stale, and holding several at once is fine.
 
-        if (fDatasetBuffers.find(typeid(T)) == fDatasetBuffers.end())
-          fDatasetBuffers.emplace(typeid(T), std::make_unique<DatasetBuffer<T>>(fInputFile,
-                                                                                GetDatasetName<T>(),
-                                                                                cafmaker::types::dlp::BuildCompType<T>));
+        // We keep the most recent buffer per type, so repeated requests for the
+        // same evtIdx are served without re-reading the file.
+        // In particular, the region-ref branch below fetches the Event product for every non-Event type,
+        // so this collapses those into a single Event read per event.
+        // Only the latest buffer per type is retained, so the cache stays small;
+        // and because buffers are immutable and co-owned by their views,
+        // evicting an entry never disturbs a view that is still holding it.
+        auto cacheKey = std::type_index(typeid(T));
+        if (auto it = fCache.find(cacheKey); it != fCache.end() && it->second.first == evtIdx)
+          return H5DataView<T>(std::static_pointer_cast<const DatasetBuffer<T>>(it->second.second));
 
-        auto dsBuffer = dynamic_cast<DatasetBuffer<T>*>(fDatasetBuffers.at(typeid(T)).get());
+        auto dsBuffer = std::make_shared<DatasetBuffer<T>>(fInputFile,
+                                                           GetDatasetName<T>(),
+                                                           cafmaker::types::dlp::BuildCompType<T>);
 
         // the easy case is if the user wants all entries.  no filtering then...
         if (evtIdx < 0)
@@ -127,9 +138,12 @@ namespace cafmaker
           } // else if (T != Event)
         } // else if (evtIdx >= 0)
 
-        H5DataView<T> view = NewView<T>(dsBuffer->bufferaddr());
-
-        return view;
+        // hand the caller a view that shares ownership of this (now immutable) buffer,
+        // and retain it as the latest buffer for this type.
+        // (shared_ptr<DatasetBuffer<T>> converts implicitly to shared_ptr<const ...>)
+        std::shared_ptr<const DatasetBuffer<T>> cachedBuffer = dsBuffer;
+        fCache[cacheKey] = {evtIdx, cachedBuffer};
+        return H5DataView<T>(cachedBuffer);
       } // H5DataView<T> NDLArDLPH5DatasetReader::GetProducts()
 
 
@@ -140,7 +154,10 @@ namespace cafmaker
 
       std::unordered_map<std::type_index, std::string> fDatasetNames;
 
-      mutable std::unordered_map<std::type_index, std::unique_ptr<DatasetBufferBase>> fDatasetBuffers;
+      /// Most recently read buffer per product type, with the evtIdx it holds.
+      /// Lets repeated requests for the same (type, evtIdx) skip re-reading.
+      mutable std::unordered_map<std::type_index,
+                                 std::pair<long, std::shared_ptr<const DatasetBufferBase>>> fCache;
   };
 }
 

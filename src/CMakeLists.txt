@@ -12,8 +12,6 @@ set(LIB_SOURCES
     reco/SANDRecoBranchFiller.cxx
     reco/TMSRecoBranchFiller.cxx
     reco/readH5/DatasetBuffer.cxx
-    reco/readH5/H5DataView.cxx
-    reco/readH5/IH5Viewer.cxx
     truth/FillTruth.cxx
     util/FloatMath.cxx
     util/GENIEBannerBypass.cxx
