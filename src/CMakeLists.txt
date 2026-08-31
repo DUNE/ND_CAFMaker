@@ -2,10 +2,10 @@
 set(LIB_SOURCES
     CAF.cxx
     beam/IFBeam.cxx
-    reco/DLP_h5_classes.cxx
+    reco/SPINE_h5_classes.cxx
     reco/MINERvARecoBranchFiller.cxx
     reco/MLNDLArRecoBranchFiller.cxx
-    reco/NDLArDLPH5DatasetReader.cxx
+    reco/NDLArSPINEH5DatasetReader.cxx
     reco/NDLArMINERvAMatchRecoFiller.cxx
     reco/NDLArTMSUniqueMatchRecoFiller.cxx
     reco/PandoraLArRecoNDBranchFiller.cxx
