@@ -1,5 +1,5 @@
 
-#include "MLNDLArRecoBranchFiller.h"
+#include "SPINENDLArRecoBranchFiller.h"
 
 #include <limits>
 
@@ -118,7 +118,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  // Helper class to map from SPINE track ID to (sr.common.ixn.spine, sr.common.ixn.spine.part.spine) indices for the corresponding SRRecoParticle
+  // Helper class to map from SPINE track ID to (sr.common.ixn.spine, sr.common.ixn.spine.part) indices for the corresponding SRRecoParticle
   // This method is `const` because it applies to the _mapper_--- we're not changing the mapping---  
   // but the returned instance is part of the SR itself and can be modified  
   caf::SRRecoParticleID MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticleID(int64_t partID) const
@@ -146,12 +146,12 @@ namespace cafmaker
       LOG.FATAL() << "MLNDLArRecoParticleMapper: interaction index " << ixn_idx << " is out of range for sr.common.ixn.spine with size " << sr.common.ixn.spine.size() << "! Abort.\n";
       abort();
     }
-    if(prt_idx >= sr.common.ixn.spine.at(ixn_idx).part.spine.size())
+    if(prt_idx >= sr.common.ixn.spine.at(ixn_idx).part.size())
     {
-      LOG.FATAL() << "MLNDLArRecoParticleMapper: particle index " << prt_idx << " is out of range for sr.common.ixn.spine[" << ixn_idx << "].part.spine with size " << sr.common.ixn.spine.at(ixn_idx).part.spine.size() << "! Abort.\n";
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: particle index " << prt_idx << " is out of range for sr.common.ixn.spine[" << ixn_idx << "].part with size " << sr.common.ixn.spine.at(ixn_idx).part.size() << "! Abort.\n";
       abort();
     }
-    return sr.common.ixn.spine.at(ixn_idx).part.spine.at(prt_idx);
+    return sr.common.ixn.spine.at(ixn_idx).part.at(prt_idx);
   }
 
   // ------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ namespace cafmaker
     sr.meta.lar2x2.readoutstart_s = trigger.triggerTime_s;
     sr.meta.lar2x2.readoutstart_ns = trigger.triggerTime_ns;
     
-    // reset the map of SPINE particle ID to (sr.common.ixn.spine, sr.common.ixn.spine.part.spine) indices for this entry
+    // reset the map of SPINE particle ID to (sr.common.ixn.spine, sr.common.ixn.spine.part) indices for this entry
     fParticleMapper.Reset();
 
     H5DataView<cafmaker::types::spine::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::spine::Interaction>(idx);
@@ -616,13 +616,12 @@ namespace cafmaker
       }
       // index of the interaction within the sr.common.ixn.spine vector
       auto ixn_idx = std::distance(sr.common.ixn.spine.begin(), itIxn);
-      // index of the particle within the sr.common.ixn.spine.part.spine vector
-      auto prt_idx = sr.common.ixn.spine[ixn_idx].part.spine.size();
+      // index of the particle within the sr.common.ixn.spine.part vector
+      auto prt_idx = sr.common.ixn.spine[ixn_idx].part.size();
       // save the indices for this particle so we can get it back later
       fParticleMapper[part.id] = {ixn_idx, prt_idx};
       // fill the reco particle
-      sr.common.ixn.spine[ixn_idx].part.spine.push_back(std::move(reco_particle));
-      sr.common.ixn.spine[ixn_idx].part.nspine++;
+      sr.common.ixn.spine[ixn_idx].part.push_back(std::move(reco_particle));
 
     }
   }
