@@ -84,13 +84,19 @@ namespace cafmaker
       double lar_dir_z = lar_track.enddir.z;
 
       double xz_dot_prod = tms_dir_x*lar_dir_x + tms_dir_z*lar_dir_z;
+      std::cout << "xz_dot_prod" << xz_dot_prod <<std::endl;
       if (xz_dot_prod != 0) {
         double xz_dot_prod = xz_dot_prod/(sqrt(pow(tms_dir_x,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_x,2)+pow(lar_dir_z,2)));
+        std::cout << "xz_dot_prod" << xz_dot_prod <<std::endl;
       }
+      std::cout << "xz_dot_prod" << xz_dot_prod <<std::endl;
       double yz_dot_prod = tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
+      std::cout << "yz_dot_prod" << yz_dot_prod <<std::endl;
       if (yz_dot_prod != 0) {
         double yz_dot_prod = yz_dot_prod/(sqrt(pow(tms_dir_y,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_y,2)+pow(lar_dir_z,2)));
+        std::cout << "yz_dot_prod" << yz_dot_prod <<std::endl;
       }
+      std::cout << "yz_dot_prod" << yz_dot_prod <<std::endl;
       double dot_prod = tms_dir_x*lar_dir_x + tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
       double angle_x = 180.0/TMath::Pi() * acos(xz_dot_prod);
       double angle_y = 180.0/TMath::Pi() * acos(yz_dot_prod);
@@ -186,9 +192,11 @@ namespace cafmaker
       sr.nd.trkmatch.nextrap += 1;
       caf::SRTrack joint_track = track_match.trk;
       if (Pandora) {
-         lar_track = sr.nd.lar.pandora[larid.ixn].tracks[larid.idx];} // if the Pandora flag is true, then the LAr tracks are listed within sr.nd.lar.pandora
+         lar_track = sr.nd.lar.pandora[larid.ixn].tracks[larid.idx];
+      } // if the Pandora flag is true, then the LAr tracks are listed within sr.nd.lar.pandora
       else {
-         lar_track = sr.nd.lar.dlp[larid.ixn].tracks[larid.idx];}     // otherwise, they're listed within sr.nd.lar.dlp
+         lar_track = sr.nd.lar.dlp[larid.ixn].tracks[larid.idx];
+      }     // otherwise, they're listed within sr.nd.lar.dlp
       tms_track = sr.nd.lar.tms.ixn[tmsid.ixn].tracks[tmsid.idx];     // this is the TMS track
       joint_track.start = lar_track.start;      // starting point of joint track is starting point of LAr track (Pandora or SPINE)
       joint_track.end = tms_track.end;          // ending point of joint track is ending point of TMS track
@@ -197,12 +205,12 @@ namespace cafmaker
       joint_track.time = tms_track.time;        // TODO: once we have reco LAr time working properly for both Pandora and SPINE this should be switched to lar_track.time
       joint_track.Evis = lar_track.Evis + tms_track.Evis;
       // TODO: add the rest of the joint_track attributes
-
+	// Fill joint_track.charge from the TMS track, will also need length, and E
 
     }
   }
 
-  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const Trigger &trigger, const float time_smear) const
+  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const Trigger &trigger, const float time_smear, std::set<int> matchIDs) const
   { // given a TMS track and a LAr interaction, computes the match scores between that TMS track and all LAr tracks in the interaction
     std::vector<caf::SRNDTrackAssn> potentialMatchList;
 
@@ -276,7 +284,9 @@ namespace cafmaker
 	  if (TMSPart != nullptr) {
 	    if (matchedPart->G4ID==TMSPart->G4ID) {
 		potential_match.trueMatch = true; // the two tracks in the match have the same true particle IDs, meaning they come from the same particle so they are a true match to each other
-		// std::cout << "True Match!" << std::endl; 
+		// std::cout << "True Match!" << std::endl;
+		matchIDs.insert(matchedPart->G4ID) // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
+		std::cout << matchedPart.start_pos().Z() << std::endl; 
 	       }
 	    }
      	 }
@@ -331,7 +341,9 @@ namespace cafmaker
 
     double tms_z_cutoff = 20;
     double lar_z_cutoff = 20; // tracks must overlap last/first 20 cm of the detectors
-    
+
+    std::set<int> matchIDs; // will store the IDs of true matches found
+
     for (unsigned int ixn_tms = 0; ixn_tms < sr.nd.tms.nixn; ixn_tms++)
     {
       caf::SRTMSInt tms_int = sr.nd.tms.ixn[ixn_tms];
@@ -351,7 +363,7 @@ namespace cafmaker
           unsigned int n_pan_tracks = pan_int.ntracks;
           
 	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time
-          std::vector<caf::SRNDTrackAssn> panTrkAssns = Compute_match_scores(pan_int, ixn_pan, n_pan_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
+          std::vector<caf::SRNDTrackAssn> panTrkAssns = Compute_match_scores(pan_int, ixn_pan, n_pan_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime, matchIDs);
 
           copy(panTrkAssns.begin(), panTrkAssns.end(), back_inserter(possiblePandoraMatches));
         }
@@ -362,7 +374,7 @@ namespace cafmaker
           unsigned int n_dlp_tracks = dlp_int.ntracks;
 	  
 	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time 
-          std::vector<caf::SRNDTrackAssn> dlpTrkAssns = Compute_match_scores(dlp_int, ixn_dlp, n_dlp_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
+          std::vector<caf::SRNDTrackAssn> dlpTrkAssns = Compute_match_scores(dlp_int, ixn_dlp, n_dlp_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime, matchIDs);
 
           copy(dlpTrkAssns.begin(), dlpTrkAssns.end(), back_inserter(possibleSPINEMatches));
         }
@@ -375,6 +387,7 @@ namespace cafmaker
     if (possibleSPINEMatches.size() > 0) {
       Create_matches(possibleSPINEMatches,false,sr); // tells the matcher that it's not working with Pandora LAr tracks (therefore, SPINE tracks)
       }
+    std::cout << "matchIDs.size()" <<  matchIDs.size() << std::endl;
     }
   }
   // todo: this is a placeholder
