@@ -1,7 +1,32 @@
 # Changelog
 [[Format loosely based on <https://keepachangelog.com/en/0.3.0>]]
 
+Note that tags as a function of changes are now also being tracked via [milestones](https://github.com/DUNE/ND_CAFMaker/milestones).
+
+## Checklist for release managers when cutting a new release:
+* Update this CHANGELOG.
+* Change the version string in the top-level `CMakeLists.txt`.
+* Use the GitHub "draft a release" page to tag a new version.
+
 ##### current
+
+##### [v5.1.1] -- 2026-07-10
+* Update DLP h5 classes by @jacoblarkin ([PR #166](https://github.com/DUNE/ND_CAFMaker/pull/166))
+
+##### [v5.1.0] -- 2026-07-07
+* Replace the fragile GNU Make build full CMake setup ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
+* Add CI via GitHub Actions: Apptainer + CVMFS on SL7 ([PR #123](https://github.com/DUNE/ND_CAFMaker/pull/123))
+* Group TMS tracks by time slice by @jdkio in ([PR #163](https://github.com/DUNE/ND_CAFMaker/pull/163))
+
+##### [v5.0.0] -- 2026-06-22
+* 129 fill new reco object parent and corresponding reco particle fields ([PR #129](https://github.com/DUNE/ND_CAFMaker/pull/129))
+
+##### [v4.12.0] -- 2026-06-19
+* Add beam quality info ([PR #109](https://github.com/DUNE/ND_CAFMaker/pull/109))
+* Fix TMS reco truth particle IDs so FindParticle() returns valid pointers ([PR #147](https://github.com/DUNE/ND_CAFMaker/pull/147))
+* Variable name update ([PR #152](https://github.com/DUNE/ND_CAFMaker/pull/152)).
+* 132 Fix SelectEvent by Correctly Mapping Event Num to Entry Num ([PR #151](https://github.com/DUNE/ND_CAFMaker/pull/151))
+* Fixes the connection between primary and secondary particles ([PR #150](https://github.com/DUNE/ND_CAFMaker/pull/150))
 
 ##### [v4.11.1] -- 2026-04-06
 * Don't assume correct truth-matching for cheated track matching ([PR #131](https://github.com/DUNE/ND_CAFMaker/pull/131))

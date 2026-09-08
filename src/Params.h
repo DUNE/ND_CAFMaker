@@ -89,6 +89,9 @@ namespace cafmaker
     fhicl::Atom<double> sigmaT { fhicl::Name("SigmaT"), fhicl::Comment("Standard deviation of time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 8.84};
     fhicl::Atom<double> fcut { fhicl::Name("fCut"), fhicl::Comment("Maximum permissible match score for the matching, (best choice depends on whether time is included)"), 59.67}; //without time: 5.25
 
+    fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between Truth_Spill primary-particle birth position and matched Truth_Spill vertex [mm]"), 100.0};
+    fhicl::Atom<double> positionToleranceMm { fhicl::Name("PositionToleranceMm"), fhicl::Comment("Maximum distance between TMS truth position and matched EDepSim vertex position [mm]"), 1.0};
+
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
     fhicl::Atom<std::string> verbosity { fhicl::Name("Verbosity"), fhicl::Comment("Verbosity level of output"), "WARNING" };
   };

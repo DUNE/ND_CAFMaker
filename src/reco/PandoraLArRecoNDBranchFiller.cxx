@@ -131,7 +131,7 @@ namespace cafmaker
   // Copy all of the Pandora LArRecoND info to the PandoraLArRecoND branch of the StandardRecord object
   void PandoraLArRecoNDBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                        caf::StandardRecord &sr,
-                                                       const cafmaker::Params &par,
+                                                       const cafmaker::Params &/*par*/,
                                                        const TruthMatcher *truthMatch) const
   {
     // Figure out where in our list of triggers this event index is.
@@ -426,9 +426,19 @@ namespace cafmaker
     FillTruthInfo(iCluster, truthMatch, sr, truePartID);
     truePartIDVect.emplace_back(truePartID);
 
+    // Instantiate SRRecoParticleID and SRRecoBaseID
+    int ixn_idx = nuIndex;
+    int prt_idx = nuInteractions[nuIndex].part.pandora.size(); // this will be the index of the particle in the interaction's particle vector after we add it
+    caf::SRRecoParticleID recoPartID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kPandora, prt_idx};
+    caf::SRRecoBaseID recoBaseID;
+
     if (isShower) // fill sr shower
     {
       caf::SRShower shower;
+
+      int robj_idx = sr.nd.lar.pandora[nuIndex].showers.size(); // this will be the index of the shower in the interaction's shower vector after we add it
+      recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLARPandoraShower, robj_idx};
+      shower.part = recoPartID;
 
       shower.start = start;
       shower.direction = dir;
@@ -451,6 +461,10 @@ namespace cafmaker
     else // fill sr track
     {
       caf::SRTrack track;
+
+      int robj_idx = sr.nd.lar.pandora[nuIndex].tracks.size(); // this will be the index of the track in the interaction's track vector after we add it
+      recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArPandoraTrack, robj_idx};
+      track.part = recoPartID;
 
       track.start = start;
       track.end = end;
@@ -477,6 +491,7 @@ namespace cafmaker
     
     // now fill the SR reco particle
     caf::SRRecoParticle recoParticle;
+    recoParticle.recoobj = recoBaseID;
 
     recoParticle.E = energy;
     recoParticle.E_method = caf::PartEMethod::kCalorimetry;
@@ -544,8 +559,6 @@ namespace cafmaker
 
     // Value and direction of the longest track, value and direction of the most energetic shower
     float longestTrack{0.0};
-    float longestTrackE{0.0};
-    float longestTrackCaloE{0.0};
     float maxShowerE{0.0};
     caf::SRVector3D longestTrackDir;
     caf::SRVector3D maxShowerEDir;
@@ -623,7 +636,13 @@ namespace cafmaker
       {
         // Track reco particle
         caf::SRRecoParticle recoParticle;
-              
+
+        // Instantiate SRRecoParticleID and SRRecoBaseID
+        int ixn_idx = nuIndex;
+        int prt_idx = interaction.part.pandora.size(); // this will be the index of the particle in the interaction's particle vector after we add it
+        caf::SRRecoParticleID recoPartID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kPandora, prt_idx};
+        caf::SRRecoBaseID recoBaseID;
+
         // Truth info
         recoParticle.truth = truePartIDVect;
         recoParticle.truthOverlap = truthOverlap;
@@ -643,9 +662,11 @@ namespace cafmaker
           caf::SRTrack track;
           track.E = recoParticle.E;
           track.Evis = (m_trkfitVisE != nullptr) ? (*m_trkfitVisE)[i] : -999.;
+          
+          int robj_idx = sr.nd.lar.pandora[nuIndex].tracks.size(); // this will be the index of the track in the interaction's track vector after we add it
+          recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArPandoraTrack, robj_idx};
+          track.part = recoPartID;
 
-          // Total number of 3D hits in the cluster
-          const int n3DHits = (m_n3DHitsVect != nullptr) ? (*m_n3DHitsVect)[i] : 0;
           track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of "track-likeness" for this SRTrack
           track.start = recoParticle.start;
           track.end = recoParticle.end;
@@ -661,8 +682,6 @@ namespace cafmaker
           {
             longestTrack = track.len_cm;
             longestTrackDir = track.dir;
-            longestTrackE = track.E;
-            longestTrackCaloE = (m_trkfitTrackCaloE != nullptr) ? (*m_trkfitTrackCaloE)[i] : 0.;
           }
 
           // Initialise total neutrino energy to zero
@@ -679,6 +698,10 @@ namespace cafmaker
           FillShower(i, shower);
           shower.truth = truePartIDVect;
           shower.truthOverlap = truthOverlap;
+          
+          int robj_idx = sr.nd.lar.pandora[nuIndex].showers.size(); // this will be the index of the shower in the interaction's shower vector after we add it
+          recoBaseID = {ixn_idx, caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLARPandoraShower, robj_idx};
+          shower.part = recoPartID;
 
           recoParticle.E_method = caf::PartEMethod::kCalorimetry;
           recoParticle.start = shower.start;    
@@ -750,6 +773,9 @@ namespace cafmaker
                     << ", "               << recoParticle.p.Z()
                     << ")"
                     << "\n";
+                    
+        // Set the recoobj ID for the particle
+        recoParticle.recoobj = recoBaseID;
 
         // Add particle to the interaction
         interaction.part.pandora.emplace_back(std::move(recoParticle));
@@ -816,7 +842,7 @@ namespace cafmaker
         // unix_ts trigger time (seconds)
         trig.triggerTime_s = m_unixTime;
         // unix_time_usec ticks (microseconds) converted to nanoseconds
-        trig.triggerTime_ns = m_unixTimeUsec * 1000;
+        trig.triggerTime_ns = m_startTime * 100;
 
         LOG.VERBOSE() << "  added trigger: evtID = " << trig.evtID
                       << ", triggerType = " << trig.triggerType

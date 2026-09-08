@@ -117,6 +117,42 @@ namespace cafmaker
 
   }
 
+  // ------------------------------------------------------------------------------
+  // Helper class to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+  // This method is `const` because it applies to the _mapper_--- we're not changing the mapping---  
+  // but the returned instance is part of the SR itself and can be modified  
+  caf::SRRecoParticleID MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticleID(int64_t partID) const
+  {
+    if(fParticleMap.find(partID) == fParticleMap.end())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: could not find particle ID " << partID << " in the particle map! Abort.\n";
+      abort();
+    }
+    auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
+    return caf::SRRecoParticleID{static_cast<int>(ixn_idx), caf::SRRecoParticleID::SRRecoParticleCollectionType::kSPINE, static_cast<int>(prt_idx)};
+  }
+
+  caf::SRRecoParticle& MLNDLArRecoBranchFiller::MLNDLArRecoParticleMapper::GetRecoParticle(caf::StandardRecord & sr, int64_t partID) const
+  {
+    if(fParticleMap.find(partID) == fParticleMap.end())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: could not find particle ID " << partID << " in the particle map! Abort.\n";
+      abort();
+    }
+    auto [ixn_idx, prt_idx] = fParticleMap.at(partID);
+
+    if(ixn_idx >= sr.common.ixn.dlp.size())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: interaction index " << ixn_idx << " is out of range for sr.common.ixn.dlp with size " << sr.common.ixn.dlp.size() << "! Abort.\n";
+      abort();
+    }
+    if(prt_idx >= sr.common.ixn.dlp.at(ixn_idx).part.dlp.size())
+    {
+      LOG.FATAL() << "MLNDLArRecoParticleMapper: particle index " << prt_idx << " is out of range for sr.common.ixn.dlp[" << ixn_idx << "].part.dlp with size " << sr.common.ixn.dlp.at(ixn_idx).part.dlp.size() << "! Abort.\n";
+      abort();
+    }
+    return sr.common.ixn.dlp.at(ixn_idx).part.dlp.at(prt_idx);
+  }
 
   // ------------------------------------------------------------------------------
   // todo: possibly build some mechanism for customizing the dataset names in the file here
@@ -142,7 +178,7 @@ namespace cafmaker
   void
   MLNDLArRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                              caf::StandardRecord &sr,
-                                             const cafmaker::Params &par,
+                                             const cafmaker::Params &/*par*/,
                                              const TruthMatcher *truthMatcher) const
 
   {
@@ -171,6 +207,9 @@ namespace cafmaker
     
     sr.meta.lar2x2.readoutstart_s = trigger.triggerTime_s;
     sr.meta.lar2x2.readoutstart_ns = trigger.triggerTime_ns;
+    
+    // reset the map of SPINE particle ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for this entry
+    fParticleMapper.Reset();
 
     H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
     H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
@@ -209,12 +248,13 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
-                                                    const cafmaker::types::dlp::TrueInteraction & ptTrueInt /* pt = "pass-through" */) const
+  void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & /*srTrueInt*/,
+                                                    const cafmaker::types::dlp::TrueInteraction & /*ptTrueInt*/ /* pt = "pass-through" */) const
   {
     LOG.DEBUG() << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
 
-    const auto NaN = std::numeric_limits<float>::signaling_NaN();
+    // todo: currently unused below...  but left in case the code below comes back
+    // const auto NaN = std::numeric_limits<float>::signaling_NaN();
 
     // vertices from ML-reco are adjusted to the edge of the sensitive detector volume
     // if they originate from outside it, so we can't use them
@@ -278,7 +318,7 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
                                                  const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
@@ -286,6 +326,8 @@ namespace cafmaker
 
     ValidateOrCopy(truePartPassthrough.orig_interaction_id, srTruePart.interaction_id, -1L, "SRTrueParticle::interaction_id");
 
+    // todo: need to figure out how to translate "1::91" etc. to the enums...
+    /*
     const auto ancestorTypeComp = [](const char* inProc, const caf::TrueParticleID::PartType & outType)
     {
       // fixme: the process codes don't look like this
@@ -303,8 +345,7 @@ namespace cafmaker
         outType = caf::TrueParticleID::kSecondary;
     };
     
-    // todo: need to figure out how to translate "1::91" etc. to the enums...
-//    ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process)
+     ValidateOrCopy(truePartPassthrough.creation_process, srTruePart.start_process); */
      ValidateOrCopy(truePartPassthrough.position[0], srTruePart.start_pos.x, NaN, "SRTrueParticle::start_pos.x");
      ValidateOrCopy(truePartPassthrough.position[1], srTruePart.start_pos.y, NaN, "SRTrueParticle::start_pos.y");
      ValidateOrCopy(truePartPassthrough.position[2], srTruePart.start_pos.z, NaN, "SRTrueParticle::start_pos.z");
@@ -362,7 +403,7 @@ namespace cafmaker
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
                                                  const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/,
                                                  const TruthMatcher * truthMatch,
                                                  caf::StandardRecord &sr) const
   {
@@ -475,24 +516,26 @@ namespace cafmaker
       reco_particle.p.x = part.momentum[0]/1000.;
       reco_particle.p.y = part.momentum[1]/1000.;
       reco_particle.p.z = part.momentum[2]/1000.;
+      float KE_MeV;
       if(part.shape == types::dlp::Shape::kTrack)
       {
         if(part.is_contained)
         {
-          reco_particle.E = part.csda_ke/1000.;
+          KE_MeV = part.csda_ke;
           reco_particle.E_method = caf::PartEMethod::kRange;
         }
         else
         {
-      	  reco_particle.E = part.mcs_ke/1000.;
+      	  KE_MeV = part.mcs_ke;
     	    reco_particle.E_method = caf::PartEMethod::kMCS;
         }
       }
       else
       {
-        reco_particle.E = part.calo_ke/1000.;
+        KE_MeV = part.calo_ke;
         reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       }
+      reco_particle.E = (KE_MeV + static_cast<float>(part.mass)) / 1000.f;
 
       if (part.match_ids.size())
       {
@@ -534,7 +577,7 @@ namespace cafmaker
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
-                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& p) { return p.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.track_id;
           caf::SRTrueParticle & srTruePart = is_primary ? truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.track_id, srPartCmp, true, (!truthMatch->HaveGENIE()))
                                                         : truthMatch->GetTrueParticle(sr, srTrueInt, truePartPassThrough.track_id, srPartCmp, false, true);
@@ -571,8 +614,15 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.dlp.push_back(std::move(reco_particle));
-      sr.common.ixn.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].part.ndlp++;
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the particle within the sr.common.ixn.dlp.part.dlp vector
+      auto prt_idx = sr.common.ixn.dlp[ixn_idx].part.dlp.size();
+      // save the indices for this particle so we can get it back later
+      fParticleMapper[part.id] = {ixn_idx, prt_idx};
+      // fill the reco particle
+      sr.common.ixn.dlp[ixn_idx].part.dlp.push_back(std::move(reco_particle));
+      sr.common.ixn.dlp[ixn_idx].part.ndlp++;
 
     }
   }
@@ -649,7 +699,7 @@ namespace cafmaker
     	  
            
           bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
-                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& p) { return p.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.track_id;
 
           // we want to make sure the particle is created, if it isn't there,
@@ -686,8 +736,21 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].tracks.push_back(std::move(track));
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].ntracks++;
+      
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the track within the sr.nd.lar.dlp[ixn_idx].tracks vector (i.e., the number of tracks already there, since we're about to add this one)
+      auto trk_idx = sr.nd.lar.dlp[ixn_idx].tracks.size();
+      // fill the SRRecoParticleID info
+      track.part = fParticleMapper.GetRecoParticleID(part.id);
+      // get a reference to the right SRRecoParticle and update its recoobj info
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, part.id);
+      srPart.recoobj.ixn = ixn_idx;
+      srPart.recoobj.irecoobj = trk_idx;
+      srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPTrack;
+      // fill the track branch
+      sr.nd.lar.dlp[ixn_idx].tracks.push_back(std::move(track));
+      sr.nd.lar.dlp[ixn_idx].ntracks++;
     }
   }
 
@@ -750,7 +813,7 @@ namespace cafmaker
                                                         [&srTrueInt](const caf::SRTrueInteraction& ixn) {return ixn.id == srTrueInt.id;}));
 
     	    bool is_primary = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), 
-                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& part) { return part.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
+                                   [&srTrueInt, &truePartPassThrough](const caf::SRTrueParticle& p) { return p.G4ID == truePartPassThrough.track_id; }) != srTrueInt.prim.end();
           srPartCmp.trkid = truePartPassThrough.track_id;
           // we don't actually need the return value here for anything,
           // but we do want the TruthMatcher to *create* a new particle when that's appropriate
@@ -785,9 +848,21 @@ namespace cafmaker
         LOG.FATAL() << "Particle's interaction ID (" << part.interaction_id << ") does not match any in the DLP set!\n";
         abort();
       }
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].showers.push_back(std::move(shower));
-      sr.nd.lar.dlp[std::distance(sr.common.ixn.dlp.begin(), itIxn)].nshowers++;
-
+      
+      // index of the interaction within the sr.common.ixn.dlp vector
+      auto ixn_idx = std::distance(sr.common.ixn.dlp.begin(), itIxn);
+      // index of the shower within the sr.nd.lar.dlp[ixn_idx].showers vector (i.e., the number of showers already there, since we're about to add this one)
+      auto shw_idx = sr.nd.lar.dlp[ixn_idx].showers.size();
+      // fill the SRRecoParticleID info
+      shower.part = fParticleMapper.GetRecoParticleID(part.id);
+      // get a reference to the right SRRecoParticle and update its recoobj info
+      auto &srPart = fParticleMapper.GetRecoParticle(sr, part.id);
+      srPart.recoobj.ixn = ixn_idx;
+      srPart.recoobj.irecoobj = shw_idx;
+      srPart.recoobj.type = caf::SRRecoBaseID::SRRecoBaseCollectionType::kNDLArDLPShower;
+      // fill the shower branch
+      sr.nd.lar.dlp[ixn_idx].showers.push_back(std::move(shower));
+      sr.nd.lar.dlp[ixn_idx].nshowers++;
     }
   }
 

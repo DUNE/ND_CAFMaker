@@ -279,8 +279,16 @@ class TypeSerializer:
             h5_name = "H5::PredType::STD_REF_DSETREG"
         # horrible hack, but bools are always stored as ints, so we have no other way of knowing
         elif fieldname and fieldname.startswith("is_"):
+            assert typ.itemsize == 1, \                 
+                  "field '{0}' follows the 'is_*' bool pattern, but is is {1} bytes; " + \
+                  "if we read this into a C++ bool, it would corrupt adjacent class members".format(fieldname,             
+  typ.itemsize)
             cpp_name += "bool"
             h5_name = self.type_string(typ, fieldname=None, which="h5")
+        elif typ.name == "bool":
+            cpp_name += "bool"
+            h5_name = "H5::PredType::STD_U8"
+            h5_name += "BE" if typ.byteorder == ">" else "LE" if typ.byteorder == "<" else sysorder[sys.byteorder]
         elif h5py.check_enum_dtype(typ):
             typenames = fieldname.split("_")
             typename = "".join(t.capitalize() for t in typenames)
