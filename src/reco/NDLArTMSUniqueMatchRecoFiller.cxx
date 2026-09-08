@@ -84,17 +84,13 @@ namespace cafmaker
       double lar_dir_z = lar_track.enddir.z;
 
       double xz_dot_prod = tms_dir_x*lar_dir_x + tms_dir_z*lar_dir_z;
-      std::cout << "xz_dot_prod" << xz_dot_prod <<std::endl;
       if (xz_dot_prod != 0) {
         double xz_dot_prod = xz_dot_prod/(sqrt(pow(tms_dir_x,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_x,2)+pow(lar_dir_z,2)));
       }
-      std::cout << "xz_dot_prod" << xz_dot_prod <<std::endl;
       double yz_dot_prod = tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
-      std::cout << "yz_dot_prod" << yz_dot_prod <<std::endl;
       if (yz_dot_prod != 0) {
         double yz_dot_prod = yz_dot_prod/(sqrt(pow(tms_dir_y,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_y,2)+pow(lar_dir_z,2)));
       }
-      std::cout << "yz_dot_prod" << yz_dot_prod <<std::endl;
       double dot_prod = tms_dir_x*lar_dir_x + tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
       double angle_x = 180.0/TMath::Pi() * acos(xz_dot_prod);
       double angle_y = 180.0/TMath::Pi() * acos(yz_dot_prod);
@@ -282,9 +278,7 @@ namespace cafmaker
 	  if (TMSPart != nullptr) {
 	    if (matchedPart->G4ID==TMSPart->G4ID) {
 		potential_match.trueMatch = true; // the two tracks in the match have the same true particle IDs, meaning they come from the same particle so they are a true match to each other
-		// std::cout << "True Match!" << std::endl;
 		matchIDs.insert(matchedPart->G4ID) // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
-		std::cout << matchedPart.start_pos().Z() << std::endl; 
 	       }
 	    }
      	 }
