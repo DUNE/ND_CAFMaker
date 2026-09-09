@@ -36,7 +36,9 @@ setup genie_xsec   v3_04_00 -q AR2320i00000:e1000:k250
 setup genie_phyopt v3_04_00 -q dkcharmtau
 
 # duneanaobj contains the 'StandardRecord' specification of the CAF format
-setup duneanaobj v04_00_00 -q e26:${BUILD_QUAL}
+# Development duneanaobj containing ND-LAr truth hit positions.
+# Must exist in $PRODUCTS before sourcing this script
+setup duneanaobj vndlar_hits_testing -q e26:${BUILD_QUAL}
 
 # direct dependencies of CAFMaker itself
 setup hdf5 v1_12_2b  -q e26:${BUILD_QUAL}
