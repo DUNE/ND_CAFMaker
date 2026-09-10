@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -45,6 +46,28 @@
 
   namespace cafmaker
   {
+    template <typename TreeType>
+    Long64_t CheckedGetEntry(TreeType *tree, Long64_t entry, const std::string &context)
+    {
+      if (!tree)
+      {
+        std::stringstream ss;
+        ss << context << " failed because the input TTree is null for entry " << entry << "\n";
+        LOG_S("CheckedGetEntry").FATAL() << ss.str();
+        throw std::runtime_error(ss.str());
+      }
+
+      const Long64_t bytesRead = tree->GetEntry(entry);
+      if (bytesRead <= 0)
+      {
+        std::stringstream ss;
+        ss << context << " failed for entry " << entry << " (GetEntry returned " << bytesRead << ")\n";
+        LOG_S("CheckedGetEntry").FATAL() << ss.str();
+        throw std::runtime_error(ss.str());
+      }
+      return bytesRead;
+    }
+
     /// Convenience method for filling truth branches that does two things:
     ///  - Checks if a value contains the expected default value, and if so, copies the new value in
     ///  - If value does not contain the default, verifies that the provided new value matches the one already there
@@ -194,7 +217,7 @@
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
 
     private:
-    static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn);
+    void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn) const;
     // static void FillParticle(caf::SRTrueParticle * part, std::size_t nixn, const TG4Event * g4event);
     int FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event) const;
     void EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
