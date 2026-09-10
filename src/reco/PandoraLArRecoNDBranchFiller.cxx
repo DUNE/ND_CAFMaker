@@ -150,7 +150,7 @@ namespace cafmaker
                   << ", internal evt idx = " << idx << ".\n";
 
     // Get the event entry
-    m_LArRecoNDTree->GetEntry(fEntryMap[idx]);
+    CheckedGetEntry(m_LArRecoNDTree.get(), fEntryMap[idx], "Pandora LArRecoND event lookup");
 
     // Set the event and run numbers
     sr.meta.nd_lar.enabled = true;
@@ -822,7 +822,7 @@ namespace cafmaker
       m_Triggers.reserve(nEvents);
       for (int entry = 0; entry < nEvents; entry++)
       {
-        m_LArRecoNDTree->GetEntry(entry);
+        CheckedGetEntry(m_LArRecoNDTree.get(), entry, "Pandora trigger discovery");
 
         if ((triggerType >= 0 && m_triggerType != triggerType) || (beamOnly && !IsBeamTrigger(m_triggerType))) // skip if not the right type
         {
