@@ -428,7 +428,7 @@ namespace cafmaker
 
     // Instantiate SRRecoParticleID and SRRecoBaseID
     int ixn_idx = nuIndex;
-    int prt_idx = nuInteractions[nuIndex].part.pandora.size(); // this will be the index of the particle in the interaction's particle vector after we add it
+    int prt_idx = nuInteractions[nuIndex].part.size(); // this will be the index of the particle in the interaction's particle vector after we add it
     caf::SRRecoParticleID recoPartID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kPandora, prt_idx};
     caf::SRRecoBaseID recoBaseID;
 
@@ -505,8 +505,7 @@ namespace cafmaker
     
     // Add particle to the interaction
     caf::SRInteraction &interaction = nuInteractions[nuIndex];
-    interaction.part.pandora.emplace_back(std::move(recoParticle));
-    interaction.part.npandora++;
+    interaction.part.emplace_back(std::move(recoParticle));
 
     // Add track truth info
     const caf::TrueParticleID nullTrueID;
@@ -639,7 +638,7 @@ namespace cafmaker
 
         // Instantiate SRRecoParticleID and SRRecoBaseID
         int ixn_idx = nuIndex;
-        int prt_idx = interaction.part.pandora.size(); // this will be the index of the particle in the interaction's particle vector after we add it
+        int prt_idx = interaction.part.size(); // this will be the index of the particle in the interaction's particle vector after we add it
         caf::SRRecoParticleID recoPartID{ixn_idx, caf::SRRecoParticleID::SRRecoParticleCollectionType::kPandora, prt_idx};
         caf::SRRecoBaseID recoBaseID;
 
@@ -778,8 +777,7 @@ namespace cafmaker
         recoParticle.recoobj = recoBaseID;
 
         // Add particle to the interaction
-        interaction.part.pandora.emplace_back(std::move(recoParticle));
-        interaction.part.npandora++;
+        interaction.part.emplace_back(std::move(recoParticle));
 
         // Add track truth info
         interaction.truth.emplace_back(trackIxn);

@@ -21,7 +21,7 @@
 
 #include "CAF.h"
 #include "Params.h"
-#include "reco/MLNDLArRecoBranchFiller.h"
+#include "reco/SPINENDLArRecoBranchFiller.h"
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
 

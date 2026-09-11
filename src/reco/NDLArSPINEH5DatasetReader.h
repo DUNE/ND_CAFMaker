@@ -1,13 +1,13 @@
-/// \file NDLArDLPH5DatasetReader.h
+/// \file NDLArSPINEH5DatasetReader.h
 ///
-/// Wrapper for retrieving products from a Deep Learn Physics ML Reco HDF5 file
+/// Wrapper for retrieving products from a SPINE ML Reco HDF5 file
 ///
 /// \author  J. Wolcott <jwolcott@fnal.gov>
 /// \date    May 2023
 
 
-#ifndef ND_CAFMAKER_NDLARDLPH5DATASETREADER_H
-#define ND_CAFMAKER_NDLARDLPH5DATASETREADER_H
+#ifndef ND_CAFMAKER_NDLARSPINEH5DATASETREADER_H
+#define ND_CAFMAKER_NDLARSPINEH5DATASETREADER_H
 
 #include <memory>
 #include <stdexcept>
@@ -19,27 +19,27 @@
 
 #include "H5Cpp.h"
 
-#include "DLP_h5_classes.h"
+#include "SPINE_h5_classes.h"
 #include "readH5/DatasetBuffer.h"
 #include "readH5/H5DataView.h"
 
 namespace cafmaker
 {
-  class NDLArDLPH5DatasetReader;
+  class NDLArSPINEH5DatasetReader;
 
   // -----------------------------------------------------------
 
 //  std::type_info Get
 
-  /// Reader for the Deep Learn Physics ML Reco chain's HDF5 files.
+  /// Reader for the SPINE ML Reco chain's HDF5 files.
   /// Not quite a generic HDF5 reader because
   /// it knows that the 'events' dataset is special
   /// (it holds region references to the other datasets)
   /// and because it knows the structured types it's expecting
-  class NDLArDLPH5DatasetReader
+  class NDLArSPINEH5DatasetReader
   {
     public:
-      NDLArDLPH5DatasetReader(const std::string & h5filename,
+      NDLArSPINEH5DatasetReader(const std::string & h5filename,
                               const std::unordered_map<std::type_index, std::string> & datasetNames);
 
       template <typename T>
@@ -73,7 +73,7 @@ namespace cafmaker
 
         auto dsBuffer = std::make_shared<DatasetBuffer<T>>(fInputFile,
                                                            GetDatasetName<T>(),
-                                                           cafmaker::types::dlp::BuildCompType<T>);
+                                                           cafmaker::types::spine::BuildCompType<T>);
 
         // the easy case is if the user wants all entries.  no filtering then...
         if (evtIdx < 0)
@@ -85,7 +85,7 @@ namespace cafmaker
         else
         {
           // when it's just the Event object they want, it's a tad simpler
-          if constexpr (std::is_same_v<T, cafmaker::types::dlp::Event>)
+          if constexpr (std::is_same_v<T, cafmaker::types::spine::Event>)
           {
             dsBuffer->resize(1);
 
@@ -109,7 +109,7 @@ namespace cafmaker
           } // if (T == Event)
           else
           {
-            H5DataView<cafmaker::types::dlp::Event> evts = GetProducts<cafmaker::types::dlp::Event>(evtIdx);
+            H5DataView<cafmaker::types::spine::Event> evts = GetProducts<cafmaker::types::spine::Event>(evtIdx);
 
             H5::DataSet ds_ref;
             ds_ref.dereference(fInputFile, &evts[0].GetRef<T>(), H5R_DATASET_REGION);
@@ -144,7 +144,7 @@ namespace cafmaker
         std::shared_ptr<const DatasetBuffer<T>> cachedBuffer = dsBuffer;
         fCache[cacheKey] = {evtIdx, cachedBuffer};
         return H5DataView<T>(cachedBuffer);
-      } // H5DataView<T> NDLArDLPH5DatasetReader::GetProducts()
+      } // H5DataView<T> NDLArSPINEH5DatasetReader::GetProducts()
 
 
       std::string InputFileName() const;
@@ -161,4 +161,4 @@ namespace cafmaker
   };
 }
 
-#endif //ND_CAFMAKER_NDLARDLPH5DATASETREADER_H
+#endif //ND_CAFMAKER_NDLARSPINEH5DATASETREADER_H

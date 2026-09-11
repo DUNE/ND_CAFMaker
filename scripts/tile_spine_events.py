@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tile_spine_events.py — make a longer DLP/SPINE HDF5 input by tiling its trigger
+tile_spine_events.py — make a longer SPINE HDF5 input by tiling its trigger
                        and event lists N times, to stress-test per-event memory.
 
     makeCAF's record loop is driven by the *trigger* dataset (one record per

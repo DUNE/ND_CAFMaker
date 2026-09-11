@@ -109,22 +109,22 @@ namespace cafmaker
       for (unsigned int iminerva = 0; iminerva < n_minerva_tracks; ++iminerva)
       {
 
-        for (unsigned int ixn_dlp = 0; ixn_dlp < sr.nd.lar.ndlp; ixn_dlp++) // SPINE Tracks
+        for (unsigned int ixn_spine = 0; ixn_spine < sr.nd.lar.nspine; ixn_spine++) // SPINE Tracks
         {
-          caf::SRNDLArInt dlp = sr.nd.lar.dlp[ixn_dlp];
-          for (unsigned int ilar = 0; ilar < dlp.ntracks; ++ilar)
+          caf::SRNDLArInt spine = sr.nd.lar.spine[ixn_spine];
+          for (unsigned int ilar = 0; ilar < spine.ntracks; ++ilar)
           {
             double residual = 0;
             double costheta = 0;
-            if (Passes_cut(Mnv_int.tracks[iminerva], dlp.tracks[ilar], costheta, residual))
+            if (Passes_cut(Mnv_int.tracks[iminerva], spine.tracks[ilar], costheta, residual))
             {
               caf::SRMINERvAID mnvid;
               mnvid.ixn = ixn_minerva;
               mnvid.idx = iminerva;
               caf::SRNDLArID larid;
-              larid.ixn = ixn_dlp;
+              larid.ixn = ixn_spine;
               larid.idx = ilar;
-              larid.reco = caf::kDeepLearnPhys;
+              larid.reco = caf::kSPINE;
 
               // Make the match
 
