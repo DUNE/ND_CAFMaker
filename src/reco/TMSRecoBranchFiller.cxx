@@ -18,7 +18,8 @@ namespace cafmaker
     : IRecoBranchFiller("TMS"),
     fTriggers(),
     fLastTriggerReqd(fTriggers.end()),
-    fVertexMatchToleranceMm(vertexMatchToleranceMm)
+    fVertexMatchToleranceMm(vertexMatchToleranceMm),
+    fUseRunQualifiedTruthIDs(false)
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
@@ -55,6 +56,36 @@ namespace cafmaker
         throw;
       }
 
+      TTree *metadata = dynamic_cast<TTree*>(fTMSRecoFile->Get("Metadata"));
+      if (metadata && metadata->GetEntries() > 0)
+      {
+        if (!metadata->GetBranch("DuneTMSVersionMajor") ||
+            !metadata->GetBranch("DuneTMSVersionMinor") ||
+            !metadata->GetBranch("DuneTMSVersionPatch"))
+          throw std::runtime_error("TMS Metadata tree is missing dune-tms version branches");
+
+        int versionMajor = 0;
+        int versionMinor = 0;
+        int versionPatch = 0;
+        metadata->SetBranchAddress("DuneTMSVersionMajor", &versionMajor);
+        metadata->SetBranchAddress("DuneTMSVersionMinor", &versionMinor);
+        metadata->SetBranchAddress("DuneTMSVersionPatch", &versionPatch);
+        metadata->GetEntry(0);
+        metadata->ResetBranchAddresses();
+
+        fUseRunQualifiedTruthIDs = versionMajor > 1 ||
+                                  (versionMajor == 1 && versionMinor >= 1);
+        LOG.DEBUG() << "TMS input reports dune-tms version "
+                    << versionMajor << "." << versionMinor << "." << versionPatch
+                    << "; using " << (fUseRunQualifiedTruthIDs ? "run-qualified" : "legacy position-based")
+                    << " truth matching\n";
+      }
+      else
+      {
+        LOG.WARNING() << "TMS input has no readable dune-tms version metadata;"
+                      << " using legacy position-based truth matching\n";
+      }
+
       TMSRecoTree->SetBranchAddress("EventNo",               &_EventNo);
       TMSRecoTree->SetBranchAddress("SliceNo",               &_SliceNo);
       TMSRecoTree->SetBranchAddress("SpillNo",               &_SpillNo);
@@ -86,12 +117,20 @@ namespace cafmaker
       TMSTrueSpill->SetBranchAddress("SpillNo",                        &_TruthSpillSpillNo);
       TMSTrueSpill->SetBranchAddress("RunNo",                          &_TruthSpillRunNo);
       TMSTrueSpill->SetBranchAddress("nTrueParticles",                 &_TruthSpillNTrueParticles);
+      if (fUseRunQualifiedTruthIDs)
+      {
+        if (!TMSTrueSpill->GetBranch("ParticleRunNo") || !TMSTrueSpill->GetBranch("TrueVtxRunNo"))
+          throw std::runtime_error("dune-tms >= 1.1.0 Truth_Spill is missing run-qualified truth branches");
+        TMSTrueSpill->SetBranchAddress("ParticleRunNo",                _TruthSpillParticleRunNo);
+      }
       TMSTrueSpill->SetBranchAddress("VertexID",                       _TruthSpillParticleVertexID);
       TMSTrueSpill->SetBranchAddress("Parent",                         _TruthSpillParent);
       TMSTrueSpill->SetBranchAddress("TrackId",                        _TruthSpillTrackID);
       TMSTrueSpill->SetBranchAddress("BirthPosition",                  _TruthSpillBirthPosition);
       TMSTrueSpill->SetBranchAddress("TrueVtxN",                       &_TruthSpillTrueVtxN);
       TMSTrueSpill->SetBranchAddress("TrueVtxID",                      _TruthSpillTrueVtxID);
+      if (fUseRunQualifiedTruthIDs)
+        TMSTrueSpill->SetBranchAddress("TrueVtxRunNo",                 _TruthSpillTrueVtxRunNo);
       TMSTrueSpill->SetBranchAddress("TrueVtxX",                       _TruthSpillTrueVtxX);
       TMSTrueSpill->SetBranchAddress("TrueVtxY",                       _TruthSpillTrueVtxY);
       TMSTrueSpill->SetBranchAddress("TrueVtxZ",                       _TruthSpillTrueVtxZ);
@@ -145,12 +184,27 @@ namespace cafmaker
     TMSTrueSpill->GetEntry(it->second);
   }
 
+  unsigned long TMSRecoBranchFiller::MakeInteractionID(int runNo, int vertexId) const
+  {
+    if (runNo < 0 || vertexId < 0 || vertexId >= 1000000)
+    {
+      std::stringstream ss;
+      ss << "Cannot construct CAF interaction ID from TMS run " << runNo
+         << " and vertex " << vertexId << "\n";
+      throw std::runtime_error(ss.str());
+    }
+    return static_cast<unsigned long>(runNo) * 1000000UL + static_cast<unsigned long>(vertexId);
+  }
+
   unsigned long TMSRecoBranchFiller::ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const
   {
     if (!truthMatch)
       throw std::runtime_error("TMSRecoBranchFiller requires TruthMatcher to resolve true interaction IDs");
     if (trueVtxIdx < 0 || trueVtxIdx >= _TruthSpillTrueVtxN)
       throw std::runtime_error("Requested Truth_Spill vertex index is out of range");
+
+    if (fUseRunQualifiedTruthIDs)
+      return MakeInteractionID(_TruthSpillTrueVtxRunNo[trueVtxIdx], _TruthSpillTrueVtxID[trueVtxIdx]);
 
     return truthMatch->ResolveVertexIDFromRunAndPosition(static_cast<unsigned long>(_TruthSpillRunNo),
                                                          _TruthSpillTrueVtxX[trueVtxIdx],
@@ -218,7 +272,12 @@ namespace cafmaker
 
   unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
   {
-    const int particleIdx = ResolvePrimaryTruthParticleIndex(ResolveRecoTrackTruthParticleIndex(recoTrackIdx), recoTrackIdx);
+    const int recoParticleIdx = ResolveRecoTrackTruthParticleIndex(recoTrackIdx);
+    if (fUseRunQualifiedTruthIDs)
+      return MakeInteractionID(_TruthSpillParticleRunNo[recoParticleIdx],
+                               _TruthSpillParticleVertexID[recoParticleIdx]);
+
+    const int particleIdx = ResolvePrimaryTruthParticleIndex(recoParticleIdx, recoTrackIdx);
 
     const int trueVtxId = _TruthSpillParticleVertexID[particleIdx];
     const double birthX = _TruthSpillBirthPosition[particleIdx][0];
