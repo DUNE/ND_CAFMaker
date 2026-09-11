@@ -304,6 +304,20 @@ namespace cafmaker
 
           auto pf = traj.Points[traj.Points.size()-1];
           part.end_pos = (pf.Position * .1).Vect();
+
+        // ND-LAr fisrt and last hits
+        bool foundFirst = false;
+        for (const auto & pt : traj.Points){
+            TVector3 pos = (pt.Position * .1).Vect();
+            if (IsInNDLAr(pos)){
+                if (!foundFirst){
+                    part.first_ndlar_hit_pos = pos;
+                    foundFirst = true;
+                }
+                part.last_ndlar_hit_pos = pos;
+            }
+        }
+
         }
         // note: we leave part.id unset since it won't match with the G4 values
         // (edep-sim numbers them all sequentially from 0 throughout the whole file)
