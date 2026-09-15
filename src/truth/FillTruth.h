@@ -217,7 +217,7 @@
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
 
     private:
-    void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn) const;
+    static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn);
     // static void FillParticle(caf::SRTrueParticle * part, std::size_t nixn, const TG4Event * g4event);
     int FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event) const;
     void EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,

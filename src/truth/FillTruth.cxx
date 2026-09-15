@@ -181,7 +181,7 @@ namespace cafmaker
   }
 
   // --------------------------------------------------------------
-  void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int /*nixn*/) const
+  void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int /*nixn*/)
   {
 
     genie::EventRecord * event = gEvt->event;
@@ -581,7 +581,7 @@ namespace cafmaker
         if (current >= static_cast<int>(g4event->Trajectories.size()))
           return ancestor;
 
-        const int parent = g4event->Trajectories.at(current).ParentId;
+        const int parent = g4event->Trajectories[current].ParentId;
         if (parent < 0)
           return ancestor;
 
@@ -672,7 +672,7 @@ namespace cafmaker
 
     fMaterializationStats.secondaryClosureCalls++;
 
-    int current = g4event->Trajectories.at(G4ID).ParentId;
+    int current = g4event->Trajectories[G4ID].ParentId;
     std::vector<int> visited{G4ID};
     std::vector<int> missingAncestors;
 
@@ -703,7 +703,7 @@ namespace cafmaker
         break;
       }
 
-      const auto &traj = g4event->Trajectories.at(current);
+      const auto &traj = g4event->Trajectories[current];
       if (traj.ParentId < 0)
       {
         LOG.WARNING() << "Materializing missing primary trajectory " << current
