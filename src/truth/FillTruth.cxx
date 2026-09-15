@@ -282,7 +282,7 @@ namespace cafmaker
             std::stringstream ss;
             ss << "GENIE stable particle has G4ID " << part.G4ID
                << " which is out of range for trajectory list size " << g4event->Trajectories.size() << "\n";
-            LOG.FATAL() << ss.str();
+            LOG_S("TruthMatcher::FillInteraction").FATAL() << ss.str();
             throw std::runtime_error(ss.str());
           }
 
@@ -291,7 +291,7 @@ namespace cafmaker
           {
             std::stringstream ss;
             ss << "Trajectory for G4ID " << part.G4ID << " has no GEANT4 points\n";
-            LOG.FATAL() << ss.str();
+            LOG_S("TruthMatcher::FillInteraction").FATAL() << ss.str();
             throw std::runtime_error(ss.str());
           }
 
