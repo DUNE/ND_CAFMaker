@@ -286,11 +286,11 @@ namespace cafmaker
             throw std::runtime_error(ss.str());
           }
 
-          ############################################################################
-          # Trajectories is now accesed with at() instead of operator[] 
-          # to avoid silent out-of-range access. The performance was checked
-          # and using at() is a ~20% cost, but the wallclock difference is negligible
-          ############################################################################
+          ////////////////////////////////////////////////////////////////////////////
+          // Trajectories is now accesed with at() instead of operator[] 
+          // to avoid silent out-of-range access. The performance was checked
+          // and using at() is a ~20% cost, but the wallclock difference is negligible
+          ////////////////////////////////////////////////////////////////////////////
 
           const auto &traj = g4event->Trajectories.at(part.G4ID);
           if (traj.Points.empty())
@@ -587,11 +587,11 @@ namespace cafmaker
         if (current >= static_cast<int>(g4event->Trajectories.size()))
           return ancestor;
 
-        ############################################################################
-        # Trajectories is now accesed with at() instead of operator[] 
-        # to avoid silent out-of-range access. The performance was checked
-        # and using at() is a ~20% cost, but the wallclock difference is negligible
-        ############################################################################
+        ////////////////////////////////////////////////////////////////////////////
+        // Trajectories is now accesed with at() instead of operator[] 
+        // to avoid silent out-of-range access. The performance was checked
+        // and using at() is a ~20% cost, but the wallclock difference is negligible
+        ////////////////////////////////////////////////////////////////////////////
         
         const int parent = g4event->Trajectories.at(current).ParentId;
         if (parent < 0)
@@ -645,13 +645,12 @@ namespace cafmaker
         LOG_S("cafmaker::FillParticleFields()").FATAL() << ss.str();
         throw std::runtime_error(ss.str());
       }
-
-      
-      ############################################################################
-      # Trajectories is now accesed with at() instead of operator[] 
-      # to avoid silent out-of-range access. The performance was checked
-      # and using at() is a ~20% cost, but the wallclock difference is negligible
-      ############################################################################
+    
+      ////////////////////////////////////////////////////////////////////////////
+      // Trajectories is now accesed with at() instead of operator[] 
+      // to avoid silent out-of-range access. The performance was checked
+      // and using at() is a ~20% cost, but the wallclock difference is negligible
+      ////////////////////////////////////////////////////////////////////////////
       
       const auto &traj = g4event->Trajectories.at(G4ID);
       if (traj.Points.empty())
@@ -692,11 +691,11 @@ namespace cafmaker
     fMaterializationStats.secondaryClosureCalls++;
 
     
-    ############################################################################
-    # Trajectories is now accesed with at() instead of operator[] 
-    # to avoid silent out-of-range access. The performance was checked
-    # and using at() is a ~20% cost, but the wallclock difference is negligible
-    ############################################################################
+    ////////////////////////////////////////////////////////////////////////////
+    // Trajectories is now accesed with at() instead of operator[] 
+    // to avoid silent out-of-range access. The performance was checked
+    // and using at() is a ~20% cost, but the wallclock difference is negligible
+    ////////////////////////////////////////////////////////////////////////////
     
 
     int current = g4event->Trajectories.at(G4ID).ParentId;
@@ -731,11 +730,11 @@ namespace cafmaker
       }
 
       
-      ############################################################################
-      # Trajectories is now accesed with at() instead of operator[] 
-      # to avoid silent out-of-range access. The performance was checked
-      # and using at() is a ~20% cost, but the wallclock difference is negligible
-      ############################################################################
+      ////////////////////////////////////////////////////////////////////////////
+      // Trajectories is now accesed with at() instead of operator[] 
+      // to avoid silent out-of-range access. The performance was checked
+      // and using at() is a ~20% cost, but the wallclock difference is negligible
+      ////////////////////////////////////////////////////////////////////////////
       
 
       const auto &traj = g4event->Trajectories.at(current);
