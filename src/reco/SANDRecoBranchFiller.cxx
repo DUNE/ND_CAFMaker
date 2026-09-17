@@ -83,7 +83,7 @@ namespace cafmaker
     auto ptr = &tr;
     NDSANDRecoTree->SetBranchAddress("cluster", &pcl);
     NDSANDRecoTree->SetBranchAddress("track", &ptr);
-    NDSANDRecoTree->GetEntry(event_num);
+    CheckedGetEntry(NDSANDRecoTree, event_num, "SAND reco event lookup");
 
     FillECalClusters(truthMatcher, sr, cl);
    
