@@ -176,7 +176,7 @@ namespace cafmaker
                 27550.0,  31610.0,   35580.0,  39460.0, 43260.0, 50620.0, 57680.0, 67780.0, 77340.0, 92220.0,
                 1.06e+05, 1.188e+05, 1.307e+05}};
         for (double& value : Range_grampercm) {
-                value /= LArDen; // convert to cm
+                value /= NDLArTMSUniqueMatchRecoFiller::LArDen; // convert to cm
         }
     return Range_grampercm;
     }
@@ -453,4 +453,4 @@ namespace cafmaker
   }
 
 }
-}
+

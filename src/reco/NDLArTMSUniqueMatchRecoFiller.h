@@ -13,6 +13,7 @@
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 #include "duneanaobj/StandardRecord/SRTruthBranch.h"
 #include "duneanaobj/StandardRecord/Navigate.h"
+#include "duneanaobj/StandardRecord/SRNDTrackAssn.h"
 #include "TMath.h"
 #include "TRandom3.h"
 #include <set>
@@ -44,6 +45,9 @@ namespace cafmaker
 
       RecoFillerType FillerType() const override { return RecoFillerType::Matcher; }
 
+      static constexpr double LArDen = 1.3954; // LAr density [g/cm3], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
+
+
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
 
@@ -64,6 +68,7 @@ namespace cafmaker
       double mean_t;
       double sigma_t;
       double f_cut;
+      bool use_smear_time;
 
       // Dimensions of TMS and LAr fiducial volume [cm]. Best practice would be to query geometry instead of hard-coding
       double tms_x_lim1 = -352.0;
@@ -80,7 +85,6 @@ namespace cafmaker
       double lar_z_lim1 = 417.924;
       double lar_z_lim2 = 913.588;
 
-      const double LArDen = 1.3954; // LAr density [g/cm3], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
       const double ActiveLArEnd = 913.588; // End z-coordinate for LAr active volume [cm], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
       const double DeadLArEnd = 937; // End z-coordinate for LAr instrumented volume [cm]
       const double TMSStart = 1117.75; // Start z-coordinate for TMS [cm], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
