@@ -34,7 +34,7 @@ namespace cafmaker
     }
   }
 
-  NDLArTMSUniqueMatchRecoFiller::NDLArTMSUniqueMatchRecoFiller(const double sigmaX, const double sigmaY, const double sigmaThX, const double sigmaThY, const bool useTime, const double meanT, const double sigmaT, const double fCut)
+  NDLArTMSUniqueMatchRecoFiller::NDLArTMSUniqueMatchRecoFiller(const double sigmaX, const double sigmaY, const double sigmaThX, const double sigmaThY, const bool useTime, const double meanT, const double sigmaT, const double fCut, const bool useSmearTime)
     : IRecoBranchFiller("LArTMSMatcher")
   {
     sigma_x = sigmaX;
@@ -45,6 +45,7 @@ namespace cafmaker
     mean_t = meanT;
     sigma_t = sigmaT;
     f_cut = fCut;
+	use_smear_time = useSmearTime;
     // nothing to do
     SetConfigured(true);
   }
@@ -271,7 +272,7 @@ namespace cafmaker
     }
   }
 
-  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, const bool use_time_smear, std::set<int> matchIDs) const
+  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, std::set<int> matchIDs) const
   { // given a TMS track and a LAr interaction, computes the match scores between that TMS track and all LAr tracks in the interaction
     std::vector<caf::SRNDTrackAssn> potentialMatchList;
 
@@ -322,7 +323,6 @@ namespace cafmaker
 		  caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
 		  const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
 		  if (matchedPart != nullptr) {
-			bool use_smear_time = use_time_smear;
 			if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
  	  			lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
 			}
