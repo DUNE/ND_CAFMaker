@@ -89,6 +89,7 @@ namespace cafmaker
     // Note: the above values are based on N5p1 data. In N5p1, the issue described in https://github.com/DUNE/dune-tms/issues/261 prevented the TMS reco time from filling correctly, so meanT was
     // calculated using TimeSliceStartTime as the TMS track time, which will be very early if hits from previous events get clustered into a track for a later event. This happens regularly in N5p1,
     // creating a large tail of TMS tracks with an earlier times than the LAr tracks which match with them in truth. meanT should be re-checked now that the issue has been fixed - should not be negative
+    fhicl::Atom<bool> useSmearTime { fhicl::Name("UseSmearTime"), fhicl::Comment("If true, use the truth-level particle time for the LAr track time with a 10 ns Gaussian smear. If false, use the reco time for the LAr track obtained through charge-light matching. Only set to false if you are working with files that have that reco time filled"), true};
 
     fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between Truth_Spill primary-particle birth position and matched Truth_Spill vertex [mm]"), 100.0};
     fhicl::Atom<double> positionToleranceMm { fhicl::Name("PositionToleranceMm"), fhicl::Comment("Maximum distance between TMS truth position and matched EDepSim vertex position [mm]"), 1.0};
