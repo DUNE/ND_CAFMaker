@@ -271,7 +271,7 @@ namespace cafmaker
     }
   }
 
-  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, std::set<int> matchIDs) const
+  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, const bool use_time_smear, std::set<int> matchIDs) const
   { // given a TMS track and a LAr interaction, computes the match scores between that TMS track and all LAr tracks in the interaction
     std::vector<caf::SRNDTrackAssn> potentialMatchList;
 
@@ -322,11 +322,13 @@ namespace cafmaker
 		  caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
 		  const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
 		  if (matchedPart != nullptr) {
-			lar_time = trk.time;
-			// TODO: Make whether to use time_smear a FHICL parameter
-			if (use_smear_time) {
+			bool use_smear_time = use_time_smear;
+			if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
  	  			lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-			
+			}
+			else {
+				lar_time = trk.time;
+			}
 	  	    double tms_time = tms_trk.time;
             delta_t = tms_time - lar_time;
             matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
@@ -341,7 +343,7 @@ namespace cafmaker
               if (TMSPart != nullptr) {
                 if (matchedPart->G4ID==TMSPart->G4ID) {
                   trueMatch = true;
-		  matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
+				  matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
                   // std::cout << "True Match!" << std::endl;
                 }
               }
