@@ -38,16 +38,16 @@ namespace cafmaker
 
       void Create_matches(std::vector<caf::SRNDTrackAssn> possibleMatches, const bool Pandora, caf::StandardRecord &sr) const;
 
-      std::vector<caf::SRNDTrackAssn> Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const Trigger &trigger, const float time_smear, std::set<int> matchIDs) const;
+      std::vector<caf::SRNDTrackAssn> Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, std::set<int> matchIDs) const;
 
-      std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
+      std::deque<cafmaker::Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
       RecoFillerType FillerType() const override { return RecoFillerType::Matcher; }
 
     private:
       void MatchTracks(caf::StandardRecord &sr) const;
 
-      void _FillRecoBranches(const Trigger &trigger,
+      void _FillRecoBranches(const cafmaker::Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;

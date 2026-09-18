@@ -175,7 +175,7 @@ namespace cafmaker
                 27550.0,  31610.0,   35580.0,  39460.0, 43260.0, 50620.0, 57680.0, 67780.0, 77340.0, 92220.0,
                 1.06e+05, 1.188e+05, 1.307e+05}};
         for (double& value : Range_grampercm) {
-                value /= NDLArTMSUniqueMatchRecoFiller::LArDen; // convert to cm
+                value /= LArDen; // convert to cm
         }
     return Range_grampercm;
     }
@@ -271,7 +271,7 @@ namespace cafmaker
     }
   }
 
-  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const Trigger &trigger, const float time_smear, std::set<int> matchIDs) const
+  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, std::set<int> matchIDs) const
   { // given a TMS track and a LAr interaction, computes the match scores between that TMS track and all LAr tracks in the interaction
     std::vector<caf::SRNDTrackAssn> potentialMatchList;
 
@@ -324,8 +324,9 @@ namespace cafmaker
 		  if (matchedPart != nullptr) {
 			lar_time = trk.time;
 			// TODO: Make whether to use time_smear a FHICL parameter
-			float timeSmear = time_smear; // The time smear won't be used once the LAr time is used, but until I confirm that this line exists to prevent an unused parameter error
-	  		// lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
+			if (use_smear_time) {
+ 	  			lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
+			
 	  	    double tms_time = tms_trk.time;
             delta_t = tms_time - lar_time;
             matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
@@ -369,12 +370,12 @@ namespace cafmaker
       potential_match.matchScore = matchScore;
       potential_match.transdispl = sqrt(pow(delta_x,2)+pow(delta_y,2));
       potential_match.cosangdispl = cos(TMath::Pi()/180.0 * angles[2]);
-      //potential_match.trueMatch = trueMatch;
-      //potential_match.deltaX = delta_x;
-      //potential_match.deltaY = delta_y;
-      //potential_match.deltaThetaX = angles[0];
-      //potential_match.deltaThetaY = angles[1];
-      //potential_match.deltaT = delta_t;
+      potential_match.trueMatch = trueMatch;
+      potential_match.deltaX = delta_x;
+      potential_match.deltaY = delta_y;
+      potential_match.deltaThetaX = angles[0];
+      potential_match.deltaThetaY = angles[1];
+      potential_match.deltaT = delta_t;
       potentialMatchList.push_back(potential_match);
     }
 
@@ -382,7 +383,7 @@ namespace cafmaker
   }
 
   void
-  NDLArTMSUniqueMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
+  NDLArTMSUniqueMatchRecoFiller::_FillRecoBranches(const cafmaker::Trigger &trigger,
                                              caf::StandardRecord &sr,
                                              const cafmaker::Params &/*par*/,
                                              const TruthMatcher */*truthMatcher*/) const
@@ -442,11 +443,12 @@ namespace cafmaker
       Create_matches(possibleSPINEMatches,false,sr); // tells the matcher that it's not working with Pandora LAr tracks (therefore, SPINE tracks)
       }
     }
-  }
+  
   // todo: this is a placeholder
-  std::deque<Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
+  std::deque<cafmaker::Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
   {
-    return std::deque<Trigger>();
+    return std::deque<cafmaker::Trigger>();
   }
 
+}
 }
