@@ -55,7 +55,7 @@ namespace cafmaker
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;
-        
+
       std::vector<caf::SRNDTrackAssn> matchVectorSPINETMS;
 
       std::vector<caf::SRNDTrackAssn> matchVectorPandoraTMS;
