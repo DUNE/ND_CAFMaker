@@ -38,6 +38,7 @@ namespace cafmaker
 
     private:
       void LoadTruthSpillEntry(int spillNo) const;
+      unsigned long MakeInteractionID(int runNo, int vertexId) const;
       unsigned long ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const;
       int ResolveRecoTrackTruthParticleIndex(int recoTrackIdx) const;
       int FindTruthSpillParticleIndex(int vertexId, int trackId) const;
@@ -101,11 +102,13 @@ namespace cafmaker
       mutable int _TruthSpillRunNo;
       mutable int _TruthSpillNTrueParticles;
       mutable int _TruthSpillTrueVtxN;
+      mutable int _TruthSpillParticleRunNo[kTMSMaxTrueParticles];
       mutable int _TruthSpillParticleVertexID[kTMSMaxTrueParticles];
       mutable int _TruthSpillParent[kTMSMaxTrueParticles];
       mutable int _TruthSpillTrackID[kTMSMaxTrueParticles];
       mutable float _TruthSpillBirthPosition[kTMSMaxTrueParticles][4];
       mutable int _TruthSpillTrueVtxID[kTMSMaxTrueVertices];
+      mutable int _TruthSpillTrueVtxRunNo[kTMSMaxTrueVertices];
       mutable float _TruthSpillTrueVtxX[kTMSMaxTrueVertices];
       mutable float _TruthSpillTrueVtxY[kTMSMaxTrueVertices];
       mutable float _TruthSpillTrueVtxZ[kTMSMaxTrueVertices];
@@ -115,6 +118,7 @@ namespace cafmaker
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, Long64_t> fTruthSpillEntryBySpillNo;
       double fVertexMatchToleranceMm;
+      bool fUseRunQualifiedTruthIDs;
 
   };
 
