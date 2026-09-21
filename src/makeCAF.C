@@ -10,6 +10,7 @@
 #include "TFile.h"
 #include "TInterpreter.h"
 #include "TTree.h"
+#include "TParameter.h"
 
 #include "cetlib/filepath_maker.h"
 #include "fhiclcpp/intermediate_table.h"
@@ -196,6 +197,16 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   return recoFillers;
 }
+
+// -------------------------------------------------
+std::optional<double> readPOTFromEdepsim(const std::string& filename)
+  {
+    if (filename.empty()) return std::nullopt;
+    std::unique_ptr<TFile> f(TFile::Open(filename.c_str()));
+    if (!f || f->IsZombie()) return std::nullopt;
+    auto* p = dynamic_cast<TParameter<double>*>(f->Get("pot_per_spill"));
+    return p ? std::make_optional(p->GetVal()) : std::nullopt;
+  }
 
 // -------------------------------------------------
 bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
@@ -435,6 +446,8 @@ void loop(CAF &caf,
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
   
   cafmaker::IFBeam beamManager(par, groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
+
+  double mcPOTperSpill = readPOTFromEdepsim(edepsimFilename).value_or(par().runInfo().POTPerSpill() * 1e13);
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
   for( int ii = start; ii < start + N; ++ii )
@@ -495,7 +508,7 @@ void loop(CAF &caf,
     }
     else
     {
-	potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
+	potTRTGTD = {mcPOTperSpill};
         caf.sr.beam.ismc = true;
     }
     if (std::isnan(caf.pot))
