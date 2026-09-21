@@ -132,7 +132,7 @@ namespace cafmaker
             return true;
           } 
     else {
-      return false;
+            return false;
     }
   }
 
@@ -160,7 +160,7 @@ namespace cafmaker
           return true;
         } 
     else {
-      return false;
+          return false;
     }
   }
 
@@ -307,51 +307,51 @@ namespace cafmaker
 
       if (use_time) {
         // this handles time-based matching - using truth-level particle times for now instead of light in LAr 
-	bool timeFail = false;
-	std::vector<float> tOv = trk.truthOverlap;
-	std::vector<caf::TrueParticleID> truIDs = trk.truth;
-	if (tOv.empty()) {
-	  timeFail = true;
-	}
-	if (truIDs.empty()) {
-  	  timeFail = true;
-	}
-	if (truIDs.size() != tOv.size()) {
-	  timeFail = true;
-	}
-	if (!timeFail) {
-	  int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
-	  caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
-	  const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-	  if (matchedPart != nullptr) {
-	    if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
- 	      lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-	    }
-	    else {
-	      lar_time = trk.time;
-	    }
-	    double tms_time = tms_trk.time;
-            delta_t = tms_time - lar_time;
-            matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
-
-            // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
-            std::vector<float> tOvTMS = tms_trk.truthOverlap;
-            std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
-            if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
-              int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
-              caf::TrueParticleID partIDTMS = truIDsTMS[idx_max_TMS];
-              const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
-              if (TMSPart != nullptr) {
-                if (matchedPart->G4ID==TMSPart->G4ID) {
-                  trueMatch = true;
-	          matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
-                  // std::cout << "True Match!" << std::endl;
-                }
-              }
-            }
-          }
-        }
-      }
+		  bool timeFail = false;
+		  std::vector<float> tOv = trk.truthOverlap;
+		  std::vector<caf::TrueParticleID> truIDs = trk.truth;
+		  if (tOv.empty()) {
+			  timeFail = true;
+		  }
+		  if (truIDs.empty()) {
+			  timeFail = true;
+		  }
+		  if (truIDs.size() != tOv.size()) {
+			  timeFail = true;
+		  }
+		  if (!timeFail) {
+			  int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
+			  caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
+			  const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
+			  if (matchedPart != nullptr) {
+				  if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
+					  lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
+				  }
+				  else {
+					  lar_time = trk.time;
+				  }
+				  double tms_time = tms_trk.time;
+				  delta_t = tms_time - lar_time;
+				  matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+				  
+				  // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
+				  std::vector<float> tOvTMS = tms_trk.truthOverlap;
+				  std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
+				  if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
+					  int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
+					  caf::TrueParticleID partIDTMS = truIDsTMS[idx_max_TMS];
+					  const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
+					  if (TMSPart != nullptr) {
+						  if (matchedPart->G4ID==TMSPart->G4ID) {
+							  trueMatch = true;
+							  matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
+							  // std::cout << "True Match!" << std::endl;
+						  }
+					  }
+				  }
+			  }
+		  }
+	  }
 
       caf::SRTMSID tmsid;
       tmsid.ixn = ixn_tms;
