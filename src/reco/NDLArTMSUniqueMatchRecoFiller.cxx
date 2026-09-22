@@ -440,6 +440,37 @@ namespace cafmaker
     if (possibleSPINEMatches.size() > 0) {
       Create_matches(possibleSPINEMatches,false,sr); // tells the matcher that it's not working with Pandora LAr tracks (therefore, SPINE tracks)
       }
+
+    // Check that the script works as intended
+    unsigned int num_matches = 0;
+    unsigned int num_true_matches = 0;
+    for (unsigned int match_no = 0; match_no < sr.nd.trkmatch.nextrap; match_no++){
+      caf::SRNDTrackAssn match_pair = sr.nd.trkmatch.extrap[match_no];
+      if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
+        // One of the match pairs this algorithm found, so proceed with the counting
+        num_matches += 1;
+        if (match_pair.trueMatch){
+          num_true_matches += 1;
+          caf::SRNDLArID match_trk_id = match_pair.larid;
+          caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<Track>(match_trk_id);
+          std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
+          std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
+          std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
+          std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
+          int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
+          caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
+          const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
+          float match_true_E = matchedParticle->p.E; // energy of the true particle
+          std::cout << "TOTAL TRUE ENERGY " << match_true_E << std::endl;
+          }
+        }
+      }
+    std::cout << "TOTAL MATCHES FOUND THIS SPILL " << num_matches << std::endl;
+    std::cout << "TRUE MATCHES FOUND THIS SPILL " << num_true_matches << std::endl;
+    if (num_matches > 0){
+      float pur = num_true_matches/num_matches;
+      std::cout << "PURITY THIS SPILL " << pur << std::endl;
+      }
     }
 
   // todo: this is a placeholder
