@@ -452,7 +452,7 @@ namespace cafmaker
         if (match_pair.trueMatch){
           num_true_matches += 1;
           caf::SRNDLArID match_trk_id = match_pair.larid;
-          caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<Track>(match_trk_id);
+          caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
           std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
           std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
           std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
