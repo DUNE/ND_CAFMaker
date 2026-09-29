@@ -8,6 +8,8 @@
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
+#include "truth/FillTruth.h"
+
 #include <TFile.h>
 #include <TTree.h>
 
@@ -91,6 +93,7 @@ void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
   sr.common.ixn.nsandreco = fSR->common.ixn.nsandreco;
   sr.nd.sand.ixn          = fSR->nd.sand.ixn;
   sr.nd.sand.nixn         = fSR->nd.sand.nixn;
+  sr.mc                   = fSR->mc;
 }
 
 #ifdef ENABLE_SANDRECO_LEGACY
