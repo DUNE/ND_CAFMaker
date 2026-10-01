@@ -502,8 +502,10 @@ void loop(CAF &caf,
     }
     if (std::isnan(caf.pot))
       caf.pot = 0;
-    caf.pot += (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
-    caf.sr.beam.pulsepot = (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
+    
+    double spillPOT = !potTRTGTD.empty() ? potTRTGTD.at(0): !potTOR101.empty() ? potTOR101.at(0) : 0.;
+    caf.pot += spillPOT;
+    caf.sr.beam.pulsepot = spillPOT;
     caf.sr.beam.potTOR101 = (potTOR101.size()==0) ? 0. : potTOR101.at(0);
     caf.sr.beam.potTR101D = (potTR101D.size()==0) ? 0. : potTR101D.at(0);
     caf.sr.beam.hornI = (hornI.size()==0) ? 0. : hornI.at(0);
