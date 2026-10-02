@@ -5,19 +5,19 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ND_CAFMaker/scripts/h5_to_cpp.py -f ../MiniProdN5p3_NDComplex_FHC.spine.full.sanddrift.0000003.MLRECO_SPINE.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
+//       ND_CAFMaker/scripts/h5_to_cpp.py -f ../MiniProdN5p3_NDComplex_FHC.spine.full.sanddrift.0000003.MLRECO_SPINE.hdf5 -o SPINE_h5_classes -ns cafmaker::types::spine -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
-#ifndef CAFMAKER_TYPES_DLP_DLP_H5_CLASSES_H
-#define CAFMAKER_TYPES_DLP_DLP_H5_CLASSES_H
+#ifndef CAFMAKER_TYPES_SPINE_SPINE_H5_CLASSES_H
+#define CAFMAKER_TYPES_SPINE_SPINE_H5_CLASSES_H
 
 #include <array>
 
 #include "H5Cpp.h"
 #include "readH5/BufferView.h"
 
-namespace cafmaker::types::dlp
+namespace cafmaker::types::spine
 {
 
   // This generic template will be overloaded
@@ -690,4 +690,4 @@ namespace cafmaker::types::dlp
 
 }
 
-#endif // CAFMAKER_TYPES_DLP_DLP_H5_CLASSES_H
+#endif // CAFMAKER_TYPES_SPINE_SPINE_H5_CLASSES_H

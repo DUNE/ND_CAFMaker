@@ -5,13 +5,13 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ND_CAFMaker/scripts/h5_to_cpp.py -f ../MiniProdN5p3_NDComplex_FHC.spine.full.sanddrift.0000003.MLRECO_SPINE.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
+//       ND_CAFMaker/scripts/h5_to_cpp.py -f ../MiniProdN5p3_NDComplex_FHC.spine.full.sanddrift.0000003.MLRECO_SPINE.hdf5 -o SPINE_h5_classes -ns cafmaker::types::spine -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
-#include "DLP_h5_classes.h"
+#include "SPINE_h5_classes.h"
 #include "H5Cpp.h"
 
-namespace cafmaker::types::dlp
+namespace cafmaker::types::spine
 {
 
   
