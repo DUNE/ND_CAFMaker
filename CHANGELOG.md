@@ -10,6 +10,13 @@ Note that tags as a function of changes are now also being tracked via [mileston
 
 ##### current
 
+##### [v5.2.0] -- 2026-09-10
+* Bump to duneanaobj v4_01_01 [66905ce3]
+* Add release manager checklist [#171](https://github.com/DUNE/ND_CAFMaker/pull/171)
+* Redesign the H5 read model & solve major memory leak [PR#172](https://github.com/DUNE/ND_CAFMaker/pull/172)
+* Eliminate all build warnings, and turn warnings -> errors going forward [PR #174](https://github.com/DUNE/ND_CAFMaker/pull/174)
+* Fix unit mismatch in E storage b/w SPINE & Pandora [PR #181](https://github.com/DUNE/ND_CAFMaker/pull/181)
+
 ##### [v5.1.1] -- 2026-07-10
 * Update DLP h5 classes by @jacoblarkin ([PR #166](https://github.com/DUNE/ND_CAFMaker/pull/166))
 
