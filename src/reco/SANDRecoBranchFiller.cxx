@@ -60,7 +60,7 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::SANDRecoBranchFiller(
       fEvtToEntry[fSR->mc.nu[i].id] = e;
     }
 
-    fTriggers.push_back(Trigger{fSR->mc.nu[0].id, 0, static_cast<unsigned long>(e), 0u});
+    fTriggers.push_back(Trigger{e, 0, static_cast<unsigned long>(e), 0u});
   }
 
   SetConfigured(true);
@@ -81,13 +81,19 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType
 void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
     const Trigger& trigger, caf::StandardRecord& sr, const cafmaker::Params& /*par*/,
     const TruthMatcher* /*truthMatcher*/) const {
-  auto it = fEvtToEntry.find(trigger.evtID);
-  if (it == fEvtToEntry.end()) {
-    LOG.WARNING() << GetName() << ": no entry for evtID=" << trigger.evtID << "\n";
-    return;
-  }
+//  auto it = fEvtToEntry.find(trigger.evtID);
+//  if (it == fEvtToEntry.end()) {
+//    LOG.WARNING() << GetName() << ": no entry for evtID=" << trigger.evtID << "\n";
+//    return;
+//  }
 
-  fCAFTree->GetEntry(it->second);
+  auto it = std::find(fTriggers.begin(), fTriggers.end(), trigger);
+  if (it == fTriggers.end()) {
+    LOG.FATAL() << GetName() << ": no trigger with evtID=" << trigger.evtID << "\n";
+    abort();
+  }
+  const long entry = std::distance(fTriggers.begin(), it);
+  fCAFTree->GetEntry(entry);
 
   sr.common.ixn.sandreco  = fSR->common.ixn.sandreco;
   sr.common.ixn.nsandreco = fSR->common.ixn.nsandreco;
