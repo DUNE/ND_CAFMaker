@@ -118,6 +118,56 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
+  // Here description
+  void FillPIDProbability(caf::SRPIDProbability& pidProb, const Particle& spinePart)
+  {
+    // Check hyp vector has the correct size (6) and primary_score vector has the correct size (2)
+    if (pidProb.hyp.size() != 6) 
+    {
+      pidProb.hyp.resize(6);
+    }
+    if (pidProb.primary_scores.size() != 2) 
+    {
+      pidProb.primary_scores.resize(2);
+    }
+
+    // Fill primary score vector
+    pidProb.primary_scores[0] = spinePart.primary_scores[0];
+    pidProb.primary_scores[1] = spinePart.primary_scores[1];
+
+    // Fill the hyp vector
+    // ref: https://spine.readthedocs.io/latest/api/generated/spine.constants.enums.html
+    // Convention: Only particles (not antiparticles) are considered for the hyp vector
+
+    auto fillHypothesis = [&](int idx, int pdg) {
+      pidProb.hyp[idx].pdg = pdg;
+      pidProb.hyp[idx].pid_score = spinePart.pid_scores[idx];
+      pidProb.hyp[idx].chi2 = spinePart.chi2_per_pid[idx];
+      pidProb.hyp[idx].energy.calo = spinePart.calo_ke;
+      pidProb.hyp[idx].energy.csda = spinePart.csda_ke_per_pid[idx];
+      pidProb.hyp[idx].energy.mcs = spinePart.mcs_ke_per_pid[idx];
+    };
+
+    // Hypothesis: photon
+    fillHypothesis(0, 22);
+
+    // Hypothesis: electron
+    fillHypothesis(1, 11);
+
+    // Hypothesis: muon
+    fillHypothesis(2, 13);
+
+    // Hypothesis: charged pion+
+    fillHypothesis(3, 211);
+
+    // Hypothesis: charged kaon+
+    fillHypothesis(4, 321);
+
+    // Hypothesis: proton
+    fillHypothesis(5, 2212);
+  }
+
+  // ------------------------------------------------------------------------------
   // Helper class to map from SPINE track ID to (sr.common.ixn.spine, sr.common.ixn.spine.part) indices for the corresponding SRRecoParticle
   // This method is `const` because it applies to the _mapper_--- we're not changing the mapping---  
   // but the returned instance is part of the SR itself and can be modified  
@@ -536,6 +586,9 @@ namespace cafmaker
         reco_particle.E_method = caf::PartEMethod::kCalorimetry;
       }
       reco_particle.E = (KE_MeV + static_cast<float>(part.mass)) / 1000.f;
+
+      // fill PID probabilities for this reco particle
+      FillPIDProbability(reco_particle.pid_prob, part);
 
       if (part.match_ids.size())
       {
