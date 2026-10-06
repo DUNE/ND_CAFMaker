@@ -47,7 +47,7 @@ class SANDRecoBranchFiller<SANDRecoVersion::experimental> : public IRecoBranchFi
   TTree* fCAFTree{nullptr}; // owned by fFile
   caf::StandardRecord* fSR{nullptr};
   std::unordered_map<long int, long int> fEvtToEntry;
-  std::vector<Trigger> fTriggers;
+  mutable std::vector<cafmaker::Trigger> fTriggers;
 };
 
 #ifdef ENABLE_SANDRECO_LEGACY

@@ -60,7 +60,7 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::SANDRecoBranchFiller(
       fEvtToEntry[fSR->mc.nu[i].id] = e;
     }
 
-    fTriggers.push_back(Trigger{e, 0, static_cast<unsigned long>(e), 0u});
+    // fTriggers.push_back(Trigger{e, 0, static_cast<unsigned long>(e), 0u});
   }
 
   SetConfigured(true);
@@ -69,13 +69,99 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::SANDRecoBranchFiller(
 std::deque<Trigger>
 SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType,
                                                                  bool /*beamOnly*/) const {
-  std::deque<Trigger> out;
-  for (const auto& t : fTriggers) {
-    if (triggerType < 0 || t.triggerType == triggerType) {
-      out.push_back(t);
+
+  std::deque<Trigger> triggers;
+  // int lastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
+
+  if (fTriggers.empty())
+  {
+    LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << fCAFTree->GetEntries() << " TMS Reco_Tree:\n";
+  
+    fTriggers.reserve(fCAFTree->GetEntries());
+      for (int entry = 0; entry < fCAFTree->GetEntries(); entry++)
+      {
+        fCAFTree->GetEntry(entry);
+
+
+        // lastSpillNo = entry;
+
+        const Trigger * prev_trig = fTriggers.empty() ? nullptr : &fTriggers.back();
+        fTriggers.emplace_back();
+        Trigger & trig = fTriggers.back();
+
+        trig.evtID = entry;
+        trig.triggerType = 1; // TODO real number?
+
+        if (prev_trig)
+        {
+          trig.triggerTime_ns = prev_trig->triggerTime_ns + 2E8 ;
+          trig.triggerTime_s = prev_trig->triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
+          if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
+          {
+            trig.triggerTime_s += 1;
+            trig.triggerTime_ns -= 1E9;
+          }
+        }
+        else
+        {
+          trig.triggerTime_ns = 0;
+          trig.triggerTime_s = 0;
+        }
+
+        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                      << ", triggerType=" << trig.triggerType
+                      << ", triggerTime_s=" << trig.triggerTime_s
+                      << ", triggerTime_ns=" << trig.triggerTime_ns
+                      << "\n";
+      }
     }
-  }
-  return out;
+
+    for (const Trigger & trigger : fTriggers)
+    {
+      if (triggerType < 0 || triggerType == trigger.triggerType)
+      {
+        triggers.push_back(trigger);
+      }
+    }
+
+    return triggers;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // std::deque<Trigger> out;
+  // for (const auto& t : fTriggers) {
+  //   if (triggerType < 0 || t.triggerType == triggerType) {
+  //     out.push_back(t);
+  //   }
+  // }
+  // return out;
 }
 
 void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
