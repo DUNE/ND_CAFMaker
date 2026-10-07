@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdio>
 #include <numeric>
 
@@ -200,8 +201,10 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 // -------------------------------------------------
 bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
 {
-  const unsigned long int s_to_ns = 1e9;
-  return ( (std::max(t1.triggerTime_s, t2.triggerTime_s) - std::min(t1.triggerTime_s, t2.triggerTime_s)) * s_to_ns + std::max(t1.triggerTime_ns, t2.triggerTime_ns) - std::min(t1.triggerTime_ns, t2.triggerTime_ns) ) < dT;
+  const long long s_to_ns = 1000000000LL;
+  long long dt = (static_cast<long long>(t1.triggerTime_s)  - static_cast<long long>(t2.triggerTime_s)) * s_to_ns
+               + (static_cast<long long>(t1.triggerTime_ns) - static_cast<long long>(t2.triggerTime_ns));
+  return std::llabs(dt) < dT;
 }
 
 struct triggerTimeCmp
@@ -498,10 +501,13 @@ void loop(CAF &caf,
 	potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
         caf.sr.beam.ismc = true;
     }
-    if (std::isnan(caf.pot))
-      caf.pot = 0;
-    caf.pot += (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
-    caf.sr.beam.pulsepot = (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
+    
+    // Use the first device with an above-threshold reading; below threshold means no beam
+    const double minPOT = par().cafmaker().minSpillPOT();
+    double spillPOT = (!potTRTGTD.empty() && potTRTGTD.at(0) > minPOT) ? potTRTGTD.at(0)
+                    : (!potTOR101.empty() && potTOR101.at(0) > minPOT) ? potTOR101.at(0)
+                    : 0.;
+    caf.sr.beam.pulsepot = spillPOT;
     caf.sr.beam.potTOR101 = (potTOR101.size()==0) ? 0. : potTOR101.at(0);
     caf.sr.beam.potTR101D = (potTR101D.size()==0) ? 0. : potTR101D.at(0);
     caf.sr.beam.hornI = (hornI.size()==0) ? 0. : hornI.at(0);
@@ -550,8 +556,7 @@ if (!vars.count("fcl")) {
   loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 
   caf.version = 5;
-  printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
-  caf.fillPOT();
+  caf.fillMeta();
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();

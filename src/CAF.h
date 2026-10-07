@@ -21,7 +21,7 @@ public:
   CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE);
   ~CAF() = default;
   void fill();
-  void fillPOT();
+  void fillMeta();
   void write();
   void Print();
   void setToBS();
@@ -34,7 +34,6 @@ public:
   std::vector< std::vector < std::vector < uint64_t > > > * geoEffThrowResults;
 
   // meta
-  double pot;
   int meta_run, meta_subrun;
   int version;
 
@@ -42,7 +41,7 @@ public:
   TTree * cafSR;
   TTree * cafSRGlobal;
   TTree * cafMVA;
-  TTree * cafPOT;
+  TTree * cafMeta;
 
   // store the GENIE record as a branch, if requested
   genie::NtpMCEventRecord * mcrec = nullptr;
