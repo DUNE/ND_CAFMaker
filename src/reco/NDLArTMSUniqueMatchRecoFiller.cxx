@@ -522,11 +522,12 @@ namespace cafmaker
             matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
 
             // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
-            std::vector<float> tOvTMS = tms_trk.truthOverlap;
+            // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
             std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
-            if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
-              int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
-              caf::TrueParticleID partIDTMS = truIDsTMS[idx_max_TMS];
+            // if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
+            if (truIDsTMS.size() == 1) {
+              //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
+              caf::TrueParticleID partIDTMS = truIDsTMS[0];//idx_max_TMS];
               const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
               if (TMSPart != nullptr) {
                 if (matchedPart->G4ID==TMSPart->G4ID) {
