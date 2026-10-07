@@ -27,9 +27,9 @@ namespace cafmaker
     public:
       NDLArTMSUniqueMatchRecoFiller(const double sigmaX, const double sigmaY, const double sigmaThX, const double sigmaThY, const bool useTime, const double meanT, const double sigmaT, const double fCut, const bool useSmearTime);
 
-      std::vector<double> Project_track(const caf::SRTrack track, const bool forward) const;
+      std::vector<float> Project_track(const caf::SRTrack track, const bool forward) const;
 
-      std::vector<double> Angle_between_tracks(const caf::SRTrack tms_track, const caf::SRTrack lar_track) const;
+      std::vector<float> Angle_between_tracks(const caf::SRTrack tms_track, const caf::SRTrack lar_track) const;
 
       bool Consider_TMS_track(const caf::SRTrack tms_track, const double tms_z_cutoff) const;
 

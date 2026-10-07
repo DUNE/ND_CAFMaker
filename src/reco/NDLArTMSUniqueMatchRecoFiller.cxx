@@ -417,6 +417,7 @@ namespace cafmaker
       joint_track.time = lar_track.time;        // TODO: once we have reco LAr time working properly for both Pandora and SPINE this should be switched to lar_track.time from tms_track.time
       joint_track.Evis = lar_track.Evis + tms_track.Evis;
       joint_track.charge = tms_track.charge;
+      joint_track.part = lar_track.part;        // Joint track inherits LAr track's reco particle ID
 
       // TODO: The following values pertain to the dead region between LAr and TMS. They may not remain accurate as geometry changes. Long-term solution is to directly query the geometry file instead
       float gap_dist = sqrt(pow(tms_track.start.x - lar_track.end.x,2)+pow(tms_track.start.y - lar_track.end.y,2)+pow(tms_track.start.z - lar_track.end.z,2));
@@ -449,34 +450,8 @@ namespace cafmaker
       }
 
       std::vector<float> proj_vec = Project_track(trk,true);
-      std::cout << "    Track End Point Z " << trk.end.z << std::endl;
-      std::cout << "    TMS Start Z " << tms_z_lim1 << std::endl;
-      std::cout << "    Track Z Distance " << tms_z_lim1 - trk.end.z << std::endl;
-      std::cout << "    Track End Dir Z " << trk.enddir.z << std::endl;
-      std::cout << "    Z Distance / Dir Z " << (tms_z_lim1 - trk.end.z)/trk.enddir.z << std::endl;
-      std::cout << "    Track End Point X " << trk.end.x << std::endl;
-      std::cout << "    Track End Dir X " << trk.enddir.x << std::endl;
-      std::cout << "    X Displacement " << trk.enddir.x*(tms_z_lim1 - trk.end.z)/trk.enddir.z << std::endl;
-      std::cout << "    X Projection " << trk.end.x + trk.enddir.x*(tms_z_lim1 - trk.end.z)/trk.enddir.z << std::endl;
-      std::cout << "    Calculated X Projection " << proj_vec[0] << std::endl;
-      std::cout << "    TMS Start X " << tms_trk.start.x << std::endl;
       float delta_x = tms_trk.start.x - proj_vec[0];
-      std::cout << "    Delta X " << delta_x << std::endl;
-      std::cout << "    Sigma X " << sigma_x << std::endl;
-      std::cout << "    X Term " << pow(delta_x/sigma_x,2) << std::endl;
-
-      std::cout << "    Z Distance / Dir Z " << (tms_z_lim1 - trk.end.z)/trk.enddir.z << std::endl;
-      std::cout << "    Track End Point Y " << trk.end.y << std::endl;
-      std::cout << "    Track End Dir Y " << trk.enddir.y << std::endl;
-      std::cout << "    Y Displacement " << trk.enddir.y*(tms_z_lim1 - trk.end.z)/trk.enddir.z << std::endl;
-      std::cout << "    Y Projection " << trk.end.y + trk.enddir.y*(tms_z_lim1 - trk.end.z)/trk.enddir.z << std::endl;
-      std::cout << "    Calculated Y Projection " << proj_vec[1] << std::endl;
-      std::cout << "    TMS Start Y " << tms_trk.start.y << std::endl;
-
       float delta_y = tms_trk.start.y - proj_vec[1];
-      std::cout << "    Delta Y " << delta_y << std::endl;
-      std::cout << "    Sigma Y " << sigma_y << std::endl;
-      std::cout << "    Y Term " << pow(delta_y/sigma_y,2) << std::endl;
 
       std::vector<float> angles = Angle_between_tracks(tms_trk,trk);
       angles[0] = std::copysign(angles[0],delta_x);
