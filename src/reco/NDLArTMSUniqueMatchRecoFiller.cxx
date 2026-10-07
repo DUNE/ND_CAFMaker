@@ -495,9 +495,6 @@ namespace cafmaker
           std::cout << "    matchedPart was a null pointer" << std::endl;
           truthFail = true;
         }
-        //else { // commented this out because I need the reco particle ID not the true particle ID
-        //  trk.part = matchedPart->G4ID; // save the particle ID to the track
-        //}
       }
 
       if (use_time) {
