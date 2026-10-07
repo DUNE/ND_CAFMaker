@@ -501,19 +501,12 @@ void loop(CAF &caf,
 	potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
         caf.sr.beam.ismc = true;
     }
-    if (std::isnan(caf.pot))
-      caf.pot = 0;
     
     // Use the first device with an above-threshold reading; below threshold means no beam
     const double minPOT = par().cafmaker().minSpillPOT();
     double spillPOT = (!potTRTGTD.empty() && potTRTGTD.at(0) > minPOT) ? potTRTGTD.at(0)
                     : (!potTOR101.empty() && potTOR101.at(0) > minPOT) ? potTOR101.at(0)
                     : 0.;
-    // Count toward total POT only if the event has LAr trigger. All events with external triggers in data are saved by SPINE, so they will be present here regardless of hits or reco objects in LAr. This change will exclude the following from total POT counting: 1) Mx2-only events (or TMS in future) that happened during 2x2 (or ND-LAr) off-time eg. between runs 2) Duplicated Mx2 POT due to any issue that might arise in the future due to time matching.
-    bool hasLArTrigger = std::any_of(groupedTriggers[ii].begin(), groupedTriggers[ii].end(),
-                                     [](const auto & t) { return t.first->GetName() == "LArML" || t.first->GetName() == "PandoraLArRecoND"; });
-    if (hasLArTrigger)
-      caf.pot += spillPOT;
     caf.sr.beam.pulsepot = spillPOT;
     caf.sr.beam.potTOR101 = (potTOR101.size()==0) ? 0. : potTOR101.at(0);
     caf.sr.beam.potTR101D = (potTR101D.size()==0) ? 0. : potTR101D.at(0);
@@ -563,8 +556,7 @@ if (!vars.count("fcl")) {
   loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 
   caf.version = 5;
-  printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
-  caf.fillPOT();
+  caf.fillMeta();
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();
