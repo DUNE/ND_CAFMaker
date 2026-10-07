@@ -82,10 +82,10 @@ namespace cafmaker
        std::cout << "    Calculated Track End Dir X " << dir_x << std::endl;
        std::cout << "    Calculated X Displacement " << dir_x*(tms_z_lim1 - z)/dir_z << std::endl;
        std::cout << "    Calculated X Projection " << x + dir_x*(tms_z_lim1 - z)/dir_z << std::endl;
-       std::cout << "    Calculated Track End Point X " << x << std::endl;
-       std::cout << "    Calculated Track End Dir X " << dir_x << std::endl;
-       std::cout << "    Calculated X Displacement " << dir_x*(tms_z_lim1 - z)/dir_z << std::endl;
-       std::cout << "    Calculated X Projection " << x + dir_x*(tms_z_lim1 - z)/dir_z << std::endl;
+       std::cout << "    Calculated Track End Point Y " << y << std::endl;
+       std::cout << "    Calculated Track End Dir Y " << dir_y << std::endl;
+       std::cout << "    Calculated Y Displacement " << dir_y*(tms_z_lim1 - z)/dir_z << std::endl;
+       std::cout << "    Calculated Y Projection " << y + dir_y*(tms_z_lim1 - z)/dir_z << std::endl;
     }
     else { // projects a TMS track backward to LAr
        x = track.start.x;
@@ -541,15 +541,16 @@ namespace cafmaker
               }
             }
             else {
-              if (tOvTMS.empty()) {
-                std::cout << "     tOvTMS was empty" << std::endl;
-              }
+              //if (tOvTMS.empty()) {
+              //  std::cout << "     tOvTMS was empty" << std::endl;
+              //}
               if (truIDsTMS.empty()) {
                 std::cout << "     truIDsTMS was empty" << std::endl;
               }
-              if (tOvTMS.size() != truIDsTMS.size()) {
-                std::cout << "     tOvTMS and truIDsTMS not the same size" << std::endl;
-                std::cout << "     tOvTMS size " << tOvTMS.size() << std::endl;
+              //if (tOvTMS.size() != truIDsTMS.size()) {
+              if (1 != truIDsTMS.size()) {
+                //std::cout << "     tOvTMS and truIDsTMS not the same size" << std::endl;
+                //std::cout << "     tOvTMS size " << tOvTMS.size() << std::endl;
                 std::cout << "     truIDsTMS size " << truIDsTMS.size() << std::endl;
               }
             }
@@ -666,19 +667,33 @@ namespace cafmaker
       if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
         // One of the match pairs this algorithm found, so proceed with the counting
         num_matches += 1;
-        if (match_pair.trueMatch){
+        if (true) {//match_pair.trueMatch){
           num_true_matches += 1;
           caf::SRNDLArID match_trk_id = match_pair.larid;
           caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
-          std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
-          std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
           std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
           std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
           int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
           caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
           const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
-          float match_true_E = matchedParticle->p.E; // energy of the true particle
-          std::cout << "TOTAL TRUE ENERGY " << match_true_E << std::endl;
+          float start_x = matchedParticle->start_pos.x;
+          float start_y = matchedParticle->start_pos.y;
+          float start_z = matchedParticle->start_pos.z;
+          if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
+              &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
+              &&((start_z > lar_z_lim1)&&(start_z < lar_z_lim2)) {
+
+                float match_true_E = matchedParticle->p.E; // energy of the true particle
+                int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
+                std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
+                std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
+
+                std::cout << "TOTAL TRUE ENERGY " << match_true_E << std::endl;
+                std::cout << "TRUE PARTICLE PDG " << match_true_PDG << std::endl;
+              }
+            else {
+              std::cout << "ROCK MUON" <<std::endl;
+            }
           }
         }
       }
