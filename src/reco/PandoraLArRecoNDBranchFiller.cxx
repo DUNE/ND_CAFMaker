@@ -283,6 +283,23 @@ namespace cafmaker
      recoParticle.origRecoObjType = caf::RecoObjType::kTrack; 
      recoParticle.score = chi2_value;
 
+     // fill PID probabilities for this reco particle
+     recoParticle.pid_prob.hyp.resize(2);
+
+     // muon
+     recoParticle.pid_prob.hyp[0].pdg = m_muonPDG;
+     recoParticle.pid_prob.hyp[0].pid_score = (*m_trkfitPID_Mu)[i];
+     recoParticle.pid_prob.hyp[0].chi2 = (*m_trkfitPID_Mu)[i];
+     recoParticle.pid_prob.hyp[0].energy.calo = (*m_trkfitTrackCaloE)[i];
+     recoParticle.pid_prob.hyp[0].energy.csda = (*m_trkfitKEFromLengthMuon)[i] + m_mMuon;
+
+     // proton
+     recoParticle.pid_prob.hyp[1].pdg = m_protonPDG;
+     recoParticle.pid_prob.hyp[1].pid_score = (*m_trkfitPID_Pro)[i];
+     recoParticle.pid_prob.hyp[1].chi2 = (*m_trkfitPID_Pro)[i];
+     recoParticle.pid_prob.hyp[1].energy.calo = (*m_trkfitTrackCaloE)[i];
+     recoParticle.pid_prob.hyp[1].energy.csda = (*m_trkfitKEFromLengthProton)[i] + m_mProton;
+
      return true;
 
  }
