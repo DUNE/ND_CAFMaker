@@ -346,15 +346,15 @@ namespace cafmaker
           copy(panTrkAssns.begin(), panTrkAssns.end(), back_inserter(possiblePandoraMatches));
         }
 
-        for (unsigned int ixn_dlp = 0; ixn_dlp < sr.nd.lar.ndlp; ixn_dlp++)
+        for (unsigned int ixn_spine = 0; ixn_spine < sr.nd.lar.nspine; ixn_spine++)
         {
-          caf::SRNDLArInt dlp_int = sr.nd.lar.dlp[ixn_dlp];
-          unsigned int n_dlp_tracks = dlp_int.ntracks;
+          caf::SRNDLArInt spine_int = sr.nd.lar.spine[ixn_spine];
+          unsigned int n_spine_tracks = spine_int.ntracks;
 	  
 	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time 
-          std::vector<caf::SRNDTrackAssn> dlpTrkAssns = Compute_match_scores(dlp_int, ixn_dlp, n_dlp_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
+          std::vector<caf::SRNDTrackAssn> spineTrkAssns = Compute_match_scores(spine_int, ixn_spine, n_spine_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
 
-          copy(dlpTrkAssns.begin(), dlpTrkAssns.end(), back_inserter(possibleSPINEMatches));
+          copy(spineTrkAssns.begin(), spineTrkAssns.end(), back_inserter(possibleSPINEMatches));
         }
       }
     }

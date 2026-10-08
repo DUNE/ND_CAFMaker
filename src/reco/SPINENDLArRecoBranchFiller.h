@@ -1,6 +1,6 @@
 /// \file MLNDLArRecoBranchFiller.h
 ///
-/// Fill ND-LAr reco branches using DeepLearnPhysics machine learning based reconstruction.
+/// Fill ND-LAr reco branches using SPINE machine learning based reconstruction.
 ///
 /// \author  J. Wolcott <jwolcott@fnal.gov>
 /// \date    Sept. 2021
@@ -14,7 +14,7 @@
 #include <typeindex>
 
 #include "reco/IRecoBranchFiller.h"
-#include "reco/NDLArDLPH5DatasetReader.h"
+#include "reco/NDLArSPINEH5DatasetReader.h"
 
 namespace caf
 {
@@ -48,41 +48,41 @@ namespace cafmaker
                              const TruthMatcher *truthMatcher) const override;
 
     private:
-      void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
-                      const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                      const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillTracks(const H5DataView<cafmaker::types::spine::Particle> & particles,
+                      const H5DataView<cafmaker::types::spine::TrueInteraction> &trueIxns,
+                      const H5DataView<cafmaker::types::spine::TrueParticle> &trueParticles,
                       const TruthMatcher * truthMatch,
                       caf::StandardRecord & sr) const;
 
-      void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
-                       const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                       const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillShowers(const H5DataView<cafmaker::types::spine::Particle> & particles,
+                       const H5DataView<cafmaker::types::spine::TrueInteraction> &trueIxns,
+                       const H5DataView<cafmaker::types::spine::TrueParticle> &trueParticles,
                        const TruthMatcher * truthMatch,
                        caf::StandardRecord & sr) const;
 
-      void FillFlashes(const H5DataView<cafmaker::types::dlp::Flash> & flashes,
+      void FillFlashes(const H5DataView<cafmaker::types::spine::Flash> & flashes,
                        caf::StandardRecord & sr) const;
       
-      void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
-                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillInteractions(const H5DataView<cafmaker::types::spine::Interaction> &ixns,
+                            const H5DataView<cafmaker::types::spine::TrueInteraction> &trueIxns,
+                            const H5DataView<cafmaker::types::spine::TrueParticle> &trueParticles,
                             const TruthMatcher * truthMatch,
                             caf::StandardRecord &sr) const;
 
-      void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
-                         const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
-                         const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillParticles(const H5DataView<cafmaker::types::spine::Particle> &particles,
+                         const H5DataView<cafmaker::types::spine::TrueInteraction> &trueInxns,
+                         const H5DataView<cafmaker::types::spine::TrueParticle> &trueParticles,
                          const TruthMatcher * truthMatch,
                          caf::StandardRecord &sr) const;
 
       void FillTrueParticle(caf::SRTrueParticle & srTruePart,
-                            const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const;
+                            const cafmaker::types::spine::TrueParticle & truePartPassthrough,
+                            const H5DataView<cafmaker::types::spine::TrueParticle> &trueParticles) const;
 
       void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
-                               const cafmaker::types::dlp::TrueInteraction & trueIntPassthrough) const;
+                               const cafmaker::types::spine::TrueInteraction & trueIntPassthrough) const;
 
-      NDLArDLPH5DatasetReader fDSReader;
+      NDLArSPINEH5DatasetReader fDSReader;
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
@@ -91,8 +91,8 @@ namespace cafmaker
       ///
       /// This mapper maintains a mapping between SPINE track IDs (from the ML reconstruction)
       /// and the corresponding indices in the CAF StandardRecord:
-      /// - The interaction index in sr.common.ixn.dlp
-      /// - The particle index in sr.common.ixn.dlp.part.dlp
+      /// - The interaction index in sr.common.ixn.spine
+      /// - The particle index in sr.common.ixn.spine.part.spine
       ///
       /// It is used to establish the linkage between low-level SPINE reconstruction
       /// and high-level SRRecoParticle objects in the CAF format.
@@ -131,7 +131,7 @@ namespace cafmaker
           std::map<int64_t, std::pair<size_t, size_t>> fParticleMap;
       };
 
-      mutable MLNDLArRecoParticleMapper fParticleMapper; ///< helper object to map from SPINE track ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for the corresponding SRRecoParticle
+      mutable MLNDLArRecoParticleMapper fParticleMapper; ///< helper object to map from SPINE track ID to (sr.common.ixn.spine, sr.common.ixn.spine.part.spine) indices for the corresponding SRRecoParticle
 
       
   };  // class MLNDLArRecoBranchFiller
