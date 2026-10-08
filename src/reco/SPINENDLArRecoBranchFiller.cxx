@@ -160,11 +160,11 @@ namespace cafmaker
     // Hypothesis: charged pion+
     fillHypothesis(3, 211);
 
-    // Hypothesis: charged kaon+
-    fillHypothesis(4, 321);
+    // Hypothesis: charged proton
+    fillHypothesis(4, 2212);
 
-    // Hypothesis: proton
-    fillHypothesis(5, 2212);
+    // Hypothesis: kaon+
+    fillHypothesis(5, 321);
   }
 
   // ------------------------------------------------------------------------------
