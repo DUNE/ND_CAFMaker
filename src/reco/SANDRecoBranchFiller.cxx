@@ -166,7 +166,7 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType
 
 void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
     const Trigger& trigger, caf::StandardRecord& sr, const cafmaker::Params& /*par*/,
-    const TruthMatcher* /*truthMatcher*/) const {
+    const TruthMatcher* truthMatcher) const {
 //  auto it = fEvtToEntry.find(trigger.evtID);
 //  if (it == fEvtToEntry.end()) {
 //    LOG.WARNING() << GetName() << ": no entry for evtID=" << trigger.evtID << "\n";
@@ -186,6 +186,9 @@ void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
   sr.nd.sand.ixn          = fSR->nd.sand.ixn;
   sr.nd.sand.nixn         = fSR->nd.sand.nixn;
   sr.mc                   = fSR->mc;
+
+	  truthMatcher->StoreGENIEEvents(sr);
+	  std::cout << "Stored Genie events" << std::endl;
 }
 
 #ifdef ENABLE_SANDRECO_LEGACY

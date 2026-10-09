@@ -137,6 +137,11 @@
                    double positionToleranceMm);
       ~TruthMatcher();
 
+
+      /// Write the GENIE record for every interaction in sr.mc.nu to the output genieEvt tree
+      /// and (re)assign nu.genieIdx.  Use when sr.mc was filled/copied outside GetTrueInteraction().
+      void StoreGENIEEvents(caf::StandardRecord & sr) const;
+
       /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
       /// \param sr         The caf::StandardRecord in question

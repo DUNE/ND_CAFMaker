@@ -180,6 +180,25 @@ namespace cafmaker
                << " [set ND_CAFMAKER_STATS=1 to enable]\n";
   }
 
+
+
+// ---------------------------
+  void TruthMatcher::StoreGENIEEvents(caf::StandardRecord & sr) const
+{
+  if (!HaveGENIE())
+    return;
+
+  for (caf::SRTrueInteraction & ixn : sr.mc.nu)
+  {
+    const unsigned long ixnID  = static_cast<unsigned long>(ixn.id);
+    const unsigned int  evtNum = ixnID % 1000000;
+    const unsigned long runNum = (ixnID - evtNum) / 1000000;
+
+    fGTrees.SelectEvent(runNum, evtNum);                 // load the matching GENIE event into caf.mcrec
+    ixn.genieIdx = fGENIEWriterCallback(fGTrees.GEvt()); // Fill() genieEvt, get the new entry index
+  }
+}
+
   // --------------------------------------------------------------
   void TruthMatcher::FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int /*nixn*/)
   {

@@ -127,13 +127,6 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   std::cout << "Filling Reco info for the following cases:\n";
 
   
-  std::string ndlarFile;
-  if (par().cafmaker().ndlarRecoFile(ndlarFile))
-  {
-    recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
-    std::cout << "   ND-LAr (Deep-Learn-Physics ML)\n";
-  }
-
   #ifdef ENABLE_SANDRECO_LEGACY
 
   std::string sandFile;
@@ -153,6 +146,13 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   }
 
   #endif
+  
+  std::string ndlarFile;
+  if (par().cafmaker().ndlarRecoFile(ndlarFile))
+  {
+    recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
+    std::cout << "   ND-LAr (Deep-Learn-Physics ML)\n";
+  }
 
   // Pandora LArRecoND
   std::string pandoraFile;
