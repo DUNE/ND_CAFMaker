@@ -425,13 +425,25 @@ namespace cafmaker
       double DeadLArDist = DeadLArEnd - ActiveLArEnd;
       double DeadLArFrac = DeadLArDist / LArTMSGap; // What fraction of the distance between LAr and TMS is dead LAr?
       joint_track.len_cm = lar_track.len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist; // Divide the TMS areal density by the LAr density and add the dead LAr length
+      std::cout << " LAr Track Length " << lar_track.len_cm << std::endl;
+      std::cout << " TMS Track Length gcm2 " << tms_track.len_gcm2 << std::endl;
+      std::cout << " LAr Density " << LArDen << std::endl;
+      std::cout << " TMS Effective Length " << tms_track.len_gcm2/LArDen << std::endl;
+      std::cout << " Dead LAr Fraction " << DeadLArFrac << std::endl;
+      std::cout << " Gap Distance " << gap_dist << std::endl;
+      std::cout << " Dead LAr Track Length " << DeadLArFrac*gap_dist << std::endl;
+      std::cout << " Total Effective Length " << lar_track.len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist << std::endl;
+      std::cout << " Calculated Effective Length " << joint_track.len_cm << std::endl;
 
       // TODO: Split this straight line distance (gap_dist) into segments as it passes through each subsequent material - only the dead LAr has been implemented so far
       joint_track.len_gcm2 = (lar_track.len_cm + DeadLArFrac*gap_dist)*LArDen + tms_track.len_gcm2;
       // TODO: add the rest of the joint_track attributes (qual, truth, truthOverlap)
       double KE_mu = Muon_LAr_KE_Reco(joint_track.len_cm); // Gives muon kinetic energy in MeV
+      std::cout << " Muon Kinetic Energy " << KE_mu << std::endl;
       float M_mu = 105.658; // Muon mass in MeV
+      std::cout << " Muon Mass " << M_mu << std::endl;
       joint_track.E = KE_mu + M_mu;
+      std::cout << " Overall Reco Energy " << joint_track.E << std::endl;
     }
   }
 
@@ -706,7 +718,7 @@ namespace cafmaker
           float start_z = matchedParticle->start_pos.z;
           if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
               &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
-              &&((start_z > lar_z_lim1)&&(start_z < lar_z_lim2)) {
+              &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)) {
 
                 float match_true_E = matchedParticle->p.E; // energy of the true particle
                 int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
