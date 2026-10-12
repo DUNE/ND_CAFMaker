@@ -167,7 +167,21 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType
 void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
     const Trigger& trigger, caf::StandardRecord& sr, const cafmaker::Params& /*par*/,
     const TruthMatcher* truthMatcher) const {
-//  auto it = fEvtToEntry.find(trigger.evtID);
+
+    if (!sr.mc.nu.empty() || sr.mc.nnu != 0) {
+    std::ostringstream msg;
+    msg << GetName() << ": stopping because sr.mc already contains true interactions (sr.mc.nu.size() = "
+        << sr.mc.nu.size() << ", sr.mc.nnu = " << sr.mc.nnu << ") while the SAND reco filler is about to fill it. "
+        << "The SAND filler copies sr.mc from the sandreco CAF and must be the first filler to run on a "
+        << "StandardRecord: running after another filler (or the TruthMatcher) would overwrite the true "
+        << "interactions they created and invalidate the genieIdx / TrueParticleID links already stored in the "
+        << "reco branches. Check the order of the reco fillers and that no other filler creates true "
+        << "interactions for the same trigger.";
+    LOG.FATAL() << msg.str() << "\n";
+    throw std::runtime_error(msg.str());
+  }
+	
+	//  auto it = fEvtToEntry.find(trigger.evtID);
 //  if (it == fEvtToEntry.end()) {
 //    LOG.WARNING() << GetName() << ": no entry for evtID=" << trigger.evtID << "\n";
 //    return;
