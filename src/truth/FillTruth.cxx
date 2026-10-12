@@ -254,7 +254,7 @@ namespace cafmaker
     nu.bjorkenX = nu.Q2/(2*Mnuc*nu.q0);
     nu.inelasticity = nu.q0/nu.E;
     if (nu.mode == caf::kCoh || nu.mode == caf::kDiffractive)
-      nu.t = in->Kine().t();
+      nu.t = in->Kine().t(true);
 
     nu.ischarm = in->ExclTag().IsCharmEvent();
     nu.isseaquark = in->ProcInfo().IsDeepInelastic() && in->InitState().Tgt().HitSeaQrk();
