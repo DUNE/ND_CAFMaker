@@ -70,8 +70,9 @@ std::deque<Trigger>
 SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType,
                                                                  bool /*beamOnly*/) const {
 
+  // This implementation is copied from the TMS BranchFiller. 
+  // Without this, there was a mismatch between the triggers from different branches.
   std::deque<Trigger> triggers;
-  // int lastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
 
   if (fTriggers.empty())
   {
@@ -81,9 +82,6 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType
       for (int entry = 0; entry < fCAFTree->GetEntries(); entry++)
       {
         fCAFTree->GetEntry(entry);
-
-
-        // lastSpillNo = entry;
 
         const Trigger * prev_trig = fTriggers.empty() ? nullptr : &fTriggers.back();
         fTriggers.emplace_back();
@@ -125,43 +123,6 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType
     }
 
     return triggers;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // std::deque<Trigger> out;
-  // for (const auto& t : fTriggers) {
-  //   if (triggerType < 0 || t.triggerType == triggerType) {
-  //     out.push_back(t);
-  //   }
-  // }
-  // return out;
 }
 
 void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
@@ -181,12 +142,6 @@ void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
     throw std::runtime_error(msg.str());
   }
 	
-	//  auto it = fEvtToEntry.find(trigger.evtID);
-//  if (it == fEvtToEntry.end()) {
-//    LOG.WARNING() << GetName() << ": no entry for evtID=" << trigger.evtID << "\n";
-//    return;
-//  }
-
   auto it = std::find(fTriggers.begin(), fTriggers.end(), trigger);
   if (it == fTriggers.end()) {
     LOG.FATAL() << GetName() << ": no trigger with evtID=" << trigger.evtID << "\n";

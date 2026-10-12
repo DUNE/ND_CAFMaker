@@ -310,14 +310,14 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 
         if(it_trig != fillerTrigPair.second.end()){
             if (it_trig != fillerTrigPair.second.begin()) {
-                //Move the trigger to the front
+                //Move the trigger to the front 
                 cafmaker::Trigger temp = std::move(*it_trig);
                 fillerTrigPair.second.erase(it_trig);
                 fillerTrigPair.second.push_front(std::move(temp));
             }
         }
         else continue; //Not found any trigger that match with ref trigger type
-
+      
         const auto & trig = fillerTrigPair.second.front();
         ss << "       " << fillerTrigPair.first->GetName() << ", " << trig.evtID;
 
@@ -326,7 +326,7 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
         // we only need to check the first one in each other stream
 
 
-
+        
         if (doTriggersMatch( trigGroup.front().second, fillerTrigPair.second.front(), trigMatchMaxDT))
         {
           ss << " -->  MATCHES\n";
@@ -446,7 +446,7 @@ void loop(CAF &caf,
 
   bool useIFBeam = false;
   if (ghepFilenames.empty() && edepsimFilename.empty() && !par().cafmaker().ForceDisableIFBeam()) useIFBeam = true;
-
+  
   cafmaker::IFBeam beamManager(par, groupedTriggers, useIFBeam); //initialize IFBeam manager if data and when IFBeam is not force disabled
   // Main event loop
   cafmaker::Progress progBar("Processing " + std::to_string(N - start) + " triggers");
@@ -473,13 +473,6 @@ void loop(CAF &caf,
       }
     }
 
-
-    // // hand off to the correct reco filler(s).
-    // for (const auto & fillerTrigPair : groupedTriggers[ii])
-    // {
-    //  cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
-    //  fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
-    // }
 
     // Once all the reco fillers have been called, let's call the matching fillers
     for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
@@ -538,7 +531,7 @@ void loop(CAF &caf,
     caf.sr.beam.verticalintTGT = verticalintTGT;
     caf.sr.beam.verticalpos121 = verticalpos121;
     caf.sr.beam.multiwireInfo = multiwireInfo;
-
+    
     cafmaker::LOG_S("").INFO() << "Filling caf tree \n";
     caf.fill();
   }
