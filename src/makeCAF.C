@@ -461,13 +461,25 @@ void loop(CAF &caf,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-
-    // hand off to the correct reco filler(s).
-    for (const auto & fillerTrigPair : groupedTriggers[ii])
+    // hand off to the correct reco filler(s), in the order of recoFillers
+    // (SAND first: it replaces sr.mc, and the other fillers store indices into sr.mc.nu)
+    for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     {
-      cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
-      fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+      for (const auto & fillerTrigPair : groupedTriggers[ii])
+      {
+        if (fillerTrigPair.first != filler.get()) continue;
+        cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << filler->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+        filler->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+      }
     }
+
+
+    // // hand off to the correct reco filler(s).
+    // for (const auto & fillerTrigPair : groupedTriggers[ii])
+    // {
+    //  cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+    //  fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+    // }
 
     // Once all the reco fillers have been called, let's call the matching fillers
     for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
