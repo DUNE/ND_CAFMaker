@@ -152,15 +152,11 @@ void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
 
   sr.common.ixn.sandreco  = fSR->common.ixn.sandreco;
   sr.common.ixn.nsandreco = fSR->common.ixn.nsandreco;
-  sr.nd.sand.ixn          = fSR->nd.sand.ixn;
-  sr.nd.sand.nixn         = fSR->nd.sand.nixn;
-  sr.nd.sand.ecal         = fSR->nd.sand.ecal;
-  sr.nd.sand.tracker      = fSR->nd.sand.tracker;
-  sr.nd.sand.grain        = fSR->nd.sand.grain;
+  sr.nd.sand              = fSR->nd.sand;
   sr.mc                   = fSR->mc;
 
-	  truthMatcher->StoreGENIEEvents(sr);
-	  std::cout << "Stored Genie events" << std::endl;
+	truthMatcher->StoreGENIEEvents(sr);
+	std::cout << "Stored Genie events" << std::endl;
 }
 
 #ifdef ENABLE_SANDRECO_LEGACY
