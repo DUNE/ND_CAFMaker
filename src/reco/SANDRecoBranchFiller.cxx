@@ -66,40 +66,40 @@ SANDRecoBranchFiller<SANDRecoVariant::baseline>::GetTriggers(int triggerType,
     LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << fCAFTree->GetEntries() << " TMS Reco_Tree:\n";
   
     fTriggers.reserve(fCAFTree->GetEntries());
-      for (int entry = 0; entry < fCAFTree->GetEntries(); entry++)
+    for (int entry = 0; entry < fCAFTree->GetEntries(); entry++)
+    {
+      fCAFTree->GetEntry(entry);
+
+      const Trigger * prev_trig = fTriggers.empty() ? nullptr : &fTriggers.back();
+      fTriggers.emplace_back();
+      Trigger & trig = fTriggers.back();
+
+      trig.evtID = entry;
+      trig.triggerType = 1; // TODO real number?
+
+      if (prev_trig)
       {
-        fCAFTree->GetEntry(entry);
-
-        const Trigger * prev_trig = fTriggers.empty() ? nullptr : &fTriggers.back();
-        fTriggers.emplace_back();
-        Trigger & trig = fTriggers.back();
-
-        trig.evtID = entry;
-        trig.triggerType = 1; // TODO real number?
-
-        if (prev_trig)
+        trig.triggerTime_ns = prev_trig->triggerTime_ns + 2E8 ;
+        trig.triggerTime_s = prev_trig->triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
+        if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
         {
-          trig.triggerTime_ns = prev_trig->triggerTime_ns + 2E8 ;
-          trig.triggerTime_s = prev_trig->triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
-          if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
-          {
-            trig.triggerTime_s += 1;
-            trig.triggerTime_ns -= 1E9;
-          }
+          trig.triggerTime_s += 1;
+          trig.triggerTime_ns -= 1E9;
         }
-        else
-        {
-          trig.triggerTime_ns = 0;
-          trig.triggerTime_s = 0;
-        }
-
-        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
-                      << ", triggerType=" << trig.triggerType
-                      << ", triggerTime_s=" << trig.triggerTime_s
-                      << ", triggerTime_ns=" << trig.triggerTime_ns
-                      << "\n";
       }
+      else
+      {
+        trig.triggerTime_ns = 0;
+        trig.triggerTime_s = 0;
+      }
+
+      LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                    << ", triggerType=" << trig.triggerType
+                    << ", triggerTime_s=" << trig.triggerTime_s
+                    << ", triggerTime_ns=" << trig.triggerTime_ns
+                    << "\n";
     }
+  }
 
     for (const Trigger & trigger : fTriggers)
     {
@@ -143,7 +143,6 @@ void SANDRecoBranchFiller<SANDRecoVariant::baseline>::_FillRecoBranches(
   sr.mc                   = fSR->mc;
 
 	truthMatcher->StoreGENIEEvents(sr);
-	std::cout << "Stored Genie events" << std::endl;
 }
 
 #ifdef ENABLE_SANDRECO_LEGACY

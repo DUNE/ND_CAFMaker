@@ -473,7 +473,6 @@ void loop(CAF &caf,
       }
     }
 
-
     // Once all the reco fillers have been called, let's call the matching fillers
     for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     {
