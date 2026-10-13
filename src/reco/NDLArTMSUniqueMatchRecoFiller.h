@@ -75,7 +75,7 @@ namespace cafmaker
       double tms_x_lim2 = 352.0;
       double tms_y_lim1 = -386.4;
       double tms_y_lim2 = 115.9;
-      double tms_z_lim1 = 1136.2;
+      double tms_z_lim1 = 1117.75;//1136.2; // the commented value came from TMSConstants.h but seems to be wrong
       double tms_z_lim2 = 1831.4;
 
       double lar_x_lim1 = -347.848;
