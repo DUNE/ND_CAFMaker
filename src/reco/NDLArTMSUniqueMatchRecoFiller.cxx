@@ -138,7 +138,7 @@ namespace cafmaker
 
     if ((x_start > tms_x_lim1)&&(x_start < tms_x_lim2) &&
         (y_start > tms_y_lim1)&&(y_start < tms_y_lim2) &&
-        (z_start > tms_z_lim1 -20)&&(z_start < tms_z_lim1 + tms_z_cutoff) && // checks track begins within fiducial volume and close enough to front
+        (z_start > tms_z_lim1)&&(z_start < tms_z_lim1 + tms_z_cutoff) && // checks track begins within fiducial volume and close enough to front
       
         (Project_track(tms_track,false)[0] > lar_x_lim1)&&(Project_track(tms_track,false)[0] < lar_x_lim2) &&
         (Project_track(tms_track,false)[1] > lar_y_lim1)&&(Project_track(tms_track,false)[1] < lar_y_lim2)) // checks that direction would have allowed it to originate from LAr
@@ -166,8 +166,8 @@ namespace cafmaker
               std::cout << "     y_start " << y_start << std::endl;
               std::cout << "     tms_y_lim2 " << tms_y_lim2 << std::endl;
             }
-            if (z_start < tms_z_lim1-20){
-              std::cout << "    Z_START < TMS_Z_LIM1-20" << std::endl;
+            if (z_start < tms_z_lim1){
+              std::cout << "    Z_START < TMS_Z_LIM1" << std::endl;
               std::cout << "     z_start " << z_start << std::endl;
               std::cout << "     tms_z_lim1 " << tms_z_lim1 << std::endl;
             }
@@ -376,7 +376,7 @@ namespace cafmaker
       }
       caf::SRNDLArID larid = track_match.larid;
       bool seen_lar = false; // checks if this LAr track has been matched already
-      for (auto const seen_larid : matched_lar) { // I think this might be wrong. May need to fix
+      for (auto const seen_larid : matched_lar) {
         if (seen_larid.ixn == larid.ixn && seen_larid.idx == larid.idx) {
           seen_lar = true;
           break;
