@@ -465,6 +465,8 @@ void loop(CAF &caf,
       }
     }
 
+    truthMatcher.LinkParticleFamilies(caf.sr);
+
     //Fill Beam info
     std::vector<double> potTRTGTD;
     std::vector<double> potTOR101;

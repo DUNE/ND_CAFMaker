@@ -216,6 +216,11 @@
       bool HaveEDEPSIM() const;
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;
 
+      /// Fill parentID and daughtersID for all particles in sr.mc.nu.
+      /// Must be called after all reco fillers have run (so all particles are materialized)
+      /// and before caf.fill().
+      void LinkParticleFamilies(caf::StandardRecord& sr) const;
+
     private:
     static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn);
     // static void FillParticle(caf::SRTrueParticle * part, std::size_t nixn, const TG4Event * g4event);
@@ -306,6 +311,10 @@
         unsigned long secondaryClosureResolvedByMaterializedPrimary = 0;
         unsigned long secondaryClosureAbortedCycle = 0;
         unsigned long secondaryClosureAbortedOutOfRange = 0;
+        unsigned long duplicateG4ID = 0;
+        unsigned long parentNotFoundEdepsim = 0;
+        unsigned long primaryWithParent = 0;
+        unsigned long primaryPDGMismatch = 0;
       };
       mutable MaterializationStats fMaterializationStats;
 

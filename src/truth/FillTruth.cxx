@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <map>
 #include <regex>
+#include <set>
 
 // ROOT
 #include "TLorentzVector.h"
@@ -163,7 +164,7 @@ namespace cafmaker
     const unsigned long totalClosureCalls = fMaterializationStats.secondaryClosureCalls;
     if (!PrintMaterializationStatsEnabled())
       return;
-    if (fMaterializationStats.missingPrimaryAdds == 0 && totalSecondaryAdds == 0 && totalClosureCalls == 0)
+    if (fMaterializationStats.missingPrimaryAdds == 0 && totalSecondaryAdds == 0 && totalClosureCalls == 0 && fMaterializationStats.duplicateG4ID == 0 && fMaterializationStats.parentNotFoundEdepsim == 0 && fMaterializationStats.primaryWithParent == 0 && fMaterializationStats.primaryPDGMismatch == 0)
       return;
 
     LOG.INFO() << "TruthMatcher materialization stats: prim(added)="
@@ -178,6 +179,12 @@ namespace cafmaker
                << ", aborted(cycle)=" << fMaterializationStats.secondaryClosureAbortedCycle
                << ", aborted(out-of-range)=" << fMaterializationStats.secondaryClosureAbortedOutOfRange
                << " [set ND_CAFMAKER_STATS=1 to enable]\n";
+    LOG.INFO() << "TruthMatcher LinkParticleFamilies stats:"
+               << " duplicate-G4ID=" << fMaterializationStats.duplicateG4ID
+               << ", parent-not-found(edepsim)=" << fMaterializationStats.parentNotFoundEdepsim
+               << ", prim-with-parent=" << fMaterializationStats.primaryWithParent
+               << ", prim-PDG-mismatch=" << fMaterializationStats.primaryPDGMismatch
+               << "\n";
   }
 
   // --------------------------------------------------------------
@@ -1207,6 +1214,130 @@ namespace cafmaker
   void TruthMatcher::GTreeContainer::SetGEvtAddr(const genie::NtpMCEventRecord *evt)
   {
     fGEvt = evt;
+  }
+
+  // ------------------------------------------------------------
+  void TruthMatcher::LinkParticleFamilies(caf::StandardRecord &sr) const
+  {
+    for (std::size_t i = 0; i < sr.mc.nu.size(); i++)
+    {
+      caf::SRTrueInteraction &ixn = sr.mc.nu[i];
+
+      // reload the correct edep-sim event for this interaction
+      // (the last SelectEvent call from the reco fillers may have been for a different interaction)
+      if (HaveEDEPSIM())
+      {
+        try
+        {
+          fEdepSimTree.SelectEvent(static_cast<unsigned long>(ixn.id));
+        }
+        catch (const std::range_error &)
+        {
+        } // no edep-sim entry for this interaction
+      }
+      const TG4Event *g4event = fEdepSimTree.G4Event();
+
+      // reset for idempotence
+      for (auto &part : ixn.prim)
+      {
+        part.parentID = caf::TrueParticleID{};
+        part.daughtersID.clear();
+      }
+      for (auto &part : ixn.sec)
+      {
+        part.parentID = caf::TrueParticleID{};
+        part.daughtersID.clear();
+      }
+
+      // build G4ID → TrueParticleID map; track conflicted IDs to skip both entries
+      std::map<int, caf::TrueParticleID> g4id_to_tpid;
+      std::set<int> conflictedG4IDs;
+
+      auto registerParticle = [&](int g4id, caf::TrueParticleID::PartType type, int idx)
+      {
+        if (g4id < 0)
+          return;
+        if (conflictedG4IDs.count(g4id))
+          return;
+        auto result = g4id_to_tpid.emplace(g4id, caf::TrueParticleID{(int)i, type, idx});
+        if (!result.second)
+        {
+          LOG.ERROR() << "Duplicate G4ID " << g4id << " in interaction " << ixn.id
+                      << ": first as (type=" << result.first->second.type
+                      << ", idx=" << result.first->second.part
+                      << "), now as (type=" << type << ", idx=" << idx
+                      << "). Skipping both from linking.\n";
+          g4id_to_tpid.erase(result.first);
+          conflictedG4IDs.insert(g4id);
+          fMaterializationStats.duplicateG4ID++;
+        }
+      };
+
+      for (int idx = 0; idx < (int)ixn.prim.size(); idx++)
+        registerParticle(ixn.prim[idx].G4ID, caf::TrueParticleID::kPrimary, idx);
+      for (int idx = 0; idx < (int)ixn.sec.size(); idx++)
+        registerParticle(ixn.sec[idx].G4ID, caf::TrueParticleID::kSecondary, idx);
+
+      // check primaries with parent >= 0 (misclassification upstream)
+      for (const auto &part : ixn.prim)
+      {
+        if (part.parent >= 0)
+        {
+          LOG.WARNING() << "Primary particle G4ID=" << part.G4ID << " pdg=" << part.pdg
+                        << " in interaction " << ixn.id << " has parent=" << part.parent
+                        << " (unexpected for a primary).\n";
+          fMaterializationStats.primaryWithParent++;
+        }
+      }
+
+      // validate primary PDG against G4 trajectory (checks stablePartIdx == TrackId assumption)
+      if (g4event)
+      {
+        for (const auto &part : ixn.prim)
+        {
+          if (part.G4ID < 0 || static_cast<std::size_t>(part.G4ID) >= g4event->Trajectories.size())
+            continue;
+          const int g4pdg = g4event->Trajectories.at(part.G4ID).PDGCode;
+          if (g4pdg != part.pdg)
+          {
+            LOG.WARNING() << "Primary particle G4ID=" << part.G4ID
+                          << " has GENIE pdg=" << part.pdg << " but G4 PDGCode=" << g4pdg
+                          << " in interaction " << ixn.id << " (stablePartIdx != TrackId?).\n";
+            fMaterializationStats.primaryPDGMismatch++;
+          }
+        }
+      }
+
+      // link parentID / daughtersID for secondaries
+      for (int idx = 0; idx < (int)ixn.sec.size(); idx++)
+      {
+        caf::SRTrueParticle &part = ixn.sec[idx];
+        if (part.parent < 0)
+          continue;
+
+        auto it = g4id_to_tpid.find(part.parent);
+        if (it == g4id_to_tpid.end())
+        {
+          if (g4event)
+          {
+            LOG.WARNING() << "Secondary G4ID=" << part.G4ID << " pdg=" << part.pdg
+                          << " in interaction " << ixn.id
+                          << " has parent G4ID=" << part.parent << " not in SR (closure regression?).\n";
+            fMaterializationStats.parentNotFoundEdepsim++;
+          }
+          continue;
+        }
+
+        const caf::TrueParticleID &parentTpid = it->second;
+        part.parentID = parentTpid;
+
+        const caf::TrueParticleID thisTpid{(int)i, caf::TrueParticleID::kSecondary, idx};
+        if (parentTpid.type == caf::TrueParticleID::kPrimary)
+          ixn.prim[parentTpid.part].daughtersID.push_back(thisTpid);
+        else
+          ixn.sec[parentTpid.part].daughtersID.push_back(thisTpid);
+      }
+    }
   }
 }
 
