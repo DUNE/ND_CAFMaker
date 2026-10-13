@@ -135,7 +135,7 @@ void SANDRecoBranchFiller<SANDRecoVariant::baseline>::_FillRecoBranches(
     abort();
   }
   const long entry = std::distance(fTriggers.begin(), it);
-  fCAFTree->GetEntry(entry);
+  CheckedGetEntry(fCAFTree, entry, "SAND reco event lookup");
 
   sr.common.ixn.sandreco  = fSR->common.ixn.sandreco;
   sr.common.ixn.nsandreco = fSR->common.ixn.nsandreco;
