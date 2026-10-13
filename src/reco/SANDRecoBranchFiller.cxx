@@ -47,21 +47,8 @@ SANDRecoBranchFiller<SANDRecoVariant::baseline>::SANDRecoBranchFiller(
 
   fCAFTree->SetBranchAddress("rec", &fSR);
 
-  // Single pass: build evtID → entry map and trigger list
   const auto nEntries = fCAFTree->GetEntries();
   fTriggers.reserve(static_cast<std::size_t>(nEntries));
-  for (Long64_t e{}; e != nEntries; ++e) {
-    fCAFTree->GetEntry(e);
-    if (fSR->mc.nnu == 0) {
-      continue;
-    }
-
-    for (std::size_t i{}; i != fSR->mc.nnu; ++i) {
-      fEvtToEntry[fSR->mc.nu[i].id] = e;
-    }
-
-    // fTriggers.push_back(Trigger{e, 0, static_cast<unsigned long>(e), 0u});
-  }
 
   SetConfigured(true);
 }
