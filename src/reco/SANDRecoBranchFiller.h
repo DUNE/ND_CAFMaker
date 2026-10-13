@@ -22,13 +22,13 @@ class StandardRecord;
 
 namespace cafmaker {
 
-enum class SANDRecoVersion : std::int8_t { legacy, experimental };
+enum class SANDRecoVariant : std::int8_t { legacy, baseline };
 
-template<SANDRecoVersion V>
+template<SANDRecoVariant V>
 class SANDRecoBranchFiller;
 
 template<>
-class SANDRecoBranchFiller<SANDRecoVersion::experimental> : public IRecoBranchFiller {
+class SANDRecoBranchFiller<SANDRecoVariant::baseline> : public IRecoBranchFiller {
  public:
   explicit SANDRecoBranchFiller(const std::string& cafFilename, std::string treeName = "cafTree");
   ~SANDRecoBranchFiller();
@@ -46,14 +46,13 @@ class SANDRecoBranchFiller<SANDRecoVersion::experimental> : public IRecoBranchFi
   std::unique_ptr<TFile> fFile;
   TTree* fCAFTree{nullptr}; // owned by fFile
   caf::StandardRecord* fSR{nullptr};
-  std::unordered_map<long int, long int> fEvtToEntry;
   mutable std::vector<cafmaker::Trigger> fTriggers;
 };
 
 #ifdef ENABLE_SANDRECO_LEGACY
 
 template<>
-class SANDRecoBranchFiller<SANDRecoVersion::legacy> : public IRecoBranchFiller {
+class SANDRecoBranchFiller<SANDRecoVariant::legacy> : public IRecoBranchFiller {
  public:
   explicit SANDRecoBranchFiller(const std::string& recoFilename);
   ~SANDRecoBranchFiller();

@@ -42,8 +42,8 @@ namespace cafmaker
     // these are optional, but will change the contents of the output CAF if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
-    fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
-    fhicl::OptionalAtom<std::string> sandRecoExperimentalFile { fhicl::Name{"SANDRecoExperimentalFile"}, fhicl::Comment("Input SAND fake_reco CAF .root file") };
+    fhicl::OptionalAtom<std::string> sandRecoLegacyFile  { fhicl::Name{"SANDRecoLegacyFile"}, fhicl::Comment("Input SAND legacy reco .root file") };
+    fhicl::OptionalAtom<std::string> sandRecoFile { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND CAF .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };
     

@@ -130,19 +130,19 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   #ifdef ENABLE_SANDRECO_LEGACY
 
   std::string sandFile;
-  if (par().cafmaker().sandRecoFile(sandFile)) {
+  if (par().cafmaker().sandRecoLegacyFile(sandFile)) {
     recoFillers.emplace_back(
-      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVersion::legacy>>(sandFile));
+      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVariant::legacy>>(sandFile));
     std::cout << "   SAND (legacy)\n";
   }
 
   #else
 
-  std::string sandExpFile;
-  if (par().cafmaker().sandRecoExperimentalFile(sandExpFile)) {
+  std::string sandFile;
+  if (par().cafmaker().sandRecoFile(sandFile)) {
     recoFillers.emplace_back(
-      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVersion::experimental>>(sandExpFile));
-    std::cout << "   SAND (experimental)\n";
+      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVariant::baseline>>(sandFile));
+    std::cout << "   SAND\n";
   }
 
   #endif

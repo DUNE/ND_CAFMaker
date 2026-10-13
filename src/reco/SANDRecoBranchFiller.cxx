@@ -19,11 +19,11 @@
 
 namespace cafmaker {
 
-SANDRecoBranchFiller<SANDRecoVersion::experimental>::~SANDRecoBranchFiller() = default;
+SANDRecoBranchFiller<SANDRecoVariant::baseline>::~SANDRecoBranchFiller() = default;
 
-SANDRecoBranchFiller<SANDRecoVersion::experimental>::SANDRecoBranchFiller(
+SANDRecoBranchFiller<SANDRecoVariant::baseline>::SANDRecoBranchFiller(
     const std::string& cafFilename, std::string treeName)
-    : IRecoBranchFiller("SANDExperimental") {
+    : IRecoBranchFiller("SAND") {
   if (cafFilename.empty()) {
     LOG.WARNING() << GetName() << ": filename is empty\n";
     SetConfigured(false);
@@ -67,7 +67,7 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::SANDRecoBranchFiller(
 }
 
 std::deque<Trigger>
-SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType,
+SANDRecoBranchFiller<SANDRecoVariant::baseline>::GetTriggers(int triggerType,
                                                                  bool /*beamOnly*/) const {
 
   // This implementation is copied from the TMS BranchFiller. 
@@ -125,7 +125,7 @@ SANDRecoBranchFiller<SANDRecoVersion::experimental>::GetTriggers(int triggerType
     return triggers;
 }
 
-void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
+void SANDRecoBranchFiller<SANDRecoVariant::baseline>::_FillRecoBranches(
     const Trigger& trigger, caf::StandardRecord& sr, const cafmaker::Params& /*par*/,
     const TruthMatcher* truthMatcher) const {
 
@@ -161,10 +161,10 @@ void SANDRecoBranchFiller<SANDRecoVersion::experimental>::_FillRecoBranches(
 
 #ifdef ENABLE_SANDRECO_LEGACY
 
-SANDRecoBranchFiller<SANDRecoVersion::legacy>::~SANDRecoBranchFiller() = default;
+SANDRecoBranchFiller<SANDRecoVariant::legacy>::~SANDRecoBranchFiller() = default;
 
-SANDRecoBranchFiller<SANDRecoVersion::legacy>::SANDRecoBranchFiller(const std::string& recoFilename)
-    : IRecoBranchFiller("SAND") {
+SANDRecoBranchFiller<SANDRecoVariant::legacy>::SANDRecoBranchFiller(const std::string& recoFilename)
+    : IRecoBranchFiller("SANDLegacy") {
   if (recoFilename.empty()) {
     LOG.WARNING() << GetName() << ": filename is empty\n";
     SetConfigured(false);
@@ -202,7 +202,7 @@ SANDRecoBranchFiller<SANDRecoVersion::legacy>::SANDRecoBranchFiller(const std::s
 }
 
 std::deque<Trigger>
-SANDRecoBranchFiller<SANDRecoVersion::legacy>::GetTriggers(int triggerType,
+SANDRecoBranchFiller<SANDRecoVariant::legacy>::GetTriggers(int triggerType,
                                                            bool /*beamOnly*/) const {
   std::deque<Trigger> out;
   for (const auto& t : fTriggers) {
@@ -213,7 +213,7 @@ SANDRecoBranchFiller<SANDRecoVersion::legacy>::GetTriggers(int triggerType,
   return out;
 }
 
-void SANDRecoBranchFiller<SANDRecoVersion::legacy>::_FillRecoBranches(
+void SANDRecoBranchFiller<SANDRecoVariant::legacy>::_FillRecoBranches(
     const Trigger& trigger, caf::StandardRecord& sr, const cafmaker::Params& /*par*/,
     const TruthMatcher* truthMatcher) const {
   auto it = std::find(fTriggers.begin(), fTriggers.end(), trigger);
@@ -238,7 +238,7 @@ void SANDRecoBranchFiller<SANDRecoVersion::legacy>::_FillRecoBranches(
   }
 }
 
-void SANDRecoBranchFiller<SANDRecoVersion::legacy>::FillECalClusters(
+void SANDRecoBranchFiller<SANDRecoVariant::legacy>::FillECalClusters(
     const TruthMatcher* /*truthMatcher*/, caf::StandardRecord& sr, std::vector<cluster>& cl) const {
   const std::size_t n = cl.size();
   sr.nd.sand.ixn.resize(1);
@@ -259,7 +259,7 @@ void SANDRecoBranchFiller<SANDRecoVersion::legacy>::FillECalClusters(
   }
 }
 
-void SANDRecoBranchFiller<SANDRecoVersion::legacy>::FillTracks(const TruthMatcher* /*truthMatcher*/,
+void SANDRecoBranchFiller<SANDRecoVariant::legacy>::FillTracks(const TruthMatcher* /*truthMatcher*/,
                                                                caf::StandardRecord& sr,
                                                                std::vector<track>& tr) const {
   const std::size_t n = tr.size();
