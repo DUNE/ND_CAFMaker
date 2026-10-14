@@ -226,14 +226,12 @@ void SANDRecoBranchFiller<SANDRecoVariant::legacy>::_FillRecoBranches(
 
 void SANDRecoBranchFiller<SANDRecoVariant::legacy>::FillECalClusters(
     const TruthMatcher* /*truthMatcher*/, caf::StandardRecord& sr, std::vector<cluster>& cl) const {
-  const std::size_t n = cl.size();
-  sr.nd.sand.ixn.resize(1);
-  auto& ixn     = sr.nd.sand.ixn[0];
-  ixn.nclusters = n;
-  ixn.ECALClusters.resize(n);
+  auto& ecal     = sr.nd.sand.ecal;
+  ecal.nclusters = cl.size();
+  ecal.clusters.resize(cl.size());
 
-  for (std::size_t i{}; i != n; ++i) {
-    auto& c = ixn.ECALClusters[i];
+  for (std::size_t i{}; i != cl.size(); ++i) {
+    auto& c = ecal.clusters[i];
     c.E     = cl[i].e;
     c.position.SetXYZ(cl[i].x, cl[i].y, cl[i].z);
     c.var_position.SetXYZ(cl[i].varx, cl[i].vary, cl[i].varz);
@@ -248,15 +246,13 @@ void SANDRecoBranchFiller<SANDRecoVariant::legacy>::FillECalClusters(
 void SANDRecoBranchFiller<SANDRecoVariant::legacy>::FillTracks(const TruthMatcher* /*truthMatcher*/,
                                                                caf::StandardRecord& sr,
                                                                std::vector<track>& tr) const {
-  const std::size_t n = tr.size();
-  sr.nd.sand.ixn.resize(1);
-  auto& ixn   = sr.nd.sand.ixn[0];
-  ixn.ntracks = n;
-  ixn.tracks.resize(n);
+  auto& tracker   = sr.nd.sand.tracker;
+  tracker.ntracks = tr.size();
+  tracker.tracks.resize(tr.size());
 
-  for (std::size_t i{}; i != n; ++i) {
-    ixn.tracks[i].start.SetXYZ(tr[i].x0, tr[i].y0, tr[i].z0);
-    ixn.tracks[i].qual = tr[i].chi2_cr;
+  for (std::size_t i{}; i != tr.size(); ++i) {
+    tracker.tracks[i].start.SetXYZ(tr[i].x0, tr[i].y0, tr[i].z0);
+    tracker.tracks[i].qual = tr[i].chi2_cr;
   }
 }
 
