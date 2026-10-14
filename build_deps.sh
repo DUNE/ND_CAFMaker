@@ -11,7 +11,7 @@ FORCE=no
 if [[ $# -lt 3 ]] && [[ x$1 == x-f || x$2 == x-f ]]; then FORCE=yes; fi
 
 # set up software
-source ndcaf_setup.sh $build
+source ndcaf_setup_deps.sh $build
 
 # edep-sim needs to know where a certain GEANT .cmake file is...
 G4_cmake_file=`find ${GEANT4_FQ_DIR}/lib64 -name 'Geant4Config.cmake'`

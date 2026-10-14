@@ -25,7 +25,6 @@
 #include "reco/TMSRecoBranchFiller.h"
 #include "reco/MINERvARecoBranchFiller.h"
 
-#include "reco/NDLArTMSMatchRecoFiller.h"
 #include "reco/NDLArTMSUniqueMatchRecoFiller.h"
 #include "reco/NDLArMINERvAMatchRecoFiller.h"
 #include "reco/PandoraLArRecoNDBranchFiller.h"
@@ -127,32 +126,33 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 
   std::cout << "Filling Reco info for the following cases:\n";
 
+  
+  #ifdef ENABLE_SANDRECO_LEGACY
+
+  std::string sandFile;
+  if (par().cafmaker().sandRecoLegacyFile(sandFile)) {
+    recoFillers.emplace_back(
+      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVariant::legacy>>(sandFile));
+    std::cout << "   SAND (legacy)\n";
+  }
+
+  #else
+
+  std::string sandFile;
+  if (par().cafmaker().sandRecoFile(sandFile)) {
+    recoFillers.emplace_back(
+      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVariant::baseline>>(sandFile));
+    std::cout << "   SAND\n";
+  }
+
+  #endif
+  
   std::string ndlarFile;
   if (par().cafmaker().ndlarRecoFile(ndlarFile))
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::MLNDLArRecoBranchFiller>(ndlarFile));
     std::cout << "   ND-LAr (Deep-Learn-Physics ML)\n";
   }
-
-  #ifdef ENABLE_SANDRECO_LEGACY
-
-  std::string sandFile;
-  if (par().cafmaker().sandRecoFile(sandFile)) {
-    recoFillers.emplace_back(
-      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVersion::legacy>>(sandFile));
-    std::cout << "   SAND (legacy)\n";
-  }
-
-  #else
-
-  std::string sandExpFile;
-  if (par().cafmaker().sandRecoExperimentalFile(sandExpFile)) {
-    recoFillers.emplace_back(
-      std::make_unique<cafmaker::SANDRecoBranchFiller<cafmaker::SANDRecoVersion::experimental>>(sandExpFile));
-    std::cout << "   SAND (experimental)\n";
-  }
-
-  #endif
 
   // Pandora LArRecoND
   std::string pandoraFile;
@@ -167,7 +167,8 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   std::string tmsFile;
   if (par().cafmaker().tmsRecoFile(tmsFile))
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile));
+    recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile,
+                                                                              par().cafmaker().vertexMatchToleranceMm()));
     std::cout << "   TMS\n";
   }
 
@@ -182,17 +183,15 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   // if we did both ND-LAr and TMS, we should try to match them, too
   if ((!ndlarFile.empty() || !pandoraFile.empty()) && !tmsFile.empty())
   {
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSMatchRecoFiller>());
-
-    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(),
-                                                                                      par().cafmaker().sigmaY(),
-                                                                                      par().cafmaker().singleAngle(),
-                                                                                      par().cafmaker().sigmaTh(),
-                                                                                      par().cafmaker().sigmaThX(),
-                                                                                      par().cafmaker().sigmaThY(),
-                                                                                      par().cafmaker().useTime(),
-                                                                                      par().cafmaker().meanT(),
-                                                                                      par().cafmaker().sigmaT(),
+    recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(), 
+                                                                                      par().cafmaker().sigmaY(), 
+                                                                                      par().cafmaker().singleAngle(), 
+                                                                                      par().cafmaker().sigmaTh(), 
+                                                                                      par().cafmaker().sigmaThX(), 
+                                                                                      par().cafmaker().sigmaThY(), 
+                                                                                      par().cafmaker().useTime(), 
+                                                                                      par().cafmaker().meanT(), 
+                                                                                      par().cafmaker().sigmaT(), 
                                                                                       par().cafmaker().fcut()));
     std::cout << "   ND-LAr + TMS matching\n";
   }
@@ -401,7 +400,8 @@ void loop(CAF &caf,
   // but the TruthMatching knows not to try to do anything with a null gtree
   cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::TruthMatcher truthMatcher(ghepFilenames, edepsimFilename , caf.mcrec,
-                                      [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); });
+                                      [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); },
+                                      par().cafmaker().positionToleranceMm());
   truthMatcher.SetLogThrehsold(thresh);
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
@@ -461,12 +461,16 @@ void loop(CAF &caf,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-
-    // hand off to the correct reco filler(s).
-    for (const auto & fillerTrigPair : groupedTriggers[ii])
+    // hand off to the correct reco filler(s), in the order of recoFillers
+    // (SAND first: it replaces sr.mc, and the other fillers store indices into sr.mc.nu)
+    for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     {
-      cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
-      fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+      for (const auto & fillerTrigPair : groupedTriggers[ii])
+      {
+        if (fillerTrigPair.first != filler.get()) continue;
+        cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << filler->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+        filler->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
+      }
     }
 
     // Once all the reco fillers have been called, let's call the matching fillers

@@ -112,7 +112,7 @@ namespace cafmaker
       MnvRecoTree->SetBranchAddress("mc_int_edepsimId", mc_int_edepsimId);
 
 
-      MnvRecoTree->GetEntry(0);
+      CheckedGetEntry(MnvRecoTree, 0, "MINERvA reco first entry");
       is_data =  ev_gps_time_sec>1.5e9; 
 
       //Meta branches
@@ -210,7 +210,7 @@ namespace cafmaker
   // here we copy all the MINERvA reco into the SRMINERvA branch of the StandardRecord object.
   void MINERvARecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
                                                 caf::StandardRecord &sr,
-                                                const cafmaker::Params &par,
+                                                const cafmaker::Params &/*par*/,
                                                 const TruthMatcher *truthMatch) const
   {
 
@@ -229,7 +229,7 @@ namespace cafmaker
 
 
     // Get nth entry from tree
-    MnvRecoTree->GetEntry(fEntryMap[idx]);  
+CheckedGetEntry(MnvRecoTree, fEntryMap[idx], "MINERvA event lookup");
     
     //Fill MINERvA specific info in the meta branch
     sr.meta.minerva.enabled = true;
@@ -535,7 +535,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  bool MINERvARecoBranchFiller::IsBeamTrigger(int triggerType) const
+  bool MINERvARecoBranchFiller::IsBeamTrigger(int /* triggerType */) const
   {
     //Check if the trigger is a beam trigger -- By construction Mx2 is always a beam trigger. 
     return true;
@@ -562,7 +562,7 @@ namespace cafmaker
       for (int entry = 0; entry < MnvRecoTree->GetEntries(); entry++)
       {
 
-        MnvRecoTree->GetEntry(entry);
+        CheckedGetEntry(MnvRecoTree, entry, "MINERvA trigger discovery");
         if ((triggerType>=0 && ev_trigger_type != triggerType) || (beamOnly && !IsBeamTrigger(ev_trigger_type))) 
         {
           LOG.VERBOSE() << "    skipping trigger ID=" << ev_trigger_type << "\n";

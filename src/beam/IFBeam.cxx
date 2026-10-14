@@ -133,7 +133,7 @@ namespace cafmaker
 
       for(const auto& pairA : deviceMap["E:NSLINA"]) {
         auto timeA = pairA.first;
-        auto currentA = pairA.second.at(0); 
+        currentA = pairA.second.at(0);
         
         if(currentA == 0.) continue;
 
@@ -181,8 +181,8 @@ namespace cafmaker
       auto it = std::find_if(data.begin(), data.end(),
           [par, &groupedTrigger](const auto& spill) {
               return std::all_of(groupedTrigger.cbegin(), groupedTrigger.cend(),
-                  [par, &spill](const auto& groupedTrigger) {
-                      return std::abs(util::getTriggerTime(groupedTrigger.second) - spill.first) < par().cafmaker().beamMatchDT();
+                  [par, &spill](const auto& gt) {
+                      return std::abs(util::getTriggerTime(gt.second) - spill.first) < par().cafmaker().beamMatchDT();
                   });
           });
 
