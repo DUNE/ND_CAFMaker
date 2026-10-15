@@ -123,7 +123,7 @@ namespace cafmaker
     {
       for (Long64_t entry = 0; entry < TMSTrueSpill->GetEntries(); ++entry)
       {
-        TMSTrueSpill->GetEntry(entry);
+        CheckedGetEntry(TMSTrueSpill, entry, "TMS Truth_Spill load");
         auto [it, inserted] = fTruthSpillEntryBySpillNo.emplace(_TruthSpillSpillNo, entry);
         if (!inserted && it->second != entry)
         {
@@ -142,7 +142,7 @@ namespace cafmaker
       throw std::runtime_error(ss.str());
     }
 
-    TMSTrueSpill->GetEntry(it->second);
+    CheckedGetEntry(TMSTrueSpill, it->second, "TMS Truth_Spill spill lookup");
   }
 
   unsigned long TMSRecoBranchFiller::ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const
@@ -296,7 +296,7 @@ namespace cafmaker
     int i = trigger.evtID; // pseudo-itterator for ixn
 
     int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
-    TMSRecoTree->GetEntry(i); // Load first entry for now
+    CheckedGetEntry(TMSRecoTree, i, "TMS Reco_Tree initial entry");
     LastSpillNo = _SpillNo;
 
     LoadTruthSpillEntry(LastSpillNo);
@@ -307,9 +307,9 @@ namespace cafmaker
     }
 
     // the i index is incremented at the end of the following while()
-    TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
-    TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
-    TMSLCTree->GetEntry(i); 
+    CheckedGetEntry(TMSRecoTree, i, "TMS Reco_Tree spill sync");
+    CheckedGetEntry(TMSTrueTree, i, "TMS Truth_Info spill sync");
+    CheckedGetEntry(TMSLCTree, i, "TMS Line_Candidates spill sync");
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
       if (_nTracks < 0)
@@ -372,9 +372,9 @@ namespace cafmaker
         }
       }
 
-      TMSRecoTree->GetEntry(++i); // Load each subsequent entry before loop test condition
-      TMSTrueTree->GetEntry(  i); // Load each subsequent entry before loop test condition, i already incremented
-      TMSLCTree  ->GetEntry(  i);
+      CheckedGetEntry(TMSRecoTree, ++i, "TMS Reco_Tree spill iteration");
+      CheckedGetEntry(TMSTrueTree, i, "TMS Truth_Info spill iteration");
+      CheckedGetEntry(TMSLCTree, i, "TMS Line_Candidates spill iteration");
 
     }
   }
@@ -410,7 +410,7 @@ namespace cafmaker
 
       for (int entry = 0; entry < TMSRecoTree->GetEntries(); entry++)
       {
-        TMSRecoTree->GetEntry(entry);
+        CheckedGetEntry(TMSRecoTree, entry, "TMS trigger discovery");
 
         if (_SpillNo == lastSpillNo)
           continue; // Only first 'event' in each spill populates a trigger
