@@ -14,7 +14,8 @@ namespace cafmaker
 {
 
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename,
-                                           double vertexMatchToleranceMm)
+                                           double vertexMatchToleranceMm,
+                                           const std::string &treeSuffix)
     : IRecoBranchFiller("TMS"),
     fTriggers(),
     fLastTriggerReqd(fTriggers.end()),
@@ -27,10 +28,12 @@ namespace cafmaker
       SetConfigured(true);
 
       // Save pointer to input tree
-      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Reco_Tree"));
+      const std::string recoTreeName = "Reco_Tree" + treeSuffix;
+      const std::string truthTreeName = "Truth_Info" + treeSuffix;
+      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get(recoTreeName.c_str()));
       TMSLCTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
       if (!TMSRecoTree) {
-        std::cerr << "Did not find TMS reco tree Reco_Tree in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Did not find TMS reco tree " << recoTreeName << " in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -41,9 +44,9 @@ namespace cafmaker
         throw;
       }
       // Save pointer to truth tree
-      TMSTrueTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Truth_Info"));
+      TMSTrueTree = dynamic_cast<TTree*>(fTMSRecoFile->Get(truthTreeName.c_str()));
       if (!TMSTrueTree) {
-        std::cerr << "Did not find TMS true tree Truth_Info in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Did not find TMS true tree " << truthTreeName << " in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
