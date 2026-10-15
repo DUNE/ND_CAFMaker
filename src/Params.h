@@ -78,16 +78,18 @@ namespace cafmaker
     fhicl::Atom<float> trackMatchdThetaY { fhicl::Name("TrackMatchDeltaThetaY"), fhicl::Comment("Maximum angle difference with respect to Y axis [rad]"), .09};
 
     // LAr-TMS track matching criteria (default values based on simulation work Quinton Weyrich)
-    fhicl::Atom<double> sigmaX { fhicl::Name("SigmaX"), fhicl::Comment("Standard deviation of x-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 107.317};
-    fhicl::Atom<double> sigmaY { fhicl::Name("SigmaY"), fhicl::Comment("Standard deviation of y-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 70.776};
-    fhicl::Atom<bool> singleAngle { fhicl::Name("SingleAnglreme"), fhicl::Comment("Calculate a single 3D angle between matching tracks (true) or split into x- and y-components"), false};
-    fhicl::Atom<double> sigmaTh { fhicl::Name("SigmaTheta"), fhicl::Comment("Standard deviation of 3D angle between end of Pandora reco track and start of matching TMS reco track [deg]"), 19.3};
-    fhicl::Atom<double> sigmaThX { fhicl::Name("SigmaThetaX"), fhicl::Comment("Standard deviation of angle along x-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 12.12};
-    fhicl::Atom<double> sigmaThY { fhicl::Name("SigmaThetaY"), fhicl::Comment("Standard deviation of angle along y-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 16.85};
+    fhicl::Atom<double> sigmaX { fhicl::Name("SigmaX"), fhicl::Comment("Standard deviation of x-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 4.928};
+    fhicl::Atom<double> sigmaY { fhicl::Name("SigmaY"), fhicl::Comment("Standard deviation of y-distance between projected Pandora reco track to start of TMS and matching TMS reco track [cm]"), 5.386};
+    fhicl::Atom<double> sigmaThX { fhicl::Name("SigmaThetaX"), fhicl::Comment("Standard deviation of angle along x-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 2.75};
+    fhicl::Atom<double> sigmaThY { fhicl::Name("SigmaThetaY"), fhicl::Comment("Standard deviation of angle along y-axis between end of Pandora reco track and start of matching TMS reco track [deg]"), 2.11};
     fhicl::Atom<bool> useTime { fhicl::Name("UseTime"), fhicl::Comment("Include time in track matching calculation"), true};
-    fhicl::Atom<double> meanT { fhicl::Name("MeanT"), fhicl::Comment("Average time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 18.88};
-    fhicl::Atom<double> sigmaT { fhicl::Name("SigmaT"), fhicl::Comment("Standard deviation of time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 8.84};
-    fhicl::Atom<double> fcut { fhicl::Name("fCut"), fhicl::Comment("Maximum permissible match score for the matching, (best choice depends on whether time is included)"), 59.67}; //without time: 5.25
+    fhicl::Atom<double> meanT { fhicl::Name("MeanT"), fhicl::Comment("Average time difference between recorded Pandora reco track and matching TMS reco track [ns]"), -5.08};
+    fhicl::Atom<double> sigmaT { fhicl::Name("SigmaT"), fhicl::Comment("Standard deviation of time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 13.63};
+    fhicl::Atom<double> fcut { fhicl::Name("fCut"), fhicl::Comment("Maximum permissible match score for the matching"), 184.21};
+    // Note: the above values are based on N5p1 data. In N5p1, the issue described in https://github.com/DUNE/dune-tms/issues/261 prevented the TMS reco time from filling correctly, so meanT was
+    // calculated using TimeSliceStartTime as the TMS track time, which will be very early if hits from previous events get clustered into a track for a later event. This happens regularly in N5p1,
+    // creating a large tail of TMS tracks with an earlier times than the LAr tracks which match with them in truth. meanT should be re-checked now that the issue has been fixed - should not be negative
+    fhicl::Atom<bool> useSmearTime { fhicl::Name("UseSmearTime"), fhicl::Comment("If true, use the truth-level particle time for the LAr track time with a 10 ns Gaussian smear. If false, use the reco time for the LAr track obtained through charge-light matching. Only set to false if you are working with files that have that reco time filled"), true};
 
     fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between Truth_Spill primary-particle birth position and matched Truth_Spill vertex [mm]"), 100.0};
     fhicl::Atom<double> positionToleranceMm { fhicl::Name("PositionToleranceMm"), fhicl::Comment("Maximum distance between TMS truth position and matched EDepSim vertex position [mm]"), 1.0};

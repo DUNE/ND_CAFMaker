@@ -48,12 +48,15 @@ namespace cafmaker
                               std::vector<caf::SRInteraction> &nuInteractions, const TruthMatcher *truthMatch,
                               float& longestTrack, caf::SRVector3D& longestTrackDir, float& maxShowerE, caf::SRVector3D& maxShowerEDir) const;
       bool HasOuterfaceBranches() const;
+      bool HasT0() const;
       void FillTruthInfo(const unsigned i, const TruthMatcher *truthMatch, caf::StandardRecord &sr, caf::TrueParticleID& truePartID) const;
       bool FillTrack(const int i, caf::SRRecoParticle& recoParticle) const;
       bool FillShower(const int i, caf::SRShower& shower) const;
  
       std::unique_ptr<TFile> m_LArRecoNDFile;
       std::unique_ptr<TTree> m_LArRecoNDTree;
+
+      bool m_inputHasTime = false; // does the input file have a reconstructed time branch? If so fill the time.
 
       // CONSTANTS
       const int m_muonPDG = 13;
@@ -64,7 +67,9 @@ namespace cafmaker
       const int m_positronPDG = -11;
       const float m_mMuon = 0.1056583755; // [GeV]
       const float m_mProton = 0.93827208943; // [GeV]
-      const float m_mElectron = 0.00051099895; // [GeV]                                             
+      const float m_mElectron = 0.00051099895; // [GeV]
+      
+      const float m_nsPerTickT0 = 16.0; // [ns] - converts reco t0 to a time in ns.
 
       // BRANCHES NAMES: see https://github.com/brucehoward-physics/LArRecoND/blob/feature/PandoraOuterface_Complete/include/PandoraOuterface.h
       int m_eventId;
@@ -97,6 +102,7 @@ namespace cafmaker
       std::vector<int> *m_isRecoPrimaryVect = nullptr;
       std::vector<int> *m_recoPDGVect = nullptr;
       std::vector<float> *m_trackScoreVect = nullptr;
+      std::vector<float> *m_particleT0 = nullptr;
       // TRACK VARIABLES
       std::vector<int> *m_trkfitPID_PDG = nullptr;
       std::vector<int> *m_trkfitPID_NDF = nullptr;

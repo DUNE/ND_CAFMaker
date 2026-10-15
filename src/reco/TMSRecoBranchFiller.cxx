@@ -357,7 +357,7 @@ namespace cafmaker
                                                                                [&srTrueInt](const caf::SRTrueInteraction& ixn)
                                                                                { return ixn.id == srTrueInt.id; })));
 
-          // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries)
+          // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries) and update NDLArTMSUniqueMatchRecoFiller.cxx in turn when you do
           const int recoTruthParticleIdx = ResolveRecoTrackTruthParticleIndex(j);
           const int partG4ID = _TruthSpillTrackID[recoTruthParticleIdx];
           truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);

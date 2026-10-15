@@ -172,14 +172,13 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::NDLArTMSUniqueMatchRecoFiller>(par().cafmaker().sigmaX(),
                                                                                       par().cafmaker().sigmaY(), 
-                                                                                      par().cafmaker().singleAngle(), 
-                                                                                      par().cafmaker().sigmaTh(), 
                                                                                       par().cafmaker().sigmaThX(), 
                                                                                       par().cafmaker().sigmaThY(), 
                                                                                       par().cafmaker().useTime(), 
                                                                                       par().cafmaker().meanT(), 
                                                                                       par().cafmaker().sigmaT(), 
-                                                                                      par().cafmaker().fcut()));
+                                                                                      par().cafmaker().fcut(),
+																					  par().cafmaker().useSmearTime()));
     std::cout << "   ND-LAr + TMS matching\n";
   }
 
