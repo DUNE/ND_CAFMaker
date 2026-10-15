@@ -27,8 +27,13 @@ namespace cafmaker
   class TMSRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
+      /// treeSuffix selects which TMS reconstruction to read: it is appended to the names of the
+      /// per-track trees, Reco_Tree and Truth_Info. Empty (the default) reads the legacy reconstruction;
+      /// "_C3D" reads the Cluster3D reconstruction (Reco_Tree_C3D / Truth_Info_C3D), which has the same
+      /// branches. Line_Candidates (slice start time) and Truth_Spill are per slice / per spill and shared.
       TMSRecoBranchFiller(const std::string & tmsRecoFilename,
-                          double vertexMatchToleranceMm);
+                          double vertexMatchToleranceMm,
+                          const std::string & treeSuffix = "");
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
