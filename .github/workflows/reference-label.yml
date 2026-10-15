@@ -1,0 +1,56 @@
+name: Label reference changes
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  label:
+    name: Label PRs that change test references
+    runs-on: ubuntu-latest
+    steps:
+      # Only inspect PR metadata; never check out or execute PR code here.
+      - name: Check reference changes and label PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+            const isReference = path => path?.startsWith('test/references/');
+            if (!files.some(file =>
+              isReference(file.filename) || isReference(file.previous_filename)
+            )) {
+              core.info('No test reference changes relative to the target branch.');
+              return;
+            }
+
+            const label = 'changes-reference';
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: label });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.issues.createLabel({
+                owner,
+                repo,
+                name: label,
+                color: 'FBCA04',
+                description: 'Changes test reference files relative to the target branch',
+              });
+            }
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pull_number,
+              labels: [label],
+            });

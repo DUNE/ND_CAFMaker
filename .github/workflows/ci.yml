@@ -51,3 +51,27 @@ jobs:
               command -v makeCAF || { echo 'makeCAF not in PATH'; exit 1; }
               makeCAF --help || exit \$?
             " 2>&1
+
+      - name: Run CAFMaker
+        run: |
+          apptainer exec \
+            --bind /cvmfs \
+            --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
+            bash -c "
+              cd '${GITHUB_WORKSPACE}' || exit \$?
+              source install/bin/ndcaf_setup.sh prof || exit \$?
+              mkdir -p outputs || exit \$?
+              makeCAF --fcl=cafmaker_0000965.fcl -n 1 || exit \$?
+            " 2>&1
+
+      - name: Dump CAF output
+        run: |
+          python3 -m pip install uproot awkward numpy
+          python3 test/scripts/dumper.py outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root --vector-entries 5
+
+      - name: Compare CAF output with reference
+        run: |
+          diff -u \
+            test/references/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root.json \
+            outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root.json
