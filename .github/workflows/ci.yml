@@ -52,6 +52,44 @@ jobs:
               makeCAF --help || exit \$?
             " 2>&1
 
+      - name: Package installed runtime
+        run: tar -czf ndcaf-runtime.tar.gz install
+
+      - name: Upload installed runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndcaf-runtime
+          path: ndcaf-runtime.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+
+  run-cafmaker:
+    name: Run CAFMaker
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download installed runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: ndcaf-runtime
+
+      - name: Extract installed runtime
+        run: tar -xzf ndcaf-runtime.tar.gz
+
+      - name: Install Apptainer
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get update -qq
+          sudo apt-get install -y apptainer
+
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
+
       - name: Run CAFMaker
         run: |
           apptainer exec \
@@ -64,6 +102,28 @@ jobs:
               mkdir -p outputs || exit \$?
               makeCAF --fcl=cafmaker_0000965.fcl -n 1 || exit \$?
             " 2>&1
+
+      - name: Upload CAF output
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-output
+          path: outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root
+          if-no-files-found: error
+          compression-level: 0
+
+  verify:
+    name: Verify CAF output
+    needs: run-cafmaker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CAF output
+        uses: actions/download-artifact@v4
+        with:
+          name: caf-output
+          path: outputs
 
       - name: Dump CAF output
         run: |
