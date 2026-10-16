@@ -314,7 +314,14 @@ namespace cafmaker
                                              const cafmaker::Params &/*par*/,
                                              const TruthMatcher */*truthMatcher*/) const
   {
-    TRandom3 rng( static_cast<unsigned int>(trigger.triggerTime_ns ));
+
+    // TRandom3 seed of 0 means 'use current time', very nondeterministic
+    const auto seed_guarded = [](unsigned int seed){
+      return seed == 0U ? 1U : seed;
+    };
+    TRandom3 rng( seed_guarded(trigger.triggerTime_ns) );
+ 
+ 
 
     std::vector<caf::SRNDTrackAssn> possiblePandoraMatches; // vector will store all possible matched tracks between Pandora and TMS
     std::vector<caf::SRNDTrackAssn> possibleSPINEMatches; // vector will store all possible matched tracks between SPINE and TMS
