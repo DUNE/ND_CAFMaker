@@ -61,6 +61,9 @@ namespace cafmaker
 
     // 0.1 s is default
     fhicl::Atom<float>  beamMatchDT { fhicl::Name("BeamMatchDeltaT"), fhicl::Comment("Maximum time difference, in s, between triggers and beam"), 0.1 };
+
+    // 1e12 is default for NuMI; spills below it are pedestal noise (incl. negative readings)
+    fhicl::Atom<double> minSpillPOT { fhicl::Name("MinSpillPOT"), fhicl::Comment("Minimum POT reading for a spill to be counted as beam"), 1e12 };
     
     // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future 
     fhicl::Atom<float> mx2_2x2_offsetX {fhicl::Name("Mx2_2x2_offsetX"), fhicl::Comment("Mx2 - 2x2 offset in X direction in cm"), 0.};
