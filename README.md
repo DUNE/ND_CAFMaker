@@ -31,7 +31,7 @@ For the minimal test setup:
 
 Extending upon the minimal test setup you can:
 * Provide a `NDLArRecoFile`, which contains the output of the ND LAr reconstruction
-* Provide a `TMSRecoFile`, which contains the output of the TMS reconstruction
+* Provide a `TMSRecoFile`, which contains the output of the TMS reconstruction (set `TMSRecoTreeSuffix: "_C3D"` to fill the TMS branch from the Cluster3D reconstruction, `Reco_Tree_C3D` / `Truth_Info_C3D`, instead of the legacy `Reco_Tree` / `Truth_Info`)
 * Provide a `SANDRecoFile`, which contains the output of the SAND reconstruction
 
 To add variables and inspect what is set and how, check `src/Params.h`.
