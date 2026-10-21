@@ -86,7 +86,8 @@ public:
       kPhotonRes = 16,
       kDarkMatterElastic = 101,
       kDarkMatterDIS = 102,
-      kDarkMatterElectron = 103
+      kDarkMatterElectron = 103,
+      kCC = 18
   };
 
   enum class SelectionType {

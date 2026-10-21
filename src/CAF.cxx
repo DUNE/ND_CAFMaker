@@ -92,8 +92,9 @@ CAF::CAF(const std::string &filename,
   };
 
   const std::map<std::string, InteractionType> interactionMap = {
-    {"QE", InteractionType::kQE}
-  };
+    {"QE", InteractionType::kQE},
+    {"CC", InteractionType::kCC}
+};
 
   const std::map<std::string, RecoType> recoMap = {
     {"RealReco", RecoType::kRealReco},
