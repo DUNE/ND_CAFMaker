@@ -57,12 +57,13 @@ source ndcaf_setup_deps.sh {prof|debug}
 ### spine-reader
 
 The ND-LAr ML reco (SPINE) HDF5 files are read with
-[spine-reader](https://github.com/pgranger23/spine-reader), a C++17 library that needs only the
+[spine-reader](https://github.com/DeepLearnPhysics/spine-reader), a C++17 library that needs only the
 HDF5 C library (the UPS `hdf5` product set up by `ndcaf_setup_deps.sh`; the C++ API is no longer used).
 Build and install it once, in the same environment (after `source ndcaf_setup_deps.sh`):
 
 ```
-cmake -S /path/to/spine-reader -B spine-reader-build \
+git clone https://github.com/DeepLearnPhysics/spine-reader.git
+cmake -S spine-reader -B spine-reader-build \
       -DCMAKE_INSTALL_PREFIX=/path/to/spine-reader-install -DSPINE_READER_BUILD_TESTS=OFF
 cmake --build spine-reader-build && cmake --install spine-reader-build
 ```
