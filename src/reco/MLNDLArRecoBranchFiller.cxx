@@ -704,7 +704,7 @@ namespace cafmaker
 
       caf::SRTrack track;
       // fill shower variables
-      track.Evis = part.calo_ke/1000.;
+      track.Evis = static_cast<float>(part.calo_ke)/1000.;   // calo_ke was a float member of the generated struct: keep its float32 rounding, so the CAF is unchanged
 
       // fill track energy with range-based estimate if contained, otherwise MCS-based estimate
       if (part.is_contained)
@@ -829,7 +829,7 @@ namespace cafmaker
 
       caf::SRShower shower;
       // fill shower variables
-      shower.Evis = part.calo_ke/1000.;
+      shower.Evis = static_cast<float>(part.calo_ke)/1000.;   // calo_ke was a float member of the generated struct: keep its float32 rounding, so the CAF is unchanged
       shower.start = caf::SRVector3D(part.start_point[0], part.start_point[1], part.start_point[2]);
       shower.direction = caf::SRVector3D(part.start_dir[0], part.start_dir[1], part.start_dir[2]);
       if (part.match_ids.size())
