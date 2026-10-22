@@ -1,4 +1,7 @@
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
+#include <iomanip>
 #include <numeric>
 
 #include "boost/program_options/options_description.hpp"
@@ -376,6 +379,122 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 }
 
 // -------------------------------------------------
+/// Assign each trigger to the spill whose time window [N * period, (N+1) * period) contains it, and build one
+/// entry per spill, in time order (a spill with no trigger gives a truth-only entry with no triggers).
+/// Throws if:
+//   - a trigger falls into a window with no spill
+//   - a filler has more than one trigger in a spill
+///  - the interactions of a spill are not all in one window
+//   - two spills share a window
+///
+/// \param triggersByFiller  The triggers of each reco filler
+/// \param spillTimeRanges   (earliest, latest) interaction time [s] of each spill, by spill ID
+/// \param spillPeriod_s     Spill period [s] used by the spill-building step
+/// \param spillOfGroup      Output: the spill ID of each returned entry
+/// \return                  One group of (filler, trigger) pairs per spill, in time order
+std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+buildSpillGroups(const std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> & triggersByFiller,
+                 const std::map<long, std::pair<double, double>> & spillTimeRanges,
+                 double spillPeriod_s,
+                 std::vector<long> & spillOfGroup)
+{
+  auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildSpillGroups()"); };
+  using TriggerGroup = std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>;
+
+  const auto fail = [&LOG](const std::string & msg) {
+    LOG().FATAL() << msg;
+    throw std::runtime_error(msg);
+  };
+
+  // Tolerance is needed for floating ronding. Some trigger timestamps are 4.19999999 instead of 4.2 or similar
+  constexpr double kWindowStartTolerance_s = 1e-6;
+  const auto window = [spillPeriod_s](double t_s)
+  { return static_cast<long>(std::floor((t_s + kWindowStartTolerance_s) / spillPeriod_s)); };
+
+  struct Slot {
+    long spill = -1;
+    TriggerGroup group;
+  };
+
+  // slots window index N
+  std::map<long, Slot> slots;  
+
+  // every interaction of a spill must be inside the window of that spill, and each window holds at most one spill
+  for (const auto& [spill, range] : spillTimeRanges) {
+    const long N = window(range.first);
+    if (window(range.second) != N) {
+      std::stringstream ss;
+      ss << std::setprecision(17) << "The interactions of spill " << spill << " span from t = " << range.first
+         << " s to " << range.second << " s, across more than one spill window of " << spillPeriod_s << " s\n";
+      fail(ss.str());
+    }
+
+    Slot& slot = slots[N];
+
+    if (slot.spill >= 0) {
+      std::stringstream ss;
+      ss << "Spills " << slot.spill << " and " << spill << " are in the same spill window [" << N * spillPeriod_s
+         << ", " << (N + 1) * spillPeriod_s << ") s\n";
+      fail(ss.str());
+    }
+
+    slot.spill = spill;
+  }
+
+  std::size_t nTriggers = 0;
+  for (const auto& [filler, triggers] : triggersByFiller) {
+    for (const cafmaker::Trigger & trig : triggers) {
+      const double t = trig.triggerTime_s + 1e-9 * trig.triggerTime_ns;
+      const long N = window(t);
+      LOG().VERBOSE() << std::setprecision(17) << filler->GetName() << " trigger " << trig.evtID << " (t = " << t
+                      << " s) -> spill window " << N << "\n";
+
+      auto itSlot = slots.find(N);
+      if (itSlot == slots.end()) {
+        std::stringstream ss;
+        ss << std::setprecision(17) << filler->GetName() << " trigger " << trig.evtID << " (t = " << t
+           << " s) is in the spill window [" << N * spillPeriod_s << ", " << (N + 1) * spillPeriod_s
+           << ") s, which has no spill in the event_spill_map\n";
+        fail(ss.str());
+      }
+
+      Slot& slot = itSlot->second;
+      auto itSame = std::find_if(slot.group.begin(), slot.group.end(),
+                                 [filler = filler](const auto & pair) { return pair.first == filler; });
+      if (itSame != slot.group.end()) {
+        std::stringstream ss;
+        ss << std::setprecision(17) << filler->GetName() << " has two triggers in spill " << slot.spill
+           << " (window " << N << "): trigger " << itSame->second.evtID << " (t = "
+           << itSame->second.triggerTime_s + 1e-9 * itSame->second.triggerTime_ns << " s) and trigger " << trig.evtID
+           << " (t = " << t << " s), but only one trigger per filler and spill is supported\n";
+        fail(ss.str());
+      }
+
+      slot.group.emplace_back(filler, trig);
+      ++nTriggers;
+    }
+  }
+
+  std::vector<TriggerGroup> ret;
+  ret.reserve(slots.size());
+  spillOfGroup.clear();
+  spillOfGroup.reserve(slots.size());
+  std::size_t nEmptySpills = 0;
+  for (auto & [N, slot] : slots) {
+    if (slot.group.empty()) {
+      ++nEmptySpills;
+    }
+    spillOfGroup.push_back(slot.spill);
+    ret.push_back(std::move(slot.group));
+  }
+
+  LOG().INFO() << "Grouped " << nTriggers << " triggers into " << slots.size() << " spills (windows of " << spillPeriod_s
+               << " s), of which " << nEmptySpills << " without any trigger (truth only)\n";
+
+  return ret;
+}
+
+// -------------------------------------------------
 // main loop function
 void loop(CAF &caf,
           cafmaker::Params &par,
@@ -404,8 +523,21 @@ void loop(CAF &caf,
     }
     triggersByRBF.insert({filler.get(), TriggerList});
   }
-  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+
+  // Using timing information from edepsip spill-based file to assign triggers to spills.
+  // One trigger per filler per spill allowed, error otherwise
+  // MC: the EDepSim file must be the one produced by the spill-build step
+  // Data: triggers are grouped by time among themselves. To be replaced by matching 
+  // the fillers' triggers to an externally provided trigger list?
+  const bool is_mc = truthMatcher.HaveEDEPSIM();
+
+  std::vector<long> spillOfGroup;  // spill ID of each entry
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> groupedTriggers;
+  if (is_mc) {
+    groupedTriggers = buildSpillGroups(triggersByRBF, truthMatcher.GetSpillTimeRanges(), truthMatcher.GetSpillPeriod(), spillOfGroup);
+  } else {
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
+  }
 
   // sanity checks
   if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
@@ -448,6 +580,10 @@ void loop(CAF &caf,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
+    if (is_mc) {
+      const long spillID = spillOfGroup[ii];
+      truthMatcher.FillSpill(caf.sr, spillID);
+    }
 
     // hand off to the correct reco filler(s).
     for (const auto & fillerTrigPair : groupedTriggers[ii])
@@ -459,7 +595,8 @@ void loop(CAF &caf,
     // Once all the reco fillers have been called, let's call the matching fillers
     for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     {
-      if (filler->FillerType() == cafmaker::RecoFillerType::Matcher)
+      // Added condition to check for truth-only spills (with empty groupedTriggers)
+      if (filler->FillerType() == cafmaker::RecoFillerType::Matcher && !groupedTriggers[ii].empty()) 
       {
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }

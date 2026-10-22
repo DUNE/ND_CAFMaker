@@ -160,6 +160,22 @@
                    double positionToleranceMm);
       ~TruthMatcher();
 
+
+      /// Add to sr.mc.nu every true interaction of the given spill, with its full particle tree
+      /// The spill membership comes from the 'event_spill_map' written by the spill-building
+      /// step into the EDEPSIM_SPILLS file.
+      /// \param sr       The caf::StandardRecord to be filled with mc info
+      /// \param spillID  The ID of the spill to fill
+      void FillSpill(caf::StandardRecord & sr, long spillID) const;
+
+      /// Time range [s] of the interactions of each spill in the event_spill_map, as (spill ID, (earliest, latest) vertex time).
+      /// Empty if there is no EDepSim file. The vertex times are those set by the spill-building step
+      std::map<long, std::pair<double, double>> GetSpillTimeRanges() const;
+
+      /// Spill period [s] used by the spill-building step ('spillPeriod_s' in the EDEPSIM_SPILLS file),
+      /// or NaN if there is no EDepSim file
+      double GetSpillPeriod() const;
+
       /// Find a TrueParticle within a given StandardRecord, or, if it doesn't exist, optionally make a new one
       ///
       /// \param sr         The caf::StandardRecord in question
@@ -220,6 +236,16 @@
     static void FillInteraction(caf::SRTrueInteraction& nu, const genie::NtpMCEventRecord * gEvt, const TG4Event * g4event, int nixn);
     // static void FillParticle(caf::SRTrueParticle * part, std::size_t nixn, const TG4Event * g4event);
     int FillParticle(caf::SRTrueInteraction &ixn, std::size_t nixn, int G4ID, std::vector<caf::SRTrueParticle> & collection, int & counter, const TG4Event * g4event) const;
+    
+    /// Fill prim and sec of a new interaction with the full edep-sim trajectory tree:
+    /// primaries first, then secondaries in pre-order,
+    /// linked through parentID / daughtersID / daughters / ancestor_id
+    ///
+    /// \param ixn      The interaction to fill
+    /// \param nixn     Index of ixn in sr.mc.nu, used for the TrueParticleIDs (parentID, daughtersID, ancestor_id)
+    /// \param g4event  The edep-sim event of the interaction
+    void FillParticleTree(caf::SRTrueInteraction &ixn, std::size_t nixn, const TG4Event *g4event) const;
+
     void EnsureSecondaryParentClosure(caf::SRTrueInteraction &ixn,
                                       std::size_t nixn,
                                       int G4ID,
@@ -280,6 +306,13 @@
           const TG4Event * G4Event() const;
           const TTree * GetEdepTree() const;
          
+          /// Vertex IDs (as run * 1000000 + event) of all the interactions in a spill, in EDepSim tree order
+          ///
+          /// \param spillID  Spill ID, as in the event_spill_map
+          /// \return         The packed vertex IDs; throws std::out_of_range if the spill is not in the map
+          const std::vector<unsigned long int> & VertexIDsInSpill(long spillID);
+          const std::map<long, std::pair<double, double>> & SpillTimeRanges_ns();
+          double SpillPeriod();
           void  LoadTree();
 
         private:
@@ -289,6 +322,9 @@
           std::map<unsigned int, std::vector<VertexCandidate>> fEventToVertexIDs;
           std::map<long long, std::vector<const VertexCandidate*>> fVertexCandidatesByYBin;
           std::map<std::tuple<double, double, double>, unsigned long int> fResolvedVertexIDByPosition;
+          std::map<long, std::vector<unsigned long int>> fVertexIDsBySpill;
+          std::map<long, std::pair<double, double>> fSpillTimeRange_ns;
+          double fSpillPeriod_s;
           double fPositionToleranceMm;
           const TG4Event * fG4Event;
           bool f_isTreeLoaded;
