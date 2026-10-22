@@ -93,18 +93,12 @@ if(CMAKE_MATCH_1)
   list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_MATCH_1}")
 endif()
 
-if("$ENV{HDF5_FQ_DIR}" MATCHES "debug")
-  set(_hdf5_lib hdf5_cpp_debug)
-else()
-  set(_hdf5_lib hdf5_cpp)
-endif()
-
-find_ups_package(
-  TARGET_NAME deps::hdf5
-  INC_VAR HDF5_INC
-  LIB_VAR HDF5_LIB
-  LIBS ${_hdf5_lib}
-  REQUIRED)
+# SPINE HDF5 files are read by spine-reader (https://github.com/pgranger23/spine-reader),
+# which needs only the HDF5 C library. Point CMAKE_PREFIX_PATH at spine-reader's install
+# prefix (-DCMAKE_PREFIX_PATH=<prefix>) so that find_package finds SpineReaderConfig.cmake.
+# spine-reader finds HDF5 with find_package(HDF5 COMPONENTS C), which picks up the UPS hdf5
+# product that ndcaf_setup_deps.sh sets up (it is on CMAKE_PREFIX_PATH).
+find_package(SpineReader CONFIG REQUIRED)
 
 find_ups_package(
   TARGET_NAME deps::log4cpp

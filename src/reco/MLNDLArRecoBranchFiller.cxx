@@ -1,120 +1,177 @@
 
 #include "MLNDLArRecoBranchFiller.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <functional>
+#include <initializer_list>
 #include <limits>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 // StandardRecord format
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
 // our headers
-#include "DLP_h5_classes.h"
 #include "Params.h"
 #include "truth/FillTruth.h"
 
-using namespace cafmaker::types::dlp;
-
-// these overloads needed to make the ValidateOrCopy() templates functional over these types
-std::ostream & operator<<(std::ostream& stream, InteractionMode mode)
-{
-  return stream << static_cast<std::underlying_type<InteractionMode>::type>(mode);
-}
-
-std::ostream & operator<<(std::ostream& stream, CurrentType curr)
-{
-  return stream << static_cast<std::underlying_type<CurrentType>::type>(curr);
-}
-
 namespace cafmaker
 {
-  caf::ScatteringMode DLP2CAF(cafmaker::types::dlp::InteractionMode mode)
+  namespace
   {
-    using cafmaker::types::dlp::InteractionMode;
-
-    switch(mode)
+    /// The columns of the SPINE file that this filler reads, product by product.
+    /// This is the single place that lists them: the constructor checks every entry
+    /// against what spine-reader found in the file (CheckFileHasWhatFillerReads()), so that a file
+    /// lacking one of them is refused instead of being read with the model's default value.
+    /// Columns that are not listed here are never looked at and may be absent.
+    ///
+    /// When adding a use of a column to this file, add it here.
+    struct FillerInput
     {
-      case InteractionMode::kQE:
-        return caf::kQE;
+      std::string product;            ///< product (HDF5 dataset) name in the file
+      bool        productOptional;    ///< truth products: data files may lack them; if present, every field below is required
+      std::vector<std::string> fields;  ///< SPINE names of the columns of the product that the filler reads
+    };
 
-      case InteractionMode::kDIS:
-        return caf::kDIS;
-
-      // for whatever reason they don't appear to have a catchall RES enumerator,
-      // just all the various NUISANCE codes ... :-|
-      case InteractionMode::kResCCNuBarDelta0PiMinus:        [[fallthrough]];
-      case InteractionMode::kResCCNuBarDeltaMinusPiPlus:     [[fallthrough]];
-      case InteractionMode::kResCCNuBarKaon0Lambda0:         [[fallthrough]];
-      case InteractionMode::kResCCNuBarNeutronEta:           [[fallthrough]];
-      case InteractionMode::kResCCNuBarNeutronPi0Pi0:        [[fallthrough]];
-      case InteractionMode::kResCCNuBarNeutronPiMinus:       [[fallthrough]];
-      case InteractionMode::kResCCNuBarNeutronPiPlusPiMinus: [[fallthrough]];
-      case InteractionMode::kResCCNuBarNeutronRho0:          [[fallthrough]];
-      case InteractionMode::kResCCNuBarNeutronRhoMinus:      [[fallthrough]];
-      case InteractionMode::kResCCNuBarProtonPi0:            [[fallthrough]];
-      case InteractionMode::kResCCNuBarProtonPi0Pi0:         [[fallthrough]];
-      case InteractionMode::kResCCNuBarProtonPiMinus:        [[fallthrough]];
-      case InteractionMode::kResCCNuBarSigma0Kaon0:          [[fallthrough]];
-      case InteractionMode::kResCCNuBarSigmaMinusKaon0:      [[fallthrough]];
-      case InteractionMode::kResCCNuDelta2PlusPiMinus:       [[fallthrough]];
-      case InteractionMode::kResCCNuDeltaPlusPiPlus:         [[fallthrough]];
-      case InteractionMode::kResCCNuKaonPlusLambda0:         [[fallthrough]];
-      case InteractionMode::kResCCNuNeutronPi0:              [[fallthrough]];
-      case InteractionMode::kResCCNuNeutronPiPlus:           [[fallthrough]];
-      case InteractionMode::kResCCNuNeutronRhoPlus:          [[fallthrough]];
-      case InteractionMode::kResCCNuProtonEta:               [[fallthrough]];
-      case InteractionMode::kResCCNuProtonPi0Pi0:            [[fallthrough]];
-      case InteractionMode::kResCCNuProtonPiPlus:            [[fallthrough]];
-      case InteractionMode::kResCCNuProtonPiPlusPiMinus:     [[fallthrough]];
-      case InteractionMode::kResCCNuProtonRhoPlus:           [[fallthrough]];
-      case InteractionMode::kResCCNuSigmaPlusKaon0:          [[fallthrough]];
-      case InteractionMode::kResCCNuSigmaPlusKaonPlus:       [[fallthrough]];
-      case InteractionMode::kResNCNuBarNeutronPi0:           [[fallthrough]];
-      case InteractionMode::kResNCNuBarNeutronPiMinus:       [[fallthrough]];
-      case InteractionMode::kResNCNuBarProtonPi0:            [[fallthrough]];
-      case InteractionMode::kResNCNuBarProtonPiPlus:         [[fallthrough]];
-      case InteractionMode::kResNCNuNeutronPi0:              [[fallthrough]];
-      case InteractionMode::kResNCNuNeutronPiMinus:          [[fallthrough]];
-      case InteractionMode::kResNCNuProtonPi0:               [[fallthrough]];
-      case InteractionMode::kResNCNuProtonPiPlus:
-        return caf::kRes;
-
-      case InteractionMode::kCoh:
-        return caf::kCoh;
-
-      case InteractionMode::kDiffractive:
-        return caf::kDiffractive;
-
-      case InteractionMode::kNuElectronElastic:
-        return caf::kNuElectronElastic;
-
-      case InteractionMode::kInverseMuDecay:
-        return caf::kInvMuonDecay;
-
-      case InteractionMode::kAMNuGamma:
-        return caf::kAMNuGamma;
-
-      case InteractionMode::kMEC:
-        return caf::kMEC;
-
-      case InteractionMode::kCohElastic:
-        return caf::kCohElastic;
-
-      case InteractionMode::kInverseBetaDecay:
-        return caf::kInverseBetaDecay;
-
-      case InteractionMode::kGlashowResonance:
-        return caf::kGlashowResonance;
-
-      case InteractionMode::kIMDAnnihilation:
-        return caf::kIMDAnnihilation;
-
-      case InteractionMode::kUnknownInteraction:
-        return caf::kUnknownMode;
-
-      default:
-        std::cerr << "Unrecognized scattering mode: " << static_cast<int>(mode) << "\n";
-        abort();
+    template <class Cls>
+    std::vector<std::string> FieldNames(std::initializer_list<typename Cls::Field> which)
+    {
+      std::vector<std::string> names;
+      for (auto f : which)
+        names.emplace_back(Cls::descriptor().fields[static_cast<std::size_t>(f)].name);
+      return names;
     }
 
+    const std::vector<FillerInput> & FillerInputs()
+    {
+      using spine::RecoParticle;
+      using spine::RecoInteraction;
+      using spine::TruthParticle;
+      using spine::TruthInteraction;
+      using spine::Flash;
+      using spine::RunInfo;
+      using spine::Trigger;
+      static const std::vector<FillerInput> inputs =
+      {
+        {"reco_particles", false, FieldNames<RecoParticle>({
+          RecoParticle::Field::id, RecoParticle::Field::is_primary, RecoParticle::Field::is_contained,
+          RecoParticle::Field::pdg_code, RecoParticle::Field::shape,
+          RecoParticle::Field::start_point, RecoParticle::Field::end_point,
+          RecoParticle::Field::start_dir, RecoParticle::Field::end_dir,
+          RecoParticle::Field::momentum, RecoParticle::Field::mass,
+          RecoParticle::Field::csda_ke, RecoParticle::Field::mcs_ke, RecoParticle::Field::calo_ke,
+          RecoParticle::Field::match_ids, RecoParticle::Field::match_overlaps,
+          RecoParticle::Field::interaction_id})},
+        {"reco_interactions", false, FieldNames<RecoInteraction>({
+          RecoInteraction::Field::id, RecoInteraction::Field::vertex,
+          RecoInteraction::Field::match_ids, RecoInteraction::Field::match_overlaps,
+          RecoInteraction::Field::flash_total_pe, RecoInteraction::Field::flash_hypo_pe})},
+        {"truth_particles", true, FieldNames<TruthParticle>({
+          TruthParticle::Field::id, TruthParticle::Field::track_id,
+          TruthParticle::Field::interaction_id, TruthParticle::Field::orig_interaction_id,
+          TruthParticle::Field::pdg_code, TruthParticle::Field::is_primary,
+          TruthParticle::Field::position, TruthParticle::Field::end_position,
+          TruthParticle::Field::momentum, TruthParticle::Field::energy_init})},
+        {"truth_interactions", true, FieldNames<TruthInteraction>({
+          TruthInteraction::Field::id, TruthInteraction::Field::orig_id})},
+        {"flashes", false, FieldNames<Flash>({
+          Flash::Field::id, Flash::Field::volume_id, Flash::Field::time,
+          Flash::Field::time_width, Flash::Field::total_pe})},
+        {"run_info", false, FieldNames<RunInfo>({
+          RunInfo::Field::run, RunInfo::Field::subrun, RunInfo::Field::event})},
+        {"trigger", false, FieldNames<Trigger>({
+          Trigger::Field::id, Trigger::Field::type, Trigger::Field::time_s, Trigger::Field::time_ns})},
+      };
+      return inputs;
+    }
+
+    /// The products read through the event reader (all but "trigger", which has a reader of its own)
+    spine::ReaderOptions EventReaderOptions()
+    {
+      spine::ReaderOptions opts;
+      for (const FillerInput & in : FillerInputs())
+        if (in.product != "trigger")
+          opts.products.push_back(in.product);
+      return opts;
+    }
+
+    spine::ReaderOptions TriggerReaderOptions()
+    {
+      spine::ReaderOptions opts;
+      opts.products = {"trigger"};
+      return opts;
+    }
+
+    /// Name of a field in a SchemaReport::mismatched entry ("name: reason")
+    std::string MismatchedFieldName(const std::string & entry)
+    {
+      return entry.substr(0, entry.find(':'));
+    }
+
+    /// All the triggers of the file, in file order: one per event, so the position in the list is the event index
+    std::vector<spine::Trigger> ReadAllTriggers(const spine::Reader & triggerReader)
+    {
+      std::vector<spine::Trigger> triggers;
+      triggers.reserve(triggerReader.num_events());
+      for (std::uint64_t evt = 0; evt < triggerReader.num_events(); ++evt)
+      {
+        const spine::Event event = triggerReader.event(evt);
+        const std::vector<spine::Trigger> & inEvent = event.objects<spine::Trigger>("trigger");
+        if (inEvent.size() != 1)
+          throw std::runtime_error("event " + std::to_string(evt) + " has " + std::to_string(inEvent.size())
+                                   + " triggers; the ND-LAr ML reco filler pairs the trigger and the event of the same position, so it needs exactly one");
+        triggers.push_back(inEvent.front());
+      }
+      return triggers;
+    }
+
+    /// Throw if the file lacks a product or a column that this filler reads.
+    /// A missing column would otherwise be read as the model's default (NaN, -1, 0, ...) with no message at all.
+    /// \param report   what spine-reader found in the file
+    /// \param products which of FillerInputs() to check (this reader's)
+    void CheckFileHasWhatFillerReads(const spine::SchemaReport & report, const std::string & filename,
+                                     const std::function<bool(const std::string &)> & products)
+    {
+      std::stringstream problems;
+      for (const FillerInput & in : FillerInputs())
+      {
+        if (!products(in.product))
+          continue;
+        const auto it = std::find_if(report.products.begin(), report.products.end(),
+                                     [&in](const spine::ProductReport & p) { return p.product == in.product; });
+        if (it == report.products.end())
+        {
+          if (!in.productOptional)
+            problems << "\n  product '" << in.product << "' is not in the file";
+          continue;
+        }
+
+        std::string lacking;
+        for (const std::string & field : in.fields)
+        {
+          const bool missing = std::find(it->missing.begin(), it->missing.end(), field) != it->missing.end();
+          const bool mismatched = std::any_of(it->mismatched.begin(), it->mismatched.end(),
+                                              [&field](const std::string & m) { return MismatchedFieldName(m) == field; });
+          if (missing || mismatched)
+            lacking += (lacking.empty() ? "" : ", ") + field + (mismatched ? " (wrong type)" : "");
+        }
+        if (!lacking.empty())
+          problems << "\n  product '" << in.product << "' lacks the field(s) " << lacking;
+      }
+
+      if (!problems.str().empty())
+      {
+        std::stringstream msg;
+        msg << "SPINE file '" << filename << "' (SPINE " << report.spine_version << ", " << report.layout
+            << ") cannot be used by the ND-LAr ML reco filler, which reads columns it does not have:" << problems.str() << "\n";
+        throw std::runtime_error(msg.str());
+      }
+    }
   }
 
   // ------------------------------------------------------------------------------
@@ -158,18 +215,17 @@ namespace cafmaker
   // todo: possibly build some mechanism for customizing the dataset names in the file here
   MLNDLArRecoBranchFiller::MLNDLArRecoBranchFiller(const std::string &h5filename)
     : IRecoBranchFiller("LArML"),
-      fDSReader(h5filename,
-                {{std::type_index(typeid(Particle)),                      "reco_particles"},
-                 {std::type_index(typeid(Interaction)),                   "reco_interactions"},
-                 {std::type_index(typeid(TrueParticle)),                  "truth_particles"},
-                 {std::type_index(typeid(TrueInteraction)),               "truth_interactions"},
-                 {std::type_index(typeid(Flash)),                         "flashes"},
-                 {std::type_index(typeid(Event)),                         "events"},
-                 {std::type_index(typeid(RunInfo)),                       "run_info"},
-                 {std::type_index(typeid(cafmaker::types::dlp::Trigger)), "trigger"}}),  // needs to be disambiguated from CAFMaker's internal Trigger
+      fReader(h5filename, EventReaderOptions()),
+      fTriggerReader(h5filename, TriggerReaderOptions()),
       fTriggers(),
       fLastTriggerReqd(fTriggers.end())
   {
+    // refuse a file that lacks a product or a column that this filler uses
+    CheckFileHasWhatFillerReads(fReader.schema_report(), h5filename,
+                                [](const std::string & product) { return product != "trigger"; });
+    CheckFileHasWhatFillerReads(fTriggerReader.schema_report(), h5filename,
+                                [](const std::string & product) { return product == "trigger"; });
+
     // if we got this far, nothing bad happened trying to open the file or dataset
     SetConfigured(true);
   }
@@ -195,8 +251,10 @@ namespace cafmaker
 
     LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
     idx = fEntryMap[idx];
+    // all the products of this event: spine-reader reads them together
+    spine::Event event = fReader.event(idx);
     //Fill ND-LAr specific info in the meta branch
-    H5DataView<cafmaker::types::dlp::RunInfo> run_info = fDSReader.GetProducts<cafmaker::types::dlp::RunInfo>(idx);
+    const std::vector<spine::RunInfo> & run_info = event.objects<spine::RunInfo>("run_info");
     sr.meta.lar2x2.enabled = true;
     for (const auto & runinf : run_info)
     {
@@ -211,17 +269,17 @@ namespace cafmaker
     // reset the map of SPINE particle ID to (sr.common.ixn.dlp, sr.common.ixn.dlp.part.dlp) indices for this entry
     fParticleMapper.Reset();
 
-    H5DataView<cafmaker::types::dlp::Interaction> interactions = fDSReader.GetProducts<cafmaker::types::dlp::Interaction>(idx);
-    H5DataView<cafmaker::types::dlp::TrueInteraction> trueInteractions = fDSReader.GetProducts<cafmaker::types::dlp::TrueInteraction>(idx);
-    H5DataView<cafmaker::types::dlp::TrueParticle> trueParticles = fDSReader.GetProducts<cafmaker::types::dlp::TrueParticle>(idx);
+    const std::vector<spine::RecoInteraction> & interactions = event.reco_interactions();
+    const std::vector<spine::TruthInteraction> & trueInteractions = event.truth_interactions();
+    const std::vector<spine::TruthParticle> & trueParticles = event.truth_particles();
     FillInteractions(interactions, trueInteractions, trueParticles, truthMatcher, sr);
 
-    H5DataView<cafmaker::types::dlp::Particle> particles = fDSReader.GetProducts<cafmaker::types::dlp::Particle>(idx);
+    const std::vector<spine::RecoParticle> & particles = event.reco_particles();
     FillParticles(particles, trueInteractions, trueParticles, truthMatcher, sr);
 
     FillTracks(particles, trueInteractions, trueParticles, truthMatcher, sr);
     FillShowers(particles, trueInteractions, trueParticles, truthMatcher, sr);
-    H5DataView<cafmaker::types::dlp::Flash> flashes = fDSReader.GetProducts<cafmaker::types::dlp::Flash>(idx);
+    const std::vector<spine::Flash> & flashes = event.objects<spine::Flash>("flashes");
     FillFlashes(flashes, sr);
 
     // todo: now do some sanity checks:
@@ -249,7 +307,7 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueInteraction(caf::SRTrueInteraction & /*srTrueInt*/,
-                                                    const cafmaker::types::dlp::TrueInteraction & /*ptTrueInt*/ /* pt = "pass-through" */) const
+                                                    const spine::TruthInteraction & /*ptTrueInt*/ /* pt = "pass-through" */) const
   {
     LOG.DEBUG() << "    now copying truth info from MLReco TrueInteraction to SRTrueInteraction...\n";
 
@@ -262,16 +320,16 @@ namespace cafmaker
     //ValidateOrCopy(ptTrueInt.truth_vertex[1], srTrueInt.vtx.y, NaN, "SRTrueInteraction::vtx::y");
     //ValidateOrCopy(ptTrueInt.truth_vertex[2], srTrueInt.vtx.z, NaN, "SRTrueInteraction::vtx::z");
 
-    const std::function<bool(const CurrentType &, const bool &)> nuCurrComp =
-    [](const CurrentType & inCurr, const bool & outCurr)
+    const std::function<bool(const spine::NuCurrentType &, const bool &)> nuCurrComp =
+    [](const spine::NuCurrentType & inCurr, const bool & outCurr)
     {
-      return (outCurr && inCurr == cafmaker::types::dlp::CurrentType::kCC)
-             || (!outCurr && inCurr == cafmaker::types::dlp::CurrentType::kNC);
+      return (outCurr && inCurr == spine::NuCurrentType::CC)
+             || (!outCurr && inCurr == spine::NuCurrentType::NC);
     };
-    const std::function<void(const CurrentType & inCurr, bool & outCurr)> nuCurrSet =
-    [](const CurrentType & inCurr, bool & outCurr)
+    const std::function<void(const spine::NuCurrentType & inCurr, bool & outCurr)> nuCurrSet =
+    [](const spine::NuCurrentType & inCurr, bool & outCurr)
     {
-      outCurr = inCurr == cafmaker::types::dlp::CurrentType::kCC;
+      outCurr = inCurr == spine::NuCurrentType::CC;
     };
 
     // todo: these need us to propagate nu info through Supera.  WIP
@@ -317,8 +375,8 @@ namespace cafmaker
 
   // ------------------------------------------------------------------------------
   void MLNDLArRecoBranchFiller::FillTrueParticle(caf::SRTrueParticle & srTruePart,
-                                                 const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/) const
+                                                 const spine::TruthParticle & truePartPassthrough,
+                                                 const std::vector<spine::TruthParticle> &/*trueParticles*/) const
   {
     const auto NaN = std::numeric_limits<float>::signaling_NaN();
     ValidateOrCopy(truePartPassthrough.pdg_code, srTruePart.pdg, 0, "pdg_code");
@@ -382,7 +440,7 @@ namespace cafmaker
     struct DLPIxnComp
     {
       long int ixnID;
-      bool operator()(const cafmaker::types::dlp::TrueInteraction & ixn)
+      bool operator()(const spine::TruthInteraction & ixn)
       {
         return ixn.id == ixnID;
       }
@@ -401,9 +459,9 @@ namespace cafmaker
 
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
-                                                 const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                                                 const H5DataView<cafmaker::types::dlp::TrueParticle> &/*trueParticles*/,
+  void MLNDLArRecoBranchFiller::FillInteractions(const std::vector<spine::RecoInteraction> &ixns,
+                                                 const std::vector<spine::TruthInteraction> &trueIxns,
+                                                 const std::vector<spine::TruthParticle> &/*trueParticles*/,
                                                  const TruthMatcher * truthMatch,
                                                  caf::StandardRecord &sr) const
   {
@@ -441,7 +499,7 @@ namespace cafmaker
             LOG.FATAL() << msg.str();
             throw std::out_of_range(msg.str());
           }
-          cafmaker::types::dlp::TrueInteraction trueIxnPassThrough = *itIxn;
+          const spine::TruthInteraction & trueIxnPassThrough = *itIxn;
 
           LOG.VERBOSE() << "  Finding matched true interaction with ML-reco ID = " << trueIxnPassThrough.id
                         << " and interaction ID = " << trueIxnPassThrough.orig_id
@@ -490,9 +548,9 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
-                                              const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
-                                              const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+  void MLNDLArRecoBranchFiller::FillParticles(const std::vector<spine::RecoParticle> &particles,
+                                              const std::vector<spine::TruthInteraction> &trueInxns,
+                                              const std::vector<spine::TruthParticle> &trueParticles,
                                               const TruthMatcher * truthMatch,
                                               caf::StandardRecord &sr) const
   {
@@ -517,7 +575,7 @@ namespace cafmaker
       reco_particle.p.y = part.momentum[1]/1000.;
       reco_particle.p.z = part.momentum[2]/1000.;
       float KE_MeV;
-      if(part.shape == types::dlp::Shape::kTrack)
+      if(part.shape == spine::ParticleShape::TRACK)
       {
         if(part.is_contained)
         {
@@ -542,7 +600,7 @@ namespace cafmaker
         for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
           LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match_ids[idx] << "\n";
-          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
+          const spine::TruthParticle & truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
@@ -565,7 +623,7 @@ namespace cafmaker
             LOG.FATAL() << ss.str();
             throw std::out_of_range(ss.str());
           }
-          const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
+          const spine::TruthInteraction & trueIxn = *it_ixn;
 
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.orig_id, false);
 
@@ -628,9 +686,9 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
-                                           const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
-                                           const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+  void MLNDLArRecoBranchFiller::FillTracks(const std::vector<spine::RecoParticle> & particles,
+                                           const std::vector<spine::TruthInteraction> &trueInxns,
+                                           const std::vector<spine::TruthParticle> &trueParticles,
                                            const TruthMatcher * truthMatch,
                                            caf::StandardRecord &sr) const
   {
@@ -640,7 +698,7 @@ namespace cafmaker
     for (const auto & part : particles)
     {
       // only choose 'particles' that correspond to Track type
-      if (part.shape != types::dlp::Shape::kTrack)
+      if (part.shape != spine::ParticleShape::TRACK)
         continue;
 
 
@@ -664,7 +722,7 @@ namespace cafmaker
         for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
           LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match_ids[idx] << "\n";
-          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
+          const spine::TruthParticle & truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
@@ -687,7 +745,7 @@ namespace cafmaker
             LOG.FATAL() << ss.str();
             throw std::out_of_range(ss.str());
           }
-          const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
+          const spine::TruthInteraction & trueIxn = *it_ixn;
 
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.orig_id, false);
 
@@ -755,9 +813,9 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
-                                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
-                                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+  void MLNDLArRecoBranchFiller::FillShowers(const std::vector<spine::RecoParticle> & particles,
+                                            const std::vector<spine::TruthInteraction> &trueInxns,
+                                            const std::vector<spine::TruthParticle> &trueParticles,
                                             const TruthMatcher * truthMatch,
                                             caf::StandardRecord &sr) const
   {
@@ -766,7 +824,7 @@ namespace cafmaker
 
     for (const auto & part : particles)
     {
-      if (part.shape != types::dlp::Shape::kShower)
+      if (part.shape != spine::ParticleShape::SHOWER)
         continue;
 
       caf::SRShower shower;
@@ -779,7 +837,7 @@ namespace cafmaker
         for (std::size_t idx = 0; idx < part.match_ids.size(); idx++)
         {
           LOG.VERBOSE() << "   searching for matched true particle with ML reco index: " << part.match_ids[idx] << "\n";
-          cafmaker::types::dlp::TrueParticle truePartPassThrough = trueParticles[part.match_ids[idx]];
+          const spine::TruthParticle & truePartPassThrough = trueParticles[part.match_ids[idx]];
 
           LOG.VERBOSE() << "      id = " << truePartPassThrough.id << "; "
                     << "track id = " << truePartPassThrough.track_id << "; "
@@ -802,7 +860,7 @@ namespace cafmaker
             LOG.FATAL() << ss.str();
             throw std::out_of_range(ss.str());
           }
-          const cafmaker::types::dlp::TrueInteraction & trueIxn = *it_ixn;
+          const spine::TruthInteraction & trueIxn = *it_ixn;
 
           caf::SRTrueInteraction & srTrueInt = truthMatch->GetTrueInteraction(sr, trueIxn.orig_id, false);
 
@@ -867,7 +925,7 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------------------------
-  void MLNDLArRecoBranchFiller::FillFlashes(const H5DataView<cafmaker::types::dlp::Flash> & flashes,
+  void MLNDLArRecoBranchFiller::FillFlashes(const std::vector<spine::Flash> & flashes,
                                             caf::StandardRecord &sr) const
   {
 
@@ -907,10 +965,10 @@ namespace cafmaker
     int entry = -1;
     if (fTriggers.empty())
     {
-      auto triggersIn = fDSReader.GetProducts<cafmaker::types::dlp::Trigger>(-1); // get ALL the Trigger products
+      auto triggersIn = ReadAllTriggers(fTriggerReader); // get ALL the Trigger products
       LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << triggersIn.size() << " ND-LAr RunInfo products:\n";
       fTriggers.reserve(triggersIn.size());
-      for (const cafmaker::types::dlp::Trigger &trigger: triggersIn)
+      for (const spine::Trigger &trigger: triggersIn)
       {
         entry +=1;
         if ((triggerType >= 0 &&  trigger.type != triggerType) || (beamOnly && !IsBeamTrigger(trigger.type)))

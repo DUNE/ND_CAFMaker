@@ -2,16 +2,13 @@
 set(LIB_SOURCES
     CAF.cxx
     beam/IFBeam.cxx
-    reco/DLP_h5_classes.cxx
     reco/MINERvARecoBranchFiller.cxx
     reco/MLNDLArRecoBranchFiller.cxx
-    reco/NDLArDLPH5DatasetReader.cxx
     reco/NDLArMINERvAMatchRecoFiller.cxx
     reco/NDLArTMSUniqueMatchRecoFiller.cxx
     reco/PandoraLArRecoNDBranchFiller.cxx
     reco/SANDRecoBranchFiller.cxx
     reco/TMSRecoBranchFiller.cxx
-    reco/readH5/DatasetBuffer.cxx
     truth/FillTruth.cxx
     util/FloatMath.cxx
     util/GENIEBannerBypass.cxx
@@ -33,7 +30,7 @@ target_link_libraries(
   ND_CAFMaker
   PUBLIC deps::log4cpp
          deps::libxml2
-         deps::hdf5
+         SpineReader::spine_reader
          deps::pythia6
          deps::gsl
          deps::lhapdf
