@@ -536,6 +536,9 @@ void loop(CAF &caf,
   if (is_mc) {
     groupedTriggers = buildSpillGroups(triggersByRBF, truthMatcher.GetSpillTimeRanges(), truthMatcher.GetSpillPeriod(), spillOfGroup);
   } else {
+    cafmaker::LOG_S("loop()").WARNING() << "No EDepSim file found: assuming data, the triggers are grouped by time among "
+                                        << "themselves (max dT = " << par().cafmaker().trigMatchDT() << " ns), "
+                                        << "with no spill and no truth\n";
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
   }
 
