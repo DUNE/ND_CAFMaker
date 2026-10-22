@@ -93,7 +93,7 @@ if(CMAKE_MATCH_1)
   list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_MATCH_1}")
 endif()
 
-# SPINE HDF5 files are read by spine-reader (https://github.com/pgranger23/spine-reader),
+# SPINE HDF5 files are read by spine-reader (https://github.com/DeepLearnPhysics/spine-reader),
 # which needs only the HDF5 C library. Point CMAKE_PREFIX_PATH at spine-reader's install
 # prefix (-DCMAKE_PREFIX_PATH=<prefix>) so that find_package finds SpineReaderConfig.cmake.
 # spine-reader finds HDF5 with find_package(HDF5 COMPONENTS C), which picks up the UPS hdf5
