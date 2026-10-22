@@ -54,13 +54,33 @@ Once inside the container, source the dependency setup script before configuring
 source ndcaf_setup_deps.sh {prof|debug}
 ```
 
+### spine-reader
+
+The ND-LAr ML reco (SPINE) HDF5 files are read with
+[spine-reader](https://github.com/DeepLearnPhysics/spine-reader), a C++17 library that needs only the
+HDF5 C library (the UPS `hdf5` product set up by `ndcaf_setup_deps.sh`; the C++ API is no longer used).
+Build and install it once, in the same environment (after `source ndcaf_setup_deps.sh`):
+
+```
+git clone https://github.com/DeepLearnPhysics/spine-reader.git
+cmake -S spine-reader -B spine-reader-build \
+      -DCMAKE_INSTALL_PREFIX=/path/to/spine-reader-install -DSPINE_READER_BUILD_TESTS=OFF
+cmake --build spine-reader-build && cmake --install spine-reader-build
+```
+
+and pass its install prefix to the ND_CAFMaker configure step with `-DCMAKE_PREFIX_PATH=/path/to/spine-reader-install`
+(see below). Both builds find the UPS `hdf5` product through `CMAKE_PREFIX_PATH`, which `ndcaf_setup_deps.sh` sets.
+
+A SPINE file that lacks a product or a column that the ND-LAr ML filler reads is refused when the
+filler is constructed, with a message naming the file, the product and the fields.
+
 ### CMake configuration
 
 Once you've set up your environment, configure and build with CMake.
 From the project root folder:
 
 ```
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug # or Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/path/to/spine-reader-install # or Release
 cmake --build build 
 ```
 

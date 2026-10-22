@@ -12,6 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # spine-reader reads the SPINE HDF5 files. Until it is available as a
+      # UPS/Spack product, CI builds it from source at a fixed commit.
+      - name: Check out spine-reader
+        uses: actions/checkout@v4
+        with:
+          repository: DeepLearnPhysics/spine-reader
+          ref: 3b61598273f537fd0b54f2f45cfbcafcb1c1b2ef
+          path: .ci/spine-reader
+
       - name: Install Apptainer
         run: |
           sudo add-apt-repository -y ppa:apptainer/ppa
@@ -36,7 +45,13 @@ jobs:
             bash -c "
               cd '${GITHUB_WORKSPACE}'
               source ndcaf_setup_deps.sh prof
-              cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || exit \$?
+              cmake -S .ci/spine-reader -B .ci/spine-reader-build -DCMAKE_BUILD_TYPE=Release \
+                    -DCMAKE_INSTALL_PREFIX='${GITHUB_WORKSPACE}/.ci/spine-reader-install' \
+                    -DSPINE_READER_BUILD_TESTS=OFF || exit \$?
+              cmake --build .ci/spine-reader-build -j\$(nproc) || exit \$?
+              cmake --install .ci/spine-reader-build || exit \$?
+              cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+                    -DCMAKE_PREFIX_PATH='${GITHUB_WORKSPACE}/.ci/spine-reader-install' || exit \$?
               cmake --build build -j\$(nproc) || exit \$?
               cmake --install build --prefix install || exit \$?
 
