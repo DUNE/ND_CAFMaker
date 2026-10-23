@@ -309,7 +309,10 @@ namespace cafmaker
         }
       }
 
-      CheckedGetEntry(TMSRecoTree, ++i, "TMS Reco_Tree spill iteration");
+      // the last spill in the file ends at the last entry, not at a change of SpillNo
+      if (++i >= TMSRecoTree->GetEntries())
+        break;
+      CheckedGetEntry(TMSRecoTree, i, "TMS Reco_Tree spill iteration");
       CheckedGetEntry(TMSTrueTree, i, "TMS Truth_Info spill iteration");
       CheckedGetEntry(TMSLCTree, i, "TMS Line_Candidates spill iteration");
 
