@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <limits>
-#include <unordered_set>
 
 /*
  * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Oct 2024
@@ -95,6 +94,7 @@ namespace cafmaker
       TMSTrueSpill->SetBranchAddress("TrueVtxX",                       _TruthSpillTrueVtxX);
       TMSTrueSpill->SetBranchAddress("TrueVtxY",                       _TruthSpillTrueVtxY);
       TMSTrueSpill->SetBranchAddress("TrueVtxZ",                       _TruthSpillTrueVtxZ);
+      TMSTrueSpill->SetBranchAddress("PDG",                            _TruthSpillPDG);
 
     } else {
       fTMSRecoFile = NULL;
@@ -174,101 +174,36 @@ namespace cafmaker
     return particleIdx;
   }
 
-  int TMSRecoBranchFiller::FindTruthSpillParticleIndex(int vertexId, int trackId) const
+  // The track's particle carries its own vertex ID even when dune-tms pruned its parents, so only vertices
+  // with that ID are candidates; the same EventId can repeat across runs in a spill, so the one whose
+  // edep-sim interaction has the particle's trajectory (same PDG, starting at its birth position) wins.
+  bool TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx, unsigned long & ixnID) const
   {
-    for (int i = 0; i < _TruthSpillNTrueParticles; ++i)
-    {
-      if (_TruthSpillParticleVertexID[i] == vertexId && _TruthSpillTrackID[i] == trackId)
-        return i;
-    }
-    return -1;
-  }
+    const int particleIdx = ResolveRecoTrackTruthParticleIndex(recoTrackIdx);
+    const float * birth = _TruthSpillBirthPosition[particleIdx];
 
-  int TMSRecoBranchFiller::ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const
-  {
-    std::unordered_set<int> visited;
-    while (_TruthSpillParent[particleIdx] != -1)
-    {
-      if (visited.find(particleIdx) != visited.end())
-      {
-        LOG.WARNING() << "TMS reco track " << recoTrackIdx
-                      << " encountered a loop while resolving Truth_Spill parents;"
-                      << " falling back to particle index " << particleIdx << "\n";
-        return particleIdx;
-      }
-      visited.insert(particleIdx);
-
-      const int parentTrackId = _TruthSpillParent[particleIdx];
-      const int vertexId = _TruthSpillParticleVertexID[particleIdx];
-      const int parentIdx = FindTruthSpillParticleIndex(vertexId, parentTrackId);
-      if (parentIdx < 0)
-      {
-        LOG.WARNING() << "TMS reco track " << recoTrackIdx
-                      << " could not resolve parent track ID " << parentTrackId
-                      << " from Truth_Spill particle index " << particleIdx
-                      << " (vertex ID " << vertexId << ");"
-                      << " falling back to the current particle instead of crashing\n";
-        return particleIdx;
-      }
-      particleIdx = parentIdx;
-    }
-
-    return particleIdx;
-  }
-
-  unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
-  {
-    const int particleIdx = ResolvePrimaryTruthParticleIndex(ResolveRecoTrackTruthParticleIndex(recoTrackIdx), recoTrackIdx);
-
-    const int trueVtxId = _TruthSpillParticleVertexID[particleIdx];
-    const double birthX = _TruthSpillBirthPosition[particleIdx][0];
-    const double birthY = _TruthSpillBirthPosition[particleIdx][1];
-    const double birthZ = _TruthSpillBirthPosition[particleIdx][2];
-
-    int matchedVtxIdx = -1;
-    int nearestVtxIdx = -1;
-    double nearestDist2 = std::numeric_limits<double>::infinity();
+    bool found = false;
+    double bestDist = fVertexMatchToleranceMm;
     for (int i = 0; i < _TruthSpillTrueVtxN; ++i)
     {
-      const double dx = _TruthSpillTrueVtxX[i] - birthX;
-      const double dy = _TruthSpillTrueVtxY[i] - birthY;
-      const double dz = _TruthSpillTrueVtxZ[i] - birthZ;
-      const double dist2 = dx*dx + dy*dy + dz*dz;
-      if (dist2 < nearestDist2)
-      {
-        nearestDist2 = dist2;
-        nearestVtxIdx = i;
-      }
-
-      if (_TruthSpillTrueVtxID[i] != trueVtxId)
-        continue;
-      if (dist2 > fVertexMatchToleranceMm * fVertexMatchToleranceMm)
+      if (_TruthSpillTrueVtxID[i] != _TruthSpillParticleVertexID[particleIdx])
         continue;
 
-      if (matchedVtxIdx >= 0)
+      const unsigned long candidateID = ResolveTrueInteractionIDFromVertexIndex(truthMatch, i);
+      const double dist = truthMatch->TrajectoryStartDistance(candidateID, _TruthSpillTrackID[particleIdx], _TruthSpillPDG[particleIdx],
+                                                              birth[0], birth[1], birth[2]);
+      if (dist >= 0 && dist <= bestDist)
       {
-        LOG.WARNING() << "Reco track " << recoTrackIdx
-                      << " matched multiple Truth_Spill vertices for vertex ID " << trueVtxId
-                      << "; using the first in-tolerance match instead of crashing\n";
-        continue;
+        bestDist = dist;
+        ixnID = candidateID;
+        found = true;
       }
-      matchedVtxIdx = i;
     }
 
-    if (matchedVtxIdx >= 0)
-      return ResolveTrueInteractionIDFromVertexIndex(truthMatch, matchedVtxIdx);
-
-    if (nearestVtxIdx >= 0)
-    {
-      LOG.WARNING() << "Reco track " << recoTrackIdx
-                    << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
-                    << trueVtxId << " within " << fVertexMatchToleranceMm << " mm;"
-                    << " falling back to nearest Truth_Spill vertex index " << nearestVtxIdx
-                    << " at distance " << std::sqrt(nearestDist2) << " mm\n";
-      return ResolveTrueInteractionIDFromVertexIndex(truthMatch, nearestVtxIdx);
-    }
-
-    throw std::runtime_error("Truth_Spill contains no vertices to resolve reco track interaction ID");
+    if (!found)
+      LOG.WARNING() << "Reco track " << recoTrackIdx << ": no interaction with vertex ID " << _TruthSpillParticleVertexID[particleIdx]
+                    << " has its GEANT4 trajectory " << _TruthSpillTrackID[particleIdx] << "; leaving its truth empty\n";
+    return found;
   }
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
@@ -349,7 +284,9 @@ namespace cafmaker
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
-          const auto genieIxnID = ResolveRecoTrackInteractionID(truthMatcher, j);
+          unsigned long genieIxnID = 0;
+          if (!ResolveRecoTrackInteractionID(truthMatcher, j, genieIxnID))
+            continue;  // no verifiable truth for this track: leave track.truth empty rather than guess
           caf::SRTrueInteraction& srTrueInt = truthMatcher->GetTrueInteraction(sr, genieIxnID);
 
           const int srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
