@@ -153,11 +153,13 @@ namespace cafmaker
                              std::string edepsimFilename,
                              const genie::NtpMCEventRecord *gEvt,
                              std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback,
-                             double positionToleranceMm)
+                             double positionToleranceMm,
+                             bool allowTrueIntsOutsideSpill)
     : cafmaker::Loggable("TruthMatcher"),
       fGTrees(ghepFilenames, gEvt),
       fGENIEWriterCallback(std::move(genieFillerCallback)),
-      fEdepSimTree(edepsimFilename, positionToleranceMm)
+      fEdepSimTree(edepsimFilename, positionToleranceMm),
+      fAllowTrueIntsOutsideSpill(allowTrueIntsOutsideSpill)
   {
     if (HaveGENIE() && !HaveEDEPSIM())
     LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
@@ -190,10 +192,13 @@ namespace cafmaker
   // ---------------------------
   void TruthMatcher::FillSpill(caf::StandardRecord & sr, long spillID) const
   {
+    fSpillsFilled = false; // Resetting to false at each new sr entry
+
     LOG.VERBOSE() << "  Filling all the true interactions of spill " << spillID << "\n";
     for (unsigned long ixnID : fEdepSimTree.VertexIDsInSpill(spillID)) {
       GetTrueInteraction(sr, ixnID, true);
     }
+    fSpillsFilled = true;
   }
 
   // ---------------------------
@@ -273,7 +278,7 @@ namespace cafmaker
     nu.bjorkenX = nu.Q2/(2*Mnuc*nu.q0);
     nu.inelasticity = nu.q0/nu.E;
     if (nu.mode == caf::kCoh || nu.mode == caf::kDiffractive)
-      nu.t = in->Kine().t(true);
+      nu.t = in->Kine().t();
 
     nu.ischarm = in->ExclTag().IsCharmEvent();
     nu.isseaquark = in->ProcInfo().IsDeepInelastic() && in->InitState().Tgt().HitSeaQrk();
@@ -342,9 +347,13 @@ namespace cafmaker
           const auto &p0 = traj.Points.front();
           part.start_pos = (p0.Position * .1).Vect();
           part.time = p0.Position.T();
+          part.first_process = p0.Process;
+          part.first_subprocess = p0.Subprocess;
 
           const auto &pf = traj.Points.back();
           part.end_pos = (pf.Position * .1).Vect();
+          part.end_process = pf.Process;
+          part.end_subprocess = pf.Subprocess;
         }
         // note: we leave part.id unset since it won't match with the G4 values
         // (edep-sim numbers them all sequentially from 0 throughout the whole file)
@@ -447,6 +456,9 @@ namespace cafmaker
       else
         LOG.VERBOSE() << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
 
+      CheckNewTruthAllowed(std::string(isPrimary ? "primary" : "secondary") + " true particle with G4ID "
+                           + std::to_string(G4ID) + " of true interaction with ID " + std::to_string(ixn.id));
+
       int particle_index = counter;
 
       long int interaction_id = ixn.id;
@@ -482,6 +494,25 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  void TruthMatcher::CheckNewTruthAllowed(const std::string & what) const
+  {
+    if (!fSpillsFilled) {
+      return;
+    }
+
+    if (!fAllowTrueIntsOutsideSpill) {
+      std::stringstream ss;
+      ss << "The " << what << " is not in the spill of this entry, so it would be added from outside the spill."
+         << "Set AllowTrueIntsOutsideSpill to override\n";
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+    LOG.WARNING() << "AllowTrueIntsOutsideSpill is set: adding the " << what << ", which is not in the spill "
+                  << "of this entry, to this entry's sr.mc. This is an emergency override and mixes the truth "
+                  << "of different spills\n";
+  }
+
+  // ------------------------------------------------------------
   caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, unsigned long ixnID, bool createNew) const
   {
     caf::SRTrueInteraction * ixn = nullptr;
@@ -498,6 +529,8 @@ namespace cafmaker
         LOG.FATAL() << "Could not find a true interaction with ID " << ixnID << " already in this StandardRecord, and you asked me not to make a new one\n";
         throw std::runtime_error("True interaction with interaction ID = " + std::to_string(ixnID) + " not found in this StandardRecord");
       }
+
+      CheckNewTruthAllowed("true interaction with ID " + std::to_string(ixnID));
 
       LOG.VERBOSE() << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
 
@@ -958,9 +991,14 @@ namespace cafmaker
           ixn.npi0++;
         }
       } else {
-        const caf::SRLorentzVector genieP = itPrim->p;
-        fillFromTrajectory(*itPrim, traj);
-        itPrim->p = genieP;
+        if (itPrim->pdg != traj.PDGCode) {
+          std::stringstream ss;
+          ss << "Primary " << primIdx << " of interaction " << ixn.id << " has G4ID " << traj.TrackId
+             << " and PDG " << itPrim->pdg << " from GENIE, but the edep-sim primary trajectory with that TrackId has PDG "
+             << traj.PDGCode << ": GENIE and edep-sim primaries are out of sync\n";
+          LOG.FATAL() << ss.str();
+          throw std::runtime_error(ss.str());
+        }
       }
 
       const caf::TrueParticleID primID{ixnIdx, caf::TrueParticleID::kPrimary, static_cast<int>(primIdx)};

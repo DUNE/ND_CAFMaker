@@ -157,7 +157,8 @@
                   std::string edepsimFilename,
                    const genie::NtpMCEventRecord *gEvt,
                    std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback,
-                   double positionToleranceMm);
+                   double positionToleranceMm,
+                   bool allowTrueIntsOutsideSpill);
       ~TruthMatcher();
 
 
@@ -253,6 +254,11 @@
                                       int &counter,
                                       const TG4Event *g4event) const;
 
+    /// Called before creating a new true interaction or particle: once FillSpill() has filled the current entry,
+    /// anything new comes from outside its spill. Throws, unless AllowTrueIntsOutsideSpill is set (then warns)
+    ///
+    /// \param what  Description of what would be created, for the messages
+    void CheckNewTruthAllowed(const std::string & what) const;
 
 
       /// Internal class organizing the GENIE trees by run to make them more easily accessible
@@ -344,6 +350,9 @@
         unsigned long secondaryClosureAbortedOutOfRange = 0;
       };
       mutable MaterializationStats fMaterializationStats;
+
+      bool fAllowTrueIntsOutsideSpill;     ///< AllowTrueIntsOutsideSpill: emergency override, see Params.h
+      mutable bool fSpillsFilled = false;  ///< true once FillSpill() has filled the current entry: no new truth after that
 
   };
 }

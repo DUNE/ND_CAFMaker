@@ -486,6 +486,9 @@ buildSpillGroups(const std::map<const cafmaker::IRecoBranchFiller*, std::deque<c
     if (slot.group.empty()) {
       ++nEmptySpills;
     }
+    // sort triggers in a spill by time, as buildTriggerList() does
+    std::sort(slot.group.begin(), slot.group.end(),
+              [](const auto & a, const auto & b) { return triggerTimeCmp()(a.second, b.second); });
     spillOfGroup.push_back(slot.spill);
     ret.push_back(std::move(slot.group));
   }
@@ -509,7 +512,8 @@ void loop(CAF &caf,
   cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::TruthMatcher truthMatcher(ghepFilenames, edepsimFilename , caf.mcrec,
                                       [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); },
-                                      par().cafmaker().positionToleranceMm());
+                                      par().cafmaker().positionToleranceMm(),
+                                      par().cafmaker().allowTrueIntsOutsideSpill());
   truthMatcher.SetLogThrehsold(thresh);
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
