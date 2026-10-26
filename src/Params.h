@@ -61,6 +61,9 @@ namespace cafmaker
 
     // 0.1 s is default
     fhicl::Atom<float>  beamMatchDT { fhicl::Name("BeamMatchDeltaT"), fhicl::Comment("Maximum time difference, in s, between triggers and beam"), 0.1 };
+
+    // 1e12 is default for NuMI; spills below it are pedestal noise (incl. negative readings)
+    fhicl::Atom<double> minSpillPOT { fhicl::Name("MinSpillPOT"), fhicl::Comment("Minimum POT reading for a spill to be counted as beam"), 1e12 };
     
     // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future 
     fhicl::Atom<float> mx2_2x2_offsetX {fhicl::Name("Mx2_2x2_offsetX"), fhicl::Comment("Mx2 - 2x2 offset in X direction in cm"), 0.};
@@ -91,7 +94,7 @@ namespace cafmaker
     // creating a large tail of TMS tracks with an earlier times than the LAr tracks which match with them in truth. meanT should be re-checked now that the issue has been fixed - should not be negative
     fhicl::Atom<bool> useSmearTime { fhicl::Name("UseSmearTime"), fhicl::Comment("If true, use the truth-level particle time for the LAr track time with a 10 ns Gaussian smear. If false, use the reco time for the LAr track obtained through charge-light matching. Only set to false if you are working with files that have that reco time filled"), true};
 
-    fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between Truth_Spill primary-particle birth position and matched Truth_Spill vertex [mm]"), 100.0};
+    fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between a TMS track's Truth_Spill particle birth position and the start of its edep-sim trajectory [mm]"), 100.0};
     fhicl::Atom<double> positionToleranceMm { fhicl::Name("PositionToleranceMm"), fhicl::Comment("Maximum distance between TMS truth position and matched EDepSim vertex position [mm]"), 1.0};
 
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL

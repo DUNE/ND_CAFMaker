@@ -544,6 +544,25 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  double TruthMatcher::TrajectoryStartDistance(unsigned long ixnID, int G4ID, int pdg, double x, double y, double z) const
+  {
+    if (!HaveEDEPSIM())
+      throw std::runtime_error("TruthMatcher::TrajectoryStartDistance() requires an EDepSim file");
+
+    fEdepSimTree.SelectEvent(ixnID);
+    const TG4Event * g4event = fEdepSimTree.G4Event();
+    if (G4ID < 0 || static_cast<std::size_t>(G4ID) >= g4event->Trajectories.size())
+      return -1;
+
+    const auto & traj = g4event->Trajectories[G4ID];
+    if (traj.PDGCode != pdg || traj.Points.empty())
+      return -1;
+
+    const auto & start = traj.Points.front().Position;
+    return std::sqrt(std::pow(start.X() - x, 2) + std::pow(start.Y() - y, 2) + std::pow(start.Z() - z, 2));
+  }
+
+  // ------------------------------------------------------------
   bool TruthMatcher::HaveGENIE() const
   {
     static auto isNull = [](const std::pair<unsigned long int, const TTree*>& pair) -> bool { return !pair.second; };
