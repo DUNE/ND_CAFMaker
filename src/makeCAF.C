@@ -464,6 +464,12 @@ buildSpillGroups(const std::map<const cafmaker::IRecoBranchFiller*, std::deque<c
       auto itSame = std::find_if(slot.group.begin(), slot.group.end(),
                                  [filler = filler](const auto & pair) { return pair.first == filler; });
       if (itSame != slot.group.end()) {
+        // TODO: only one trigger per filler and spill is supported at the moment, despite the possibility
+        // to have more than one trigger per filler (e.g. a cosmic trigger inside the beam window).
+        // Some reco fillers are written assuming they are called once per entry: called a second time on the
+        // same StandardRecord, they'll overwrite what the first trigger filled, or mix the reco objects
+        // of the two triggers. Supporting multipe triggers per filler requires to update the reco fillers themself, 
+        // the matching fillers and the metadata;
         std::stringstream ss;
         ss << std::setprecision(17) << filler->GetName() << " has two triggers in spill " << slot.spill
            << " (window " << N << "): trigger " << itSame->second.evtID << " (t = "
