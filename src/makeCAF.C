@@ -555,7 +555,7 @@ if (!vars.count("fcl")) {
 
   loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 
-  caf.version = 5;
+  caf.version = 6;
   caf.fillMeta();
 
   std::cout << "Writing CAF" << std::endl;

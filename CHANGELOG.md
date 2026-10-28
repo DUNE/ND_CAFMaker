@@ -10,6 +10,11 @@ Note that tags as a function of changes are now also being tracked via [mileston
 
 ##### current
 
+##### [v6.0.0-pre] -- 2026-10-28
+***Notice: special pre-release for 2x2 production.  Main line will resume in ~late Nov. 2026 with v6.0.0, which will supersede [#205](https://github.com/DUNE/ND_CAFMaker/pull/205) below with [#213](https://github.com/DUNE/ND_CAFMaker/pull/213)***
+* Update SPINE format to work with v1.3.0 [PR #205](https://github.com/DUNE/ND_CAFMaker/pull/205)
+* Several fixes to POT counting [PR #204](https://github.com/DUNE/ND_CAFMaker/pull/204)
+
 ##### [v5.2.0] -- 2026-09-10
 * Bump to duneanaobj v4_01_01 [66905ce3]
 * Add release manager checklist [#171](https://github.com/DUNE/ND_CAFMaker/pull/171)
