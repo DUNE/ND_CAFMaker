@@ -383,6 +383,7 @@ namespace cafmaker
         }
       }
       if (seen_lar) {
+        std::cout << " THIS LAr TRACK WAS ALREADY MATCHED SUCCESSFULLY" << std::endl;
         continue;
       }
       caf::SRTMSID tmsid = track_match.tmsid;
@@ -394,6 +395,7 @@ namespace cafmaker
         }
       }
       if (seen_tms) {
+        std::cout << " THIS TMS TRACK WAS ALREADY MATCHED SUCCESSFULLY" << std::endl;
         continue;
       }
 
@@ -549,6 +551,11 @@ namespace cafmaker
             caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
             const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
             lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
+            std::cout << "     LAr Particle Time " << matchedPart->time << std::endl;
+            std::cout << "     LAr Trigger Time (s)" << trigger.triggerTime_s << std::endl;
+            std::cout << "     1e9*LAr Trigger Time (s) " << 1e9*trigger.triggerTime_s << std::endl;
+            std::cout << "     LAr Trigger Time (ns) " << trigger.triggerTime_ns << std::endl;
+            std::cout << "     Time Smear" << time_smear << std::endl;
             std::cout << "     LAr Time " << lar_time << std::endl;
             double tms_time = tms_trk.time;
             std::cout << "     TMS Time " << tms_time << std::endl;
