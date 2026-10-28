@@ -11,6 +11,7 @@
 #include <iostream>
 #include <deque>
 #include <map>
+#include <optional>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -115,6 +116,11 @@ namespace cafmaker
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, Long64_t> fTruthSpillEntryBySpillNo;
       double fVertexMatchToleranceMm;
+
+      struct DuneTMSVersion { int major, minor, patch; };
+      // dune-tms version from the input's Metadata tree;
+      // empty when the input doesn't record one.
+      std::optional<DuneTMSVersion> fTMSVersion;
 
   };
 
