@@ -237,7 +237,8 @@ namespace cafmaker
   }
 
   bool PandoraLArRecoNDBranchFiller::HasT0() const
-  { // should come up with something more robust but ok for now? (to be deleted in the future anyway)
+  {
+    // Check if reco particle level t0 branch is available in input file, so we don't try to use it if this file does have a reco t0 
     if(m_LArRecoNDTree->GetBranch("t0"))
         return true;
 
@@ -322,7 +323,8 @@ namespace cafmaker
      
      shower.start = start;
      shower.direction = dir;
-     shower.time = m_inputHasTime ? (*m_particleT0)[i]*m_nsPerTickT0 : -999.; // Fill time if it's available
+     // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+     shower.time = m_inputHasTime ? (*m_particleT0)[i]*m_nsPerTickT0 : -999.;
      shower.Evis = (*m_shwrEnergy)[i]/1000.; // [GeV]
      shower.qual = (*m_trackScoreVect)[i]; // saving the trackScore value as additional reco info. This provides a sort of degree of "shower-likeness" for this SRShower
      shower.len_cm = shwrLength;
@@ -456,7 +458,8 @@ namespace cafmaker
 
       shower.start = start;
       shower.direction = dir;
-      shower.time = m_inputHasTime ? (*m_particleT0)[iCluster]*m_nsPerTickT0 : -999.; // Fill time if it's available
+      // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+      shower.time = m_inputHasTime ? (*m_particleT0)[iCluster]*m_nsPerTickT0 : -999.;
       shower.Evis = energy;
       shower.initial_dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[iCluster] : -999.;
       shower.conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((start.X() - vtxX),2) + std::pow((start.Y() - vtxY),2) + std::pow((start.Z() - vtxZ),2)) : -999;
@@ -485,7 +488,8 @@ namespace cafmaker
       track.end = end;
       track.dir = dir;
       track.enddir = dir;
-      track.time = m_inputHasTime ? (*m_particleT0)[iCluster]*m_nsPerTickT0 : -999.; // Fill time if it's available
+      // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+      track.time = m_inputHasTime ? (*m_particleT0)[iCluster]*m_nsPerTickT0 : -999.;
       track.Evis = energy;
       track.E = energy;
       track.qual = n3DHits * 1.0;
@@ -686,7 +690,8 @@ namespace cafmaker
           track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of "track-likeness" for this SRTrack
           track.start = recoParticle.start;
           track.end = recoParticle.end;
-          track.time = m_inputHasTime ? (*m_particleT0)[i]*m_nsPerTickT0 : -999.; // Fill time if it's available
+          // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+          track.time = m_inputHasTime ? (*m_particleT0)[i]*m_nsPerTickT0 : -999.;
           track.len_cm = (*m_trkfitLength)[i];
           track.len_gcm2 = track.len_cm * m_LArDensity;
           track.truth = truePartIDVect; 
