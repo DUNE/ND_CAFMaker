@@ -12,9 +12,11 @@
 #include <unordered_map>
 #include <map>
 #include <typeindex>
+#include <vector>
+
+#include <spine/reader.hpp>
 
 #include "reco/IRecoBranchFiller.h"
-#include "reco/NDLArDLPH5DatasetReader.h"
 
 namespace caf
 {
@@ -48,41 +50,42 @@ namespace cafmaker
                              const TruthMatcher *truthMatcher) const override;
 
     private:
-      void FillTracks(const H5DataView<cafmaker::types::dlp::Particle> & particles,
-                      const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                      const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillTracks(const std::vector<spine::RecoParticle> & particles,
+                      const std::vector<spine::TruthInteraction> &trueIxns,
+                      const std::vector<spine::TruthParticle> &trueParticles,
                       const TruthMatcher * truthMatch,
                       caf::StandardRecord & sr) const;
 
-      void FillShowers(const H5DataView<cafmaker::types::dlp::Particle> & particles,
-                       const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                       const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillShowers(const std::vector<spine::RecoParticle> & particles,
+                       const std::vector<spine::TruthInteraction> &trueIxns,
+                       const std::vector<spine::TruthParticle> &trueParticles,
                        const TruthMatcher * truthMatch,
                        caf::StandardRecord & sr) const;
 
-      void FillFlashes(const H5DataView<cafmaker::types::dlp::Flash> & flashes,
+      void FillFlashes(const std::vector<spine::Flash> & flashes,
                        caf::StandardRecord & sr) const;
       
-      void FillInteractions(const H5DataView<cafmaker::types::dlp::Interaction> &ixns,
-                            const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueIxns,
-                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillInteractions(const std::vector<spine::RecoInteraction> &ixns,
+                            const std::vector<spine::TruthInteraction> &trueIxns,
+                            const std::vector<spine::TruthParticle> &trueParticles,
                             const TruthMatcher * truthMatch,
                             caf::StandardRecord &sr) const;
 
-      void FillParticles(const H5DataView<cafmaker::types::dlp::Particle> &particles,
-                         const H5DataView<cafmaker::types::dlp::TrueInteraction> &trueInxns,
-                         const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles,
+      void FillParticles(const std::vector<spine::RecoParticle> &particles,
+                         const std::vector<spine::TruthInteraction> &trueInxns,
+                         const std::vector<spine::TruthParticle> &trueParticles,
                          const TruthMatcher * truthMatch,
                          caf::StandardRecord &sr) const;
 
       void FillTrueParticle(caf::SRTrueParticle & srTruePart,
-                            const cafmaker::types::dlp::TrueParticle & truePartPassthrough,
-                            const H5DataView<cafmaker::types::dlp::TrueParticle> &trueParticles) const;
+                            const spine::TruthParticle & truePartPassthrough,
+                            const std::vector<spine::TruthParticle> &trueParticles) const;
 
       void FillTrueInteraction(caf::SRTrueInteraction & srTrueInt,
-                               const cafmaker::types::dlp::TrueInteraction & trueIntPassthrough) const;
+                               const spine::TruthInteraction & trueIntPassthrough) const;
 
-      NDLArDLPH5DatasetReader fDSReader;
+      spine::Reader fReader;           ///< reads the events: reco and truth products, flashes, run_info
+      spine::Reader fTriggerReader;    ///< reads only the trigger product (GetTriggers() scans all of it)
       mutable std::vector<cafmaker::Trigger> fTriggers;
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, int> fEntryMap; //Map of the filtered trigger entries stored in the caf file
