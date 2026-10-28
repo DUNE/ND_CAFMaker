@@ -68,8 +68,9 @@ namespace cafmaker
       const float m_mMuon = 0.1056583755; // [GeV]
       const float m_mProton = 0.93827208943; // [GeV]
       const float m_mElectron = 0.00051099895; // [GeV]
-      
-      const float m_nsPerTickT0 = 16.0; // [ns] - converts reco t0 to a time in ns.
+
+      // ns per readout time tick given 62.5 MHz readout [Instruments 2026, 10(1), 18]
+      const float m_nsPerTickT0 = 16.0; // [ns] - converts reco t0 to a time in ns
 
       // BRANCHES NAMES: see https://github.com/brucehoward-physics/LArRecoND/blob/feature/PandoraOuterface_Complete/include/PandoraOuterface.h
       int m_eventId;
