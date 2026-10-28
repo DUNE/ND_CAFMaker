@@ -41,9 +41,7 @@ namespace cafmaker
       void LoadTruthSpillEntry(int spillNo) const;
       unsigned long ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const;
       int ResolveRecoTrackTruthParticleIndex(int recoTrackIdx) const;
-      int FindTruthSpillParticleIndex(int vertexId, int trackId) const;
-      int ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const;
-      unsigned long ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const;
+      bool ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx, unsigned long & ixnID) const;
       void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
 
       void _FillRecoBranches(const Trigger &trigger,
@@ -105,6 +103,7 @@ namespace cafmaker
       mutable int _TruthSpillParticleVertexID[kTMSMaxTrueParticles];
       mutable int _TruthSpillParent[kTMSMaxTrueParticles];
       mutable int _TruthSpillTrackID[kTMSMaxTrueParticles];
+      mutable int _TruthSpillPDG[kTMSMaxTrueParticles];
       mutable float _TruthSpillBirthPosition[kTMSMaxTrueParticles][4];
       mutable int _TruthSpillTrueVtxID[kTMSMaxTrueVertices];
       mutable float _TruthSpillTrueVtxX[kTMSMaxTrueVertices];
