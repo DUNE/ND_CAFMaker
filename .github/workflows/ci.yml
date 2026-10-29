@@ -7,7 +7,10 @@ on:
 jobs:
   build:
     name: Build (prof)
-    runs-on: ubuntu-latest
+    # we are pinning to 24.04 because Apptainer's PPA is not correctly being read in 26.04.
+    # the Ubuntu Apptainer package has a bug (apptainer/apptainer#3487) that sets up the wrong AppArmor path.
+    # 24.04 will be supported until 2029.  we can revisit the situation then, if needed.
+    runs-on: ubuntu-24.04 
 
     steps:
       - uses: actions/checkout@v4
