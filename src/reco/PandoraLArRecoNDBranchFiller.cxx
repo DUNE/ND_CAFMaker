@@ -36,6 +36,9 @@ namespace cafmaker
       // Standard Record classes with default filler
       const bool inputHasOuterfaceBranches = HasOuterfaceBranches();
       LOG.VERBOSE() << "Input file has Pandora Outerface branches? " << inputHasOuterfaceBranches << "\n";
+      // For time, make it a data member of the filler...
+      m_inputHasTime = HasT0();
+      LOG.VERBOSE() << "Input file has reconstructed t0? " << m_inputHasTime << "\n";
 
       // Set branch addresses
       m_LArRecoNDTree->SetBranchAddress("event", &m_eventId);
@@ -67,6 +70,9 @@ namespace cafmaker
       m_LArRecoNDTree->SetBranchAddress("nuVtxZ", &m_nuVtxZVect);
       m_LArRecoNDTree->SetBranchAddress("isRecoPrimary", &m_isRecoPrimaryVect);
       m_LArRecoNDTree->SetBranchAddress("recoPDG", &m_recoPDGVect);
+      if (m_inputHasTime){
+        m_LArRecoNDTree->SetBranchAddress("t0", &m_particleT0);
+      }
       if (inputHasOuterfaceBranches)
       {
         // TRACK VARIABLES (PANDORA OUTERFACE)
@@ -230,6 +236,15 @@ namespace cafmaker
     return false;
   }
 
+  bool PandoraLArRecoNDBranchFiller::HasT0() const
+  {
+    // Check if reco particle level t0 branch is available in input file, so we don't try to use it if this file does have a reco t0 
+    if(m_LArRecoNDTree->GetBranch("t0"))
+        return true;
+
+    return false;
+  }
+
   // ------------------------------------------------------------------------------
   bool PandoraLArRecoNDBranchFiller::FillTrack(const int i, caf::SRRecoParticle& recoParticle) const
   {  // Assign the pdg for the fitting hypotesis that has the lowest chi2
@@ -306,9 +321,10 @@ namespace cafmaker
      const caf::SRVector3D start{shwrfitStartX, shwrfitStartY, shwrfitStartZ};
      const caf::SRVector3D dir{shwrfitDirX, shwrfitDirY, shwrfitDirZ};
      
-     shower.start = start;    
+     shower.start = start;
      shower.direction = dir;
-     shower.time = -999.; // TODO to be filled at some point
+     // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+     shower.time = m_inputHasTime ? (*m_particleT0)[i]*m_nsPerTickT0 : -999.;
      shower.Evis = (*m_shwrEnergy)[i]/1000.; // [GeV]
      shower.qual = (*m_trackScoreVect)[i]; // saving the trackScore value as additional reco info. This provides a sort of degree of "shower-likeness" for this SRShower
      shower.len_cm = shwrLength;
@@ -442,6 +458,8 @@ namespace cafmaker
 
       shower.start = start;
       shower.direction = dir;
+      // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+      shower.time = m_inputHasTime ? (*m_particleT0)[iCluster]*m_nsPerTickT0 : -999.;
       shower.Evis = energy;
       shower.initial_dEdx = (m_shwrdEdx != nullptr) ? (*m_shwrdEdx)[iCluster] : -999.;
       shower.conversionGap = (m_nuVtxXVect != nullptr) ?  sqrt(std::pow((start.X() - vtxX),2) + std::pow((start.Y() - vtxY),2) + std::pow((start.Z() - vtxZ),2)) : -999;
@@ -470,6 +488,8 @@ namespace cafmaker
       track.end = end;
       track.dir = dir;
       track.enddir = dir;
+      // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+      track.time = m_inputHasTime ? (*m_particleT0)[iCluster]*m_nsPerTickT0 : -999.;
       track.Evis = energy;
       track.E = energy;
       track.qual = n3DHits * 1.0;
@@ -670,6 +690,8 @@ namespace cafmaker
           track.qual = (*m_trackScoreVect)[i];// saving the trackScore value as additional reco info. This provides a sort of degree of "track-likeness" for this SRTrack
           track.start = recoParticle.start;
           track.end = recoParticle.end;
+          // Fill time if it's available: time in spill from Pandora, from using Billy W's charge-light matching t0 within hits of the particle
+          track.time = m_inputHasTime ? (*m_particleT0)[i]*m_nsPerTickT0 : -999.;
           track.len_cm = (*m_trkfitLength)[i];
           track.len_gcm2 = track.len_cm * m_LArDensity;
           track.truth = truePartIDVect; 
