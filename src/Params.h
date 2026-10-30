@@ -42,7 +42,7 @@ namespace cafmaker
     // these are optional, but will change the contents of the output CAF if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
-    fhicl::Atom<std::string> tmsRecoTreeSuffix { fhicl::Name{"TMSRecoTreeSuffix"}, fhicl::Comment("Suffix of the TMS per-track trees (Reco_Tree, Truth_Info) to read: empty = legacy reconstruction, \"_C3D\" = Cluster3D reconstruction (Reco_Tree_C3D, Truth_Info_C3D)"), "" };
+    fhicl::Atom<std::string> tmsRecoTreeSuffix { fhicl::Name{"TMSRecoTreeSuffix"}, fhicl::Comment("Suffix of the TMS per-track trees (Reco_Tree, Truth_Info) to read: \"_C3D\" (default) = Cluster3D reconstruction (Reco_Tree_C3D, Truth_Info_C3D), empty = legacy reconstruction (Reco_Tree, Truth_Info), needed for older TMS reco files that have no Cluster3D trees"), "_C3D" };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };

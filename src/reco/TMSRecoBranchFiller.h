@@ -29,13 +29,13 @@ namespace cafmaker
   {
     public:
       /// treeSuffix selects which TMS reconstruction to read: it is appended to the names of the
-      /// per-track trees, Reco_Tree and Truth_Info. Empty (the default) reads the legacy reconstruction;
-      /// "_C3D" reads the Cluster3D reconstruction (Reco_Tree_C3D / Truth_Info_C3D), which has the same
-      /// branches. Truth_Spill is per spill and shared. Line_Candidates (TMSStartTime) belongs to the legacy
+      /// per-track trees, Reco_Tree and Truth_Info. "_C3D" (the default) reads the Cluster3D
+      /// reconstruction (Reco_Tree_C3D / Truth_Info_C3D); empty reads the legacy reconstruction (Reco_Tree /
+      /// Truth_Info), which has the same branches and is needed for older files without Cluster3D trees. Truth_Spill is per spill and shared. Line_Candidates (TMSStartTime) belongs to the legacy
       /// reconstruction only, so with a non-empty suffix the track time is taken from the suffixed Reco_Tree instead.
       TMSRecoBranchFiller(const std::string & tmsRecoFilename,
                           double vertexMatchToleranceMm,
-                          const std::string & treeSuffix = "");
+                          const std::string & treeSuffix = "_C3D");
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
