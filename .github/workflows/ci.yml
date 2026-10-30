@@ -11,6 +11,7 @@ permissions:
 jobs:
   resolve-inputs:
     name: Find prepared CAFMaker inputs
+    if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -41,33 +42,38 @@ jobs:
             }
 
             for (const branch of branches) {
-              for await (const { data } of github.paginate.iterator(
-                github.rest.actions.listWorkflowRuns,
-                {
-                  ...context.repo,
-                  workflow_id: 'prepare-ci-inputs.yml',
-                  branch,
-                  status: 'success',
-                  per_page: 100,
-                }
-              )) {
-                for (const run of data) {
-                  if (run.head_repository?.full_name !== repository.full_name) continue;
-                  if (branch !== repository.default_branch && run.event !== 'workflow_dispatch') continue;
-                  const artifacts = await github.paginate(
-                    github.rest.actions.listWorkflowRunArtifacts,
-                    { ...context.repo, run_id: run.id, per_page: 100 }
-                  );
-                  const artifact = artifacts.find(candidate =>
-                    candidate.name === 'caf-inputs' &&
-                    !candidate.expired &&
-                    Date.parse(candidate.expires_at) > Date.now()
-                  );
-                  if (!artifact) continue;
-                  core.setOutput('run-id', String(run.id));
-                  core.setOutput('artifact-id', String(artifact.id));
-                  core.info(`Using caf-inputs from ${branch} preparation run ${run.id}`);
-                  return;
+              const workflowIds = branch === repository.default_branch
+                ? ['prepare-ci-inputs.yml']
+                : ['ci.yml', 'prepare-ci-inputs.yml'];
+              for (const workflowId of workflowIds) {
+                for await (const { data } of github.paginate.iterator(
+                  github.rest.actions.listWorkflowRuns,
+                  {
+                    ...context.repo,
+                    workflow_id: workflowId,
+                    branch,
+                    status: 'success',
+                    per_page: 100,
+                  }
+                )) {
+                  for (const run of data) {
+                    if (run.head_repository?.full_name !== repository.full_name) continue;
+                    if (branch !== repository.default_branch && run.event !== 'workflow_dispatch') continue;
+                    const artifacts = await github.paginate(
+                      github.rest.actions.listWorkflowRunArtifacts,
+                      { ...context.repo, run_id: run.id, per_page: 100 }
+                    );
+                    const artifact = artifacts.find(candidate =>
+                      candidate.name === 'caf-inputs' &&
+                      !candidate.expired &&
+                      Date.parse(candidate.expires_at) > Date.now()
+                    );
+                    if (!artifact) continue;
+                    core.setOutput('run-id', String(run.id));
+                    core.setOutput('artifact-id', String(artifact.id));
+                    core.info(`Using caf-inputs from ${workflowId} run ${run.id} on ${branch}`);
+                    return;
+                  }
                 }
               }
             }
@@ -75,11 +81,69 @@ jobs:
               'No unexpired CAFMaker inputs found. Run Prepare CI inputs on the default branch, then rerun CI.'
             );
 
+  prepare-pr-inputs:
+    name: Prepare inputs for PR branch
+    if: github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CAF_INPUT_URL: https://portal.nersc.gov/cfs/dune/data/emir_test/ND_CAFMaker_CI/inputs/cafmaker_staging/
+
+    steps:
+      - name: Check input directory and file availability
+        timeout-minutes: 5
+        run: |
+          wget \
+            --spider \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --execute robots=off \
+            --https-only \
+            --timeout=10 \
+            --tries=1 \
+            --no-verbose \
+            "${CAF_INPUT_URL}"
+
+      - name: Download input directory
+        run: |
+          cut_dirs=$(python3 -c 'import os; from urllib.parse import urlparse; print(len(urlparse(os.environ["CAF_INPUT_URL"]).path.strip("/").split("/")))')
+          wget \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --no-host-directories \
+            --cut-dirs="${cut_dirs}" \
+            --reject='index.html*' \
+            --execute robots=off \
+            --https-only \
+            --timeout=60 \
+            --tries=3 \
+            --no-verbose \
+            --directory-prefix=inputs \
+            "${CAF_INPUT_URL}"
+          if [[ -z "$(find inputs -type f -print -quit)" ]]; then
+            echo 'No input files were downloaded' >&2
+            exit 1
+          fi
+          du -sh inputs
+
+      - name: Upload CAFMaker inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-inputs
+          path: inputs/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 2
+
   build:
     name: Build (prof)
     # we are pinning to 24.04 because Apptainer's PPA is not correctly being read in 26.04.
     # the Ubuntu Apptainer package has a bug (apptainer/apptainer#3487) that sets up the wrong AppArmor path.
     # 24.04 will be supported until 2029.  we can revisit the situation then, if needed.
+    if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-24.04 
 
     steps:
