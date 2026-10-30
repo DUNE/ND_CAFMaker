@@ -12,7 +12,7 @@ permissions:
 jobs:
   label:
     name: Label PRs that change test references
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # Only inspect PR metadata; never check out or execute PR code here.
       - name: Check reference changes and label PR

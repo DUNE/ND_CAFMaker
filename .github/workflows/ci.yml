@@ -12,7 +12,7 @@ jobs:
   resolve-inputs:
     name: Find prepared CAFMaker inputs
     if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       run-id: ${{ steps.inputs.outputs.run-id }}
@@ -84,7 +84,7 @@ jobs:
   prepare-pr-inputs:
     name: Prepare inputs for PR branch
     if: github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
       CAF_INPUT_URL: https://portal.nersc.gov/cfs/dune/data/emir_test/ND_CAFMaker_CI/inputs/cafmaker_staging/
@@ -201,7 +201,7 @@ jobs:
   run-cafmaker:
     name: Run CAFMaker
     needs: [build, resolve-inputs]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -239,13 +239,12 @@ jobs:
           apptainer exec \
             --bind /cvmfs \
             --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
-            --bind "${GITHUB_WORKSPACE}/inputs:/inputs:ro" \
             /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
             bash -c "
               cd '${GITHUB_WORKSPACE}' || exit \$?
               source install/bin/ndcaf_setup.sh prof || exit \$?
               mkdir -p outputs || exit \$?
-              makeCAF --fcl=fickle.fcl -n 1 || exit \$?
+              makeCAF --fcl=test/fickle.fcl -n 1 || exit \$?
             " 2>&1
 
       - name: Upload CAF output
@@ -260,7 +259,7 @@ jobs:
   verify:
     name: Verify CAF output
     needs: run-cafmaker
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
