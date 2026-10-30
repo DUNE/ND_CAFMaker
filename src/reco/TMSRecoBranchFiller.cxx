@@ -381,18 +381,29 @@ namespace cafmaker
                                                                                [&srTrueInt](const caf::SRTrueInteraction& ixn)
                                                                                { return ixn.id == srTrueInt.id; })));
 
-          // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries)
+          // the true particle can be a primary or a secondary: FillSpill() has already filled both collections,
+          // so look in both before asking for a new one (which would duplicate a secondary into prim)
           const int recoTruthParticleIdx = ResolveRecoTrackTruthParticleIndex(j);
           const int partG4ID = _TruthSpillTrackID[recoTruthParticleIdx];
-          truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
-          const int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
-                                                                 std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(),
-                                                                              [partG4ID](const caf::SRTrueParticle& part)
-                                                                              { return part.G4ID == partG4ID; })));
+          const auto sameG4ID = [partG4ID](const caf::SRTrueParticle& part) { return part.G4ID == partG4ID; };
 
-          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
-                                                    caf::TrueParticleID::PartType::kPrimary,
-                                                    truthVecIdx});
+          caf::TrueParticleID::PartType partType = caf::TrueParticleID::PartType::kPrimary;
+          auto itPart = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), sameG4ID);
+          int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(), itPart));
+          if (itPart == srTrueInt.prim.end()) {
+            auto itSec = std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), sameG4ID);
+            if (itSec != srTrueInt.sec.end()) {
+              partType = caf::TrueParticleID::PartType::kSecondary;
+              truthVecIdx = static_cast<int>(std::distance(srTrueInt.sec.begin(), itSec));
+            } else {
+              // in neither collection (no spill truth filled for this entry): create it, as a primary as before
+              truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
+              truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
+                                                           std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), sameG4ID)));
+            }
+          }
+
+          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx, partType, truthVecIdx});
         }
       }
 

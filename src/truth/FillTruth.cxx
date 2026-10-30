@@ -5,14 +5,21 @@
 /// \author  J. Wolcott <jwolcott@fnal.gov>, based on code by C. Marshall <chris.marshall@rochester.edu>
 /// \date    Jan. 2022
 
+#include <cmath>
 #include "FillTruth.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <map>
+#include <limits>
 #include <regex>
+#include <unordered_map>
 
 // ROOT
 #include "TLorentzVector.h"
+#include "TMap.h"
+#include "TObjString.h"
+#include "TParameter.h"
 #include "TVector3.h"
 #include "TTree.h"
 
@@ -146,11 +153,13 @@ namespace cafmaker
                              std::string edepsimFilename,
                              const genie::NtpMCEventRecord *gEvt,
                              std::function<int(const genie::NtpMCEventRecord *)> genieFillerCallback,
-                             double positionToleranceMm)
+                             double positionToleranceMm,
+                             bool allowTrueIntsOutsideSpill)
     : cafmaker::Loggable("TruthMatcher"),
       fGTrees(ghepFilenames, gEvt),
       fGENIEWriterCallback(std::move(genieFillerCallback)),
-      fEdepSimTree(edepsimFilename, positionToleranceMm)
+      fEdepSimTree(edepsimFilename, positionToleranceMm),
+      fAllowTrueIntsOutsideSpill(allowTrueIntsOutsideSpill)
   {
     if (HaveGENIE() && !HaveEDEPSIM())
     LOG_S("TruthMatcher::FillInteraction").WARNING() << "CAFMaker has GENIE but no Edepsim, truth will be limited, should not be used for official production \n";
@@ -178,6 +187,40 @@ namespace cafmaker
                << ", aborted(cycle)=" << fMaterializationStats.secondaryClosureAbortedCycle
                << ", aborted(out-of-range)=" << fMaterializationStats.secondaryClosureAbortedOutOfRange
                << " [set ND_CAFMAKER_STATS=1 to enable]\n";
+  }
+
+  // ---------------------------
+  void TruthMatcher::FillSpill(caf::StandardRecord & sr, long spillID) const
+  {
+    fSpillsFilled = false; // Resetting to false at each new sr entry
+
+    LOG.VERBOSE() << "  Filling all the true interactions of spill " << spillID << "\n";
+    for (unsigned long ixnID : fEdepSimTree.VertexIDsInSpill(spillID)) {
+      GetTrueInteraction(sr, ixnID, true);
+    }
+    fSpillsFilled = true;
+  }
+
+  // ---------------------------
+  std::map<long, std::pair<double, double>> TruthMatcher::GetSpillTimeRanges() const
+  {
+    if (!HaveEDEPSIM()) {
+      return {};
+    }
+    std::map<long, std::pair<double, double>> ranges;
+    for (const auto & [spill, range_ns] : fEdepSimTree.SpillTimeRanges_ns()) {
+      ranges[spill] = {range_ns.first * 1e-9, range_ns.second * 1e-9};
+    }
+    return ranges;
+  }
+
+  // ---------------------------
+  double TruthMatcher::GetSpillPeriod() const
+  {
+    if (!HaveEDEPSIM()) {
+      return std::numeric_limits<double>::quiet_NaN();
+    }
+    return fEdepSimTree.SpillPeriod();
   }
 
   // --------------------------------------------------------------
@@ -304,9 +347,13 @@ namespace cafmaker
           const auto &p0 = traj.Points.front();
           part.start_pos = (p0.Position * .1).Vect();
           part.time = p0.Position.T();
+          part.first_process = p0.Process;
+          part.first_subprocess = p0.Subprocess;
 
           const auto &pf = traj.Points.back();
           part.end_pos = (pf.Position * .1).Vect();
+          part.end_process = pf.Process;
+          part.end_subprocess = pf.Subprocess;
         }
         // note: we leave part.id unset since it won't match with the G4 values
         // (edep-sim numbers them all sequentially from 0 throughout the whole file)
@@ -409,6 +456,9 @@ namespace cafmaker
       else
         LOG.VERBOSE() << "  made a new SRTrueParticle in " << (isPrimary ? "prim" : "sec") << " collection \n";
 
+      CheckNewTruthAllowed(std::string(isPrimary ? "primary" : "secondary") + " true particle with G4ID "
+                           + std::to_string(G4ID) + " of true interaction with ID " + std::to_string(ixn.id));
+
       int particle_index = counter;
 
       long int interaction_id = ixn.id;
@@ -444,6 +494,25 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  void TruthMatcher::CheckNewTruthAllowed(const std::string & what) const
+  {
+    if (!fSpillsFilled) {
+      return;
+    }
+
+    if (!fAllowTrueIntsOutsideSpill) {
+      std::stringstream ss;
+      ss << "The " << what << " is not in the spill of this entry, so it would be added from outside the spill."
+         << "Set AllowTrueIntsOutsideSpill to override\n";
+      LOG.FATAL() << ss.str();
+      throw std::runtime_error(ss.str());
+    }
+    LOG.WARNING() << "AllowTrueIntsOutsideSpill is set: adding the " << what << ", which is not in the spill "
+                  << "of this entry, to this entry's sr.mc. This is an emergency override and mixes the truth "
+                  << "of different spills\n";
+  }
+
+  // ------------------------------------------------------------
   caf::SRTrueInteraction & TruthMatcher::GetTrueInteraction(caf::StandardRecord &sr, unsigned long ixnID, bool createNew) const
   {
     caf::SRTrueInteraction * ixn = nullptr;
@@ -460,6 +529,8 @@ namespace cafmaker
         LOG.FATAL() << "Could not find a true interaction with ID " << ixnID << " already in this StandardRecord, and you asked me not to make a new one\n";
         throw std::runtime_error("True interaction with interaction ID = " + std::to_string(ixnID) + " not found in this StandardRecord");
       }
+
+      CheckNewTruthAllowed("true interaction with ID " + std::to_string(ixnID));
 
       LOG.VERBOSE() << "    creating new SRTrueInteraction.  Trying to match to a GENIE event...\n";
 
@@ -515,6 +586,10 @@ namespace cafmaker
       }
       else
         LOG.VERBOSE() << "      --> no matching GENIE or Edepsim interaction found.  New empty SRTrueInteraction will be returned.\n";
+
+      if (HaveEDEPSIM()) {
+        FillParticleTree(*ixn, sr.mc.nu.size() - 1, fEdepSimTree.G4Event());
+      }
       
     } // if ( didn't find a matching SRTrueInteraction )
     else
@@ -795,6 +870,162 @@ namespace cafmaker
   }
 
   // ------------------------------------------------------------
+  void TruthMatcher::FillParticleTree(caf::SRTrueInteraction &ixn, std::size_t nixn, const TG4Event *g4event) const
+  {
+    if (!g4event) {
+      return;
+    }
+
+    const auto & trajs = g4event->Trajectories;
+    const int ixnIdx = static_cast<int>(nixn);
+
+    const auto fillFromTrajectory = [&ixn](caf::SRTrueParticle &part, const TG4Trajectory &traj)
+    {
+      part.G4ID = traj.TrackId;
+      part.pdg = traj.PDGCode;
+      part.interaction_id = ixn.id;
+      part.p = traj.InitialMomentum * 1E-3;
+      part.parent = traj.ParentId;
+
+      const auto &p0 = traj.Points.front();
+      part.start_pos = (p0.Position * 0.1).Vect();
+      part.time = p0.Position.T();
+      part.first_process = p0.Process;
+      part.first_subprocess = p0.Subprocess;
+
+      const auto &pf = traj.Points.back();
+      part.end_pos = (pf.Position * 0.1).Vect();
+      part.end_process = pf.Process;
+      part.end_subprocess = pf.Subprocess;
+    };
+
+    std::unordered_map<int, std::size_t> idxByTrackId;
+    for (std::size_t i = 0; i < trajs.size(); ++i) {
+      idxByTrackId[trajs[i].TrackId] = i;
+    }
+
+    // children of each trajectory, in TrackId order
+    std::vector<std::size_t> roots, orphans;
+    std::unordered_map<int, std::vector<std::size_t>> children;
+    for (std::size_t i = 0; i < trajs.size(); ++i) {
+      if (trajs[i].Points.empty()) {
+        LOG.WARNING() << "Trajectory " << trajs[i].TrackId << " of interaction " << ixn.id << " has no GEANT4 points, skipping it\n";
+        continue;
+      }
+      const int parent = trajs[i].ParentId;
+      if (parent < 0) {
+        roots.push_back(i);
+      } else if (idxByTrackId.count(parent)) {
+        children[parent].push_back(i);
+      } else {
+        orphans.push_back(i);
+      }
+    }
+
+    std::vector<bool> visited(trajs.size(), false);
+
+    const auto addSubtree = [&](std::size_t rootIdx, const caf::TrueParticleID &rootParentID, const caf::TrueParticleID &ancestorID)
+    {
+      std::vector<std::pair<std::size_t, caf::TrueParticleID>> stack{{rootIdx, rootParentID}};
+      while (!stack.empty()) {
+        const auto [trajIdx, parentID] = stack.back();
+        stack.pop_back();
+        if (visited[trajIdx]) {  // protects against malformed (cyclic) parent chains
+          continue;
+        }
+        visited[trajIdx] = true;
+
+        const TG4Trajectory &traj = trajs[trajIdx];
+        const caf::TrueParticleID secID{ixnIdx, caf::TrueParticleID::kSecondary, static_cast<int>(ixn.sec.size())};
+        ixn.sec.emplace_back();
+        ixn.nsec++;
+        caf::SRTrueParticle &part = ixn.sec.back();
+        fillFromTrajectory(part, traj);
+        part.parentID = parentID;
+        part.ancestor_id = ancestorID;
+
+        if (parentID.type == caf::TrueParticleID::kPrimary || parentID.type == caf::TrueParticleID::kSecondary) {
+          caf::SRTrueParticle &parent = (parentID.type == caf::TrueParticleID::kPrimary) ? ixn.prim.at(parentID.part)
+                                                                                         : ixn.sec.at(parentID.part);
+          parent.daughters.push_back(static_cast<unsigned int>(traj.TrackId));
+          parent.daughtersID.push_back(secID);
+        }
+
+        // reversed, so that the children are popped (and stored) in TrackId order
+        if (auto it = children.find(traj.TrackId); it != children.end()) {
+          for (auto itChild = it->second.rbegin(); itChild != it->second.rend(); ++itChild) {
+            stack.emplace_back(*itChild, secID);
+          }
+        }
+      }
+    };
+
+    for (std::size_t rootIdx : roots) {
+      const TG4Trajectory &traj = trajs[rootIdx];
+      visited[rootIdx] = true;
+
+      // primaries from GENIE are already there (with the GENIE momentum, which we keep)
+      auto itPrim = std::find_if(ixn.prim.begin(), ixn.prim.end(),
+                                 [&traj](const caf::SRTrueParticle &p) { return p.G4ID == traj.TrackId; });
+      std::size_t primIdx = std::distance(ixn.prim.begin(), itPrim);
+      if (itPrim == ixn.prim.end()) {
+        // without GENIE the primaries come from edep-sim only; with it, every primary trajectory should match one
+        if (HaveGENIE()) {
+          LOG.WARNING() << "Primary trajectory " << traj.TrackId << " (pdg " << traj.PDGCode << ") of interaction "
+                        << ixn.id << " has no matching GENIE primary: adding it from the edep-sim trajectory\n";
+        }
+        ixn.prim.emplace_back();
+        ixn.nprim++;
+        fillFromTrajectory(ixn.prim.back(), traj);
+
+        const int pdg = traj.PDGCode;
+        if (pdg == 2212) {
+          ixn.nproton++;
+        } else if (pdg == 2112) {
+          ixn.nneutron++;
+        } else if (pdg == 211) {
+          ixn.npip++;
+        } else if (pdg == -211) {
+          ixn.npim++;
+        } else if (pdg == 111) {
+          ixn.npi0++;
+        }
+      } else {
+        if (itPrim->pdg != traj.PDGCode) {
+          std::stringstream ss;
+          ss << "Primary " << primIdx << " of interaction " << ixn.id << " has G4ID " << traj.TrackId
+             << " and PDG " << itPrim->pdg << " from GENIE, but the edep-sim primary trajectory with that TrackId has PDG "
+             << traj.PDGCode << ": GENIE and edep-sim primaries are out of sync\n";
+          LOG.FATAL() << ss.str();
+          throw std::runtime_error(ss.str());
+        }
+      }
+
+      const caf::TrueParticleID primID{ixnIdx, caf::TrueParticleID::kPrimary, static_cast<int>(primIdx)};
+      ixn.prim[primIdx].daughters.clear();
+      ixn.prim[primIdx].daughtersID.clear();
+
+      if (auto it = children.find(traj.TrackId); it != children.end()) {
+        for (std::size_t childIdx : it->second) {
+          addSubtree(childIdx, primID, primID);
+        }
+      }
+    }
+
+    // trajectories whose parent was not saved by edep-sim: keep them, with unknown parent and ancestor
+    for (std::size_t orphanIdx : orphans) {
+      if (visited[orphanIdx]) {
+        continue;
+      }
+      LOG.WARNING() << "Trajectory " << trajs[orphanIdx].TrackId << " of interaction " << ixn.id
+                    << " has parent " << trajs[orphanIdx].ParentId << " which is not in the trajectory list\n";
+      caf::TrueParticleID unknown;
+      unknown.ixn = ixnIdx;
+      addSubtree(orphanIdx, unknown, unknown);
+    }
+  }
+
+  // ------------------------------------------------------------
   TruthMatcher::GTreeContainer::GTreeContainer(const vector<std::string> &filenames, const genie::NtpMCEventRecord * gEvt)
     : cafmaker::Loggable("GTreeContainer"), fGEvt(gEvt)
   {
@@ -873,6 +1104,7 @@ namespace cafmaker
   TruthMatcher::EdepSimTreeContainer::EdepSimTreeContainer(std::string filename,
                                                            double positionToleranceMm)
   : cafmaker::Loggable("GTreeContainer"),
+    fSpillPeriod_s(std::numeric_limits<double>::quiet_NaN()),
     fPositionToleranceMm(positionToleranceMm)
   {
     fEdepFile = TFile::Open(filename.c_str());
@@ -891,11 +1123,37 @@ namespace cafmaker
   // ------------------------------------------------------------
   void  TruthMatcher::EdepSimTreeContainer::LoadTree()
   {
+    auto * spillMap = dynamic_cast<TMap *>(fEdepFile->Get("event_spill_map"));
+    if (!spillMap) {
+      const std::string msg = "No 'event_spill_map' in the EDepSim file: a spill-built EDepSim file (EDEPSIM_SPILLS) is required\n";
+      LOG.FATAL() << msg;
+      throw std::runtime_error(msg);
+    }
+    if (auto * period = dynamic_cast<TParameter<double> *>(fEdepFile->Get("spillPeriod_s"))) {
+      fSpillPeriod_s = period->GetVal();
+    }
+    if (!(std::isfinite(fSpillPeriod_s) && fSpillPeriod_s > 0)) {
+      const std::string msg = "No valid 'spillPeriod_s' in the EDepSim file: a spill-built EDepSim file (EDEPSIM_SPILLS) is required\n";
+      LOG.FATAL() << msg;
+      throw std::runtime_error(msg);
+    }
+
     for (int i = 0; i<fEdepTree->GetEntries(); i++)
     {
       CheckedGetEntry(fEdepTree, i, "EDepSim tree load");
       unsigned long int vertex_id = static_cast<unsigned long int>(fG4Event->RunId) * 1000000ul + static_cast<unsigned long int>(fG4Event->EventId);
       fEdepEntries[vertex_id] = i;
+
+      const std::string eventString = std::to_string(fG4Event->RunId) + " " + std::to_string(fG4Event->EventId);
+      auto * spillStr = dynamic_cast<TObjString *>(spillMap->GetValue(eventString.c_str()));
+      if (!spillStr) {
+        std::stringstream ss;
+        ss << "EDepSim event '" << eventString << "' is not in the event_spill_map\n";
+        LOG.FATAL() << ss.str();
+        throw std::runtime_error(ss.str());
+      }
+      const long spill = std::stol(spillStr->GetString().Data());
+      fVertexIDsBySpill[spill].push_back(vertex_id);
 
       if (fG4Event->Primaries.empty())
       {
@@ -911,6 +1169,12 @@ namespace cafmaker
                                                             static_cast<unsigned long int>(fG4Event->RunId),
                                                             event_id,
                                                             pos.X(), pos.Y(), pos.Z()});
+
+      auto [itRange, inserted] = fSpillTimeRange_ns.emplace(spill, std::make_pair(pos.T(), pos.T()));
+      if (!inserted) {
+        itRange->second.first = std::min(itRange->second.first, pos.T());
+        itRange->second.second = std::max(itRange->second.second, pos.T());
+      }
     }
 
     for (auto & [eventId, candidates] : fEventToVertexIDs)
@@ -922,6 +1186,36 @@ namespace cafmaker
         fVertexCandidatesByYBin[yBin].push_back(&candidate);
       }
     }
+  }
+
+  // ------------------------------------------------------------
+  const std::vector<unsigned long int> & TruthMatcher::EdepSimTreeContainer::VertexIDsInSpill(long spillID)
+  {
+    if (!f_isTreeLoaded) {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+    return fVertexIDsBySpill.at(spillID);
+  }
+
+  // ------------------------------------------------------------
+  double TruthMatcher::EdepSimTreeContainer::SpillPeriod()
+  {
+    if (!f_isTreeLoaded) {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+    return fSpillPeriod_s;
+  }
+
+  // ------------------------------------------------------------
+  const std::map<long, std::pair<double, double>> & TruthMatcher::EdepSimTreeContainer::SpillTimeRanges_ns()
+  {
+    if (!f_isTreeLoaded) {
+      LoadTree();
+      f_isTreeLoaded = true;
+    }
+    return fSpillTimeRange_ns;
   }
 
   // ------------------------------------------------------------
