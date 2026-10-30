@@ -11,6 +11,7 @@
 #include <iostream>
 #include <deque>
 #include <map>
+#include <optional>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -125,6 +126,11 @@ namespace cafmaker
       /// True when an alternative reconstruction (treeSuffix non-empty) is read. Its tracks are not the
       /// legacy ones, so per-track quantities must come from its own Reco_Tree, not from Line_Candidates.
       bool fUseSuffixedTrackTime = false;
+
+      struct DuneTMSVersion { int major, minor, patch; };
+      // dune-tms version from the input's Metadata tree;
+      // empty when the input doesn't record one.
+      std::optional<DuneTMSVersion> fTMSVersion;
 
   };
 
