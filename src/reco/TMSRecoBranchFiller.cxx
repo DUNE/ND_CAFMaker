@@ -35,6 +35,8 @@ namespace cafmaker
       TMSLCTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
       if (!TMSRecoTree) {
         std::cerr << "Did not find TMS reco tree " << recoTreeName << " in input file " << tmsRecoFilename << std::endl;
+        if (!treeSuffix.empty())
+          std::cerr << "If this file predates the Cluster3D reconstruction, set TMSRecoTreeSuffix: \"\" to read the legacy Reco_Tree" << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
