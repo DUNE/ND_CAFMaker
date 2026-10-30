@@ -10,14 +10,14 @@
 //#include "nusystematics/artless/response_helper.hh"
 
 CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE)
-  : pot(std::numeric_limits<decltype(pot)>::signaling_NaN()),  rh(rw_fhicl_filename)
+  : rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
 
   cafSR = new TTree("cafTree", "cafTree");
   cafSRGlobal = new TTree("globalTree", "globalTree");
   cafMVA = new TTree("mvaTree", "mvaTree");
-  cafPOT = new TTree( "meta", "meta" );
+  cafMeta = new TTree( "meta", "meta" );
 
   if (storeGENIE)
     genie = new TTree( "genieEvt", "genieEvt" );
@@ -45,10 +45,9 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
   if (genie)
     genie->Branch( "genie_record", &mcrec );
 
-  cafPOT->Branch( "pot", &pot, "pot/D" );
-  cafPOT->Branch( "run", &meta_run, "run/I" );
-  cafPOT->Branch( "subrun", &meta_subrun, "subrun/I" );
-  cafPOT->Branch( "version", &version, "version/I" );
+  cafMeta->Branch( "run", &meta_run, "run/I" );
+  cafMeta->Branch( "subrun", &meta_subrun, "subrun/I" );
+  cafMeta->Branch( "version", &version, "version/I" );
 
   // fixme: the following is disabled until DIRT-II finishes on model + uncertainty decisions
 //  // Get list of variations, and make CAF branch for each one
@@ -88,10 +87,10 @@ void CAF::Print()
   //printf( "    Reco: Ev = %3.3f Elep = %3.3f q %d mu/e/nc %d%d%d cont/trk/ecal/exit %d%d%d%d had veto %2.1f\n\n", sr.Ev_reco, sr.Elep_reco, sr.reco_q, sr.reco_numu, sr.reco_nue, sr.reco_nc, sr.muon_contained, sr.muon_tracker, sr.muon_ecal, sr.muon_exit, sr.Ehad_veto );
 }
 
-void CAF::fillPOT()
+void CAF::fillMeta()
 {
   printf( "Filling metadata\n" );
-  cafPOT->Fill();
+  cafMeta->Fill();
 }
 
 void CAF::write()
@@ -101,7 +100,7 @@ void CAF::write()
     flatCAFFile->cd();
     flatCAFTree->Write();
 
-    for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
+    for (auto tree : {cafSRGlobal, cafMVA, cafMeta, genie })
     {
       if (!tree)
         continue;
@@ -115,7 +114,7 @@ void CAF::write()
     cafFile->cd();
     cafSR->Write();
 
-    for (auto tree : {cafSRGlobal, cafMVA, cafPOT, genie })
+    for (auto tree : {cafSRGlobal, cafMVA, cafMeta, genie })
     {
       if (!tree)
         continue;

@@ -59,6 +59,30 @@ namespace cafmaker
         throw;
       }
 
+      // dune-tms version, if the input records one.
+      // Older files have no Metadata tree, or one without the version branches;
+      // treat both as "version unknown" rather than an error.
+      TTree *metadata = dynamic_cast<TTree*>(fTMSRecoFile->Get("Metadata"));
+      if (metadata && metadata->GetEntries() > 0 &&
+          metadata->GetBranch("DuneTMSVersionMajor") &&
+          metadata->GetBranch("DuneTMSVersionMinor") &&
+          metadata->GetBranch("DuneTMSVersionPatch"))
+      {
+        DuneTMSVersion version{};
+        metadata->SetBranchAddress("DuneTMSVersionMajor", &version.major);
+        metadata->SetBranchAddress("DuneTMSVersionMinor", &version.minor);
+        metadata->SetBranchAddress("DuneTMSVersionPatch", &version.patch);
+        CheckedGetEntry(metadata, 0, "TMS Metadata version read");
+        metadata->ResetBranchAddresses();
+        fTMSVersion = version;
+        LOG.INFO() << "TMS input reports dune-tms version "
+                   << version.major << "." << version.minor << "." << version.patch << "\n";
+      }
+      else
+      {
+        LOG.WARNING() << "TMS input has no readable dune-tms version metadata\n";
+      }
+
       TMSRecoTree->SetBranchAddress("EventNo",               &_EventNo);
       TMSRecoTree->SetBranchAddress("SliceNo",               &_SliceNo);
       TMSRecoTree->SetBranchAddress("SpillNo",               &_SpillNo);
