@@ -239,7 +239,6 @@ jobs:
           apptainer exec \
             --bind /cvmfs \
             --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
-            --bind "${GITHUB_WORKSPACE}/inputs:/inputs:ro" \
             /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
             bash -c "
               cd '${GITHUB_WORKSPACE}' || exit \$?
