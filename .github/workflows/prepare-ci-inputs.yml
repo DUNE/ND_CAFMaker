@@ -1,0 +1,71 @@
+name: Prepare CI inputs
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prepare-ci-inputs
+  cancel-in-progress: false
+
+jobs:
+  download-inputs:
+    name: Prepare CAFMaker inputs
+    if: github.event_name == 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CAF_INPUT_URL: https://portal.nersc.gov/cfs/dune/data/emir_test/ND_CAFMaker_CI/inputs/cafmaker_staging/
+
+    steps:
+      - name: Check input directory and file availability
+        timeout-minutes: 5
+        run: |
+          wget \
+            --spider \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --execute robots=off \
+            --https-only \
+            --timeout=10 \
+            --tries=1 \
+            --no-verbose \
+            "${CAF_INPUT_URL}"
+
+      - name: Download input directory
+        run: |
+          cut_dirs=$(python3 -c 'import os; from urllib.parse import urlparse; print(len(urlparse(os.environ["CAF_INPUT_URL"]).path.strip("/").split("/")))')
+          wget \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --no-host-directories \
+            --cut-dirs="${cut_dirs}" \
+            --reject='index.html*' \
+            --execute robots=off \
+            --https-only \
+            --timeout=60 \
+            --tries=3 \
+            --no-verbose \
+            --directory-prefix=inputs \
+            "${CAF_INPUT_URL}"
+          if [[ -z "$(find inputs -type f -print -quit)" ]]; then
+            echo 'No input files were downloaded' >&2
+            exit 1
+          fi
+          du -sh inputs
+
+      - name: Upload CAFMaker inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-inputs
+          path: inputs/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 2

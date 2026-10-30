@@ -4,12 +4,146 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
+  resolve-inputs:
+    name: Find prepared CAFMaker inputs
+    if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      run-id: ${{ steps.inputs.outputs.run-id }}
+      artifact-id: ${{ steps.inputs.outputs.artifact-id }}
+
+    steps:
+      - name: Find latest successful input preparation
+        id: inputs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get(context.repo);
+            const branches = [];
+            if (
+              context.eventName === 'pull_request' &&
+              context.payload.pull_request.head.repo?.full_name === repository.full_name
+            ) {
+              branches.push(context.payload.pull_request.head.ref);
+            } else if (
+              context.eventName === 'workflow_dispatch' &&
+              context.ref.startsWith('refs/heads/')
+            ) {
+              branches.push(context.ref.slice('refs/heads/'.length));
+            }
+            if (!branches.includes(repository.default_branch)) {
+              branches.push(repository.default_branch);
+            }
+
+            for (const branch of branches) {
+              const workflowIds = branch === repository.default_branch
+                ? ['prepare-ci-inputs.yml']
+                : ['ci.yml', 'prepare-ci-inputs.yml'];
+              for (const workflowId of workflowIds) {
+                for await (const { data } of github.paginate.iterator(
+                  github.rest.actions.listWorkflowRuns,
+                  {
+                    ...context.repo,
+                    workflow_id: workflowId,
+                    branch,
+                    status: 'success',
+                    per_page: 100,
+                  }
+                )) {
+                  for (const run of data) {
+                    if (run.head_repository?.full_name !== repository.full_name) continue;
+                    if (branch !== repository.default_branch && run.event !== 'workflow_dispatch') continue;
+                    const artifacts = await github.paginate(
+                      github.rest.actions.listWorkflowRunArtifacts,
+                      { ...context.repo, run_id: run.id, per_page: 100 }
+                    );
+                    const artifact = artifacts.find(candidate =>
+                      candidate.name === 'caf-inputs' &&
+                      !candidate.expired &&
+                      Date.parse(candidate.expires_at) > Date.now()
+                    );
+                    if (!artifact) continue;
+                    core.setOutput('run-id', String(run.id));
+                    core.setOutput('artifact-id', String(artifact.id));
+                    core.info(`Using caf-inputs from ${workflowId} run ${run.id} on ${branch}`);
+                    return;
+                  }
+                }
+              }
+            }
+            core.setFailed(
+              'No unexpired CAFMaker inputs found. Run Prepare CI inputs on the default branch, then rerun CI.'
+            );
+
+  prepare-pr-inputs:
+    name: Prepare inputs for PR branch
+    if: github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CAF_INPUT_URL: https://portal.nersc.gov/cfs/dune/data/emir_test/ND_CAFMaker_CI/inputs/cafmaker_staging/
+
+    steps:
+      - name: Check input directory and file availability
+        timeout-minutes: 5
+        run: |
+          wget \
+            --spider \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --execute robots=off \
+            --https-only \
+            --timeout=10 \
+            --tries=1 \
+            --no-verbose \
+            "${CAF_INPUT_URL}"
+
+      - name: Download input directory
+        run: |
+          cut_dirs=$(python3 -c 'import os; from urllib.parse import urlparse; print(len(urlparse(os.environ["CAF_INPUT_URL"]).path.strip("/").split("/")))')
+          wget \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --no-host-directories \
+            --cut-dirs="${cut_dirs}" \
+            --reject='index.html*' \
+            --execute robots=off \
+            --https-only \
+            --timeout=60 \
+            --tries=3 \
+            --no-verbose \
+            --directory-prefix=inputs \
+            "${CAF_INPUT_URL}"
+          if [[ -z "$(find inputs -type f -print -quit)" ]]; then
+            echo 'No input files were downloaded' >&2
+            exit 1
+          fi
+          du -sh inputs
+
+      - name: Upload CAFMaker inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-inputs
+          path: inputs/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 2
+
   build:
     name: Build (prof)
     # we are pinning to 24.04 because Apptainer's PPA is not correctly being read in 26.04.
     # the Ubuntu Apptainer package has a bug (apptainer/apptainer#3487) that sets up the wrong AppArmor path.
     # 24.04 will be supported until 2029.  we can revisit the situation then, if needed.
+    if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-24.04 
 
     steps:
@@ -51,3 +185,98 @@ jobs:
               command -v makeCAF || { echo 'makeCAF not in PATH'; exit 1; }
               makeCAF --help || exit \$?
             " 2>&1
+
+      - name: Package installed runtime
+        run: tar -czf ndcaf-runtime.tar.gz install
+
+      - name: Upload installed runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndcaf-runtime
+          path: ndcaf-runtime.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+  run-cafmaker:
+    name: Run CAFMaker
+    needs: [build, resolve-inputs]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CAFMaker inputs
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.resolve-inputs.outputs.artifact-id }}
+          merge-multiple: true
+          path: inputs
+          run-id: ${{ needs.resolve-inputs.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Download installed runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: ndcaf-runtime
+
+      - name: Extract installed runtime
+        run: tar -xzf ndcaf-runtime.tar.gz
+
+      - name: Install Apptainer
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get update -qq
+          sudo apt-get install -y apptainer
+
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
+
+      - name: Run CAFMaker
+        run: |
+          apptainer exec \
+            --bind /cvmfs \
+            --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
+            bash -c "
+              cd '${GITHUB_WORKSPACE}' || exit \$?
+              source install/bin/ndcaf_setup.sh prof || exit \$?
+              mkdir -p outputs || exit \$?
+              makeCAF --fcl=test/fickle.fcl -n 1 || exit \$?
+            " 2>&1
+
+      - name: Upload CAF output
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-output
+          path: outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+  verify:
+    name: Verify CAF output
+    needs: run-cafmaker
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CAF output
+        uses: actions/download-artifact@v4
+        with:
+          name: caf-output
+          path: outputs
+
+      - name: Dump CAF output
+        run: |
+          python3 -m pip install uproot awkward numpy
+          python3 test/scripts/dumper.py outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root --vector-entries 5
+
+      - name: Compare CAF output with reference
+        run: |
+          diff -u \
+            test/references/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root.json \
+            outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root.json
