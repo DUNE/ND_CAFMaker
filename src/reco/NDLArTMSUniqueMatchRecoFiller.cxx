@@ -1,6 +1,24 @@
 #include "NDLArTMSUniqueMatchRecoFiller.h"
 #include <cmath>
 #include "TRandom3.h"
+#include <set>
+
+#include "Math/Functor.h"
+#include "Math/GenVector/PositionVector3D.h"
+#include "Minuit2/Minuit2Minimizer.h"
+#include "Rtypes.h"
+#include "TAxis.h"
+#include "TGraphErrors.h"
+#include "TMath.h"
+#include "TMatrixDSymEigen.h"
+#include "TMatrixDSymfwd.h"
+#include "TMatrixDfwd.h"
+#include "TMatrixT.h"
+#include "TMatrixTSym.h"
+#include "TPolyLine3D.h"
+#include "TSpline.h"
+#include "TVectorDfwd.h"
+#include "TVectorT.h"
 
 namespace cafmaker
 {
@@ -16,35 +34,34 @@ namespace cafmaker
     }
   }
 
-  NDLArTMSUniqueMatchRecoFiller::NDLArTMSUniqueMatchRecoFiller(const double sigmaX, const double sigmaY, const bool singleAngle, const double sigmaTh, const double sigmaThX, const double sigmaThY, const bool useTime, const double meanT, const double sigmaT, const double fCut)
+  NDLArTMSUniqueMatchRecoFiller::NDLArTMSUniqueMatchRecoFiller(const double sigmaX, const double sigmaY, const double sigmaThX, const double sigmaThY, const bool useTime, const double meanT, const double sigmaT, const double fCut, const bool useSmearTime)
     : IRecoBranchFiller("LArTMSMatcher")
   {
     sigma_x = sigmaX;
     sigma_y = sigmaY;
-    single_angle = singleAngle;
-    sigma_angle = sigmaTh;
     sigma_angle_x = sigmaThX;
     sigma_angle_y = sigmaThY;
     use_time = useTime;
     mean_t = meanT;
     sigma_t = sigmaT;
     f_cut = fCut;
+    use_smear_time = useSmearTime;
     // nothing to do
     SetConfigured(true);
   }
 
-  std::vector<double> NDLArTMSUniqueMatchRecoFiller::Project_track(const caf::SRTrack track, const bool forward) const
+  std::vector<float> NDLArTMSUniqueMatchRecoFiller::Project_track(const caf::SRTrack track, const bool forward) const
   {
-    double x, y, z;
+    float x, y, z;
 
-    double dir_x, dir_y, dir_z;
+    float dir_x, dir_y, dir_z;
     
-    double proj_z;
-    double proj_x;
-    double proj_y;
+    float proj_z;
+    float proj_x;
+    float proj_y;
 
     if (forward) { // projects a LAr track forward to TMS
-      x = track.end.x;
+       x = track.end.x;
        y = track.end.y;
        z = track.end.z;
 
@@ -69,41 +86,41 @@ namespace cafmaker
        proj_x = -dir_x*proj_z/dir_z + x;
        proj_y = -dir_y*proj_z/dir_z + y;
     }
-    std::vector<double> proj_point = {proj_x, proj_y, proj_z};
+    std::vector<float> proj_point = {proj_x, proj_y, proj_z};
     return proj_point;
   }
 
-  std::vector<double> NDLArTMSUniqueMatchRecoFiller::Angle_between_tracks(const caf::SRTrack tms_track, const caf::SRTrack lar_track) const
+  std::vector<float> NDLArTMSUniqueMatchRecoFiller::Angle_between_tracks(const caf::SRTrack tms_track, const caf::SRTrack lar_track) const
   {
-      double tms_dir_x = tms_track.dir.x;
-      double tms_dir_y = tms_track.dir.y;
-      double tms_dir_z = tms_track.dir.z;
+      float tms_dir_x = tms_track.dir.x;
+      float tms_dir_y = tms_track.dir.y;
+      float tms_dir_z = tms_track.dir.z;
 
-      double lar_dir_x = lar_track.enddir.x;
-      double lar_dir_y = lar_track.enddir.y;
-      double lar_dir_z = lar_track.enddir.z;
+      float lar_dir_x = lar_track.enddir.x;
+      float lar_dir_y = lar_track.enddir.y;
+      float lar_dir_z = lar_track.enddir.z;
 
-      double xz_dot_prod = tms_dir_x*lar_dir_x + tms_dir_z*lar_dir_z;
+      float xz_dot_prod = tms_dir_x*lar_dir_x + tms_dir_z*lar_dir_z;
       if (xz_dot_prod != 0) {
         xz_dot_prod = xz_dot_prod/(sqrt(pow(tms_dir_x,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_x,2)+pow(lar_dir_z,2)));
       }
-      double yz_dot_prod = tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
+      float yz_dot_prod = tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
       if (yz_dot_prod != 0) {
         yz_dot_prod = yz_dot_prod/(sqrt(pow(tms_dir_y,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_y,2)+pow(lar_dir_z,2)));
       }
-      double dot_prod = tms_dir_x*lar_dir_x + tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
-      double angle_x = 180.0/TMath::Pi() * acos(xz_dot_prod);
-      double angle_y = 180.0/TMath::Pi() * acos(yz_dot_prod);
-      double angle_overall = 180.0/TMath::Pi() * acos(dot_prod);
-      std::vector<double> angles = {angle_x,angle_y,angle_overall};
+      float dot_prod = tms_dir_x*lar_dir_x + tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
+      float angle_x = 180.0/TMath::Pi() * acos(xz_dot_prod);
+      float angle_y = 180.0/TMath::Pi() * acos(yz_dot_prod);
+      float angle_overall = 180.0/TMath::Pi() * acos(dot_prod);
+      std::vector<float> angles = {angle_x,angle_y,angle_overall};
       return angles;
   }
 
   bool NDLArTMSUniqueMatchRecoFiller::Consider_TMS_track(const caf::SRTrack tms_track, const double tms_z_cutoff) const
   {
-    double x_start = tms_track.start.x;
-    double y_start = tms_track.start.y;
-    double z_start = tms_track.start.z;
+    float x_start = tms_track.start.x;
+    float y_start = tms_track.start.y;
+    float z_start = tms_track.start.z;
 
     if ((x_start > tms_x_lim1)&&(x_start < tms_x_lim2) &&
         (y_start > tms_y_lim1)&&(y_start < tms_y_lim2) &&
@@ -115,19 +132,19 @@ namespace cafmaker
             return true;
           } 
     else {
-      return false;
+            return false;
     }
   }
 
   bool NDLArTMSUniqueMatchRecoFiller::Consider_LAr_track(const caf::SRTrack lar_track, const double lar_z_cutoff) const
   {
-    double x_start = lar_track.start.x;
-    double y_start = lar_track.start.y;
-    double z_start = lar_track.start.z;
+    float x_start = lar_track.start.x;
+    float y_start = lar_track.start.y;
+    float z_start = lar_track.start.z;
 
-    double x_end = lar_track.end.x;
-    double y_end = lar_track.end.y;
-    double z_end = lar_track.end.z;
+    float x_end = lar_track.end.x;
+    float y_end = lar_track.end.y;
+    float z_end = lar_track.end.z;
 
     if ((x_start > lar_x_lim1)&&(x_start < lar_x_lim2) &&
         (y_start > lar_y_lim1)&&(y_start < lar_y_lim2) &&
@@ -143,11 +160,49 @@ namespace cafmaker
           return true;
         } 
     else {
-      return false;
+          return false;
     }
   }
 
-  void NDLArTMSUniqueMatchRecoFiller::Create_matches(std::vector<caf::SRNDTrackAssn> possibleMatches, caf::StandardRecord &sr) const
+	constexpr auto range_gramper_cm()
+        {
+	std::array<double, 73> Range_grampercm{
+                {0.9833,   1.36,      1.786,    2.507,   3.321,   4.859,   6.598,   8.512,   10.58,   12.78,
+                15.1,     17.52,     20.04,    25.31,   30.84,   36.59,   42.5,    54.73,   67.32,   86.66,
+                106.3,    139.4,     172.5,    205.6,   238.5,   271.1,   303.5,   335.7,   367.7,   431.0,
+                493.4,    555.2,     616.3,    736.8,   855.2,   1030.0,  1202.0,  1482.0,  1758.0,  2029.0,
+                2297.0,   2562.0,    2825.0,   3085.0,  3343.0,  3854.0,  4359.0,  4859.0,  5354.0,  6333.0,
+                7298.0,   8726.0,    10130.0,  12430.0, 14690.0, 16920.0, 19100.0, 21260.0, 23380.0, 25480.0,
+                27550.0,  31610.0,   35580.0,  39460.0, 43260.0, 50620.0, 57680.0, 67780.0, 77340.0, 92220.0,
+                1.06e+05, 1.188e+05, 1.307e+05}};
+        for (double& value : Range_grampercm) {
+                value /= NDLArTMSUniqueMatchRecoFiller::LArDen; // convert to cm
+        }
+    return Range_grampercm;
+    }
+
+        constexpr auto Range_grampercm = range_gramper_cm();
+        constexpr std::array<double, 73> KE_MeV{
+        {10.0,    12.0,    14.0,    17.0,    20.0,    25.0,    30.0,    35.0,    40.0,    45.0,
+        50.0,    55.0,    60.0,    70.0,    80.0,    90.0,    100.0,   120.0,   140.0,   170.0,
+        200.0,   250.0,   300.0,   350.0,   400.0,   450.0,   500.0,   550.0,   600.0,   700.0,
+        800.0,   900.0,   1000.0,  1200.0,  1400.0,  1700.0,  2000.0,  2500.0,  3000.0,  3500.0,
+        4000.0,  4500.0,  5000.0,  5500.0,  6000.0,  7000.0,  8000.0,  9000.0,  10000.0, 12000.0,
+        14000.0, 17000.0, 20000.0, 25000.0, 30000.0, 35000.0, 40000.0, 45000.0, 50000.0, 55000.0,
+        60000.0, 70000.0, 80000.0, 90000.0, 1e+05,   1.2e+05, 1.4e+05, 1.7e+05, 2e+05,   2.5e+05,
+        3e+05,   3.5e+05, 4e+05}};
+        TGraph const KEvsR{73, Range_grampercm.data(), KE_MeV.data()};
+        TSpline3 const KEvsR_spline3{"KEvsRS", &KEvsR};
+
+
+  double NDLArTMSUniqueMatchRecoFiller::Muon_LAr_KE_Reco(const float trk_length) const
+  { // Function for reconstructing the kinetic energy of a muon from the distance it would travel in LAr
+	// From larreco/RecoAlg/TrackMomentumCalculator.cxx
+
+	return KEvsR_spline3.Eval(trk_length);
+  }
+
+  void NDLArTMSUniqueMatchRecoFiller::Create_matches(std::vector<caf::SRNDTrackAssn> possibleMatches, bool Pandora, caf::StandardRecord &sr) const
   {
     std::sort(possibleMatches.begin(),possibleMatches.end(),Track_match_sorter);
 
@@ -158,7 +213,8 @@ namespace cafmaker
       caf::SRNDTrackAssn track_match = possibleMatches[match_idx];
       double score = track_match.matchScore;
       if (score > f_cut) {
-        break;}
+        continue;
+      }
       caf::SRNDLArID larid = track_match.larid;
       bool seen_lar = false; // checks if this LAr track has been matched already
       for (auto const seen_larid : matched_lar) {
@@ -168,7 +224,8 @@ namespace cafmaker
         }
       }
       if (seen_lar) {
-        continue;}
+        continue;
+      }
       caf::SRTMSID tmsid = track_match.tmsid;
       bool seen_tms = false; // checks if this TMS track has been matched already
       for (auto const seen_tmsid : matched_tms) {
@@ -178,32 +235,66 @@ namespace cafmaker
         }
       }
       if (seen_tms) {
-        continue;}
-      
+        continue;
+      }
+
       matched_tms.push_back(tmsid);
       matched_lar.push_back(larid);
       sr.nd.trkmatch.extrap.push_back(track_match); // adds successfully matched pair to StandardRecord of track matches
       sr.nd.trkmatch.nextrap += 1;
+      caf::SRTrack joint_track = track_match.trk;
+      caf::SRTrack lar_track;
+      if (Pandora) {
+         lar_track = sr.nd.lar.pandora[larid.ixn].tracks[larid.idx];
+      } // if the Pandora flag is true, then the LAr tracks are listed within sr.nd.lar.pandora
+      else {
+         lar_track = sr.nd.lar.dlp[larid.ixn].tracks[larid.idx];
+      }     // otherwise, they're listed within sr.nd.lar.dlp
+      caf::SRTrack tms_track = sr.nd.tms.ixn[tmsid.ixn].tracks[tmsid.idx];     // this is the TMS track
+      joint_track.start = lar_track.start;      // starting point of joint track is starting point of LAr track (Pandora or SPINE)
+      joint_track.end = tms_track.end;          // ending point of joint track is ending point of TMS track
+      joint_track.dir = lar_track.dir;          // starting direction of joint track is starting direction of LAr track (Pandora or SPINE)
+      joint_track.enddir = tms_track.enddir;    // end direction of joint track is end direction of TMS track
+      joint_track.time = lar_track.time;        // TODO: once we have reco LAr time working properly for both Pandora and SPINE this should be switched to lar_track.time from tms_track.time
+      joint_track.Evis = lar_track.Evis + tms_track.Evis;
+      joint_track.charge = tms_track.charge;
+      joint_track.part = lar_track.part;        // Joint track inherits LAr track's reco particle ID
+
+      // TODO: The following values pertain to the dead region between LAr and TMS. They may not remain accurate as geometry changes. Long-term solution is to directly query the geometry file instead
+      float gap_dist = sqrt(pow(tms_track.start.x - lar_track.end.x,2)+pow(tms_track.start.y - lar_track.end.y,2)+pow(tms_track.start.z - lar_track.end.z,2));
+      double LArTMSGap = TMSStart - ActiveLArEnd;
+      double DeadLArDist = DeadLArEnd - ActiveLArEnd;
+      double DeadLArFrac = DeadLArDist / LArTMSGap; // What fraction of the distance between LAr and TMS is dead LAr?
+      joint_track.len_cm = lar_track.len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist; // Divide the TMS areal density by the LAr density and add the dead LAr length
+
+      // TODO: Split this straight line distance (gap_dist) into segments as it passes through each subsequent material - only the dead LAr has been implemented so far
+      joint_track.len_gcm2 = (lar_track.len_cm + DeadLArFrac*gap_dist)*LArDen + tms_track.len_gcm2;
+      // TODO: add the rest of the joint_track attributes (qual, truth, truthOverlap)
+      double KE_mu = Muon_LAr_KE_Reco(joint_track.len_cm); // Gives muon kinetic energy in MeV
+      float M_mu = 105.658; // Muon mass in MeV
+      joint_track.E = KE_mu + M_mu;
     }
   }
 
-  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const Trigger &trigger, const float time_smear) const
+  std::vector<caf::SRNDTrackAssn> NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, std::set<int> matchIDs, const bool Pandora) const
   { // given a TMS track and a LAr interaction, computes the match scores between that TMS track and all LAr tracks in the interaction
     std::vector<caf::SRNDTrackAssn> potentialMatchList;
 
-    for (unsigned int itrk = 0; itrk < n_tracks; itrk++)
-    {
+    for (unsigned int itrk = 0; itrk < n_tracks; itrk++) {
       caf::SRTrack trk = ixn.tracks[itrk];
+      bool trueMatch = false;
 
       if (!Consider_LAr_track(trk,lar_z_cutoff)) {
         continue; //skips the lar track if it isn't suitable according to the function
       }
-      
-      std::vector<double> proj_vec = Project_track(trk,true);
-      double delta_x = tms_trk.start.x - proj_vec[0];
-      double delta_y = tms_trk.start.y - proj_vec[1];
 
-      std::vector<double> angles = Angle_between_tracks(tms_trk,trk);
+      std::vector<float> proj_vec = Project_track(trk,true);
+      float delta_x = tms_trk.start.x - proj_vec[0];
+      float delta_y = tms_trk.start.y - proj_vec[1];
+
+      std::vector<float> angles = Angle_between_tracks(tms_trk,trk);
+      angles[0] = std::copysign(angles[0],delta_x);
+      angles[1] = std::copysign(angles[1],delta_y); // if the TMS track has a larger X or Y value than the projected LAr track, then the X or Y angle is positive. Otherwise, it's negative
 
       double matchScore = std::numeric_limits<double>::max(); // initialize match score to max value
 
@@ -211,56 +302,56 @@ namespace cafmaker
       caf::SRVector3D start_pos;
       double delta_t = 0; // initialize time of LAr track and time difference between it and TMS track to 0
 
-      if (single_angle) {
-        double angle = angles[2]; // overall angle between LAr and TMS track
-        matchScore = pow(delta_x/sigma_x,2) + pow(delta_y/sigma_y,2) + pow(angle/sigma_angle,2);
-        // matchScore is a weighted sum of x and y distances between tracks (after projection) and angle between them
+      float angle_x = angles[0];
+      float angle_y = angles[1]; // x and y components of LAr and TMS tracks
+      matchScore = pow(delta_x/sigma_x,2) + pow(delta_y/sigma_y,2) + pow(angle_x/sigma_angle_x,2)+ pow(angle_y/sigma_angle_y,2);
+      bool truthFail = false;
+      std::vector<float> tOv = trk.truthOverlap;
+      std::vector<caf::TrueParticleID> truIDs = trk.truth;
+      if (tOv.empty()) {
+        truthFail = true;
       }
-      else {
-        double angle_x = angles[0];
-        double angle_y = angles[1]; // x and y components of LAr and TMS tracks
-        matchScore = pow(delta_x/sigma_x,2) + pow(delta_y/sigma_y,2) + pow(angle_x/sigma_angle_x,2)+ pow(angle_y/sigma_angle_y,2);
-        // same as above except there are two angles not just one
+      if (truIDs.empty()) {
+        truthFail = true;
       }
+      if (truIDs.size() != tOv.size()) {
+        truthFail = true;
+      }
+      if (!truthFail) {
+        int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
+        caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
+        const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
+        if (matchedPart == nullptr) {
+          truthFail = true;
+        }
 
       if (use_time) {
-        // this handles time-based matching - using truth-level particle times for now instead of light in LAr
-        
-        bool timeFail = false;
-        std::vector<float> tOv = trk.truthOverlap;
-        std::vector<caf::TrueParticleID> truIDs = trk.truth;
-        if (tOv.empty()) {
-          timeFail = true;
+        // this handles time-based matching
+        if (!use_smear_time) {// this occurs when the LAr time has filled in the file
+          lar_time = trk.time;
         }
-        if (truIDs.empty()) {
-          timeFail = true;
-        }
-        if (truIDs.size() != tOv.size()) {
-          timeFail = true;
-        }
-        if (!timeFail) {
-          int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
-          caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
-          const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-          if (matchedPart != nullptr) {
+        if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
+          if (!truthFail) {
+            int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
+            caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
+            const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
             lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-            // Eventually we'll want to fill the LAr time from the track rather than the particle (trk.time instead of matchedPart->time).
-            // But LAr tracks from SPINE don't have their time attribute filled yet, so we use the true particle for now to keep the matcher agnostic to the LAr reco method
             double tms_time = tms_trk.time;
             delta_t = tms_time - lar_time;
             matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+
             // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
-            std::vector<float> tOvTMS = tms_trk.truthOverlap;
+            // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
             std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
-            if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
-              int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
-              caf::TrueParticleID partIDTMS = truIDsTMS[idx_max_TMS];
+            // if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
+            if (truIDsTMS.size() == 1) {
+              //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
+              caf::TrueParticleID partIDTMS = truIDsTMS[0];//idx_max_TMS];
               const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
-              // TODO: Right now the partIDTMS values are nonsensical and the TMSPart->G4ID is always a null pointer. There are problems bringing TMS truth info into ND-CAFMaker
-              // Uncomment the following once this has been fixed
               if (TMSPart != nullptr) {
                 if (matchedPart->G4ID==TMSPart->G4ID) {
-                  // TODO: Add "TrueMatch" boolean attribute to the TrackAssn and set to true
+                  trueMatch = true;
+                  matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
                   // std::cout << "True Match!" << std::endl;
                 }
               }
@@ -273,7 +364,12 @@ namespace cafmaker
       tmsid.ixn = ixn_tms;
       tmsid.idx = itms;
       caf::SRNDLArID larid;
-      larid.reco = caf::kPandoraNDLAr;
+      if (Pandora) {
+        larid.reco = caf::kPandoraNDLAr;
+      }
+      else {
+        larid.reco = caf::kDeepLearnPhys;
+      }
       larid.ixn = ixn_lar;
       larid.idx = itrk;
 
@@ -289,27 +385,19 @@ namespace cafmaker
       potential_match.matchScore = matchScore;
       potential_match.transdispl = sqrt(pow(delta_x,2)+pow(delta_y,2));
       potential_match.cosangdispl = cos(TMath::Pi()/180.0 * angles[2]);
-
-      caf::SRTrack joint_track = potential_match.trk;
-      joint_track.start = trk.start;
-      joint_track.end = tms_trk.end;
-      joint_track.dir = trk.dir;
-      joint_track.enddir = tms_trk.enddir;
-
-      joint_track.time = tms_trk.time; // TODO: once we have reco LAr time working properly for both Pandora and SPINE this should be switched to trk.time
-
-      joint_track.Evis = trk.Evis + tms_trk.Evis;
-      // TODO: add the rest of the joint_track attributes
-      
+      potential_match.trueMatch = trueMatch;
+      potential_match.deltaX = delta_x;
+      potential_match.deltaY = delta_y;
+      potential_match.deltaThetaX = angles[0];
+      potential_match.deltaThetaY = angles[1];
+      potential_match.deltaT = delta_t;
       potentialMatchList.push_back(potential_match);
     }
 
     return potentialMatchList;
   }
 
-
-  void
-  NDLArTMSUniqueMatchRecoFiller::_FillRecoBranches(const Trigger &trigger,
+  void NDLArTMSUniqueMatchRecoFiller::_FillRecoBranches(const cafmaker::Trigger &trigger,
                                              caf::StandardRecord &sr,
                                              const cafmaker::Params &/*par*/,
                                              const TruthMatcher */*truthMatcher*/) const
@@ -321,38 +409,36 @@ namespace cafmaker
 
     double tms_z_cutoff = 20;
     double lar_z_cutoff = 20; // tracks must overlap last/first 20 cm of the detectors
-    
-    for (unsigned int ixn_tms = 0; ixn_tms < sr.nd.tms.nixn; ixn_tms++)
-    {
+
+    std::set<int> matchIDs; // will store the IDs of true matches found
+
+    for (unsigned int ixn_tms = 0; ixn_tms < sr.nd.tms.nixn; ixn_tms++) {
       caf::SRTMSInt tms_int = sr.nd.tms.ixn[ixn_tms];
       unsigned int n_tms_tracks = tms_int.ntracks;
-      
-      for (unsigned int itms = 0; itms < n_tms_tracks; itms++)
-      {
+
+      for (unsigned int itms = 0; itms < n_tms_tracks; itms++){
         caf::SRTrack tms_trk = tms_int.tracks[itms];
 
         if (!Consider_TMS_track(tms_trk,tms_z_cutoff)) {
           continue; // skips the TMS track if it isn't suitable according to the function
         }
 
-        for (unsigned int ixn_pan = 0; ixn_pan < sr.nd.lar.npandora; ixn_pan++)
-        {
+        for (unsigned int ixn_pan = 0; ixn_pan < sr.nd.lar.npandora; ixn_pan++){
           caf::SRNDLArInt pan_int = sr.nd.lar.pandora[ixn_pan];
           unsigned int n_pan_tracks = pan_int.ntracks;
-          
+
 	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time
-          std::vector<caf::SRNDTrackAssn> panTrkAssns = Compute_match_scores(pan_int, ixn_pan, n_pan_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
+          std::vector<caf::SRNDTrackAssn> panTrkAssns = Compute_match_scores(pan_int, ixn_pan, n_pan_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime, matchIDs,true);
 
           copy(panTrkAssns.begin(), panTrkAssns.end(), back_inserter(possiblePandoraMatches));
         }
 
-        for (unsigned int ixn_dlp = 0; ixn_dlp < sr.nd.lar.ndlp; ixn_dlp++)
-        {
+        for (unsigned int ixn_dlp = 0; ixn_dlp < sr.nd.lar.ndlp; ixn_dlp++){
           caf::SRNDLArInt dlp_int = sr.nd.lar.dlp[ixn_dlp];
           unsigned int n_dlp_tracks = dlp_int.ntracks;
-	  
+
 	  float smearTime = rng.Gaus(0.,10.); // Used for the cheated LAr time 
-          std::vector<caf::SRNDTrackAssn> dlpTrkAssns = Compute_match_scores(dlp_int, ixn_dlp, n_dlp_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime);
+          std::vector<caf::SRNDTrackAssn> dlpTrkAssns = Compute_match_scores(dlp_int, ixn_dlp, n_dlp_tracks, ixn_tms, itms, lar_z_cutoff, tms_trk, sr, trigger, smearTime, matchIDs,false);
 
           copy(dlpTrkAssns.begin(), dlpTrkAssns.end(), back_inserter(possibleSPINEMatches));
         }
@@ -360,17 +446,18 @@ namespace cafmaker
     }
 
     if (possiblePandoraMatches.size() > 0) {
-      Create_matches(possiblePandoraMatches,sr);
-    }
+      Create_matches(possiblePandoraMatches,true,sr); // tells the matcher that it's working with Pandora LAr tracks
+      }
 
     if (possibleSPINEMatches.size() > 0) {
-      Create_matches(possibleSPINEMatches,sr);
+      Create_matches(possibleSPINEMatches,false,sr); // tells the matcher that it's not working with Pandora LAr tracks (therefore, SPINE tracks)
+      }
     }
-  }
+
   // todo: this is a placeholder
-  std::deque<Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
+  std::deque<cafmaker::Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
   {
-    return std::deque<Trigger>();
+    return std::deque<cafmaker::Trigger>();
   }
 
 }
