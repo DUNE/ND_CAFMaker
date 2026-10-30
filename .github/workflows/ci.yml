@@ -245,7 +245,7 @@ jobs:
               cd '${GITHUB_WORKSPACE}' || exit \$?
               source install/bin/ndcaf_setup.sh prof || exit \$?
               mkdir -p outputs || exit \$?
-              makeCAF --fcl=fickle.fcl -n 1 || exit \$?
+              makeCAF --fcl=test/fickle.fcl -n 1 || exit \$?
             " 2>&1
 
       - name: Upload CAF output
