@@ -14,11 +14,13 @@ namespace cafmaker
 {
 
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename,
-                                           double vertexMatchToleranceMm)
+                                           double vertexMatchToleranceMm,
+                                           const std::string &treeSuffix)
     : IRecoBranchFiller("TMS"),
     fTriggers(),
     fLastTriggerReqd(fTriggers.end()),
-    fVertexMatchToleranceMm(vertexMatchToleranceMm)
+    fVertexMatchToleranceMm(vertexMatchToleranceMm),
+    fUseSuffixedTrackTime(!treeSuffix.empty())
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
@@ -27,10 +29,12 @@ namespace cafmaker
       SetConfigured(true);
 
       // Save pointer to input tree
-      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Reco_Tree"));
+      const std::string recoTreeName = "Reco_Tree" + treeSuffix;
+      const std::string truthTreeName = "Truth_Info" + treeSuffix;
+      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get(recoTreeName.c_str()));
       TMSLCTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
       if (!TMSRecoTree) {
-        std::cerr << "Did not find TMS reco tree Reco_Tree in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Did not find TMS reco tree " << recoTreeName << " in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -41,9 +45,9 @@ namespace cafmaker
         throw;
       }
       // Save pointer to truth tree
-      TMSTrueTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Truth_Info"));
+      TMSTrueTree = dynamic_cast<TTree*>(fTMSRecoFile->Get(truthTreeName.c_str()));
       if (!TMSTrueTree) {
-        std::cerr << "Did not find TMS true tree Truth_Info in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Did not find TMS true tree " << truthTreeName << " in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -358,7 +362,12 @@ namespace cafmaker
           track.dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           track.enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          track.time    = static_cast<double>(_TMSStartTime[j]); //Adds time of interaction // TODO: use _TrackTime after prod n4p1
+          // Legacy: time of interaction from Line_Candidates. TMSStartTime there is a single value per slice
+          // (the first legacy track's time), so it cannot describe the tracks of another reconstruction.
+          // For a suffixed reconstruction (e.g. _C3D) use the track's own start time from its Reco_Tree.
+          // TODO: use _TrackTime after prod n4p1
+          track.time    = fUseSuffixedTrackTime ? static_cast<double>(_TrackStartPos[j][3])
+                                                : static_cast<double>(_TMSStartTime[j]); //Adds time of interaction
 
           // Track info
           track.len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives

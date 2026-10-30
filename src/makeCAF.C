@@ -156,7 +156,8 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   if (par().cafmaker().tmsRecoFile(tmsFile))
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile,
-                                                                              par().cafmaker().vertexMatchToleranceMm()));
+                                                                              par().cafmaker().vertexMatchToleranceMm(),
+                                                                              par().cafmaker().tmsRecoTreeSuffix()));
     std::cout << "   TMS\n";
   }
 
