@@ -3,33 +3,33 @@
 nd_cafmaker: @local::standard_nd_cafmaker
 
 nd_cafmaker.CAFMakerSettings.GHEPFiles: [
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009650.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009651.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009652.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009653.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009654.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009655.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009656.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009657.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009658.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009659.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009650.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009651.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009652.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009653.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009654.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009655.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009656.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009657.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009658.GHEP.root",
-   "/inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009659.GHEP.root"
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009650.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009651.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009652.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009653.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009654.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009655.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009656.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009657.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009658.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.ndlarfid.sanddrift.0009659.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009650.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009651.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009652.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009653.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009654.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009655.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009656.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009657.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009658.GHEP.root",
+   "inputs/run-genie/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift/GHEP/0009000/MiniProdN5p1_NDComplex_FHC.genie.rockantindlarfid.sanddrift.0009659.GHEP.root"
 ]
 
 nd_cafmaker.CAFMakerSettings.OutputFile: "outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root"
 
-nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "/input/run-mlreco/MiniProdN5p1_NDComplex_FHC.spine.full.sanddrift/MLRECO_SPINE/0000000/MiniProdN5p1_NDComplex_FHC.spine.full.sanddrift.0000965.MLRECO_SPINE.hdf5"
-nd_cafmaker.CAFMakerSettings.TMSRecoFile: "/input/run-tms-reco/MiniProdN5p1_NDComplex_FHC.tmsreco.full.sanddrift/TMSRECO/0000000/MiniProdN5p1_NDComplex_FHC.tmsreco.full.sanddrift.0000965.TMSRECO.root"
-nd_cafmaker.CAFMakerSettings.EdepsimFile: "/input/run-spill-build/MiniProdN5p1_NDComplex_FHC.spill.full.sanddrift/EDEPSIM_SPILLS/0000000/MiniProdN5p1_NDComplex_FHC.spill.full.sanddrift.0000965.EDEPSIM_SPILLS.root"
+nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "inputs/run-mlreco/MiniProdN5p1_NDComplex_FHC.spine.full.sanddrift/MLRECO_SPINE/0000000/MiniProdN5p1_NDComplex_FHC.spine.full.sanddrift.0000965.MLRECO_SPINE.hdf5"
+nd_cafmaker.CAFMakerSettings.TMSRecoFile: "inputs/run-tms-reco/MiniProdN5p1_NDComplex_FHC.tmsreco.full.sanddrift/TMSRECO/0000000/MiniProdN5p1_NDComplex_FHC.tmsreco.full.sanddrift.0000965.TMSRECO.root"
+nd_cafmaker.CAFMakerSettings.EdepsimFile: "inputs/run-spill-build/MiniProdN5p1_NDComplex_FHC.spill.full.sanddrift/EDEPSIM_SPILLS/0000000/MiniProdN5p1_NDComplex_FHC.spill.full.sanddrift.0000965.EDEPSIM_SPILLS.root"
 
 
-# WORKSPACE="$PWD" apptainer shell --bind /cvmfs --bind "$WORKSPACE:$WORKSPACE" --bind "$WORKSPACE/alex-runcafmaker:/inputs" /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest
+# WORKSPACE="$PWD" apptainer shell --bind /cvmfs --bind "$WORKSPACE:$WORKSPACE" --bind "$WORKSPACE/alex-runcafmaker:inputs" /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest
