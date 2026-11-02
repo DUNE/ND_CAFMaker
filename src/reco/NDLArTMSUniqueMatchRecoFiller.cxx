@@ -736,24 +736,28 @@ namespace cafmaker
     for (unsigned int match_no = 0; match_no < sr.nd.trkmatch.nextrap; match_no++){
       caf::SRNDTrackAssn match_pair = sr.nd.trkmatch.extrap[match_no];
       if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
-        // One of the match pairs this algorithm found, so proceed with the counting
+        // One of the match pairs this algorithm found, so proceed with the counting and energy reco
         num_matches += 1;
-        if (match_pair.trueMatch){
-          num_true_matches += 1;
-          caf::SRNDLArID match_trk_id = match_pair.larid;
-          caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
-          std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
-          std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
-          int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
-          caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
-          const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
-          float start_x = matchedParticle->start_pos.x;
-          float start_y = matchedParticle->start_pos.y;
-          float start_z = matchedParticle->start_pos.z;
-          if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
-              &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
-              &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)) {
-
+        num_true_matches += 1;
+        caf::SRNDLArID match_trk_id = match_pair.larid;
+        caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
+        std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
+        std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
+        int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
+        caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
+        const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
+        float start_x = matchedParticle->start_pos.x;
+        float start_y = matchedParticle->start_pos.y;
+        float start_z = matchedParticle->start_pos.z;
+        bool ERecoForTrueMatchesOnly = false; // if true, this only prints out the energy reco performance for true matched track pairs - may be useful for debugging
+        bool PrintRecoVsTrueE = true;
+        if ((ERecoForTrueMatchesOnly)&&(!match_pair.trueMatch)){
+          PrintRecoVsTrueE = false; // if you tell the algorithm to only show the energy reco performance for the true matched tracks, and you DO NOT have a true matched pair, then we should not print the following
+        }
+        if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
+            &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
+            &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)){
+              if (PrintRecoVsTrueE) {
                 float match_true_E = matchedParticle->p.E; // energy of the true particle
                 int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
                 std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
@@ -763,9 +767,18 @@ namespace cafmaker
                 std::cout << "TRUE PARTICLE PDG " << match_true_PDG << std::endl;
               }
             else {
-              std::cout << "ROCK MUON" <<std::endl;
+              std::cout << "FALSE MATCH: " << std::endl;
+              std::cout << " LAr Interaction " << match_pair.larid.ixn << " LAr Index " << match_pair.larid.idx << std::endl;
+              std::cout << " TMS Interaction " << match_pair.tmsid.ixn << " TMS Index " << match_pair.tmsid.idx << std::endl;
+              std::cout << " Not displaying energy reco" << std::endl;
             }
           }
+          else {
+            std::cout << "ROCK MUON" <<std::endl;
+          }
+        }
+        if (match_pair.trueMatch){
+          num_true_matches += 1;
         }
       }
     std::cout << "TOTAL MATCHES FOUND THIS SPILL " << num_matches << std::endl;
