@@ -55,7 +55,7 @@ namespace cafmaker
     float x, y, z;
 
     float dir_x, dir_y, dir_z;
-    
+
     float proj_z;
     float proj_x;
     float proj_y;
@@ -72,20 +72,6 @@ namespace cafmaker
        proj_z = tms_z_lim1 - z;
        proj_x = dir_x*proj_z/dir_z + x;
        proj_y = dir_y*proj_z/dir_z + y;
-
-       std::cout << "    Calculated Track End Point Z " << z << std::endl;
-       std::cout << "    Calculated TMS Start Z " << tms_z_lim1 << std::endl;
-       std::cout << "    Calculated Track Z Distance " << tms_z_lim1 - z << std::endl;
-       std::cout << "    Calculated Track End Dir Z " << dir_z << std::endl;
-       std::cout << "    Calculated Z Distance / Dir Z " << (tms_z_lim1 - z)/dir_z << std::endl;
-       std::cout << "    Calculated Track End Point X " << x << std::endl;
-       std::cout << "    Calculated Track End Dir X " << dir_x << std::endl;
-       std::cout << "    Calculated X Displacement " << dir_x*(tms_z_lim1 - z)/dir_z << std::endl;
-       std::cout << "    Calculated X Projection " << x + dir_x*(tms_z_lim1 - z)/dir_z << std::endl;
-       std::cout << "    Calculated Track End Point Y " << y << std::endl;
-       std::cout << "    Calculated Track End Dir Y " << dir_y << std::endl;
-       std::cout << "    Calculated Y Displacement " << dir_y*(tms_z_lim1 - z)/dir_z << std::endl;
-       std::cout << "    Calculated Y Projection " << y + dir_y*(tms_z_lim1 - z)/dir_z << std::endl;
     }
     else { // projects a TMS track backward to LAr
        x = track.start.x;
@@ -139,68 +125,13 @@ namespace cafmaker
     if ((x_start > tms_x_lim1)&&(x_start < tms_x_lim2) &&
         (y_start > tms_y_lim1)&&(y_start < tms_y_lim2) &&
         (z_start > tms_z_lim1)&&(z_start < tms_z_lim1 + tms_z_cutoff) && // checks track begins within fiducial volume and close enough to front
-      
+
         (Project_track(tms_track,false)[0] > lar_x_lim1)&&(Project_track(tms_track,false)[0] < lar_x_lim2) &&
         (Project_track(tms_track,false)[1] > lar_y_lim1)&&(Project_track(tms_track,false)[1] < lar_y_lim2)) // checks that direction would have allowed it to originate from LAr
           {
             return true;
-          } 
+          }
     else {
-            if (x_start < tms_x_lim1){
-              std::cout << "    X_START < TMS_X_LIM1" << std::endl;
-              std::cout << "     x_start " << x_start << std::endl;
-              std::cout << "     tms_x_lim1 " << tms_x_lim1 << std::endl;
-            }
-            if (x_start > tms_x_lim2){
-              std::cout << "    X_START > TMS_X_LIM2" << std::endl;
-              std::cout << "     x_start " << x_start << std::endl;
-              std::cout << "     tms_x_lim2 " << tms_x_lim2 << std::endl;
-            }
-            if (y_start < tms_y_lim1){
-              std::cout << "    Y_START < TMS_Y_LIM1" << std::endl;
-              std::cout << "     y_start " << y_start << std::endl;
-              std::cout << "     tms_y_lim1 " << tms_y_lim1 << std::endl;
-            }
-            if (y_start > tms_y_lim2){
-              std::cout << "    Y_START > TMS_Y_LIM2" << std::endl;
-              std::cout << "     y_start " << y_start << std::endl;
-              std::cout << "     tms_y_lim2 " << tms_y_lim2 << std::endl;
-            }
-            if (z_start < tms_z_lim1){
-              std::cout << "    Z_START < TMS_Z_LIM1" << std::endl;
-              std::cout << "     z_start " << z_start << std::endl;
-              std::cout << "     tms_z_lim1 " << tms_z_lim1 << std::endl;
-            }
-            if (z_start > tms_z_lim1 + tms_z_cutoff){
-              std::cout << "    Z_START > TMS_Z_LIM1 + TMS_Z_CUTOFF" << std::endl;
-              std::cout << "     z_start " << z_start << std::endl;
-              std::cout << "     tms_z_lim1 " << tms_z_lim1 << std::endl;
-              std::cout << "     tms_z_cutoff " << tms_z_cutoff << std::endl;
-            }
-
-
-
-            if (Project_track(tms_track,false)[0] < lar_x_lim1){
-              std::cout << "    PROJECT_TRACK(TMS_TRACK,FALSE)[0] < LAR_X_LIM1" << std::endl;
-              std::cout << "     Project_track(tms_track,false)[0] " << Project_track(tms_track,false)[0] << std::endl;
-              std::cout << "     lar_x_lim1 " << lar_x_lim1 << std::endl;
-            }
-            if (Project_track(tms_track,false)[0] > lar_x_lim2){
-              std::cout << "    PROJECT_TRACK(TMS_TRACK,FALSE)[0] > LAR_X_LIM2" << std::endl;
-              std::cout << "     Project_track(tms_track,false)[0] " << Project_track(tms_track,false)[0] << std::endl;
-              std::cout << "     lar_x_lim2 " << lar_x_lim2 << std::endl;
-            } 
-            if (Project_track(tms_track,false)[1] < lar_y_lim1){
-              std::cout << "    PROJECT_TRACK(TMS_TRACK,FALSE)[1] < LAR_Y_LIM1" << std::endl;
-              std::cout << "     Project_track(tms_track,false)[1] " << Project_track(tms_track,false)[1] << std::endl;
-              std::cout << "     lar_y_lim1 " << lar_y_lim1 << std::endl;
-            } 
-            if (Project_track(tms_track,false)[1] > lar_y_lim2){
-              std::cout << "     PROJECT_TRACK(TMS_TRACK,FALSE)[1] > LAR_Y_LIM2" << std::endl;
-              std::cout << "      Project_track(tms_track,false)[1] " << Project_track(tms_track,false)[1] << std::endl;
-              std::cout << "      lar_y_lim2 " << lar_y_lim2 << std::endl;
-            } 
-
             return false;
     }
   }
@@ -222,97 +153,13 @@ namespace cafmaker
         (x_end > lar_x_lim1)&&(x_end < lar_x_lim2) &&
         (y_end > lar_y_lim1)&&(y_end < lar_y_lim2) &&
         (z_end > lar_z_lim2 - lar_z_cutoff)&&(z_end < lar_z_lim2) && // checks track ends close enough to back of LAr
-      
+
         (Project_track(lar_track,true)[0] > tms_x_lim1)&&(Project_track(lar_track,true)[0] < tms_x_lim2) &&
         (Project_track(lar_track,true)[1] > tms_y_lim1)&&(Project_track(lar_track,true)[1] < tms_y_lim2)) // checks that direction would allow it to hit TMS
         {
           return true;
-        } 
+        }
     else {
-            if (x_start < lar_x_lim1){
-              std::cout << "    X_START < LAr_X_LIM1" << std::endl;
-              std::cout << "     x_start " << x_start << std::endl;
-              std::cout << "     lar_x_lim1 " << lar_x_lim1 << std::endl;
-            }
-            if (x_start > lar_x_lim2){
-              std::cout << "    X_START > LAr_X_LIM2" << std::endl;
-              std::cout << "     x_start " << x_start << std::endl;
-              std::cout << "     lar_x_lim2 " << lar_x_lim2 << std::endl;
-            }
-            if (y_start < lar_y_lim1){
-              std::cout << "    Y_START < LAr_Y_LIM1" << std::endl;
-              std::cout << "     y_start " << y_start << std::endl;
-              std::cout << "     lar_y_lim1 " << lar_y_lim1 << std::endl;
-            }
-            if (y_start > lar_y_lim2){
-              std::cout << "    Y_START > LAr_Y_LIM2" << std::endl;
-              std::cout << "     y_start " << y_start << std::endl;
-              std::cout << "     lar_y_lim2 " << lar_y_lim2 << std::endl;
-            }
-            if (z_start < lar_z_lim1){
-              std::cout << "    Z_START < LAr_Z_LIM1" << std::endl;
-              std::cout << "     z_start " << z_start << std::endl;
-              std::cout << "     lar_z_lim1 " << lar_z_lim1 << std::endl;
-            }
-            if (z_start > lar_z_lim2){
-              std::cout << "    Z_START > LAr_Z_LIM2" << std::endl;
-              std::cout << "     z_start " << z_start << std::endl;
-              std::cout << "     lar_z_lim2 " << lar_z_lim2 << std::endl;
-            }
-
-            if (x_end < lar_x_lim1){
-              std::cout << "    X_END < LAr_X_LIM1" << std::endl;
-              std::cout << "     x_end " << x_end << std::endl;
-              std::cout << "     lar_x_lim1 " << lar_x_lim1 << std::endl;
-            }
-            if (x_end > lar_x_lim2){
-              std::cout << "    X_END > LAr_X_LIM2" << std::endl;
-              std::cout << "     x_end " << x_end << std::endl;
-              std::cout << "     lar_x_lim2 " << lar_x_lim2 << std::endl;
-            }
-            if (y_end < lar_y_lim1){
-              std::cout << "    Y_END < LAr_Y_LIM1" << std::endl;
-              std::cout << "     y_end " << y_end << std::endl;
-              std::cout << "     lar_y_lim1 " << lar_y_lim1 << std::endl;
-            }
-            if (y_end > lar_y_lim2){
-              std::cout << "    Y_END > LAr_Y_LIM2" << std::endl;
-              std::cout << "     y_end " << y_end << std::endl;
-              std::cout << "     lar_y_lim2 " << lar_y_lim2 << std::endl;
-            }
-            if (z_end < lar_z_lim2 - lar_z_cutoff){
-              std::cout << "    Z_END < LAr_Z_LIM2 - LAr_Z_CUTOFF" << std::endl;
-              std::cout << "     z_end " << z_end << std::endl;
-              std::cout << "     lar_z_lim2 " << lar_z_lim2 << std::endl;
-              std::cout << "     lar_z_cutoff " << lar_z_cutoff << std::endl;
-            }
-            if (z_end > lar_z_lim2){
-              std::cout << "    Z_END > LAr_Z_LIM2" << std::endl;
-              std::cout << "     z_end " << z_end << std::endl;
-              std::cout << "     lar_z_lim2 " << lar_z_lim2 << std::endl;
-            }
-
-            if (Project_track(lar_track,true)[0] < tms_x_lim1){
-              std::cout << "    PROJECT_TRACK(LAr_TRACK,TRUE)[0] < TMS_X_LIM1" << std::endl;
-              std::cout << "     Project_track(lar_track,true)[0] " << Project_track(lar_track,true)[0] << std::endl;
-              std::cout << "     tms_x_lim1 " << tms_x_lim1 << std::endl;
-            }
-            if (Project_track(lar_track,true)[0] > tms_x_lim2){
-              std::cout << "    PROJECT_TRACK(LAr_TRACK,TRUE)[0] > TMS_X_LIM2" << std::endl;
-              std::cout << "     Project_track(lar_track,true)[0] " << Project_track(lar_track,true)[0] << std::endl;
-              std::cout << "     tms_x_lim2 " << tms_x_lim2 << std::endl;
-            } 
-            if (Project_track(lar_track,true)[1] < tms_y_lim1){
-              std::cout << "    PROJECT_TRACK(LAr_TRACK,TRUE)[1] < TMS_Y_LIM1" << std::endl;
-              std::cout << "     Project_track(lar_track,true)[1] " << Project_track(lar_track,true)[1] << std::endl;
-              std::cout << "     tms_y_lim1 " << tms_y_lim1 << std::endl;
-            } 
-            if (Project_track(lar_track,true)[1] > tms_y_lim2){
-              std::cout << "    PROJECT_TRACK(LAr_TRACK,TRUE)[1] > TMS_Y_LIM2" << std::endl;
-              std::cout << "     Project_track(lar_track,true)[1] " << Project_track(lar_track,true)[1] << std::endl;
-              std::cout << "     tms_y_lim2 " << tms_y_lim2 << std::endl;
-            } 
-
           return false;
     }
   }
@@ -359,19 +206,13 @@ namespace cafmaker
   {
     std::sort(possibleMatches.begin(),possibleMatches.end(),Track_match_sorter);
 
-    std::vector<caf::SRNDLArID> matched_lar; 
+    std::vector<caf::SRNDLArID> matched_lar;
     std::vector<caf::SRTMSID> matched_tms; // stores LAr and TMS indices that have already been matched
 
     for (unsigned int match_idx = 0; match_idx < possibleMatches.size(); match_idx++) {
-      std::cout << "Checking Match " << match_idx << "/" << possibleMatches.size() << std::endl;
       caf::SRNDTrackAssn track_match = possibleMatches[match_idx];
-      std::cout << " LAr Interaction " << track_match.larid.ixn << " Index " << track_match.larid.idx << std::endl;
-      std::cout << " TMS Interaction " << track_match.tmsid.ixn << " Index " << track_match.tmsid.idx << std::endl;
       double score = track_match.matchScore;
-      std::cout << " Match Score " << score << std::endl;
-      std::cout << " fCut " << f_cut << std::endl;
       if (score > f_cut) {
-        std::cout << " SCORE > FCUT" << std::endl;
         continue; // this was break before, I think that was wrong
       }
       caf::SRNDLArID larid = track_match.larid;
@@ -425,25 +266,13 @@ namespace cafmaker
       double DeadLArDist = DeadLArEnd - ActiveLArEnd;
       double DeadLArFrac = DeadLArDist / LArTMSGap; // What fraction of the distance between LAr and TMS is dead LAr?
       joint_track.len_cm = lar_track.len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist; // Divide the TMS areal density by the LAr density and add the dead LAr length
-      std::cout << " LAr Track Length " << lar_track.len_cm << std::endl;
-      std::cout << " TMS Track Length gcm2 " << tms_track.len_gcm2 << std::endl;
-      std::cout << " LAr Density " << LArDen << std::endl;
-      std::cout << " TMS Effective Length " << tms_track.len_gcm2/LArDen << std::endl;
-      std::cout << " Dead LAr Fraction " << DeadLArFrac << std::endl;
-      std::cout << " Gap Distance " << gap_dist << std::endl;
-      std::cout << " Dead LAr Track Length " << DeadLArFrac*gap_dist << std::endl;
-      std::cout << " Total Effective Length " << lar_track.len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist << std::endl;
-      std::cout << " Calculated Effective Length " << joint_track.len_cm << std::endl;
 
       // TODO: Split this straight line distance (gap_dist) into segments as it passes through each subsequent material - only the dead LAr has been implemented so far
       joint_track.len_gcm2 = (lar_track.len_cm + DeadLArFrac*gap_dist)*LArDen + tms_track.len_gcm2;
       // TODO: add the rest of the joint_track attributes (qual, truth, truthOverlap)
       double KE_mu = Muon_LAr_KE_Reco(joint_track.len_cm); // Gives muon kinetic energy in MeV
-      std::cout << " Muon Kinetic Energy " << KE_mu << std::endl;
       float M_mu = 105.658; // Muon mass in MeV
-      std::cout << " Muon Mass " << M_mu << std::endl;
       joint_track.E = KE_mu + M_mu;
-      std::cout << " Overall Reco Energy " << joint_track.E << std::endl;
     }
   }
 
@@ -452,12 +281,10 @@ namespace cafmaker
     std::vector<caf::SRNDTrackAssn> potentialMatchList;
 
     for (unsigned int itrk = 0; itrk < n_tracks; itrk++) {
-      std::cout << "   LAr track " << itrk << "/" << n_tracks << std::endl;
       caf::SRTrack trk = ixn.tracks[itrk];
       bool trueMatch = false;
 
       if (!Consider_LAr_track(trk,lar_z_cutoff)) {
-        std::cout << "    LAr TRACK FAILED" << std::endl;
         continue; //skips the lar track if it isn't suitable according to the function
       }
 
@@ -467,13 +294,7 @@ namespace cafmaker
 
       std::vector<float> angles = Angle_between_tracks(tms_trk,trk);
       angles[0] = std::copysign(angles[0],delta_x);
-      std::cout << "    Delta Theta X " << angles[0] << std::endl;
-      std::cout << "    Sigma Theta X " << sigma_angle_x << std::endl;
-      std::cout << "    Theta X Term " << pow(angles[0]/sigma_angle_x,2) << std::endl;
       angles[1] = std::copysign(angles[1],delta_y); // if the TMS track has a larger X or Y value than the projected LAr track, then the X or Y angle is positive. Otherwise, it's negative
-      std::cout << "    Delta Theta Y " << angles[1] << std::endl;
-      std::cout << "    Sigma Theta Y " << sigma_angle_y << std::endl;
-      std::cout << "    Theta Y Term " << pow(angles[1]/sigma_angle_y,2) << std::endl;
 
       double matchScore = std::numeric_limits<double>::max(); // initialize match score to max value
 
@@ -488,15 +309,12 @@ namespace cafmaker
       std::vector<float> tOv = trk.truthOverlap;
       std::vector<caf::TrueParticleID> truIDs = trk.truth;
       if (tOv.empty()) {
-        std::cout << "    tOv EMPTY" << std::endl;
         truthFail = true;
       }
       if (truIDs.empty()) {
-        std::cout << "    truIDs EMPTY" << std::endl;
         truthFail = true;
       }
       if (truIDs.size() != tOv.size()) {
-        std::cout << "    truIDs.size() != tOv.size()" << std::endl;
         truthFail = true;
       }
       if (!truthFail) {
@@ -504,79 +322,50 @@ namespace cafmaker
         caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
         const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
         if (matchedPart == nullptr) {
-          std::cout << "    matchedPart was a null pointer" << std::endl;
           truthFail = true;
         }
       }
 
       if (use_time) {
         // this handles time-based matching
-        std::cout << "    USING TIME" << std::endl;
         if (!use_smear_time) {// this occurs when the LAr time has filled in the file
-          std::cout << "    NO SMEAR TIME" << std::endl;
           lar_time = trk.time;
+          double tms_time = tms_trk.time;
+          delta_t = tms_time - lar_time;
+          matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
         }
-        if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
-          std::cout << "    USING SMEAR TIME" << std::endl;
-          if (!truthFail) {
-            int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
-            caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
-            const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-            lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-            std::cout << "     LAr Time " << lar_time << std::endl;
-            double tms_time = tms_trk.time;
-            std::cout << "     TMS Time " << tms_time << std::endl;
-            delta_t = tms_time - lar_time;
-            std::cout << "     Delta T " << delta_t << std::endl;
-            std::cout << "     Mean T " << mean_t << std::endl;
-            std::cout << "     Sigma T " << sigma_t << std::endl;
-            std::cout << "     T Term " << pow((delta_t-mean_t)/sigma_t,2) << std::endl;
-            matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+      }
 
-            // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
-            // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
-            std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
-            // if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
-            if (truIDsTMS.size() == 1) {
-              //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
-              caf::TrueParticleID partIDTMS = truIDsTMS[0];//idx_max_TMS];
-              const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
-              if (TMSPart != nullptr) {
-                if (matchedPart->G4ID==TMSPart->G4ID) {
-                  trueMatch = true;
-                  matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
-                  std::cout << "     TRUE MATCH" << std::endl;
-                }
-              }
-              else {
-                std::cout << "     TMSPart was a null pointer" << std::endl;
-              }
+      if (!truthFail) {
+        int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
+        caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
+        const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
+        if (use_time && use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
+          lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
+          double tms_time = tms_trk.time;
+          delta_t = tms_time - lar_time;
+          matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+        }
+        if (matchScore != matchScore) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
+          std::cout << "     NAN MATCH SCORE" << std::endl;
+          continue;
+        }
+        // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
+        // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
+        std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
+        // if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
+        if (truIDsTMS.size() == 1) {
+          //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
+          caf::TrueParticleID partIDTMS = truIDsTMS[0];//idx_max_TMS];
+          const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
+          if (TMSPart != nullptr) {
+            if (matchedPart->G4ID==TMSPart->G4ID) {
+              trueMatch = true;
+              matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
             }
-            else {
-              //if (tOvTMS.empty()) {
-              //  std::cout << "     tOvTMS was empty" << std::endl;
-              //}
-              if (truIDsTMS.empty()) {
-                std::cout << "     truIDsTMS was empty" << std::endl;
-              }
-              //if (tOvTMS.size() != truIDsTMS.size()) {
-              if (1 != truIDsTMS.size()) {
-                //std::cout << "     tOvTMS and truIDsTMS not the same size" << std::endl;
-                //std::cout << "     tOvTMS size " << tOvTMS.size() << std::endl;
-                std::cout << "     truIDsTMS size " << truIDsTMS.size() << std::endl;
-              }
-            }
-          }
-          else {
-            std::cout << "     Problem finding the LAr particle" << std::endl;
           }
         }
       }
-      else {
-        std::cout << "     NOT USING TIME" << std::endl;
-      }
-      std::cout << "     Match Score " << matchScore << std::endl;
-      std::cout << "     fCut " << f_cut << std::endl;
       caf::SRTMSID tmsid;
       tmsid.ixn = ixn_tms;
       tmsid.idx = itms;
@@ -630,22 +419,17 @@ namespace cafmaker
     std::set<int> matchIDs; // will store the IDs of true matches found
 
     for (unsigned int ixn_tms = 0; ixn_tms < sr.nd.tms.nixn; ixn_tms++) {
-      std::cout << "TMS Interaction " << ixn_tms << "/" << sr.nd.tms.nixn << std::endl;
       caf::SRTMSInt tms_int = sr.nd.tms.ixn[ixn_tms];
       unsigned int n_tms_tracks = tms_int.ntracks;
-      std::cout << "NUMBER OF TMS TRACKS " << n_tms_tracks << std::endl;
 
       for (unsigned int itms = 0; itms < n_tms_tracks; itms++){
-        std::cout << " TMS Track " << itms << "/" << n_tms_tracks << std::endl;
         caf::SRTrack tms_trk = tms_int.tracks[itms];
 
         if (!Consider_TMS_track(tms_trk,tms_z_cutoff)) {
-          std::cout << " TMS TRACK FAILED" << std::endl;
           continue; // skips the TMS track if it isn't suitable according to the function
         }
 
         for (unsigned int ixn_pan = 0; ixn_pan < sr.nd.lar.npandora; ixn_pan++){
-          std::cout << "  Pandora Interaction " << ixn_pan << "/" << sr.nd.lar.npandora << std::endl;
           caf::SRNDLArInt pan_int = sr.nd.lar.pandora[ixn_pan];
           unsigned int n_pan_tracks = pan_int.ntracks;
 
@@ -656,7 +440,6 @@ namespace cafmaker
         }
 
         for (unsigned int ixn_dlp = 0; ixn_dlp < sr.nd.lar.ndlp; ixn_dlp++){
-          std::cout << "  SPINE Interaction " << ixn_dlp << "/" << sr.nd.lar.ndlp << std::endl;
           caf::SRNDLArInt dlp_int = sr.nd.lar.dlp[ixn_dlp];
           unsigned int n_dlp_tracks = dlp_int.ntracks;
 
@@ -684,7 +467,7 @@ namespace cafmaker
       if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
         // One of the match pairs this algorithm found, so proceed with the counting
         num_matches += 1;
-        if (true) {//match_pair.trueMatch){
+        if (match_pair.trueMatch){
           num_true_matches += 1;
           caf::SRNDLArID match_trk_id = match_pair.larid;
           caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
@@ -702,25 +485,14 @@ namespace cafmaker
 
                 float match_true_E = matchedParticle->p.E; // energy of the true particle
                 int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
-                std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
-                std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
-
-                std::cout << "TOTAL TRUE ENERGY " << match_true_E << std::endl;
-                std::cout << "TRUE PARTICLE PDG " << match_true_PDG << std::endl;
-              }
-            else {
-              std::cout << "ROCK MUON" <<std::endl;
-            }
           }
         }
       }
-    std::cout << "TOTAL MATCHES FOUND THIS SPILL " << num_matches << std::endl;
-    std::cout << "TRUE MATCHES FOUND THIS SPILL " << num_true_matches << std::endl;
+    }
     if (num_matches > 0){
       float pur = num_true_matches/num_matches;
-      std::cout << "PURITY THIS SPILL " << pur << std::endl;
-      }
     }
+  }
 
   // todo: this is a placeholder
   std::deque<cafmaker::Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
