@@ -150,8 +150,15 @@ For more details and examples, see [GitHub Issue #142](https://github.com/DUNE/N
 If you have such a custom version that you wish to use, edit `ndcaf_setup_deps.sh` to add your custom UPS directory to `$PRODUCTS` and to set up the version name for your working copy.
 Consult the README for more details.
 
+# Contributing
+
+We welcome contributions from all DUNE collaborators.  
+If you're a collaborator and new to the ND_CAFMaker effort, please reach out to the ND Sim/Reco conveners (see Contact, below) to find good places to plug in.
+If you're not a DUNE collaborator, [join the experiment](https://atwork.dunescience.org/how-to-participate/)!
+
 # Contact
 * Jeremy Wolcott (jwolcott@fnal.gov) current lead author / maintainer
+* Alex Booth (abooth@fnal.gov), Matteo Tenti (mtenti@fnal.gov), ND Sim/Reco conveners
 
 ### Other major contributors
 * Chris Marshall (chris.marshall@rochester.edu)

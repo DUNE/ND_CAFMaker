@@ -212,6 +212,9 @@
       /// TMS-specific resolver: use the Truth_Spill vertex position to recover the legacy packed
       /// vertex ID. The run number is retained only for diagnostics/error messages; matching is position-only.
       unsigned long ResolveVertexIDFromRunAndPosition(unsigned long runNumForErrMsg, double x, double y, double z) const;
+      /// Distance [mm] from (x, y, z) to the start of GEANT4 trajectory G4ID in edep-sim interaction ixnID,
+      /// or a negative value if that interaction has no such trajectory or its PDG code is not pdg.
+      double TrajectoryStartDistance(unsigned long ixnID, int G4ID, int pdg, double x, double y, double z) const;
       bool HaveGENIE() const;
       bool HaveEDEPSIM() const;
       void SetLogThrehsold(cafmaker::Logger::THRESHOLD thresh) override;

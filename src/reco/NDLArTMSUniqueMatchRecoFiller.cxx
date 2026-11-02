@@ -324,42 +324,46 @@ namespace cafmaker
         if (matchedPart == nullptr) {
           truthFail = true;
         }
+      }
 
       if (use_time) {
         // this handles time-based matching
         if (!use_smear_time) {// this occurs when the LAr time has filled in the file
           lar_time = trk.time;
+          double tms_time = tms_trk.time;
+          delta_t = tms_time - lar_time;
+          matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
         }
-        if (use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
-          if (!truthFail) {
-            int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
-            caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
-            const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-            lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-            double tms_time = tms_trk.time;
-            delta_t = tms_time - lar_time;
-            matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
-
-            // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
-            // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
-            std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
-            // if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
-            if (truIDsTMS.size() == 1) {
-              //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
-              caf::TrueParticleID partIDTMS = truIDsTMS[0];//idx_max_TMS];
-              const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
-              if (TMSPart != nullptr) {
-                if (matchedPart->G4ID==TMSPart->G4ID) {
-                  trueMatch = true;
-                  matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
-                  // std::cout << "True Match!" << std::endl;
-                }
-              }
+      }
+      if (!truthFail) {
+        int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
+        caf::TrueParticleID partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
+        const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
+        if (use_time && use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
+          lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
+          double tms_time = tms_trk.time;
+          delta_t = tms_time - lar_time;
+          matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+        }
+        if (matchScore != matchScore) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
+          continue;
+        }
+        // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
+        // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
+        std::vector<caf::TrueParticleID> truIDsTMS = tms_trk.truth;
+        // if (!tOvTMS.empty() && !truIDsTMS.empty() && tOvTMS.size() == truIDsTMS.size()) {
+        if (truIDsTMS.size() == 1) {
+          //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
+          caf::TrueParticleID partIDTMS = truIDsTMS[0];//idx_max_TMS];
+          const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
+          if (TMSPart != nullptr) {
+            if (matchedPart->G4ID==TMSPart->G4ID) {
+              trueMatch = true;
+              matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
             }
           }
         }
       }
-
       caf::SRTMSID tmsid;
       tmsid.ixn = ixn_tms;
       tmsid.idx = itms;
@@ -402,7 +406,14 @@ namespace cafmaker
                                              const cafmaker::Params &/*par*/,
                                              const TruthMatcher */*truthMatcher*/) const
   {
-    TRandom3 rng( static_cast<unsigned int>(trigger.triggerTime_ns ));
+
+    // TRandom3 seed of 0 means 'use current time', very nondeterministic
+    const auto seed_guarded = [](unsigned int seed){
+      return seed == 0U ? 1U : seed;
+    };
+    TRandom3 rng( seed_guarded(trigger.triggerTime_ns) );
+ 
+ 
 
     std::vector<caf::SRNDTrackAssn> possiblePandoraMatches; // vector will store all possible matched tracks between Pandora and TMS
     std::vector<caf::SRNDTrackAssn> possibleSPINEMatches; // vector will store all possible matched tracks between SPINE and TMS
@@ -452,7 +463,48 @@ namespace cafmaker
     if (possibleSPINEMatches.size() > 0) {
       Create_matches(possibleSPINEMatches,false,sr); // tells the matcher that it's not working with Pandora LAr tracks (therefore, SPINE tracks)
       }
+
+    // Check that the script works as intended
+    unsigned int num_matches = 0;
+    unsigned int num_true_matches = 0;
+    for (unsigned int match_no = 0; match_no < sr.nd.trkmatch.nextrap; match_no++){
+      caf::SRNDTrackAssn match_pair = sr.nd.trkmatch.extrap[match_no];
+      if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
+        // One of the match pairs this algorithm found, so proceed with the counting and energy reco
+        num_matches += 1;
+        num_true_matches += 1;
+        caf::SRNDLArID match_trk_id = match_pair.larid;
+        caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
+        std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
+        std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
+        int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
+        caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
+        const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
+        float start_x = matchedParticle->start_pos.x;
+        float start_y = matchedParticle->start_pos.y;
+        float start_z = matchedParticle->start_pos.z;
+        bool ERecoForTrueMatchesOnly = false; // if true, this only prints out the energy reco performance for true matched track pairs - may be useful for debugging
+        bool PrintRecoVsTrueE = true;
+        if ((ERecoForTrueMatchesOnly)&&(!match_pair.trueMatch)){
+          PrintRecoVsTrueE = false; // if you tell the algorithm to only show the energy reco performance for the true matched tracks, and you DO NOT have a true matched pair, then we should not print the following
+        }
+        if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
+            &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
+            &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)){
+              if (PrintRecoVsTrueE) {
+                float match_true_E = matchedParticle->p.E; // energy of the true particle
+                int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
+              }
+        }
+        if (match_pair.trueMatch){
+          num_true_matches += 1;
+        }
+      }
     }
+    if (num_matches > 0){
+      float pur = num_true_matches/num_matches;
+    }
+  }
 
   // todo: this is a placeholder
   std::deque<cafmaker::Trigger> NDLArTMSUniqueMatchRecoFiller::GetTriggers(int /*triggerType*/, bool /*beamOnly*/) const
