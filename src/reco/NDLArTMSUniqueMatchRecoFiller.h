@@ -70,12 +70,12 @@ namespace cafmaker
       double f_cut;
       bool use_smear_time;
 
-      // Dimensions of TMS and LAr fiducial volume [cm]. Best practice would be to query geometry instead of hard-coding
+      // Dimensions of TMS and LAr fiducial volume [cm]. TODO: query geometry instead of hard-coding
       double tms_x_lim1 = -352.0;
       double tms_x_lim2 = 352.0;
       double tms_y_lim1 = -386.4;
       double tms_y_lim2 = 115.9;
-      double tms_z_lim1 = 1117.75;//1136.2; // the commented value came from TMSConstants.h but seems to be wrong
+      double tms_z_lim1 = 1111.25;//1117.75;//1136.2; // 1136.2 came from TMSConstants.h but seems to be wrong, 1117.75 seems to be the correct value for N5p1 but the majority of N5p3 tracks start at 1111.25
       double tms_z_lim2 = 1831.4;
 
       double lar_x_lim1 = -347.848;
