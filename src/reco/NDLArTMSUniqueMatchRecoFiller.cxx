@@ -347,7 +347,11 @@ namespace cafmaker
           matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
         }
         if (matchScore != matchScore) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
-          std::cout << "     NAN MATCH SCORE" << std::endl;
+          std::cout << " NAN MATCH SCORE" << std::endl;
+          std::cout << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << std::endl;
+          std::cout << " TMS ixn " << ixn_tms << " | TMS idx " << itms << std::endl;
+          std::cout << " True particle ID " << partID << std::endl;
+          std::cout << " True particle time " << matchedPart->time << std::endl;
           continue;
         }
         // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
@@ -465,32 +469,29 @@ namespace cafmaker
     for (unsigned int match_no = 0; match_no < sr.nd.trkmatch.nextrap; match_no++){
       caf::SRNDTrackAssn match_pair = sr.nd.trkmatch.extrap[match_no];
       if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
-        // One of the match pairs this algorithm found, so proceed with the counting
+        // One of the match pairs this algorithm found, so proceed with the counting and energy reco
         num_matches += 1;
+        num_true_matches += 1;
+        caf::SRNDLArID match_trk_id = match_pair.larid;
+        caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
+        std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
+        std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
+        int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
+        caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
+        const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
+        float start_x = matchedParticle->start_pos.x;
+        float start_y = matchedParticle->start_pos.y;
+        float start_z = matchedParticle->start_pos.z;
         if (match_pair.trueMatch){
           num_true_matches += 1;
-          caf::SRNDLArID match_trk_id = match_pair.larid;
-          caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
-          std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
-          std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
-          int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
-          caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
-          const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
-          float start_x = matchedParticle->start_pos.x;
-          float start_y = matchedParticle->start_pos.y;
-          float start_z = matchedParticle->start_pos.z;
-          if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
-              &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
-              &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)) {
-
-                float match_true_E = matchedParticle->p.E; // energy of the true particle
-                int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
-          }
         }
       }
     }
+    std::cout << "Number of matches " << num_matches << std::cout;
+    std::cout << "Number of true matches " << num_matches << std::cout;
     if (num_matches > 0){
       float pur = num_true_matches/num_matches;
+      std::cout << "Purity " << pur << std::endl;
     }
   }
 
