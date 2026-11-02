@@ -33,6 +33,7 @@
 #include "reco/PandoraLArRecoNDBranchFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "truth/TruthFilter.h"
 #include "beam/IFBeam.h"
 #include "util/GENIEQuiet.h"
 #include "util/Logger.h"
@@ -616,6 +617,8 @@ void loop(CAF &caf,
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }
     }
+
+    cafmaker::FilterTrueParticles(caf.sr, par().cafmaker().trueParticleMinKE(), par().cafmaker().trueParticleMaxGeneration());
 
     //Fill Beam info
     std::vector<double> potTRTGTD;

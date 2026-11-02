@@ -59,6 +59,12 @@ namespace cafmaker
     fhicl::Comment("Allow the reco fillers to add true interactions or true particles that are not in the spill of the current entry. "
                    "This is a bad idea: it hides reco objects matched to the wrong spill and mixes the truth of different spills. "
                    "It only exists as an emergency override"), false };
+    fhicl::Atom<double> trueParticleMinKE { fhicl::Name("TrueParticleMinKE"),
+    fhicl::Comment("Secondary true particles with a kinetic energy below this [GeV] are removed from sr.mc, unless a reco "
+                   "object links to them or they are the parent of a kept particle. <= 0 (default) keeps them all"), 0. };
+    fhicl::Atom<int> trueParticleMaxGeneration { fhicl::Name("TrueParticleMaxGeneration"),
+    fhicl::Comment("Secondary true particles of a generation beyond this (daughters of a primary = 1) are removed from sr.mc, "
+                   "unless a reco object links to them or they are the parent of a kept particle. < 0 (default) keeps them all"), -1 };
 
     // 100 us is default
     fhicl::Atom<unsigned int>  trigMatchDT { fhicl::Name("TriggerMatchDeltaT"), fhicl::Comment("Maximum time difference, in ns, between triggers to be considered a match"), 100000 };
