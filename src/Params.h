@@ -42,6 +42,7 @@ namespace cafmaker
     // these are optional, but will change the contents of the output CAF if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
+    fhicl::Atom<std::string> tmsRecoTreeSuffix { fhicl::Name{"TMSRecoTreeSuffix"}, fhicl::Comment("Suffix of the TMS per-track trees (Reco_Tree, Truth_Info) to read: \"_C3D\" (default) = Cluster3D reconstruction (Reco_Tree_C3D, Truth_Info_C3D), empty = legacy reconstruction (Reco_Tree, Truth_Info), needed for older TMS reco files that have no Cluster3D trees"), "_C3D" };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };
@@ -61,6 +62,9 @@ namespace cafmaker
 
     // 0.1 s is default
     fhicl::Atom<float>  beamMatchDT { fhicl::Name("BeamMatchDeltaT"), fhicl::Comment("Maximum time difference, in s, between triggers and beam"), 0.1 };
+
+    // 1e12 is default for NuMI; spills below it are pedestal noise (incl. negative readings)
+    fhicl::Atom<double> minSpillPOT { fhicl::Name("MinSpillPOT"), fhicl::Comment("Minimum POT reading for a spill to be counted as beam"), 1e12 };
     
     // Minerva - 2x2 offsets in mm - Defaults are what's inside the simulation, hopefully that won't be needed in the future 
     fhicl::Atom<float> mx2_2x2_offsetX {fhicl::Name("Mx2_2x2_offsetX"), fhicl::Comment("Mx2 - 2x2 offset in X direction in cm"), 0.};
