@@ -13,6 +13,7 @@ set(LIB_SOURCES
     reco/TMSRecoBranchFiller.cxx
     reco/readH5/DatasetBuffer.cxx
     truth/FillTruth.cxx
+    truth/TruthFilter.cxx
     util/FloatMath.cxx
     util/GENIEBannerBypass.cxx
     util/GENIEQuiet.cxx

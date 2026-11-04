@@ -56,6 +56,16 @@ namespace cafmaker
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
     fhicl::Atom<int>  numevts { fhicl::Name("NumEvts"), fhicl::Comment("Number of events to process (-1 means 'all')"), -1 };
     fhicl::Atom<int>  seed    { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
+    fhicl::Atom<bool> allowTrueIntsOutsideSpill { fhicl::Name("AllowTrueIntsOutsideSpill"),
+    fhicl::Comment("Allow the reco fillers to add true interactions or true particles that are not in the spill of the current entry. "
+                   "This is a bad idea: it hides reco objects matched to the wrong spill and mixes the truth of different spills. "
+                   "It only exists as an emergency override"), false };
+    fhicl::Atom<double> trueParticleMinKE { fhicl::Name("TrueParticleMinKE"),
+    fhicl::Comment("Secondary true particles with a kinetic energy below this [GeV] are removed from sr.mc, unless a reco "
+                   "object links to them or they are the parent of a kept particle. <= 0 (default = 10) keeps them all"), 10. };
+    fhicl::Atom<int> trueParticleMaxGeneration { fhicl::Name("TrueParticleMaxGeneration"),
+    fhicl::Comment("Secondary true particles of a generation beyond this (daughters of a primary = 1) are removed from sr.mc, "
+                   "unless a reco object links to them or they are the parent of a kept particle. < 0 (default = 3) keeps them all"), 3 };
 
     // 100 us is default
     fhicl::Atom<unsigned int>  trigMatchDT { fhicl::Name("TriggerMatchDeltaT"), fhicl::Comment("Maximum time difference, in ns, between triggers to be considered a match"), 100000 };
