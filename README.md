@@ -31,7 +31,7 @@ For the minimal test setup:
 
 Extending upon the minimal test setup you can:
 * Provide a `NDLArRecoFile`, which contains the output of the ND LAr reconstruction
-* Provide a `TMSRecoFile`, which contains the output of the TMS reconstruction
+* Provide a `TMSRecoFile`, which contains the output of the TMS reconstruction (by default the TMS branch is filled from the Cluster3D reconstruction, `Reco_Tree_C3D` / `Truth_Info_C3D`; set `TMSRecoTreeSuffix: ""` to use the legacy `Reco_Tree` / `Truth_Info` instead, e.g. for older TMS reco files that have no Cluster3D trees)
 * Provide a `SANDRecoFile`, which contains the output of the SAND reconstruction
 
 To add variables and inspect what is set and how, check `src/Params.h`.
@@ -150,8 +150,15 @@ For more details and examples, see [GitHub Issue #142](https://github.com/DUNE/N
 If you have such a custom version that you wish to use, edit `ndcaf_setup_deps.sh` to add your custom UPS directory to `$PRODUCTS` and to set up the version name for your working copy.
 Consult the README for more details.
 
+# Contributing
+
+We welcome contributions from all DUNE collaborators.  
+If you're a collaborator and new to the ND_CAFMaker effort, please reach out to the ND Sim/Reco conveners (see Contact, below) to find good places to plug in.
+If you're not a DUNE collaborator, [join the experiment](https://atwork.dunescience.org/how-to-participate/)!
+
 # Contact
 * Jeremy Wolcott (jwolcott@fnal.gov) current lead author / maintainer
+* Alex Booth (abooth@fnal.gov), Matteo Tenti (mtenti@fnal.gov), ND Sim/Reco conveners
 
 ### Other major contributors
 * Chris Marshall (chris.marshall@rochester.edu)

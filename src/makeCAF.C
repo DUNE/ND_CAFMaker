@@ -1,4 +1,7 @@
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
+#include <iomanip>
 #include <numeric>
 
 #include "boost/program_options/options_description.hpp"
@@ -30,6 +33,7 @@
 #include "reco/PandoraLArRecoNDBranchFiller.h"
 #include "reco/SANDRecoBranchFiller.h"
 #include "truth/FillTruth.h"
+#include "truth/TruthFilter.h"
 #include "beam/IFBeam.h"
 #include "util/GENIEQuiet.h"
 #include "util/Logger.h"
@@ -168,7 +172,8 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
   if (par().cafmaker().tmsRecoFile(tmsFile))
   {
     recoFillers.emplace_back(std::make_unique<cafmaker::TMSRecoBranchFiller>(tmsFile,
-                                                                              par().cafmaker().vertexMatchToleranceMm()));
+                                                                              par().cafmaker().vertexMatchToleranceMm(),
+                                                                              par().cafmaker().tmsRecoTreeSuffix()));
     std::cout << "   TMS\n";
   }
 
@@ -213,8 +218,10 @@ std::vector<std::unique_ptr<cafmaker::IRecoBranchFiller>> getRecoFillers(const c
 // -------------------------------------------------
 bool doTriggersMatch(const cafmaker::Trigger& t1, const cafmaker::Trigger& t2, unsigned int dT)
 {
-  const unsigned long int s_to_ns = 1e9;
-  return ( (std::max(t1.triggerTime_s, t2.triggerTime_s) - std::min(t1.triggerTime_s, t2.triggerTime_s)) * s_to_ns + std::max(t1.triggerTime_ns, t2.triggerTime_ns) - std::min(t1.triggerTime_ns, t2.triggerTime_ns) ) < dT;
+  const long long s_to_ns = 1000000000LL;
+  long long dt = (static_cast<long long>(t1.triggerTime_s)  - static_cast<long long>(t2.triggerTime_s)) * s_to_ns
+               + (static_cast<long long>(t1.triggerTime_ns) - static_cast<long long>(t2.triggerTime_ns));
+  return std::llabs(dt) < dT;
 }
 
 struct triggerTimeCmp
@@ -389,6 +396,131 @@ buildTriggerList(std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmake
 }
 
 // -------------------------------------------------
+/// Assign each trigger to the spill whose time window [N * period, (N+1) * period) contains it, and build one
+/// entry per spill, in time order (a spill with no trigger gives a truth-only entry with no triggers).
+/// Throws if:
+//   - a trigger falls into a window with no spill
+//   - a filler has more than one trigger in a spill
+///  - the interactions of a spill are not all in one window
+//   - two spills share a window
+///
+/// \param triggersByFiller  The triggers of each reco filler
+/// \param spillTimeRanges   (earliest, latest) interaction time [s] of each spill, by spill ID
+/// \param spillPeriod_s     Spill period [s] used by the spill-building step
+/// \param spillOfGroup      Output: the spill ID of each returned entry
+/// \return                  One group of (filler, trigger) pairs per spill, in time order
+std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+buildSpillGroups(const std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> & triggersByFiller,
+                 const std::map<long, std::pair<double, double>> & spillTimeRanges,
+                 double spillPeriod_s,
+                 std::vector<long> & spillOfGroup)
+{
+  auto LOG = [&]() -> const cafmaker::Logger & { return cafmaker::LOG_S("buildSpillGroups()"); };
+  using TriggerGroup = std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>;
+
+  const auto fail = [&LOG](const std::string & msg) {
+    LOG().FATAL() << msg;
+    throw std::runtime_error(msg);
+  };
+
+  // Tolerance is needed for floating ronding. Some trigger timestamps are 4.19999999 instead of 4.2 or similar
+  constexpr double kWindowStartTolerance_s = 1e-6;
+  const auto window = [spillPeriod_s](double t_s)
+  { return static_cast<long>(std::floor((t_s + kWindowStartTolerance_s) / spillPeriod_s)); };
+
+  struct Slot {
+    long spill = -1;
+    TriggerGroup group;
+  };
+
+  // slots window index N
+  std::map<long, Slot> slots;  
+
+  // every interaction of a spill must be inside the window of that spill, and each window holds at most one spill
+  for (const auto& [spill, range] : spillTimeRanges) {
+    const long N = window(range.first);
+    if (window(range.second) != N) {
+      std::stringstream ss;
+      ss << std::setprecision(17) << "The interactions of spill " << spill << " span from t = " << range.first
+         << " s to " << range.second << " s, across more than one spill window of " << spillPeriod_s << " s\n";
+      fail(ss.str());
+    }
+
+    Slot& slot = slots[N];
+
+    if (slot.spill >= 0) {
+      std::stringstream ss;
+      ss << "Spills " << slot.spill << " and " << spill << " are in the same spill window [" << N * spillPeriod_s
+         << ", " << (N + 1) * spillPeriod_s << ") s\n";
+      fail(ss.str());
+    }
+
+    slot.spill = spill;
+  }
+
+  std::size_t nTriggers = 0;
+  for (const auto& [filler, triggers] : triggersByFiller) {
+    for (const cafmaker::Trigger & trig : triggers) {
+      const double t = trig.triggerTime_s + 1e-9 * trig.triggerTime_ns;
+      const long N = window(t);
+      LOG().VERBOSE() << std::setprecision(17) << filler->GetName() << " trigger " << trig.evtID << " (t = " << t
+                      << " s) -> spill window " << N << "\n";
+
+      auto itSlot = slots.find(N);
+      if (itSlot == slots.end()) {
+        std::stringstream ss;
+        ss << std::setprecision(17) << filler->GetName() << " trigger " << trig.evtID << " (t = " << t
+           << " s) is in the spill window [" << N * spillPeriod_s << ", " << (N + 1) * spillPeriod_s
+           << ") s, which has no spill in the event_spill_map\n";
+        fail(ss.str());
+      }
+
+      Slot& slot = itSlot->second;
+      auto itSame = std::find_if(slot.group.begin(), slot.group.end(),
+                                 [filler = filler](const auto & pair) { return pair.first == filler; });
+      if (itSame != slot.group.end()) {
+        // TODO: only one trigger per filler and spill is supported at the moment, despite the possibility
+        // to have more than one trigger per filler (e.g. a cosmic trigger inside the beam window).
+        // Some reco fillers are written assuming they are called once per entry: called a second time on the
+        // same StandardRecord, they'll overwrite what the first trigger filled, or mix the reco objects
+        // of the two triggers. Supporting multipe triggers per filler requires to update the reco fillers themself, 
+        // the matching fillers and the metadata;
+        std::stringstream ss;
+        ss << std::setprecision(17) << filler->GetName() << " has two triggers in spill " << slot.spill
+           << " (window " << N << "): trigger " << itSame->second.evtID << " (t = "
+           << itSame->second.triggerTime_s + 1e-9 * itSame->second.triggerTime_ns << " s) and trigger " << trig.evtID
+           << " (t = " << t << " s), but only one trigger per filler and spill is supported\n";
+        fail(ss.str());
+      }
+
+      slot.group.emplace_back(filler, trig);
+      ++nTriggers;
+    }
+  }
+
+  std::vector<TriggerGroup> ret;
+  ret.reserve(slots.size());
+  spillOfGroup.clear();
+  spillOfGroup.reserve(slots.size());
+  std::size_t nEmptySpills = 0;
+  for (auto & [N, slot] : slots) {
+    if (slot.group.empty()) {
+      ++nEmptySpills;
+    }
+    // sort triggers in a spill by time, as buildTriggerList() does
+    std::sort(slot.group.begin(), slot.group.end(),
+              [](const auto & a, const auto & b) { return triggerTimeCmp()(a.second, b.second); });
+    spillOfGroup.push_back(slot.spill);
+    ret.push_back(std::move(slot.group));
+  }
+
+  LOG().INFO() << "Grouped " << nTriggers << " triggers into " << slots.size() << " spills (windows of " << spillPeriod_s
+               << " s), of which " << nEmptySpills << " without any trigger (truth only)\n";
+
+  return ret;
+}
+
+// -------------------------------------------------
 // main loop function
 void loop(CAF &caf,
           cafmaker::Params &par,
@@ -401,7 +533,8 @@ void loop(CAF &caf,
   cafmaker::Logger::THRESHOLD thresh = cafmaker::Logger::parseStringThresh(par().cafmaker().verbosity());
   cafmaker::TruthMatcher truthMatcher(ghepFilenames, edepsimFilename , caf.mcrec,
                                       [&caf](const genie::NtpMCEventRecord* mcrec){ return caf.StoreGENIEEvent(mcrec); },
-                                      par().cafmaker().positionToleranceMm());
+                                      par().cafmaker().positionToleranceMm(),
+                                      par().cafmaker().allowTrueIntsOutsideSpill());
   truthMatcher.SetLogThrehsold(thresh);
   // figure out which triggers we need to loop over between the various reco fillers
   std::map<const cafmaker::IRecoBranchFiller*, std::deque<cafmaker::Trigger>> triggersByRBF;
@@ -417,8 +550,24 @@ void loop(CAF &caf,
     }
     triggersByRBF.insert({filler.get(), TriggerList});
   }
-  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>>
+
+  // Using timing information from edepsip spill-based file to assign triggers to spills.
+  // One trigger per filler per spill allowed, error otherwise
+  // MC: the EDepSim file must be the one produced by the spill-build step
+  // Data: triggers are grouped by time among themselves. To be replaced by matching 
+  // the fillers' triggers to an externally provided trigger list?
+  const bool is_mc = truthMatcher.HaveEDEPSIM();
+
+  std::vector<long> spillOfGroup;  // spill ID of each entry
+  std::vector<std::vector<std::pair<const cafmaker::IRecoBranchFiller*, cafmaker::Trigger>>> groupedTriggers;
+  if (is_mc) {
+    groupedTriggers = buildSpillGroups(triggersByRBF, truthMatcher.GetSpillTimeRanges(), truthMatcher.GetSpillPeriod(), spillOfGroup);
+  } else {
+    cafmaker::LOG_S("loop()").WARNING() << "No EDepSim file found: assuming data, the triggers are grouped by time among "
+                                        << "themselves (max dT = " << par().cafmaker().trigMatchDT() << " ns), "
+                                        << "with no spill and no truth\n";
     groupedTriggers = buildTriggerList(triggersByRBF, par().cafmaker().trigMatchDT());
+  }
 
   // sanity checks
   if (par().cafmaker().first() > static_cast<int>(groupedTriggers.size()))
@@ -461,26 +610,29 @@ void loop(CAF &caf,
     // reset (the default constructor initializes its variables)
     caf.setToBS();
 
-    // hand off to the correct reco filler(s), in the order of recoFillers
-    // (SAND first: it replaces sr.mc, and the other fillers store indices into sr.mc.nu)
-    for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
+    if (is_mc) {
+      const long spillID = spillOfGroup[ii];
+      truthMatcher.FillSpill(caf.sr, spillID);
+    }
+
+    // hand off to the correct reco filler(s).
+    for (const auto & fillerTrigPair : groupedTriggers[ii])
     {
-      for (const auto & fillerTrigPair : groupedTriggers[ii])
-      {
-        if (fillerTrigPair.first != filler.get()) continue;
-        cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << filler->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
-        filler->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
-      }
+      cafmaker::LOG_S("loop()").INFO() << "Global trigger idx : " << ii << ", reco filler: '" << fillerTrigPair.first->GetName() << "', reco trigger eventID: " << fillerTrigPair.second.evtID << "\n";
+      fillerTrigPair.first->FillRecoBranches(fillerTrigPair.second, caf.sr, par, &truthMatcher);
     }
 
     // Once all the reco fillers have been called, let's call the matching fillers
     for (const std::unique_ptr<cafmaker::IRecoBranchFiller>& filler : recoFillers)
     {
-      if (filler->FillerType() == cafmaker::RecoFillerType::Matcher)
+      // Added condition to check for truth-only spills (with empty groupedTriggers)
+      if (filler->FillerType() == cafmaker::RecoFillerType::Matcher && !groupedTriggers[ii].empty()) 
       {
         filler->FillRecoBranches(groupedTriggers[ii][0].second, caf.sr, par, &truthMatcher);
       }
     }
+
+    cafmaker::FilterTrueParticles(caf.sr, par().cafmaker().trueParticleMinKE(), par().cafmaker().trueParticleMaxGeneration());
 
     //Fill Beam info
     std::vector<double> potTRTGTD;
@@ -515,10 +667,13 @@ void loop(CAF &caf,
 	potTRTGTD = {par().runInfo().POTPerSpill() * 1e13};
         caf.sr.beam.ismc = true;
     }
-    if (std::isnan(caf.pot))
-      caf.pot = 0;
-    caf.pot += (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
-    caf.sr.beam.pulsepot = (potTRTGTD.size()==0) ? 0. : potTRTGTD.at(0);
+    
+    // Use the first device with an above-threshold reading; below threshold means no beam
+    const double minPOT = par().cafmaker().minSpillPOT();
+    double spillPOT = (!potTRTGTD.empty() && potTRTGTD.at(0) > minPOT) ? potTRTGTD.at(0)
+                    : (!potTOR101.empty() && potTOR101.at(0) > minPOT) ? potTOR101.at(0)
+                    : 0.;
+    caf.sr.beam.pulsepot = spillPOT;
     caf.sr.beam.potTOR101 = (potTOR101.size()==0) ? 0. : potTOR101.at(0);
     caf.sr.beam.potTR101D = (potTR101D.size()==0) ? 0. : potTR101D.at(0);
     caf.sr.beam.hornI = (hornI.size()==0) ? 0. : hornI.at(0);
@@ -567,8 +722,7 @@ if (!vars.count("fcl")) {
   loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 
   caf.version = 5;
-  printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
-  caf.fillPOT();
+  caf.fillMeta();
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();

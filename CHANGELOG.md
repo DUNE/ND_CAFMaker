@@ -9,6 +9,7 @@ Note that tags as a function of changes are now also being tracked via [mileston
 * Use the GitHub "draft a release" page to tag a new version.
 
 ##### current
+* TMS branch is filled from the Cluster3D reconstruction by default (`TMSRecoTreeSuffix`, default `"_C3D"`); set it to `""` for the legacy reconstruction or older TMS reco files; track time then comes from the Cluster3D tree [PR #211](https://github.com/DUNE/ND_CAFMaker/pull/211)
 
 ##### [v5.2.0] -- 2026-09-10
 * Bump to duneanaobj v4_01_01 [66905ce3]
