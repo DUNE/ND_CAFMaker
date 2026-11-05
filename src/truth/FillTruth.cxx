@@ -243,8 +243,9 @@ namespace cafmaker
                                                      << " to account for change in units from m to cm\n";
     nu.vtx = nu_vtx;
 
-    // we can't fill the time, however, because that's changed by spill building
-    nu.time = vtx.T();
+    // the GENIE time is from before the spill building
+    // use the edep-sim one if available, set by the spill building [ns]
+    nu.time = g4event ? g4event->Primaries.front().Position.T() : vtx.T();
 
     nu.pdg = in->InitState().ProbePdg();
     nu.pdgorig = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
