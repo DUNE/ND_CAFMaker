@@ -243,9 +243,8 @@ namespace cafmaker
                                                      << " to account for change in units from m to cm\n";
     nu.vtx = nu_vtx;
 
-    // the GENIE time is from before the spill building
-    // use the edep-sim one if available, set by the spill building [ns]
-    nu.time = g4event ? g4event->Primaries.front().Position.T() : vtx.T();
+    // we can't fill the time, however, because that's changed by spill building
+    nu.time = vtx.T();
 
     nu.pdg = in->InitState().ProbePdg();
     nu.pdgorig = in->InitState().ProbePdg(); // fill this for similarity with FD, but no oscillations
@@ -279,7 +278,7 @@ namespace cafmaker
     nu.bjorkenX = nu.Q2/(2*Mnuc*nu.q0);
     nu.inelasticity = nu.q0/nu.E;
     if (nu.mode == caf::kCoh || nu.mode == caf::kDiffractive)
-      nu.t = in->Kine().t(true);
+      nu.t = in->Kine().t();
 
     nu.ischarm = in->ExclTag().IsCharmEvent();
     nu.isseaquark = in->ProcInfo().IsDeepInelastic() && in->InitState().Tgt().HitSeaQrk();
