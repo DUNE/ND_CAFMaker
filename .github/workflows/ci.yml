@@ -13,12 +13,12 @@ jobs:
       - uses: actions/checkout@v4
 
       # spine-reader reads the SPINE HDF5 files. Until it is available as a
-      # UPS/Spack product, CI builds it from source at a fixed commit.
+      # UPS/Spack product, CI builds it from source at a release tag.
       - name: Check out spine-reader
         uses: actions/checkout@v4
         with:
           repository: DeepLearnPhysics/spine-reader
-          ref: 3b61598273f537fd0b54f2f45cfbcafcb1c1b2ef
+          ref: v0.1.0
           path: .ci/spine-reader
 
       - name: Install Apptainer
