@@ -20,7 +20,7 @@ namespace cafmaker
 
     // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
     fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
-    
+
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
@@ -46,7 +46,7 @@ namespace cafmaker
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };
-    
+
     // this is optional by way of the default value. Will result in an extra output file if enabled
     fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
 
