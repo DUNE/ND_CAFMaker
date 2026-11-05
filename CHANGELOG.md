@@ -10,6 +10,7 @@ Note that tags as a function of changes are now also being tracked via [mileston
 
 ##### current
 * TMS branch is filled from the Cluster3D reconstruction by default (`TMSRecoTreeSuffix`, default `"_C3D"`); set it to `""` for the legacy reconstruction or older TMS reco files; track time then comes from the Cluster3D tree [PR #211](https://github.com/DUNE/ND_CAFMaker/pull/211)
+* Read the SPINE HDF5 files with [spine-reader](https://github.com/DeepLearnPhysics/spine-reader) (HDF5 C library only) instead of the generated HDF5 C++ classes; `DLP_h5_classes`, `readH5/`, `NDLArDLPH5DatasetReader` and `scripts/h5_to_cpp.py` are removed. A file lacking a column the ND-LAr ML filler reads is now refused at construction instead of being read as zeros.
 
 ##### [v5.2.0] -- 2026-09-10
 * Bump to duneanaobj v4_01_01 [66905ce3]
