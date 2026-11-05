@@ -95,7 +95,7 @@ SANDRecoBranchFiller::GetTriggers(int triggerType,
 
   if (fTriggers.empty())
   {
-    LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << fCAFTree->GetEntries() << " TMS Reco_Tree:\n";
+    LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << fCAFTree->GetEntries() << " SAND Tree:\n";
   
     fTriggers.reserve(fCAFTree->GetEntries());
     for (int entry = 0; entry < fCAFTree->GetEntries(); entry++)
