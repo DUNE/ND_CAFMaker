@@ -10,6 +10,7 @@ set(LIB_SOURCES
     reco/SANDRecoBranchFiller.cxx
     reco/TMSRecoBranchFiller.cxx
     truth/FillTruth.cxx
+    truth/TruthFilter.cxx
     util/FloatMath.cxx
     util/GENIEBannerBypass.cxx
     util/GENIEQuiet.cxx
@@ -21,10 +22,6 @@ set(LIB_SOURCES
 add_library(ND_CAFMaker SHARED ${LIB_SOURCES})
 
 target_include_directories(ND_CAFMaker PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-
-if(SAND_ENABLED)
-  target_compile_definitions(ND_CAFMaker PRIVATE ENABLE_SAND)
-endif()
 
 target_link_libraries(
   ND_CAFMaker
@@ -50,10 +47,6 @@ target_link_libraries(
          duneanaobj::StandardRecord
          duneanaobj::StandardRecordFlat)
 
-# SANDReco is optional — link only when SAND_ENABLED at configure time.
-if(SAND_ENABLED)
-  target_link_libraries(ND_CAFMaker PUBLIC deps::sand)
-endif()
 
 set_source_files_properties(makeCAF.C PROPERTIES LANGUAGE CXX)
 add_executable(makeCAF makeCAF.C)

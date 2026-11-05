@@ -20,7 +20,7 @@ namespace cafmaker
 
     // fixme: placeholder.  won't work for data, which will need to either pass through from upstream or interface to POT database here
     fhicl::Atom<float> POTPerSpill { fhicl::Name("POTPerSpill"), fhicl::Comment("Fixed POT per spill (units of 10^13).")};
-    
+
     fhicl::Atom<bool> fhc        { fhicl::Name("IsFHC"),    fhicl::Comment("Is this an FHC run?"), true };
     fhicl::Atom<bool> IsGasTPC   { fhicl::Name("IsGasTPC"), fhicl::Comment("Was GArTPC geometry used? (If not, TMS)"), false };
 
@@ -42,10 +42,11 @@ namespace cafmaker
     // these are optional, but will change the contents of the output CAF if supplied
     fhicl::OptionalAtom<std::string> ndlarRecoFile  { fhicl::Name{"NDLArRecoFile"}, fhicl::Comment("Input ND-LAr (ML) reco .h5 file") };
     fhicl::OptionalAtom<std::string> tmsRecoFile  { fhicl::Name{"TMSRecoFile"}, fhicl::Comment("Input TMS reco .root file") };
+    fhicl::Atom<std::string> tmsRecoTreeSuffix { fhicl::Name{"TMSRecoTreeSuffix"}, fhicl::Comment("Suffix of the TMS per-track trees (Reco_Tree, Truth_Info) to read: \"_C3D\" (default) = Cluster3D reconstruction (Reco_Tree_C3D, Truth_Info_C3D), empty = legacy reconstruction (Reco_Tree, Truth_Info), needed for older TMS reco files that have no Cluster3D trees"), "_C3D" };
     fhicl::OptionalAtom<std::string> sandRecoFile  { fhicl::Name{"SANDRecoFile"}, fhicl::Comment("Input SAND reco .root file") };
     fhicl::OptionalAtom<std::string> minervaRecoFile  { fhicl::Name{"MINERVARecoFile"}, fhicl::Comment("Input MINERVA reco .root file") };
     fhicl::OptionalAtom<std::string> pandoraLArRecoNDFile  { fhicl::Name{"PandoraLArRecoNDFile"}, fhicl::Comment("Input Pandora LArRecoND .root file") };
-    
+
     // this is optional by way of the default value. Will result in an extra output file if enabled
     fhicl::Atom<bool> makeFlatCAF { fhicl::Name{"MakeFlatCAF"}, fhicl::Comment("Make 'flat' CAF in addition to structured CAF?"), true };
 
@@ -55,6 +56,16 @@ namespace cafmaker
     fhicl::Atom<int>  first   { fhicl::Name("FirstEvt"), fhicl::Comment("Start processing from this event number"), 0 };
     fhicl::Atom<int>  numevts { fhicl::Name("NumEvts"), fhicl::Comment("Number of events to process (-1 means 'all')"), -1 };
     fhicl::Atom<int>  seed    { fhicl::Name("Seed"), fhicl::Comment("Random seed to use"), -1 };  // use the run number by default
+    fhicl::Atom<bool> allowTrueIntsOutsideSpill { fhicl::Name("AllowTrueIntsOutsideSpill"),
+    fhicl::Comment("Allow the reco fillers to add true interactions or true particles that are not in the spill of the current entry. "
+                   "This is a bad idea: it hides reco objects matched to the wrong spill and mixes the truth of different spills. "
+                   "It only exists as an emergency override"), false };
+    fhicl::Atom<double> trueParticleMinKE { fhicl::Name("TrueParticleMinKE"),
+    fhicl::Comment("Secondary true particles with a kinetic energy below this [GeV] are removed from sr.mc, unless a reco "
+                   "object links to them or they are the parent of a kept particle. <= 0 (default = 10) keeps them all"), 10. };
+    fhicl::Atom<int> trueParticleMaxGeneration { fhicl::Name("TrueParticleMaxGeneration"),
+    fhicl::Comment("Secondary true particles of a generation beyond this (daughters of a primary = 1) are removed from sr.mc, "
+                   "unless a reco object links to them or they are the parent of a kept particle. < 0 (default = 3) keeps them all"), 3 };
 
     // 100 us is default
     fhicl::Atom<unsigned int>  trigMatchDT { fhicl::Name("TriggerMatchDeltaT"), fhicl::Comment("Maximum time difference, in ns, between triggers to be considered a match"), 100000 };
@@ -92,7 +103,7 @@ namespace cafmaker
     fhicl::Atom<double> sigmaT { fhicl::Name("SigmaT"), fhicl::Comment("Standard deviation of time difference between recorded Pandora reco track and matching TMS reco track [ns]"), 8.84};
     fhicl::Atom<double> fcut { fhicl::Name("fCut"), fhicl::Comment("Maximum permissible match score for the matching, (best choice depends on whether time is included)"), 59.67}; //without time: 5.25
 
-    fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between Truth_Spill primary-particle birth position and matched Truth_Spill vertex [mm]"), 100.0};
+    fhicl::Atom<double> vertexMatchToleranceMm { fhicl::Name("VertexMatchToleranceMm"), fhicl::Comment("Maximum distance between a TMS track's Truth_Spill particle birth position and the start of its edep-sim trajectory [mm]"), 100.0};
     fhicl::Atom<double> positionToleranceMm { fhicl::Name("PositionToleranceMm"), fhicl::Comment("Maximum distance between TMS truth position and matched EDepSim vertex position [mm]"), 1.0};
 
     // options are VERBOSE, DEBUG, INFO, WARNING, ERROR, FATAL
