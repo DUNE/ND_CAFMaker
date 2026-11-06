@@ -71,12 +71,20 @@ namespace cafmaker
       bool use_smear_time;
 
       // Dimensions of TMS and LAr fiducial volume [cm]. TODO: query geometry instead of hard-coding
-      double tms_x_lim1 = -352.0;
-      double tms_x_lim2 = 352.0;
-      double tms_y_lim1 = -386.4;
-      double tms_y_lim2 = 115.9;
+      double tms_x_lim1 = -400.0;//previous value (c. N5p1) -352.0;
+      double tms_x_lim2 = 400.0;//previous value (c. N5p1) 352.0;
+      double tms_y_lim1 = -570.2;//previous value (c. N5p1) -386.4 (largest difference)
+      double tms_y_lim2 = 129.8;//previous value (c. N5p1) 115.9;
       double tms_z_lim1 = 1111.25;//1117.75;//1136.2; // 1136.2 came from TMSConstants.h but seems to be wrong, 1117.75 seems to be the correct value for N5p1 but the majority of N5p3 tracks start at 1111.25
-      double tms_z_lim2 = 1831.4;
+      double tms_z_lim2 = 1863.5;//previous value (c.N5p1) 1831.4;
+      // These are estimates of the boundaries of TMS using the N5p3 geometry (GDML file located here: https://github.com/DUNE/ND_Production/blob/main/geometry/nd_hall_with_lar_tms_sand_stt1_v2026.03.06.gdml).
+      // They were obtained by converting the GDML to root using the instructions on the README here: https://github.com/PandoraPFAOrg/LArRecoND, and then modifying line 25 of
+      // /exp/dune/app/users/weyrich/investigate_geo/investigate_geo.cpp to point to that root file, before running root -l /exp/dune/app/users/weyrich/investigate_geo/investigate_geo.cpp\(\"volTMS_0\"\) to get
+      // the dimensions and coordinates of the centre of the volume volTMS_0. The exception is tms_z_lim1, which comes from printing the z-coordinate of the start point of all the TMS tracks in a TMS-Reco file
+
+      // I am not 100% sure that volTMS_0 actually describes the active volume of TMS, or if it also includes some surrounding material. The z-coordinate of the front face of volTMS_0 is listed as 1108.5, which is
+      // three cm less than the actual start point of the majority of the tracks, so I hope that the two agree with each other sufficiently well. But this uncertainty, and the complicated process needed to define
+      // the geometry, is another reason the script should be set up to query the geometry for us to get the dimensions automatically
 
       double lar_x_lim1 = -347.848;
       double lar_x_lim2 = 347.848;
@@ -85,9 +93,7 @@ namespace cafmaker
       double lar_z_lim1 = 417.924;
       double lar_z_lim2 = 913.588;
 
-      const double ActiveLArEnd = 913.588; // End z-coordinate for LAr active volume [cm], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
-      const double DeadLArEnd = 937; // End z-coordinate for LAr instrumented volume [cm]
-      const double TMSStart = 1117.75; // Start z-coordinate for TMS [cm], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
+      const double DeadLArEnd = 937; // End z-coordinate for LAr instrumented volume [cm], from https://github.com/DUNE/dune-tms/blob/main/src/TMS_Constants.h c. Sep. 16, 2026
 
   };
 }
