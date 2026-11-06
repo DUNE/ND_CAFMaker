@@ -2,7 +2,12 @@ name: ND_CAFMaker CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -14,7 +19,9 @@ env:
 jobs:
   resolve-inputs:
     name: Find prepared CAFMaker inputs
-    if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    if: >-
+      (github.event_name != 'pull_request' || !github.event.pull_request.draft) &&
+      (github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -161,7 +168,9 @@ jobs:
     # we are pinning to 24.04 because Apptainer's PPA is not correctly being read in 26.04.
     # the Ubuntu Apptainer package has a bug (apptainer/apptainer#3487) that sets up the wrong AppArmor path.
     # 24.04 will be supported until 2029.  we can revisit the situation then, if needed.
-    if: github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    if: >-
+      (github.event_name != 'pull_request' || !github.event.pull_request.draft) &&
+      (github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
     runs-on: ubuntu-24.04 
 
     steps:
@@ -205,6 +214,7 @@ jobs:
   run-cafmaker:
     name: Run CAFMaker
     needs: [build, resolve-inputs]
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
 
     steps:
@@ -261,6 +271,7 @@ jobs:
   verify:
     name: Verify CAF output
     needs: run-cafmaker
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-24.04
     outputs:
       comparison: ${{ steps.compare.outputs.comparison }}
@@ -331,7 +342,7 @@ jobs:
 
   summary:
     name: CI summary
-    if: always()
+    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
     needs: [resolve-inputs, prepare-pr-inputs, build, run-cafmaker, verify]
     runs-on: ubuntu-24.04
     steps:
