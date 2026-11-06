@@ -149,6 +149,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Test regression runner control flow
+        run: python3 test/scripts/test_caf_regression.py -v
+
       - name: Install Apptainer
         run: |
           sudo add-apt-repository -y ppa:apptainer/ppa
@@ -160,31 +163,8 @@ jobs:
         with:
           cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
 
-      # NOTE: bash -c (no -e) is required. UPS products/setup uses &&/|| chains
-      # that return non-zero when running under sh (e.g. "test $ss = csh && ...").
-      # bash -e would treat those as fatal errors. Interactive singularity shells
-      # work because set -e is off by default. cmake exits are checked explicitly.
       - name: Build, install, and test
-        run: |
-          apptainer exec \
-            --bind /cvmfs \
-            --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
-            /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
-            bash -c "
-              cd '${GITHUB_WORKSPACE}'
-              source ndcaf_setup_deps.sh prof
-              cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || exit \$?
-              cmake --build build -j\$(nproc) || exit \$?
-              cmake --install build --prefix install || exit \$?
-
-              # Test: sourcing ndcaf_setup.sh from the install tree must put
-              # makeCAF in PATH and let it run --help end-to-end. This catches
-              # regressions in the script split (Commit 1) and the install
-              # layout / RPATH (Commit 3).
-              source install/bin/ndcaf_setup.sh prof || exit \$?
-              command -v makeCAF || { echo 'makeCAF not in PATH'; exit 1; }
-              makeCAF --help || exit \$?
-            " 2>&1
+        run: bash scripts/caf-regression --stage build --work-dir "${GITHUB_WORKSPACE}"
 
       - name: Package installed runtime
         run: tar -czf ndcaf-runtime.tar.gz install
@@ -235,17 +215,9 @@ jobs:
           cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
 
       - name: Run CAFMaker
-        run: |
-          apptainer exec \
-            --bind /cvmfs \
-            --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
-            /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
-            bash -c "
-              cd '${GITHUB_WORKSPACE}' || exit \$?
-              source install/bin/ndcaf_setup.sh prof || exit \$?
-              mkdir -p outputs || exit \$?
-              makeCAF --fcl=test/fickle.fcl -n 1 || exit \$?
-            " 2>&1
+        run: >-
+          bash scripts/caf-regression --stage run --work-dir "${GITHUB_WORKSPACE}"
+          --cache-dir "${GITHUB_WORKSPACE}/inputs"
 
       - name: Upload CAF output
         uses: actions/upload-artifact@v4
@@ -270,13 +242,27 @@ jobs:
           name: caf-output
           path: outputs
 
-      - name: Dump CAF output
+      - name: Install Apptainer
         run: |
-          python3 -m pip install uproot awkward numpy
-          python3 test/scripts/dumper.py outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root --vector-entries 5
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get update -qq
+          sudo apt-get install -y apptainer
 
-      - name: Compare CAF output with reference
-        run: |
-          diff -u \
-            test/references/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root.json \
-            outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root.json
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: "singularity.opensciencegrid.org"
+
+      - name: Dump and compare CAF output
+        run: bash scripts/caf-regression --stage verify --work-dir "${GITHUB_WORKSPACE}"
+
+      - name: Upload comparison diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-comparison
+          path: |
+            outputs/*.json
+            outputs/reference.diff
+          if-no-files-found: warn
+          retention-days: 1
