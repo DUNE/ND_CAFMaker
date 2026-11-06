@@ -51,6 +51,9 @@ else
   [[ -z "${work_dir}" ]] || die '--work-dir is only supported with --stage'
 fi
 
+if [[ "${stage}" == verify && -n "${GITHUB_OUTPUT:-}" ]]; then
+  printf 'comparison=error\n' >> "${GITHUB_OUTPUT}"
+fi
 command -v apptainer >/dev/null || die 'Install Apptainer before running this command'
 if [[ -z "${stage}" || "${stage}" == verify ]]; then
   [[ -d "${PYTHON_IMAGE}" ]] || die "Required CVMFS image is unavailable: ${PYTHON_IMAGE}"
@@ -150,6 +153,13 @@ verify() {
   diff -u -- "${reference}" "${candidate}" > "${work_dir}/outputs/reference.diff" || diff_status=$?
   cat -- "${work_dir}/outputs/reference.diff"
   (( diff_status <= 1 )) || die 'Reference comparison failed'
+  if [[ "${stage}" == verify && -n "${GITHUB_OUTPUT:-}" ]]; then
+    if (( diff_status == 0 )); then
+      printf 'comparison=match\n' >> "${GITHUB_OUTPUT}"
+    else
+      printf 'comparison=mismatch\n' >> "${GITHUB_OUTPUT}"
+    fi
+  fi
   if [[ "${mode}" == update-reference ]]; then
     if (( diff_status == 0 )); then
       printf 'Reference is already up to date.\n'

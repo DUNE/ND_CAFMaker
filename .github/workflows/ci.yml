@@ -140,6 +140,7 @@ jobs:
 
   build:
     name: Build (prof)
+    needs: resolve-inputs
     # we are pinning to 24.04 because Apptainer's PPA is not correctly being read in 26.04.
     # the Ubuntu Apptainer package has a bug (apptainer/apptainer#3487) that sets up the wrong AppArmor path.
     # 24.04 will be supported until 2029.  we can revisit the situation then, if needed.
@@ -232,6 +233,9 @@ jobs:
     name: Verify CAF output
     needs: run-cafmaker
     runs-on: ubuntu-24.04
+    outputs:
+      comparison: ${{ steps.compare.outputs.comparison }}
+      artifact-id: ${{ steps.diagnostics.outputs.artifact-id }}
 
     steps:
       - uses: actions/checkout@v4
@@ -254,9 +258,21 @@ jobs:
           cvmfs_repositories: "singularity.opensciencegrid.org"
 
       - name: Dump and compare CAF output
+        id: compare
         run: bash scripts/caf-regression --stage verify --work-dir "${GITHUB_WORKSPACE}"
 
+      - name: Render regression differences
+        if: always() && steps.compare.outputs.comparison == 'mismatch'
+        run: |
+          source test/regression-environment.conf
+          python3 test/scripts/ci_summary.py regression \
+            --reference "test/references/${CAF_FILENAME}.json" \
+            --candidate "outputs/${CAF_FILENAME}.json" \
+            --diff outputs/reference.diff \
+            --output outputs/regression-summary.md
+
       - name: Upload comparison diagnostics
+        id: diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -264,5 +280,52 @@ jobs:
           path: |
             outputs/*.json
             outputs/reference.diff
+            outputs/regression-summary.md
           if-no-files-found: warn
           retention-days: 1
+
+  summary:
+    name: CI summary
+    if: always()
+    needs: [resolve-inputs, prepare-pr-inputs, build, run-cafmaker, verify]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download comparison diagnostics
+        id: download
+        if: needs.verify.outputs.artifact-id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.verify.outputs.artifact-id }}
+          merge-multiple: true
+          path: comparison
+
+      - name: Collect job and failed-step details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let jobs = [];
+            try {
+              jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                ...context.repo,
+                run_id: context.runId,
+                filter: 'latest',
+                per_page: 100,
+              });
+            } catch (error) {
+              core.warning(`Could not retrieve job details: ${error.message}`);
+            }
+            require('fs').writeFileSync('ci-jobs.json', JSON.stringify(jobs));
+
+      - name: Write CI summary
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+          CI_PREPARATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+          CI_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CI_DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+          CI_ARTIFACT_URL: ${{ needs.verify.outputs.artifact-id != '' && format('{0}/{1}/actions/runs/{2}/artifacts/{3}', github.server_url, github.repository, github.run_id, needs.verify.outputs.artifact-id) || '' }}
+        run: >-
+          python3 test/scripts/ci_summary.py summary
+          --jobs ci-jobs.json --regression comparison/regression-summary.md
