@@ -6,6 +6,8 @@ import subprocess
 import tempfile
 import unittest
 
+import ci_summary
+
 
 RUNNER = Path(__file__).resolve().parents[2] / "scripts" / "caf-regression"
 FILENAME = "MiniProdN5p1_NDComplex_FHC.0000965.CAF.root"
@@ -96,6 +98,7 @@ class RegressionRunnerTest(unittest.TestCase):
         self.scratch.mkdir()
         self.log = self.root / "commands.log"
         self.environment = dict(os.environ)
+        self.environment.pop("GITHUB_OUTPUT", None)
         self.environment.update(
             PATH=f"{self.bin}:{os.environ['PATH']}",
             TMPDIR=str(self.scratch),
@@ -215,6 +218,26 @@ class RegressionRunnerTest(unittest.TestCase):
         self.assertIn('+{"value": 2}', (work / "outputs/reference.diff").read_text())
         self.assertEqual(self.reference.read_text(), '{"value": 1}\n')
 
+    def test_ci_comparison_output_distinguishes_mismatch_from_failure(self):
+        work = self.root / "verification work"
+        (work / "outputs").mkdir(parents=True)
+        (work / "outputs" / FILENAME).write_bytes(b"ROOT")
+        github_output = self.root / "github-output"
+        self.environment["GITHUB_OUTPUT"] = str(github_output)
+        for scenario, expected, status in (("match", "match", 0), ("mismatch", "mismatch", 1), ("error", "error", 23)):
+            with self.subTest(scenario=scenario):
+                github_output.write_text("")
+                self.environment.pop("MOCK_FAIL", None)
+                self.environment.pop("MOCK_JSON", None)
+                if scenario == "mismatch":
+                    self.environment["MOCK_JSON"] = '{"value": 2}\n'
+                elif scenario == "error":
+                    self.environment["MOCK_FAIL"] = "verify"
+                result = self.invoke("--stage", "verify", "--work-dir", str(work))
+                self.assertEqual(result.returncode, status, result.stderr)
+                self.assertEqual(github_output.read_text().splitlines()[-1], f"comparison={expected}")
+                self.assert_clean()
+
     def test_invalid_cli_and_missing_cache_fail_before_running(self):
         invalid = (
             ("--stage", "verify", "--work-dir", str(self.root), "--update-reference"),
@@ -227,6 +250,101 @@ class RegressionRunnerTest(unittest.TestCase):
                 self.assertNotEqual(self.invoke(*arguments).returncode, 0)
         self.assertFalse(self.log.exists())
         self.assert_clean()
+
+
+class CISummaryTest(unittest.TestCase):
+    def successful_needs(self, comparison="match"):
+        needs = {stage: {"result": "success", "outputs": {}} for stage in ("resolve-inputs", "build", "run-cafmaker", "verify")}
+        needs["prepare-pr-inputs"] = {"result": "skipped", "outputs": {}}
+        needs["verify"]["outputs"]["comparison"] = comparison
+        return needs
+
+    def test_passed_summary(self):
+        report = ci_summary.render_summary(self.successful_needs(), [])
+        self.assertIn("## Passed", report)
+        self.assertNotIn("--update-reference", report)
+
+    def test_mismatch_summary_and_update_command(self):
+        needs = self.successful_needs("mismatch")
+        needs["verify"]["result"] = "failure"
+        report = ci_summary.render_summary(needs, [], "REGRESSION TABLE")
+        self.assertIn("## Regression Mismatch", report)
+        self.assertIn("REGRESSION TABLE", report)
+        self.assertIn("./scripts/caf-regression --update-reference", report)
+
+    def test_upstream_failure_and_skips_are_not_regression_mismatches(self):
+        needs = self.successful_needs("")
+        needs["resolve-inputs"]["result"] = "failure"
+        for stage in ("build", "run-cafmaker", "verify"):
+            needs[stage]["result"] = "skipped"
+        report = ci_summary.render_summary(needs, [])
+        self.assertIn("## CI Failure", report)
+        self.assertIn("Regression was not completed", report)
+        self.assertNotIn("--update-reference", report)
+
+    def test_dump_error_has_no_update_advice(self):
+        needs = self.successful_needs("error")
+        needs["verify"]["result"] = "failure"
+        report = ci_summary.render_summary(needs, [])
+        self.assertIn("Verification failed before", report)
+        self.assertNotIn("--update-reference", report)
+
+    def test_artifact_failure_alongside_mismatch_is_reported(self):
+        needs = self.successful_needs("mismatch")
+        needs["verify"]["result"] = "failure"
+        jobs = [{"name": "Verify CAF output", "html_url": "https://github.com/example/repo/actions/runs/1/job/2", "steps": [
+            {"name": "Dump and compare CAF output", "conclusion": "failure"},
+            {"name": "Upload comparison diagnostics", "conclusion": "failure"},
+        ]}]
+        report = ci_summary.render_summary(needs, jobs)
+        self.assertIn("## CI Failure", report)
+        self.assertIn("Upload comparison diagnostics", report)
+        self.assertIn("Intentional Reference Changes", report)
+
+    def test_preparation_only_does_not_claim_regression_pass(self):
+        needs = {stage: {"result": "skipped", "outputs": {}} for stage in ci_summary.STAGES}
+        needs["prepare-pr-inputs"]["result"] = "success"
+        report = ci_summary.render_summary(needs, [], preparation_only=True)
+        self.assertIn("## Input Preparation Passed", report)
+        self.assertNotIn("## Passed", report)
+        self.assertIn("did not build or run", report)
+
+    def test_cancelled_and_unknown_results_do_not_pass(self):
+        for status in ("cancelled", "skipped", "unknown"):
+            with self.subTest(status=status):
+                needs = self.successful_needs()
+                needs["build"]["result"] = status
+                self.assertIn("## CI Failure", ci_summary.render_summary(needs, []))
+
+    def test_structured_diff_add_remove_type_and_array_changes(self):
+        report = ci_summary.render_regression(
+            {"energy": 1, "removed": None, "vector": [1, 2], "type": True},
+            {"energy": 2, "added": None, "vector": [1, 3, 4], "type": 1}, "diff",
+        )
+        self.assertIn("6 changed fields", report)
+        self.assertIn("/vector/2", report)
+        self.assertIn("Added", report)
+        self.assertIn("Removed", report)
+        self.assertIn("(missing)", report)
+
+    def test_diff_html_is_escaped_and_bounded(self):
+        reference = {str(position): 1 for position in range(60)}
+        candidate = {str(position): "<script>|danger</script>" for position in range(60)}
+        report = ci_summary.render_regression(reference, candidate, "<script>\n" * 250)
+        self.assertIn("Showing the first 50 fields", report)
+        self.assertIn("Preview truncated", report)
+        self.assertNotIn("<script>", report)
+        self.assertIn("&#124;", report)
+
+    def test_formatting_only_mismatch(self):
+        report = ci_summary.render_regression({"value": 1}, {"value": 1}, "diff")
+        self.assertIn("formatting differences", report)
+
+    def test_missing_comparison_and_reporting_failure(self):
+        self.assertIn("## CI Failure", ci_summary.render_summary(self.successful_needs(""), []))
+        report = ci_summary.render_summary(self.successful_needs(), [], reporting_errors=["Artifact download failed"])
+        self.assertIn("## CI Failure", report)
+        self.assertIn("Artifact download failed", report)
 
 
 if __name__ == "__main__":

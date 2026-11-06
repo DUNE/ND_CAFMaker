@@ -31,5 +31,7 @@ nd_cafmaker.CAFMakerSettings.NDLArRecoFile: "inputs/run-mlreco/MiniProdN5p1_NDCo
 nd_cafmaker.CAFMakerSettings.TMSRecoFile: "inputs/run-tms-reco/MiniProdN5p1_NDComplex_FHC.tmsreco.full.sanddrift/TMSRECO/0000000/MiniProdN5p1_NDComplex_FHC.tmsreco.full.sanddrift.0000965.TMSRECO.root"
 nd_cafmaker.CAFMakerSettings.EdepsimFile: "inputs/run-spill-build/MiniProdN5p1_NDComplex_FHC.spill.full.sanddrift/EDEPSIM_SPILLS/0000000/MiniProdN5p1_NDComplex_FHC.spill.full.sanddrift.0000965.EDEPSIM_SPILLS.root"
 
+nd_cafmaker.CAFMakerSettings.TMSRecoTreeSuffix: ""
+
 
 # WORKSPACE="$PWD" apptainer shell --bind /cvmfs --bind "$WORKSPACE:$WORKSPACE" --bind "$WORKSPACE/alex-runcafmaker:inputs" /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest
