@@ -8,6 +8,9 @@ permissions:
   contents: read
   actions: read
 
+env:
+  CI_SUMMARY_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary
+
 jobs:
   resolve-inputs:
     name: Find prepared CAFMaker inputs
@@ -81,6 +84,14 @@ jobs:
               'No unexpired CAFMaker inputs found. Run Prepare CI inputs on the default branch, then rerun CI.'
             );
 
+      - &failure-summary-link
+        name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::This job failed. View the CI summary: %s (available after the CI summary job finishes).\n' "${CI_SUMMARY_URL}"
+          printf 'CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '## CI failure\n\n[View the CI summary](%s) for stage results and diagnostics. The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
   prepare-pr-inputs:
     name: Prepare inputs for PR branch
     if: github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
@@ -138,6 +149,12 @@ jobs:
           compression-level: 0
           retention-days: 2
 
+      - name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::View the CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '[View the CI summary](%s). The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
   build:
     name: Build (prof)
     needs: resolve-inputs
@@ -178,6 +195,12 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
+
+      - name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::View the CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '[View the CI summary](%s). The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
 
   run-cafmaker:
     name: Run CAFMaker
@@ -228,6 +251,12 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
+
+      - name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::View the CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '[View the CI summary](%s). The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
 
   verify:
     name: Verify CAF output
@@ -283,6 +312,22 @@ jobs:
             outputs/regression-summary.md
           if-no-files-found: warn
           retention-days: 1
+
+      - name: Link to CI summary on failure
+        if: failure()
+        env:
+          COMPARISON: ${{ steps.compare.outputs.comparison }}
+        run: |
+          if [[ "${COMPARISON}" == mismatch ]]; then
+            title='Regression mismatch'
+            message='The generated CAF differs from the reference. View the CI summary for changed fields and reference-update guidance'
+          else
+            title='Verification failure'
+            message='Verification or diagnostic handling failed. View the CI summary for stage results and diagnostics'
+          fi
+          printf '::error title=%s::%s: %s (available after the CI summary job finishes).\n' "${title}" "${message}" "${CI_SUMMARY_URL}"
+          printf 'CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '## %s\n\n[View the CI summary](%s) for details. The report appears after the CI summary job finishes.\n' "${title}" "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
 
   summary:
     name: CI summary
