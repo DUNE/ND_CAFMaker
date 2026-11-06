@@ -124,7 +124,7 @@ namespace cafmaker
 
     if ((x_start > tms_x_lim1)&&(x_start < tms_x_lim2) &&
         (y_start > tms_y_lim1)&&(y_start < tms_y_lim2) &&
-        (z_start > tms_z_lim1)&&(z_start < tms_z_lim1 + tms_z_cutoff) && // checks track begins within fiducial volume and close enough to front
+        (z_start >= tms_z_lim1)&&(z_start < tms_z_lim1 + tms_z_cutoff) && // checks track begins within fiducial volume and close enough to front
 
         (Project_track(tms_track,false)[0] > lar_x_lim1)&&(Project_track(tms_track,false)[0] < lar_x_lim2) &&
         (Project_track(tms_track,false)[1] > lar_y_lim1)&&(Project_track(tms_track,false)[1] < lar_y_lim2)) // checks that direction would have allowed it to originate from LAr
