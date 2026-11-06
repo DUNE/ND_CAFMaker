@@ -172,6 +172,11 @@ verify() {
     replacement=
     printf 'Updated %s\n' "${reference}"
   else
+    if (( diff_status != 0 )) && [[ -n "${CI_SUMMARY_URL:-}" ]]; then
+      printf '\n\033[1;31mREGRESSION FAILED - VIEW THE SUMMARY\033[0m\n'
+      printf '%s\n' "${CI_SUMMARY_URL}"
+      printf 'The report appears after the CI summary job finishes.\n\n'
+    fi
     return "${diff_status}"
   fi
 }

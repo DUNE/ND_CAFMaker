@@ -144,6 +144,21 @@ class RegressionRunnerTest(unittest.TestCase):
         self.assertEqual(self.reference.read_text(), '{"value": 1}\n')
         self.assert_clean()
 
+    def test_ci_failure_banner_follows_diff_and_is_absent_on_success(self):
+        url = "https://github.com/DUNE/ND_CAFMaker/actions/runs/123#summary"
+        self.environment["CI_SUMMARY_URL"] = url
+        result = self.local_run("--check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("VIEW THE SUMMARY", result.stdout)
+        self.environment["MOCK_JSON"] = '{"value": 2}\n'
+        result = self.local_run("--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("\033[1;31mREGRESSION FAILED - VIEW THE SUMMARY\033[0m", result.stdout)
+        self.assertIn(url, result.stdout)
+        self.assertLess(result.stdout.index('+{"value": 2}'), result.stdout.index("VIEW THE SUMMARY"))
+        self.assertEqual(self.reference.read_text(), '{"value": 1}\n')
+        self.assert_clean()
+
     def test_update_replaces_atomically_and_preserves_permissions(self):
         old_inode = self.reference.stat().st_ino
         self.environment["MOCK_JSON"] = '{"value": 2}\n'
