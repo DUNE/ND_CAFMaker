@@ -473,14 +473,22 @@ namespace cafmaker
       if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
         // One of the match pairs this algorithm found, so proceed with the counting and energy reco
         num_matches += 1;
-        num_true_matches += 1;
+        if (match_pair.trueMatch)
+          num_true_matches += 1;
+
         caf::SRNDLArID match_trk_id = match_pair.larid;
         caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
         std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
         std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
+        if (match_tOv.empty() || matched_truIDs.empty() || match_tOv.size() != matched_truIDs.size())
+          continue; // no usable truth info for this LAr track, so energy reco can't be compared to truth
+
         int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
         caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
         const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
+        if (!matchedParticle)
+          continue;
+
         float start_x = matchedParticle->start_pos.x;
         float start_y = matchedParticle->start_pos.y;
         float start_z = matchedParticle->start_pos.z;
@@ -508,15 +516,12 @@ namespace cafmaker
               LOG.VERBOSE() << " Not displaying energy reco" << "\n";
             }
           }
-        if (match_pair.trueMatch){
-          num_true_matches += 1;
-        }
       }
     }
     LOG.DEBUG() << "Number of matches " << num_matches << "\n";
-    LOG.DEBUG() << "Number of true matches " << num_matches << "\n";
+    LOG.DEBUG() << "Number of true matches " << num_true_matches << "\n";
     if (num_matches > 0){
-      float pur = num_true_matches/num_matches;
+      float pur = static_cast<float>(num_true_matches)/num_matches;
       LOG.DEBUG() << "Purity " << pur << "\n";
     }
   }
