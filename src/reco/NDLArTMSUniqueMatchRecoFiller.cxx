@@ -262,8 +262,8 @@ namespace cafmaker
 
       // TODO: The following values pertain to the dead region between LAr and TMS. They may not remain accurate as geometry changes. Long-term solution is to directly query the geometry file instead
       float gap_dist = sqrt(pow(tms_track.start.x - lar_track.end.x,2)+pow(tms_track.start.y - lar_track.end.y,2)+pow(tms_track.start.z - lar_track.end.z,2));
-      double LArTMSGap = TMSStart - ActiveLArEnd;
-      double DeadLArDist = DeadLArEnd - ActiveLArEnd;
+      double LArTMSGap = tms_z_lim1 - lar_z_lim2;
+      double DeadLArDist = DeadLArEnd - lar_z_lim2;
       double DeadLArFrac = DeadLArDist / LArTMSGap; // What fraction of the distance between LAr and TMS is dead LAr?
       joint_track.len_cm = lar_track.len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist; // Divide the TMS areal density by the LAr density and add the dead LAr length
 
