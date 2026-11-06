@@ -2,18 +2,182 @@ name: ND_CAFMaker CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  CI_SUMMARY_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary
+
 jobs:
+  resolve-inputs:
+    name: Find prepared CAFMaker inputs
+    if: >-
+      (github.event_name != 'pull_request' || !github.event.pull_request.draft) &&
+      (github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      run-id: ${{ steps.inputs.outputs.run-id }}
+      artifact-id: ${{ steps.inputs.outputs.artifact-id }}
+
+    steps:
+      - name: Find latest successful input preparation
+        id: inputs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get(context.repo);
+            const branches = [];
+            if (
+              context.eventName === 'pull_request' &&
+              context.payload.pull_request.head.repo?.full_name === repository.full_name
+            ) {
+              branches.push(context.payload.pull_request.head.ref);
+            } else if (
+              context.eventName === 'workflow_dispatch' &&
+              context.ref.startsWith('refs/heads/')
+            ) {
+              branches.push(context.ref.slice('refs/heads/'.length));
+            }
+            if (!branches.includes(repository.default_branch)) {
+              branches.push(repository.default_branch);
+            }
+
+            for (const branch of branches) {
+              const workflowIds = branch === repository.default_branch
+                ? ['prepare-ci-inputs.yml']
+                : ['ci.yml', 'prepare-ci-inputs.yml'];
+              for (const workflowId of workflowIds) {
+                for await (const { data } of github.paginate.iterator(
+                  github.rest.actions.listWorkflowRuns,
+                  {
+                    ...context.repo,
+                    workflow_id: workflowId,
+                    branch,
+                    status: 'success',
+                    per_page: 100,
+                  }
+                )) {
+                  for (const run of data) {
+                    if (run.head_repository?.full_name !== repository.full_name) continue;
+                    if (branch !== repository.default_branch && run.event !== 'workflow_dispatch') continue;
+                    const artifacts = await github.paginate(
+                      github.rest.actions.listWorkflowRunArtifacts,
+                      { ...context.repo, run_id: run.id, per_page: 100 }
+                    );
+                    const artifact = artifacts.find(candidate =>
+                      candidate.name === 'caf-inputs' &&
+                      !candidate.expired &&
+                      Date.parse(candidate.expires_at) > Date.now()
+                    );
+                    if (!artifact) continue;
+                    core.setOutput('run-id', String(run.id));
+                    core.setOutput('artifact-id', String(artifact.id));
+                    core.info(`Using caf-inputs from ${workflowId} run ${run.id} on ${branch}`);
+                    return;
+                  }
+                }
+              }
+            }
+            core.setFailed(
+              'No unexpired CAFMaker inputs found. Run Prepare CI inputs on the default branch, then rerun CI.'
+            );
+
+      - &failure-summary-link
+        name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::This job failed. View the CI summary: %s (available after the CI summary job finishes).\n' "${CI_SUMMARY_URL}"
+          printf 'CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '## CI failure\n\n[View the CI summary](%s) for stage results and diagnostics. The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
+  prepare-pr-inputs:
+    name: Prepare inputs for PR branch
+    if: github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CAF_INPUT_URL: https://portal.nersc.gov/cfs/dune/data/emir_test/ND_CAFMaker_CI/inputs/cafmaker_staging/
+
+    steps:
+      - name: Check input directory and file availability
+        timeout-minutes: 5
+        run: |
+          wget \
+            --spider \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --execute robots=off \
+            --https-only \
+            --timeout=10 \
+            --tries=1 \
+            --no-verbose \
+            "${CAF_INPUT_URL}"
+
+      - name: Download input directory
+        run: |
+          cut_dirs=$(python3 -c 'import os; from urllib.parse import urlparse; print(len(urlparse(os.environ["CAF_INPUT_URL"]).path.strip("/").split("/")))')
+          wget \
+            --recursive \
+            --level=inf \
+            --no-parent \
+            --no-host-directories \
+            --cut-dirs="${cut_dirs}" \
+            --reject='index.html*' \
+            --execute robots=off \
+            --https-only \
+            --timeout=60 \
+            --tries=3 \
+            --no-verbose \
+            --directory-prefix=inputs \
+            "${CAF_INPUT_URL}"
+          if [[ -z "$(find inputs -type f -print -quit)" ]]; then
+            echo 'No input files were downloaded' >&2
+            exit 1
+          fi
+          du -sh inputs
+
+      - name: Upload CAFMaker inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-inputs
+          path: inputs/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 2
+
+      - name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::View the CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '[View the CI summary](%s). The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
   build:
     name: Build (prof)
+    needs: resolve-inputs
     # we are pinning to 24.04 because Apptainer's PPA is not correctly being read in 26.04.
     # the Ubuntu Apptainer package has a bug (apptainer/apptainer#3487) that sets up the wrong AppArmor path.
     # 24.04 will be supported until 2029.  we can revisit the situation then, if needed.
+    if: >-
+      (github.event_name != 'pull_request' || !github.event.pull_request.draft) &&
+      (github.event_name != 'workflow_dispatch' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
     runs-on: ubuntu-24.04 
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Test regression runner control flow
+        run: python3 test/scripts/test_caf_regression.py -v
 
       - name: Install Apptainer
         run: |
@@ -26,28 +190,198 @@ jobs:
         with:
           cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
 
-      # NOTE: bash -c (no -e) is required. UPS products/setup uses &&/|| chains
-      # that return non-zero when running under sh (e.g. "test $ss = csh && ...").
-      # bash -e would treat those as fatal errors. Interactive singularity shells
-      # work because set -e is off by default. cmake exits are checked explicitly.
       - name: Build, install, and test
-        run: |
-          apptainer exec \
-            --bind /cvmfs \
-            --bind "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
-            /cvmfs/singularity.opensciencegrid.org/fermilab/fnal-wn-sl7:latest \
-            bash -c "
-              cd '${GITHUB_WORKSPACE}'
-              source ndcaf_setup_deps.sh prof
-              cmake -S . -B build -DCMAKE_BUILD_TYPE=Release || exit \$?
-              cmake --build build -j\$(nproc) || exit \$?
-              cmake --install build --prefix install || exit \$?
+        run: bash scripts/caf-regression --stage build --work-dir "${GITHUB_WORKSPACE}"
 
-              # Test: sourcing ndcaf_setup.sh from the install tree must put
-              # makeCAF in PATH and let it run --help end-to-end. This catches
-              # regressions in the script split (Commit 1) and the install
-              # layout / RPATH (Commit 3).
-              source install/bin/ndcaf_setup.sh prof || exit \$?
-              command -v makeCAF || { echo 'makeCAF not in PATH'; exit 1; }
-              makeCAF --help || exit \$?
-            " 2>&1
+      - name: Package installed runtime
+        run: tar -czf ndcaf-runtime.tar.gz install
+
+      - name: Upload installed runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: ndcaf-runtime
+          path: ndcaf-runtime.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::View the CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '[View the CI summary](%s). The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
+  run-cafmaker:
+    name: Run CAFMaker
+    needs: [build, resolve-inputs]
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CAFMaker inputs
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.resolve-inputs.outputs.artifact-id }}
+          merge-multiple: true
+          path: inputs
+          run-id: ${{ needs.resolve-inputs.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - name: Download installed runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: ndcaf-runtime
+
+      - name: Extract installed runtime
+        run: tar -xzf ndcaf-runtime.tar.gz
+
+      - name: Install Apptainer
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get update -qq
+          sudo apt-get install -y apptainer
+
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: "dune.opensciencegrid.org,larsoft.opensciencegrid.org,fermilab.opensciencegrid.org,oasis.opensciencegrid.org,singularity.opensciencegrid.org"
+
+      - name: Run CAFMaker
+        run: >-
+          bash scripts/caf-regression --stage run --work-dir "${GITHUB_WORKSPACE}"
+          --cache-dir "${GITHUB_WORKSPACE}/inputs"
+
+      - name: Upload CAF output
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-output
+          path: outputs/MiniProdN5p1_NDComplex_FHC.0000965.CAF.root
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+      - name: Link to CI summary on failure
+        if: failure()
+        run: |
+          printf '::error title=CI failure::View the CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '[View the CI summary](%s). The report appears after the CI summary job finishes.\n' "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
+  verify:
+    name: Verify CAF output
+    needs: run-cafmaker
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    outputs:
+      comparison: ${{ steps.compare.outputs.comparison }}
+      artifact-id: ${{ steps.diagnostics.outputs.artifact-id }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CAF output
+        uses: actions/download-artifact@v4
+        with:
+          name: caf-output
+          path: outputs
+
+      - name: Install Apptainer
+        run: |
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt-get update -qq
+          sudo apt-get install -y apptainer
+
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: "singularity.opensciencegrid.org"
+
+      - name: Dump and compare CAF output
+        id: compare
+        run: bash scripts/caf-regression --stage verify --work-dir "${GITHUB_WORKSPACE}"
+
+      - name: Render regression differences
+        if: always() && steps.compare.outputs.comparison == 'mismatch'
+        run: |
+          source test/regression-environment.conf
+          python3 test/scripts/ci_summary.py regression \
+            --reference "test/references/${CAF_FILENAME}.json" \
+            --candidate "outputs/${CAF_FILENAME}.json" \
+            --diff outputs/reference.diff \
+            --output outputs/regression-summary.md
+
+      - name: Upload comparison diagnostics
+        id: diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: caf-comparison
+          path: |
+            outputs/*.json
+            outputs/reference.diff
+            outputs/regression-summary.md
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Link to CI summary on failure
+        if: failure()
+        env:
+          COMPARISON: ${{ steps.compare.outputs.comparison }}
+        run: |
+          if [[ "${COMPARISON}" == mismatch ]]; then
+            title='Regression mismatch'
+            message='The generated CAF differs from the reference. View the CI summary for changed fields and reference-update guidance'
+          else
+            title='Verification failure'
+            message='Verification or diagnostic handling failed. View the CI summary for stage results and diagnostics'
+          fi
+          printf '::error title=%s::%s: %s (available after the CI summary job finishes).\n' "${title}" "${message}" "${CI_SUMMARY_URL}"
+          printf 'CI summary: %s\n' "${CI_SUMMARY_URL}"
+          printf '## %s\n\n[View the CI summary](%s) for details. The report appears after the CI summary job finishes.\n' "${title}" "${CI_SUMMARY_URL}" >> "${GITHUB_STEP_SUMMARY}"
+
+  summary:
+    name: CI summary
+    if: always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
+    needs: [resolve-inputs, prepare-pr-inputs, build, run-cafmaker, verify]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download comparison diagnostics
+        id: download
+        if: needs.verify.outputs.artifact-id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.verify.outputs.artifact-id }}
+          merge-multiple: true
+          path: comparison
+
+      - name: Collect job and failed-step details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let jobs = [];
+            try {
+              jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                ...context.repo,
+                run_id: context.runId,
+                filter: 'latest',
+                per_page: 100,
+              });
+            } catch (error) {
+              core.warning(`Could not retrieve job details: ${error.message}`);
+            }
+            require('fs').writeFileSync('ci-jobs.json', JSON.stringify(jobs));
+
+      - name: Write CI summary
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+          CI_PREPARATION_ONLY: ${{ github.event_name == 'workflow_dispatch' && github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+          CI_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          CI_DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+          CI_ARTIFACT_URL: ${{ needs.verify.outputs.artifact-id != '' && format('{0}/{1}/actions/runs/{2}/artifacts/{3}', github.server_url, github.repository, github.run_id, needs.verify.outputs.artifact-id) || '' }}
+        run: >-
+          python3 test/scripts/ci_summary.py summary
+          --jobs ci-jobs.json --regression comparison/regression-summary.md

@@ -1,0 +1,191 @@
+#!/bin/bash
+set -euo pipefail
+
+repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+source "${repo_dir}/test/regression-environment.conf"
+
+usage() {
+  printf '%s\n' \
+    'Usage: caf-regression [--check | --update-reference] [--cache-dir DIR]' \
+    '       caf-regression --stage build|run|verify --work-dir DIR [--cache-dir DIR]' \
+    'Local modes build, run and dump in temporary space; --check is the default.' \
+    'An existing input cache is reused without validation and never deleted.' \
+    'CI stages retain build/install/outputs in the supplied work directory.'
+}
+
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+mode=check
+stage=
+work_dir=
+cache_dir=/tmp/ndsimreco/CI_files
+mode_selected=false
+while (( $# )); do
+  case "$1" in
+    --help|-h) usage; exit 0 ;;
+    --check|--update-reference)
+      [[ "${mode_selected}" == false ]] || die 'Choose only one local mode'
+      mode_selected=true
+      mode=${1#--}
+      shift
+      ;;
+    --stage|--work-dir|--cache-dir)
+      (( $# >= 2 )) && [[ -n "$2" ]] || die "$1 requires a value"
+      case "$1" in
+        --stage) stage=$2 ;;
+        --work-dir) work_dir=$2 ;;
+        --cache-dir) cache_dir=$2 ;;
+      esac
+      shift 2
+      ;;
+    *) die "Unknown option: $1" ;;
+  esac
+done
+if [[ -n "${stage}" ]]; then
+  [[ "${stage}" == build || "${stage}" == run || "${stage}" == verify ]] || die 'Invalid stage'
+  [[ -n "${work_dir}" && "${mode_selected}" == false ]] || die 'Stages require --work-dir and cannot update references'
+else
+  [[ -z "${work_dir}" ]] || die '--work-dir is only supported with --stage'
+fi
+
+if [[ "${stage}" == verify && -n "${GITHUB_OUTPUT:-}" ]]; then
+  printf 'comparison=error\n' >> "${GITHUB_OUTPUT}"
+fi
+command -v apptainer >/dev/null || die 'Install Apptainer before running this command'
+if [[ -z "${stage}" || "${stage}" == verify ]]; then
+  [[ -d "${PYTHON_IMAGE}" ]] || die "Required CVMFS image is unavailable: ${PYTHON_IMAGE}"
+fi
+if [[ "${stage}" != verify ]]; then
+  [[ -d "${CAF_IMAGE}" && -f "${CAF_DEPS_SETUP}" ]] || \
+    die 'Mount the CAFMaker image and DUNE dependency repositories on CVMFS first'
+fi
+
+scratch_dir=$(mktemp -d "${TMPDIR:-/tmp}/caf-regression.XXXXXXXX")
+replacement=
+cleanup() {
+  [[ -z "${replacement}" ]] || rm -f -- "${replacement}"
+  rm -rf -- "${scratch_dir}"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+export APPTAINER_TMPDIR="${scratch_dir}"
+export APPTAINER_CACHEDIR="${scratch_dir}/image-cache"
+if [[ -z "${stage}" ]]; then
+  work_dir="${scratch_dir}/work"
+fi
+mkdir -p -- "${work_dir}"
+work_dir=$(cd -- "${work_dir}" && pwd)
+for bind_path in "${repo_dir}" "${work_dir}" "${scratch_dir}" "${cache_dir}"; do
+  [[ "${bind_path}" != *:* && "${bind_path}" != *,* ]] || die 'Bind paths cannot contain colons or commas'
+done
+
+prepare_inputs() {
+  if [[ -e "${cache_dir}" ]]; then
+    [[ -d "${cache_dir}" ]] || die "Input cache is not a directory: ${cache_dir}"
+    printf 'WARNING: Reusing %s; cached inputs are assumed complete and are not validated.\n' "${cache_dir}" >&2
+  else
+    command -v wget >/dev/null || die 'wget is required to download inputs'
+    mkdir -p -- "${cache_dir}"
+    wget --recursive --level=inf --no-parent --no-host-directories \
+      --cut-dirs=7 --reject='index.html*' --execute robots=off \
+      --https-only --timeout=60 --tries=3 --no-verbose \
+      --directory-prefix="${cache_dir}" "${CAF_INPUT_URL}"
+  fi
+  cache_dir=$(cd -- "${cache_dir}" && pwd)
+}
+
+container_exec() {
+  local image=$1
+  shift
+  apptainer exec --cleanenv --containall --home "${scratch_dir}:/scratch" --pwd /work \
+    --bind /cvmfs --bind "${repo_dir}:/source:ro" \
+    --bind "${work_dir}:/work" --bind "${scratch_dir}:/scratch" \
+    "$@" "${image}" bash -c "${container_body}" caf-regression
+}
+
+build() {
+  local container_body='
+    source /source/ndcaf_setup_deps.sh prof
+    command -v cmake >/dev/null || exit 1
+    cmake -S /source -B /work/build -DCMAKE_BUILD_TYPE=Release || exit $?
+    cmake --build /work/build -j$(nproc) || exit $?
+    cmake --install /work/build --prefix /work/install || exit $?
+    source /work/install/bin/ndcaf_setup.sh prof || exit $?
+    command -v makeCAF || exit $?
+    makeCAF --help || exit $?
+  '
+  container_exec "${CAF_IMAGE}"
+}
+
+run() {
+  [[ -f "${work_dir}/install/bin/ndcaf_setup.sh" ]] || die 'Installed runtime is missing'
+  [[ -d "${cache_dir}" ]] || die "Input cache is missing: ${cache_dir}"
+  cache_dir=$(cd -- "${cache_dir}" && pwd)
+  mkdir -p -- "${work_dir}/inputs" "${work_dir}/outputs"
+  local container_body='
+    source /work/install/bin/ndcaf_setup.sh prof || exit $?
+    makeCAF --fcl=/source/test/fickle.fcl -n 1 || exit $?
+  '
+  container_exec "${CAF_IMAGE}" --bind "${cache_dir}:/work/inputs:ro"
+}
+
+verify() {
+  local reference="${repo_dir}/test/references/${CAF_FILENAME}.json"
+  local candidate="${work_dir}/outputs/${CAF_FILENAME}.json"
+  [[ -s "${work_dir}/outputs/${CAF_FILENAME}" ]] || die 'CAF output is missing or empty'
+  local container_body='
+    set -e
+    source /source/test/regression-environment.conf
+    test "$(python3 -c "import platform; print(platform.python_version())")" = "$PYTHON_VERSION"
+    python3 -m venv /scratch/venv
+    /scratch/venv/bin/python -m pip install --disable-pip-version-check --no-cache-dir \
+      --index-url https://pypi.org/simple --only-binary=:all: uproot awkward numpy
+    /scratch/venv/bin/python /source/test/scripts/dumper.py \
+      "/work/outputs/${CAF_FILENAME}" --vector-entries 5
+  '
+  container_exec "${PYTHON_IMAGE}"
+  [[ -s "${candidate}" ]] || die 'Reference generation produced no JSON'
+  local diff_status=0
+  diff -u -- "${reference}" "${candidate}" > "${work_dir}/outputs/reference.diff" || diff_status=$?
+  cat -- "${work_dir}/outputs/reference.diff"
+  (( diff_status <= 1 )) || die 'Reference comparison failed'
+  if [[ "${stage}" == verify && -n "${GITHUB_OUTPUT:-}" ]]; then
+    if (( diff_status == 0 )); then
+      printf 'comparison=match\n' >> "${GITHUB_OUTPUT}"
+    else
+      printf 'comparison=mismatch\n' >> "${GITHUB_OUTPUT}"
+    fi
+  fi
+  if [[ "${mode}" == update-reference ]]; then
+    if (( diff_status == 0 )); then
+      printf 'Reference is already up to date.\n'
+      return
+    fi
+    replacement=$(mktemp "${reference}.XXXXXXXX")
+    cp -- "${candidate}" "${replacement}"
+    chmod --reference="${reference}" "${replacement}"
+    mv -f -- "${replacement}" "${reference}"
+    replacement=
+    printf 'Updated %s\n' "${reference}"
+  else
+    if (( diff_status != 0 )) && [[ -n "${CI_SUMMARY_URL:-}" ]]; then
+      printf '\n\033[1;31mREGRESSION FAILED - VIEW THE SUMMARY\033[0m\n'
+      printf '%s\n' "${CI_SUMMARY_URL}"
+      printf 'The report appears after the CI summary job finishes.\n\n'
+    fi
+    return "${diff_status}"
+  fi
+}
+
+if [[ -n "${stage}" ]]; then
+  "${stage}"
+else
+  prepare_inputs
+  build
+  run
+  verify
+fi

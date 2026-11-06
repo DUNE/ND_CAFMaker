@@ -1,0 +1,1473 @@
+{
+  "trees": {
+    "cafTree": {
+      "entries": 1,
+      "branches": {
+        "rec/meta/meta.nd_lar.enabled": false,
+        "rec/meta/meta.nd_lar.run": -1,
+        "rec/meta/meta.nd_lar.subrun": -1,
+        "rec/meta/meta.nd_lar.event": -1,
+        "rec/meta/meta.nd_lar.subevt": -1,
+        "rec/meta/meta.nd_lar.triggertype": -1,
+        "rec/meta/meta.nd_lar.triggered": true,
+        "rec/meta/meta.nd_lar.readoutstart_s": 0,
+        "rec/meta/meta.nd_lar.readoutstart_ns": 0,
+        "rec/meta/meta.nd_lar.readoutend_s": 0,
+        "rec/meta/meta.nd_lar.readoutend_ns": 0,
+        "rec/meta/meta.nd_lar.prism_offset": null,
+        "rec/meta/meta.nd_gar.enabled": false,
+        "rec/meta/meta.nd_gar.run": -1,
+        "rec/meta/meta.nd_gar.subrun": -1,
+        "rec/meta/meta.nd_gar.event": -1,
+        "rec/meta/meta.nd_gar.subevt": -1,
+        "rec/meta/meta.nd_gar.triggertype": -1,
+        "rec/meta/meta.nd_gar.triggered": true,
+        "rec/meta/meta.nd_gar.readoutstart_s": 0,
+        "rec/meta/meta.nd_gar.readoutstart_ns": 0,
+        "rec/meta/meta.nd_gar.readoutend_s": 0,
+        "rec/meta/meta.nd_gar.readoutend_ns": 0,
+        "rec/meta/meta.nd_gar.prism_offset": null,
+        "rec/meta/meta.tms.enabled": true,
+        "rec/meta/meta.tms.run": -1,
+        "rec/meta/meta.tms.subrun": -1,
+        "rec/meta/meta.tms.event": -1,
+        "rec/meta/meta.tms.subevt": -1,
+        "rec/meta/meta.tms.triggertype": -1,
+        "rec/meta/meta.tms.triggered": true,
+        "rec/meta/meta.tms.readoutstart_s": 0,
+        "rec/meta/meta.tms.readoutstart_ns": 0,
+        "rec/meta/meta.tms.readoutend_s": 0,
+        "rec/meta/meta.tms.readoutend_ns": 0,
+        "rec/meta/meta.tms.prism_offset": null,
+        "rec/meta/meta.sand.enabled": false,
+        "rec/meta/meta.sand.run": -1,
+        "rec/meta/meta.sand.subrun": -1,
+        "rec/meta/meta.sand.event": -1,
+        "rec/meta/meta.sand.subevt": -1,
+        "rec/meta/meta.sand.triggertype": -1,
+        "rec/meta/meta.sand.triggered": true,
+        "rec/meta/meta.sand.readoutstart_s": 0,
+        "rec/meta/meta.sand.readoutstart_ns": 0,
+        "rec/meta/meta.sand.readoutend_s": 0,
+        "rec/meta/meta.sand.readoutend_ns": 0,
+        "rec/meta/meta.sand.prism_offset": null,
+        "rec/meta/meta.lar2x2.enabled": true,
+        "rec/meta/meta.lar2x2.run": 0,
+        "rec/meta/meta.lar2x2.subrun": 0,
+        "rec/meta/meta.lar2x2.event": 965000,
+        "rec/meta/meta.lar2x2.subevt": -1,
+        "rec/meta/meta.lar2x2.triggertype": -1,
+        "rec/meta/meta.lar2x2.triggered": true,
+        "rec/meta/meta.lar2x2.readoutstart_s": 0,
+        "rec/meta/meta.lar2x2.readoutstart_ns": 0,
+        "rec/meta/meta.lar2x2.readoutend_s": 0,
+        "rec/meta/meta.lar2x2.readoutend_ns": 0,
+        "rec/meta/meta.lar2x2.prism_offset": null,
+        "rec/meta/meta.minerva.enabled": false,
+        "rec/meta/meta.minerva.run": -1,
+        "rec/meta/meta.minerva.subrun": -1,
+        "rec/meta/meta.minerva.event": -1,
+        "rec/meta/meta.minerva.subevt": -1,
+        "rec/meta/meta.minerva.triggertype": -1,
+        "rec/meta/meta.minerva.triggered": true,
+        "rec/meta/meta.minerva.readoutstart_s": 0,
+        "rec/meta/meta.minerva.readoutstart_ns": 0,
+        "rec/meta/meta.minerva.readoutend_s": 0,
+        "rec/meta/meta.minerva.readoutend_ns": 0,
+        "rec/meta/meta.minerva.prism_offset": null,
+        "rec/meta/meta.fd_hd.enabled": false,
+        "rec/meta/meta.fd_hd.run": -1,
+        "rec/meta/meta.fd_hd.subrun": -1,
+        "rec/meta/meta.fd_hd.event": -1,
+        "rec/meta/meta.fd_hd.subevt": -1,
+        "rec/meta/meta.fd_hd.triggertype": -1,
+        "rec/meta/meta.fd_hd.triggered": true,
+        "rec/meta/meta.fd_hd.readoutstart_s": 0,
+        "rec/meta/meta.fd_hd.readoutstart_ns": 0,
+        "rec/meta/meta.fd_hd.readoutend_s": 0,
+        "rec/meta/meta.fd_hd.readoutend_ns": 0,
+        "rec/meta/meta.fd_hd.prism_offset": null,
+        "rec/meta/meta.fd_vd.enabled": false,
+        "rec/meta/meta.fd_vd.run": -1,
+        "rec/meta/meta.fd_vd.subrun": -1,
+        "rec/meta/meta.fd_vd.event": -1,
+        "rec/meta/meta.fd_vd.subevt": -1,
+        "rec/meta/meta.fd_vd.triggertype": -1,
+        "rec/meta/meta.fd_vd.triggered": true,
+        "rec/meta/meta.fd_vd.readoutstart_s": 0,
+        "rec/meta/meta.fd_vd.readoutstart_ns": 0,
+        "rec/meta/meta.fd_vd.readoutend_s": 0,
+        "rec/meta/meta.fd_vd.readoutend_ns": 0,
+        "rec/meta/meta.fd_vd.prism_offset": null,
+        "rec/meta/meta.pd_hd.enabled": false,
+        "rec/meta/meta.pd_hd.run": -1,
+        "rec/meta/meta.pd_hd.subrun": -1,
+        "rec/meta/meta.pd_hd.event": -1,
+        "rec/meta/meta.pd_hd.subevt": -1,
+        "rec/meta/meta.pd_hd.triggertype": -1,
+        "rec/meta/meta.pd_hd.triggered": true,
+        "rec/meta/meta.pd_hd.readoutstart_s": 0,
+        "rec/meta/meta.pd_hd.readoutstart_ns": 0,
+        "rec/meta/meta.pd_hd.readoutend_s": 0,
+        "rec/meta/meta.pd_hd.readoutend_ns": 0,
+        "rec/meta/meta.pd_hd.prism_offset": null,
+        "rec/beam/beam.ismc": true,
+        "rec/beam/beam.isgoodpulse": true,
+        "rec/beam/beam.pulsetimesec": 0,
+        "rec/beam/beam.pulsetimensec": 0,
+        "rec/beam/beam.gpspulsetimesec": 0,
+        "rec/beam/beam.gpspulsetimensec": 0,
+        "rec/beam/beam.deltapulsetimensec": -9999999,
+        "rec/beam/beam.pulsepot": 50000000188416.0,
+        "rec/beam/beam.potTOR101": 0.0,
+        "rec/beam/beam.potTR101D": 0.0,
+        "rec/beam/beam.hornI": 0.0,
+        "rec/beam/beam.hornDir": 0.0,
+        "rec/beam/beam.beamHwidth": null,
+        "rec/beam/beam.beamVwidth": null,
+        "rec/beam/beam.horizontalposTGT": [],
+        "rec/beam/beam.horizontalintTGT": [],
+        "rec/beam/beam.horizontalpos121": [],
+        "rec/beam/beam.verticalposTGT": [],
+        "rec/beam/beam.verticalintTGT": [],
+        "rec/beam/beam.verticalpos121": [],
+        "rec/beam/beam.multiwireInfo": [],
+        "rec/mc/mc.nu/mc.nu.id": [
+          1000009655000392,
+          1000009659002634,
+          1000009657000115,
+          1000009657001987,
+          1000009651001656
+        ],
+        "rec/mc/mc.nu/mc.nu.genieIdx": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "rec/mc/mc.nu/mc.nu.pdg": [
+          14,
+          14,
+          14,
+          14,
+          14
+        ],
+        "rec/mc/mc.nu/mc.nu.pdgorig": [
+          14,
+          14,
+          14,
+          14,
+          14
+        ],
+        "rec/mc/mc.nu/mc.nu.iscc": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "rec/mc/mc.nu/mc.nu.mode": [
+          3,
+          3,
+          3,
+          3,
+          4
+        ],
+        "rec/mc/mc.nu/mc.nu.targetPDG": [
+          1000260560,
+          1000260560,
+          1000260560,
+          1000260560,
+          1000260560
+        ],
+        "rec/mc/mc.nu/mc.nu.hitnuc": [
+          2212,
+          2112,
+          2212,
+          2112,
+          2112
+        ],
+        "rec/mc/mc.nu/mc.nu.removalE": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.E": [
+          12.307853698730469,
+          8.610160827636719,
+          6.139192581176758,
+          3.358771562576294,
+          3.4264168739318848
+        ],
+        "rec/mc/mc.nu/mc.nu.vtx.x": [
+          -295.8094482421875,
+          -274.0773620605469,
+          -232.32456970214844,
+          128.4557647705078,
+          75.40283966064453
+        ],
+        "rec/mc/mc.nu/mc.nu.vtx.y": [
+          -417.3819274902344,
+          -416.2910461425781,
+          59.992652893066406,
+          -533.6424560546875,
+          -532.5121459960938
+        ],
+        "rec/mc/mc.nu/mc.nu.vtx.z": [
+          2572.583740234375,
+          180.48403930664062,
+          -485.1244812011719,
+          2253.664794921875,
+          2507.371826171875
+        ],
+        "rec/mc/mc.nu/mc.nu.momentum.x": [
+          -0.060061484575271606,
+          -0.056726206094026566,
+          -0.019547054544091225,
+          0.007964054122567177,
+          0.004610823933035135
+        ],
+        "rec/mc/mc.nu/mc.nu.momentum.y": [
+          -1.2892531156539917,
+          -0.9614803791046143,
+          -0.6182012557983398,
+          -0.3620450496673584,
+          -0.36648744344711304
+        ],
+        "rec/mc/mc.nu/mc.nu.momentum.z": [
+          12.239995002746582,
+          8.556120872497559,
+          6.107956409454346,
+          3.3391923904418945,
+          3.4067575931549072
+        ],
+        "rec/mc/mc.nu/mc.nu.isvtxcont": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "rec/mc/mc.nu/mc.nu.time": [
+          1.0254453854940948e-06,
+          9.45936733387498e-07,
+          9.224910968441691e-07,
+          1.015070779430971e-06,
+          1.023488721330068e-06
+        ],
+        "rec/mc/mc.nu/mc.nu.bjorkenX": [
+          0.21683987975120544,
+          0.04819371923804283,
+          0.08498335629701614,
+          0.8284488916397095,
+          0.38858723640441895
+        ],
+        "rec/mc/mc.nu/mc.nu.inelasticity": [
+          0.25430792570114136,
+          0.47849714756011963,
+          0.25156906247138977,
+          0.6331741213798523,
+          0.5674887299537659
+        ],
+        "rec/mc/mc.nu/mc.nu.Q2": [
+          1.2746089696884155,
+          0.3728864789009094,
+          0.2464892417192459,
+          3.3087575435638428,
+          1.4189971685409546
+        ],
+        "rec/mc/mc.nu/mc.nu.q0": [
+          3.1299848556518555,
+          4.119937419891357,
+          1.5444309711456299,
+          2.1266872882843018,
+          1.9444528818130493
+        ],
+        "rec/mc/mc.nu/mc.nu.modq": [
+          3.327373504638672,
+          4.164945125579834,
+          1.622268795967102,
+          2.7984917163848877,
+          2.280327796936035
+        ],
+        "rec/mc/mc.nu/mc.nu.W": [
+          2.342055320739746,
+          2.871598243713379,
+          1.8803385496139526,
+          1.2517516613006592,
+          1.7647680044174194
+        ],
+        "rec/mc/mc.nu/mc.nu.t": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.ischarm": [
+          false,
+          true,
+          false,
+          false,
+          false
+        ],
+        "rec/mc/mc.nu/mc.nu.isseaquark": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "rec/mc/mc.nu/mc.nu.resnum": [
+          0,
+          0,
+          0,
+          0,
+          11
+        ],
+        "rec/mc/mc.nu/mc.nu.xsec": [
+          2.637063012400631e-09,
+          5.6092828298881514e-11,
+          1.1630914009685966e-09,
+          1.0744203304824396e-09,
+          7.550154251800834e-11
+        ],
+        "rec/mc/mc.nu/mc.nu.genweight": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rec/mc/mc.nu/mc.nu.baseline": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.prod_vtx.x": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.prod_vtx.y": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.prod_vtx.z": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.parent_dcy_mom.x": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.parent_dcy_mom.y": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.parent_dcy_mom.z": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.parent_dcy_mode": [
+          -1,
+          -1,
+          -1,
+          -1,
+          -1
+        ],
+        "rec/mc/mc.nu/mc.nu.parent_pdg": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rec/mc/mc.nu/mc.nu.parent_dcy_E": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.imp_weight": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/mc/mc.nu/mc.nu.generator": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rec/mc/mc.nu/mc.nu.genVersion": [
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "rec/mc/mc.nu/mc.nu.nproton": [
+          3,
+          0,
+          2,
+          2,
+          1
+        ],
+        "rec/mc/mc.nu/mc.nu.nneutron": [
+          8,
+          1,
+          1,
+          2,
+          0
+        ],
+        "rec/mc/mc.nu/mc.nu.npip": [
+          2,
+          0,
+          1,
+          1,
+          0
+        ],
+        "rec/mc/mc.nu/mc.nu.npim": [
+          1,
+          0,
+          0,
+          1,
+          0
+        ],
+        "rec/mc/mc.nu/mc.nu.npi0": [
+          1,
+          0,
+          0,
+          0,
+          1
+        ],
+        "rec/mc/mc.nu/mc.nu.nprim": [
+          16,
+          3,
+          5,
+          7,
+          3
+        ],
+        "rec/mc/mc.nu/mc.nu.nprefsi": [
+          5,
+          2,
+          3,
+          3,
+          2
+        ],
+        "rec/mc/mc.nu/mc.nu.nsec": [
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        "rec/mc/mc.nu/mc.nu.xsec_cvwgt": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rec/mc/mc.nnu": 451,
+        "rec/common/common.ixn.dlp/common.ixn.dlp.id": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.vtx.x": [
+          123.3768310546875,
+          118.85400390625,
+          259.842041015625,
+          138.197998046875,
+          141.76922607421875
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.vtx.y": [
+          -188.1058349609375,
+          -97.18930053710938,
+          -113.18529510498047,
+          -86.77330017089844,
+          -7.834897041320801
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.vtx.z": [
+          459.12664794921875,
+          418.1780090332031,
+          418.1780090332031,
+          418.1780090332031,
+          429.3380126953125
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.lngtrk.x": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.lngtrk.y": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.lngtrk.z": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.heshw.x": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.heshw.y": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.heshw.z": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.calo.x": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.calo.y": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.calo.z": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.part_mom_sum.x": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.part_mom_sum.y": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.dir.part_mom_sum.z": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.isnubar": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.nue": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.numu": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.nutau": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.nc": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.protons0": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.protons1": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.protons2": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.protonsN": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.chgpi0": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.chgpi1": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.chgpi2": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.chgpiN": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.pizero0": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.pizero1": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.pizero2": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.pizeroN": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.neutron0": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.neutron1": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.neutron2": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.nuhyp.cvn.neutronN": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.calo": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.lep_calo": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.mu_range": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.mu_mcs": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.mu_mcs_llhd": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.e_calo": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.e_had": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.mu_had": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.regcnn": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.Enu.part_energy_sum": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.part.ndlp": [
+          6,
+          69,
+          15,
+          21,
+          13
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.part.npandora": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.part.npida": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.part.nsandreco": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.truth": [
+          [
+            444
+          ],
+          [
+            444,
+            391,
+            331
+          ],
+          [
+            64,
+            246
+          ],
+          [
+            444,
+            152
+          ],
+          [
+            444
+          ]
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.truthOverlap": [
+          [
+            0.033926330506801605
+          ],
+          [
+            0.6366750001907349,
+            0.1798597127199173,
+            0.0004349591035861522
+          ],
+          [
+            0.9893426299095154,
+            0.00029023364186286926
+          ],
+          [
+            0.12896500527858734,
+            0.08116753399372101
+          ],
+          [
+            0.06676549464464188
+          ]
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.preselected": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "rec/common/common.ixn.dlp/common.ixn.dlp.isFromTrigger": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "rec/common/common.ixn.ndlp": 163,
+        "rec/common/common.ixn.pandora/common.ixn.pandora.id": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.vtx.x": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.vtx.y": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.vtx.z": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.lngtrk.x": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.lngtrk.y": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.lngtrk.z": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.heshw.x": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.heshw.y": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.heshw.z": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.calo.x": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.calo.y": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.calo.z": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.part_mom_sum.x": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.part_mom_sum.y": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.dir.part_mom_sum.z": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.isnubar": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.nue": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.numu": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.nutau": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.nc": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.protons0": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.protons1": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.protons2": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.protonsN": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.chgpi0": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.chgpi1": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.chgpi2": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.chgpiN": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.pizero0": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.pizero1": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.pizero2": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.pizeroN": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.neutron0": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.neutron1": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.neutron2": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.nuhyp.cvn.neutronN": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.calo": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.lep_calo": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.mu_range": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.mu_mcs": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.mu_mcs_llhd": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.e_calo": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.e_had": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.mu_had": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.regcnn": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.Enu.part_energy_sum": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.part.ndlp": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.part.npandora": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.part.npida": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.part.nsandreco": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.truth": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.truthOverlap": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.preselected": [],
+        "rec/common/common.ixn.pandora/common.ixn.pandora.isFromTrigger": [],
+        "rec/common/common.ixn.npandora": 0,
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.id": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.vtx.x": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.vtx.y": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.vtx.z": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.lngtrk.x": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.lngtrk.y": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.lngtrk.z": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.heshw.x": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.heshw.y": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.heshw.z": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.calo.x": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.calo.y": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.calo.z": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.part_mom_sum.x": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.part_mom_sum.y": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.dir.part_mom_sum.z": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.isnubar": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.nue": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.numu": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.nutau": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.nc": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.protons0": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.protons1": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.protons2": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.protonsN": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.chgpi0": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.chgpi1": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.chgpi2": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.chgpiN": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.pizero0": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.pizero1": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.pizero2": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.pizeroN": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.neutron0": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.neutron1": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.neutron2": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.nuhyp.cvn.neutronN": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.calo": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.lep_calo": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.mu_range": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.mu_mcs": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.mu_mcs_llhd": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.e_calo": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.e_had": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.mu_had": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.regcnn": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.Enu.part_energy_sum": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.ndlp": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.npandora": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.npida": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.nsandreco": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.truth": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.truthOverlap": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.preselected": [],
+        "rec/common/common.ixn.sandreco/common.ixn.sandreco.isFromTrigger": [],
+        "rec/common/common.ixn.nsandreco": 0,
+        "rec/fd/fd.hd.pandora/fd.hd.pandora.ntracks": [],
+        "rec/fd/fd.hd.pandora/fd.hd.pandora.nshowers": [],
+        "rec/fd/fd.hd.pandora/fd.hd.pandora.npfps": [],
+        "rec/fd/fd.hd.npandora": 0,
+        "rec/fd/fd.vd.pandora/fd.vd.pandora.ntracks": [],
+        "rec/fd/fd.vd.pandora/fd.vd.pandora.nshowers": [],
+        "rec/fd/fd.vd.pandora/fd.vd.pandora.npfps": [],
+        "rec/fd/fd.vd.npandora": 0,
+        "rec/fd/fd.pd_hd.pandora/fd.pd_hd.pandora.ntracks": [],
+        "rec/fd/fd.pd_hd.pandora/fd.pd_hd.pandora.nshowers": [],
+        "rec/fd/fd.pd_hd.pandora/fd.pd_hd.pandora.npfps": [],
+        "rec/fd/fd.pd_hd.npandora": 0,
+        "rec/fd/fd.pd_vd.pandora/fd.pd_vd.pandora.ntracks": [],
+        "rec/fd/fd.pd_vd.pandora/fd.pd_vd.pandora.nshowers": [],
+        "rec/fd/fd.pd_vd.pandora/fd.pd_vd.pandora.npfps": [],
+        "rec/fd/fd.pd_vd.npandora": 0,
+        "rec/nd/nd.lar.dlp/nd.lar.dlp.ntracks": [
+          0,
+          1,
+          6,
+          11,
+          12
+        ],
+        "rec/nd/nd.lar.dlp/nd.lar.dlp.nshowers": [
+          6,
+          62,
+          5,
+          3,
+          1
+        ],
+        "rec/nd/nd.lar.ndlp": 163,
+        "rec/nd/nd.lar.pandora/nd.lar.pandora.ntracks": [],
+        "rec/nd/nd.lar.pandora/nd.lar.pandora.nshowers": [],
+        "rec/nd/nd.lar.npandora": 0,
+        "rec/nd/nd.lar.flashes/nd.lar.flashes.id": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "rec/nd/nd.lar.flashes/nd.lar.flashes.tpc_id": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rec/nd/nd.lar.flashes/nd.lar.flashes.time": [
+          1.1199999789823778e-06,
+          8.655999408802018e-06,
+          9.024000064528082e-06,
+          3.904000095644733e-06,
+          5.200000032345997e-06
+        ],
+        "rec/nd/nd.lar.flashes/nd.lar.flashes.time_width": [
+          4.799999686611045e-08,
+          6.399999818995639e-08,
+          2.2399999011213367e-07,
+          3.199999909497819e-08,
+          6.399999818995639e-08
+        ],
+        "rec/nd/nd.lar.flashes/nd.lar.flashes.total_pe": [
+          6372.28759765625,
+          33755.3671875,
+          98374.875,
+          16722.912109375,
+          3739.923095703125
+        ],
+        "rec/nd/nd.lar.nflashes": 660,
+        "rec/nd/nd.gar.nixn": 0,
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.ntracks": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.nclusters": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.nFSP": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.pdg": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.ptrue": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.trkLen": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.trkLenPerp": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.partEvReco": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.gastpc_pi_pl_mult": [],
+        "rec/nd/nd.gar.ixn/nd.gar.ixn.gastpc_pi_min_mult": [],
+        "rec/nd/nd.tms.ixn/nd.tms.ixn.ntracks": [
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        "rec/nd/nd.tms.nixn": 93,
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.part.ixn": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.part.type": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.part.ipart": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.start.x": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.start.y": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.start.z": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.end.x": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.end.y": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.end.z": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.dir.x": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.dir.y": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.dir.z": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.enddir.x": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.enddir.y": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.enddir.z": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.time": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.Evis": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.qual": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.charge": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.len_gcm2": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.len_cm": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.E": [],
+        "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.truthOverlap": [],
+        "rec/nd/nd.sand.grain.ntracks": 0,
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.part.ixn": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.part.type": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.part.ipart": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.start.x": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.start.y": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.start.z": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.direction.x": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.direction.y": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.direction.z": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.time": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.Evis": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.qual": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.len_cm": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.initial_dEdx": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.conversionGap": [],
+        "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.truthOverlap": [],
+        "rec/nd/nd.sand.grain.nshowers": 0,
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.part.ixn": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.part.type": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.part.ipart": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.start.x": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.start.y": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.start.z": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.end.x": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.end.y": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.end.z": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.dir.x": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.dir.y": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.dir.z": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.enddir.x": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.enddir.y": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.enddir.z": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.time": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.Evis": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.qual": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.charge": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.len_gcm2": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.len_cm": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.E": [],
+        "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.truthOverlap": [],
+        "rec/nd/nd.sand.tracker.ntracks": 0,
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.part.ixn": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.part.type": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.part.ipart": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.start.x": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.start.y": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.start.z": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.direction.x": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.direction.y": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.direction.z": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.time": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.Evis": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.qual": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.len_cm": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.initial_dEdx": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.conversionGap": [],
+        "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.truthOverlap": [],
+        "rec/nd/nd.sand.tracker.nshowers": 0,
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.part.ixn": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.part.type": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.part.ipart": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.id": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.position.x": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.position.y": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.position.z": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.var_position.x": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.var_position.y": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.var_position.z": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.time": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.start.x": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.start.y": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.start.z": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.direction.x": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.direction.y": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.direction.z": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.E": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.num_cells": [],
+        "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.truthOverlap": [],
+        "rec/nd/nd.sand.ecal.nclusters": 0,
+        "rec/nd/nd.sand.ixn/nd.sand.ixn.ntrkmatch": [],
+        "rec/nd/nd.sand.nixn": 0,
+        "rec/nd/nd.minerva.ixn/nd.minerva.ixn.ntracks": [],
+        "rec/nd/nd.minerva.ixn/nd.minerva.ixn.nshowers": [],
+        "rec/nd/nd.minerva.nixn": 0,
+        "rec/nd/nd.trkmatch.nextrap": 1,
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.part.ixn": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.part.type": [
+          0
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.part.ipart": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.larid.reco": [
+          2
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.larid.ixn": [
+          2
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.larid.idx": [
+          1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.tmsid.ixn": [
+          11
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.tmsid.idx": [
+          0
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.minervaid.ixn": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.minervaid.idx": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.garid.ixn": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.garid.idx": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.transdispl": [
+          219.85987854003906
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.cosangdispl": [
+          0.9943073391914368
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.matchScore": [
+          21.799854278564453
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trueMatch": [
+          false
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.deltaX": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.deltaY": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.deltaThetaX": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.deltaThetaY": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.deltaT": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.matchType": [
+          3
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.part.ixn": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.part.type": [
+          0
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.part.ipart": [
+          -1
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.start.x": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.start.y": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.start.z": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.end.x": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.end.y": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.end.z": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.dir.x": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.dir.y": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.dir.z": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.enddir.x": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.enddir.y": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.enddir.z": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.time": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.Evis": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.qual": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.charge": [
+          -32768
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.len_gcm2": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.len_cm": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.E": [
+          null
+        ],
+        "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.truthOverlap": [
+          []
+        ],
+        "rec/nd/nd.shwmatch.nextrap": 0,
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.part.ixn": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.part.type": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.part.ipart": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.larid.reco": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.larid.ixn": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.larid.idx": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.minervaid.ixn": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.minervaid.idx": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.part.ixn": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.part.type": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.part.ipart": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.start.x": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.start.y": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.start.z": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.direction.x": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.direction.y": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.direction.z": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.time": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.Evis": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.qual": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.len_cm": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.initial_dEdx": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.conversionGap": [],
+        "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.truthOverlap": []
+      }
+    },
+    "globalTree": {
+      "entries": 1,
+      "branches": {
+        "global/wgts/wgts.xsec_params/wgts.xsec_params.vals": [],
+        "global/wgts/wgts.xsec_params/wgts.xsec_params.name": [],
+        "global/wgts/wgts.xsec_params/wgts.xsec_params.id": [],
+        "global/wgts/wgts.flux_params/wgts.flux_params.vals": [],
+        "global/wgts/wgts.flux_params/wgts.flux_params.name": [],
+        "global/wgts/wgts.flux_params/wgts.flux_params.id": [],
+        "global/first_git_shorthash": "d6b9de7a",
+        "global/first_version": "04.02.01",
+        "global/latest_git_shorthash": "d6b9de7a",
+        "global/latest_version": "04.02.01"
+      }
+    },
+    "mvaTree": {
+      "entries": 1,
+      "branches": {}
+    },
+    "meta": {
+      "entries": 1,
+      "branches": {
+        "run": 1,
+        "subrun": 0,
+        "version": 5
+      }
+    },
+    "genieEvt": {
+      "entries": 1,
+      "branches": {}
+    }
+  },
+  "unreadable_branches": {
+    "cafTree": {
+      "rec/mc/mc.nu/mc.nu.prim": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/mc/mc.nu/mc.nu.prefsi": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/mc/mc.nu/mc.nu.sec": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/mc/mc.nu/mc.nu.xsec_systs": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/mc/mc.nu/mc.nu.flux_systs": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.dlp/common.ixn.dlp.part.dlp": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.dlp/common.ixn.dlp.part.pandora": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.dlp/common.ixn.dlp.part.pida": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.dlp/common.ixn.dlp.part.sandreco": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.pandora/common.ixn.pandora.part.dlp": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.pandora/common.ixn.pandora.part.pandora": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.pandora/common.ixn.pandora.part.pida": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.pandora/common.ixn.pandora.part.sandreco": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.dlp": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.pandora": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.pida": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/common/common.ixn.sandreco/common.ixn.sandreco.part.sandreco": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.hd.pandora/fd.hd.pandora.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.hd.pandora/fd.hd.pandora.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.hd.pandora/fd.hd.pandora.pfps": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.vd.pandora/fd.vd.pandora.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.vd.pandora/fd.vd.pandora.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.vd.pandora/fd.vd.pandora.pfps": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.pd_hd.pandora/fd.pd_hd.pandora.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.pd_hd.pandora/fd.pd_hd.pandora.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.pd_hd.pandora/fd.pd_hd.pandora.pfps": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.pd_vd.pandora/fd.pd_vd.pandora.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.pd_vd.pandora/fd.pd_vd.pandora.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/fd/fd.pd_vd.pandora/fd.pd_vd.pandora.pfps": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.lar.dlp/nd.lar.dlp.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.lar.dlp/nd.lar.dlp.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.lar.dlp/nd.lar.dlp.flash": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.lar.pandora/nd.lar.pandora.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.lar.pandora/nd.lar.pandora.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.lar.pandora/nd.lar.pandora.flash": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.gar.ixn/nd.gar.ixn.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.gar.ixn/nd.gar.ixn.clusters": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.tms.ixn/nd.tms.ixn.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.sand.grain.tracks/nd.sand.grain.tracks.truth": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.sand.grain.showers/nd.sand.grain.showers.truth": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.sand.tracker.tracks/nd.sand.tracker.tracks.truth": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.sand.tracker.showers/nd.sand.tracker.showers.truth": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.sand.ecal.clusters/nd.sand.ecal.clusters.truth": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.sand.ixn/nd.sand.ixn.trkmatch": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.minerva.ixn/nd.minerva.ixn.tracks": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.minerva.ixn/nd.minerva.ixn.showers": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.trkmatch.extrap/nd.trkmatch.extrap.trk.truth": "NotImplementedError: memberwise serialization of AsArray",
+      "rec/nd/nd.shwmatch.extrap/nd.shwmatch.extrap.shw.truth": "NotImplementedError: memberwise serialization of AsArray"
+    },
+    "genieEvt": {
+      "genie_record": "DeserializationError: while reading"
+    }
+  }
+}
