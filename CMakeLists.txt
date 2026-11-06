@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(ND_CAFMaker LANGUAGES CXX)
-set(${PROJECT_NAME}_CMAKE_PROJECT_VERSION_STRING 5.1.1)
+set(${PROJECT_NAME}_CMAKE_PROJECT_VERSION_STRING 5.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -156,24 +156,6 @@ add_library(deps::curl INTERFACE IMPORTED)
 set_target_properties(
   deps::curl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "/usr/include/curl"
                         INTERFACE_LINK_LIBRARIES "${CURL_LIB_PATH}")
-
-# SANDReco — optional, auto-detected from environment (both modes)
-if(DEFINED ENV{SANDRECO_INC} OR DEFINED ENV{SANDRECO_LIB})
-  set(SAND_ENABLED TRUE)
-  find_library(
-    SANDRECO_LIB_PATH
-    NAMES Struct
-    PATHS "$ENV{SANDRECO_LIB}"
-    NO_DEFAULT_PATH)
-  add_library(deps::sand INTERFACE IMPORTED)
-  set_target_properties(
-    deps::sand PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "$ENV{SANDRECO_INC}"
-                          INTERFACE_LINK_LIBRARIES "${SANDRECO_LIB_PATH}")
-  message(STATUS "SANDReco: enabled (SANDRECO_INC=$ENV{SANDRECO_INC})")
-else()
-  set(SAND_ENABLED FALSE)
-  message(STATUS "SANDReco: disabled (SANDRECO_INC/LIB not set)")
-endif()
 
 add_subdirectory(src)
 

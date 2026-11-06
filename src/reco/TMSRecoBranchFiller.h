@@ -11,6 +11,7 @@
 #include <iostream>
 #include <deque>
 #include <map>
+#include <optional>
 
 // The virtual base class
 #include "IRecoBranchFiller.h"
@@ -27,8 +28,14 @@ namespace cafmaker
   class TMSRecoBranchFiller : public cafmaker::IRecoBranchFiller
   {
     public:
+      /// treeSuffix selects which TMS reconstruction to read: it is appended to the names of the
+      /// per-track trees, Reco_Tree and Truth_Info. "_C3D" (the default) reads the Cluster3D
+      /// reconstruction (Reco_Tree_C3D / Truth_Info_C3D); empty reads the legacy reconstruction (Reco_Tree /
+      /// Truth_Info), which has the same branches and is needed for older files without Cluster3D trees. Truth_Spill is per spill and shared. Line_Candidates (TMSStartTime) belongs to the legacy
+      /// reconstruction only, so with a non-empty suffix the track time is taken from the suffixed Reco_Tree instead.
       TMSRecoBranchFiller(const std::string & tmsRecoFilename,
-                          double vertexMatchToleranceMm);
+                          double vertexMatchToleranceMm,
+                          const std::string & treeSuffix = "_C3D");
 
       std::deque<Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
@@ -40,9 +47,7 @@ namespace cafmaker
       void LoadTruthSpillEntry(int spillNo) const;
       unsigned long ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const;
       int ResolveRecoTrackTruthParticleIndex(int recoTrackIdx) const;
-      int FindTruthSpillParticleIndex(int vertexId, int trackId) const;
-      int ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const;
-      unsigned long ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const;
+      bool ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx, unsigned long & ixnID) const;
       void FillInteractions(const TruthMatcher * truthMatch, caf::StandardRecord &sr) const;
 
       void _FillRecoBranches(const Trigger &trigger,
@@ -104,6 +109,7 @@ namespace cafmaker
       mutable int _TruthSpillParticleVertexID[kTMSMaxTrueParticles];
       mutable int _TruthSpillParent[kTMSMaxTrueParticles];
       mutable int _TruthSpillTrackID[kTMSMaxTrueParticles];
+      mutable int _TruthSpillPDG[kTMSMaxTrueParticles];
       mutable float _TruthSpillBirthPosition[kTMSMaxTrueParticles][4];
       mutable int _TruthSpillTrueVtxID[kTMSMaxTrueVertices];
       mutable float _TruthSpillTrueVtxX[kTMSMaxTrueVertices];
@@ -115,6 +121,15 @@ namespace cafmaker
       mutable decltype(fTriggers)::const_iterator  fLastTriggerReqd;    ///< the last trigger requested using _FillRecoBranches()
       mutable std::map<int, Long64_t> fTruthSpillEntryBySpillNo;
       double fVertexMatchToleranceMm;
+
+      /// True when an alternative reconstruction (treeSuffix non-empty) is read. Its tracks are not the
+      /// legacy ones, so per-track quantities must come from its own Reco_Tree, not from Line_Candidates.
+      bool fUseSuffixedTrackTime = false;
+
+      struct DuneTMSVersion { int major, minor, patch; };
+      // dune-tms version from the input's Metadata tree;
+      // empty when the input doesn't record one.
+      std::optional<DuneTMSVersion> fTMSVersion;
 
   };
 
