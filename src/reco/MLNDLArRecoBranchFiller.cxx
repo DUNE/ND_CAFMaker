@@ -517,7 +517,7 @@ namespace cafmaker
       reco_particle.p.y = part.momentum[1]/1000.;
       reco_particle.p.z = part.momentum[2]/1000.;
       float KE_MeV;
-      if(part.shape == types::dlp::Shape::kTrack)
+      if(part.shape == types::dlp::Shape::kTRACK)
       {
         if(part.is_contained)
         {
@@ -640,7 +640,7 @@ namespace cafmaker
     for (const auto & part : particles)
     {
       // only choose 'particles' that correspond to Track type
-      if (part.shape != types::dlp::Shape::kTrack)
+      if (part.shape != types::dlp::Shape::kTRACK)
         continue;
 
 
@@ -766,7 +766,7 @@ namespace cafmaker
 
     for (const auto & part : particles)
     {
-      if (part.shape != types::dlp::Shape::kShower)
+      if (part.shape != types::dlp::Shape::kSHOWER)
         continue;
 
       caf::SRShower shower;
