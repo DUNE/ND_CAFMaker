@@ -350,8 +350,9 @@ namespace cafmaker
           std::cout << " NAN MATCH SCORE" << std::endl;
           std::cout << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << std::endl;
           std::cout << " TMS ixn " << ixn_tms << " | TMS idx " << itms << std::endl;
-          std::cout << " True particle ID " << partID << std::endl;
+          std::cout << " True particle ID " << matchedPart->G4ID << std::endl;
           std::cout << " True particle time " << matchedPart->time << std::endl;
+          std::cout << " --------------------" << std::endl;
           continue;
         }
         // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
@@ -482,13 +483,37 @@ namespace cafmaker
         float start_x = matchedParticle->start_pos.x;
         float start_y = matchedParticle->start_pos.y;
         float start_z = matchedParticle->start_pos.z;
+        bool ERecoForTrueMatchesOnly = false; // if true, this only prints out the energy reco performance for true matched track pairs - may be useful for debugging
+        bool PrintRecoVsTrueE = true;
+        if ((ERecoForTrueMatchesOnly)&&(!match_pair.trueMatch)){
+          PrintRecoVsTrueE = false; // if you tell the algorithm to only show the energy reco performance for the true matched tracks, and you DO NOT have a true matched pair, then we should not print the following
+        }
+        if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
+            &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
+            &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)){
+              if (PrintRecoVsTrueE) {
+                float match_true_E = matchedParticle->p.E; // energy of the true particle
+                int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
+                std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
+                std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
+
+                std::cout << "TOTAL TRUE ENERGY " << match_true_E << std::endl;
+                std::cout << "TRUE PARTICLE PDG " << match_true_PDG << std::endl;
+              }
+            else {
+              std::cout << "FALSE MATCH: " << std::endl;
+              std::cout << " LAr Interaction " << match_pair.larid.ixn << " LAr Index " << match_pair.larid.idx << std::endl;
+              std::cout << " TMS Interaction " << match_pair.tmsid.ixn << " TMS Index " << match_pair.tmsid.idx << std::endl;
+              std::cout << " Not displaying energy reco" << std::endl;
+            }
+          }
         if (match_pair.trueMatch){
           num_true_matches += 1;
         }
       }
     }
-    std::cout << "Number of matches " << num_matches << std::cout;
-    std::cout << "Number of true matches " << num_matches << std::cout;
+    std::cout << "Number of matches " << num_matches << std::endl;
+    std::cout << "Number of true matches " << num_matches << std::endl;
     if (num_matches > 0){
       float pur = num_true_matches/num_matches;
       std::cout << "Purity " << pur << std::endl;
