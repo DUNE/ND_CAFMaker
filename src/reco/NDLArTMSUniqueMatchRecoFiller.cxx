@@ -346,13 +346,14 @@ namespace cafmaker
           delta_t = tms_time - lar_time;
           matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
         }
-        if (matchScore != matchScore) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
-          std::cout << " NAN MATCH SCORE" << std::endl;
-          std::cout << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << std::endl;
-          std::cout << " TMS ixn " << ixn_tms << " | TMS idx " << itms << std::endl;
-          std::cout << " True particle ID " << matchedPart->G4ID << std::endl;
-          std::cout << " True particle time " << matchedPart->time << std::endl;
-          std::cout << " --------------------" << std::endl;
+        if (std::isnan(matchScore)) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
+          LOG.WARNING() << " NAN MATCH SCORE (score = " << matchScore << ")\n";
+          LOG.WARNING() << "   tms_time = " << tms_trk.time << "; lar_time = " << lar_time << " (trk.time = " << trk.time << "); delta_t = " << delta_t << "\n";
+          LOG.WARNING() << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << "\n";
+          LOG.WARNING() << " TMS ixn " << ixn_tms << " | TMS idx " << itms << "\n";
+          LOG.WARNING() << " True particle ID " << matchedPart->G4ID << "\n";
+          LOG.WARNING() << " True particle time " << matchedPart->time << "\n";
+          LOG.WARNING() << " --------------------" << "\n";
           continue;
         }
         // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
@@ -472,14 +473,22 @@ namespace cafmaker
       if (match_pair.matchType == caf::NDRecoMatchType::kUniqueWithTime || match_pair.matchType == caf::NDRecoMatchType::kUniqueNoTime){
         // One of the match pairs this algorithm found, so proceed with the counting and energy reco
         num_matches += 1;
-        num_true_matches += 1;
+        if (match_pair.trueMatch)
+          num_true_matches += 1;
+
         caf::SRNDLArID match_trk_id = match_pair.larid;
         caf::SRTrack matched_lar_trk = sr.nd.lar.Reco<caf::SRTrack>(match_trk_id);
         std::vector<float> match_tOv = matched_lar_trk.truthOverlap;
         std::vector<caf::TrueParticleID> matched_truIDs = matched_lar_trk.truth;
+        if (match_tOv.empty() || matched_truIDs.empty() || match_tOv.size() != matched_truIDs.size())
+          continue; // no usable truth info for this LAr track, so energy reco can't be compared to truth
+
         int match_idx_max = std::distance(match_tOv.begin(),std::max_element(match_tOv.begin(),match_tOv.end()));
         caf::TrueParticleID match_partID = matched_truIDs[match_idx_max]; // ID of true particle that makes up the majority of the track
         const auto& matchedParticle = FindParticle(sr.mc,match_partID); // gets the particle object corresponding to the ID
+        if (!matchedParticle)
+          continue;
+
         float start_x = matchedParticle->start_pos.x;
         float start_y = matchedParticle->start_pos.y;
         float start_z = matchedParticle->start_pos.z;
@@ -494,29 +503,26 @@ namespace cafmaker
               if (PrintRecoVsTrueE) {
                 float match_true_E = matchedParticle->p.E; // energy of the true particle
                 int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
-                std::cout << "TOTAL RECO ENERGY " << match_pair.trk.E << std::endl;
-                std::cout << "LAr RECO ENERGY " << matched_lar_trk.E << std::endl;
+                LOG.VERBOSE() << "TOTAL RECO ENERGY " << match_pair.trk.E << "\n";
+                LOG.VERBOSE() << "LAr RECO ENERGY " << matched_lar_trk.E << "\n";
 
-                std::cout << "TOTAL TRUE ENERGY " << match_true_E << std::endl;
-                std::cout << "TRUE PARTICLE PDG " << match_true_PDG << std::endl;
+                LOG.VERBOSE() << "TOTAL TRUE ENERGY " << match_true_E << "\n";
+                LOG.VERBOSE() << "TRUE PARTICLE PDG " << match_true_PDG << "\n";
               }
             else {
-              std::cout << "FALSE MATCH: " << std::endl;
-              std::cout << " LAr Interaction " << match_pair.larid.ixn << " LAr Index " << match_pair.larid.idx << std::endl;
-              std::cout << " TMS Interaction " << match_pair.tmsid.ixn << " TMS Index " << match_pair.tmsid.idx << std::endl;
-              std::cout << " Not displaying energy reco" << std::endl;
+              LOG.VERBOSE() << "FALSE MATCH: " << "\n";
+              LOG.VERBOSE() << " LAr Interaction " << match_pair.larid.ixn << " LAr Index " << match_pair.larid.idx << "\n";
+              LOG.VERBOSE() << " TMS Interaction " << match_pair.tmsid.ixn << " TMS Index " << match_pair.tmsid.idx << "\n";
+              LOG.VERBOSE() << " Not displaying energy reco" << "\n";
             }
           }
-        if (match_pair.trueMatch){
-          num_true_matches += 1;
-        }
       }
     }
-    std::cout << "Number of matches " << num_matches << std::endl;
-    std::cout << "Number of true matches " << num_matches << std::endl;
+    LOG.DEBUG() << "Number of matches " << num_matches << "\n";
+    LOG.DEBUG() << "Number of true matches " << num_true_matches << "\n";
     if (num_matches > 0){
-      float pur = num_true_matches/num_matches;
-      std::cout << "Purity " << pur << std::endl;
+      float pur = static_cast<float>(num_true_matches)/num_matches;
+      LOG.DEBUG() << "Purity " << pur << "\n";
     }
   }
 

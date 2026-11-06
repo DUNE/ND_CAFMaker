@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <limits>
-#include <unordered_set>
 
 /*
  * Liam O'Sullivan <liam.osullivan@uni-mainz.de>  -  Oct 2024
@@ -14,11 +13,13 @@ namespace cafmaker
 {
 
   TMSRecoBranchFiller::TMSRecoBranchFiller(const std::string &tmsRecoFilename,
-                                           double vertexMatchToleranceMm)
+                                           double vertexMatchToleranceMm,
+                                           const std::string &treeSuffix)
     : IRecoBranchFiller("TMS"),
     fTriggers(),
     fLastTriggerReqd(fTriggers.end()),
-    fVertexMatchToleranceMm(vertexMatchToleranceMm)
+    fVertexMatchToleranceMm(vertexMatchToleranceMm),
+    fUseSuffixedTrackTime(!treeSuffix.empty())
   {
     fTMSRecoFile = new TFile(tmsRecoFilename.c_str(), "READ");
     name = std::string("TMS");
@@ -27,10 +28,14 @@ namespace cafmaker
       SetConfigured(true);
 
       // Save pointer to input tree
-      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Reco_Tree"));
+      const std::string recoTreeName = "Reco_Tree" + treeSuffix;
+      const std::string truthTreeName = "Truth_Info" + treeSuffix;
+      TMSRecoTree = dynamic_cast<TTree*>(fTMSRecoFile->Get(recoTreeName.c_str()));
       TMSLCTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Line_Candidates"));
       if (!TMSRecoTree) {
-        std::cerr << "Did not find TMS reco tree Reco_Tree in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Did not find TMS reco tree " << recoTreeName << " in input file " << tmsRecoFilename << std::endl;
+        if (!treeSuffix.empty())
+          std::cerr << "If this file predates the Cluster3D reconstruction, set TMSRecoTreeSuffix: \"\" to read the legacy Reco_Tree" << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -41,9 +46,9 @@ namespace cafmaker
         throw;
       }
       // Save pointer to truth tree
-      TMSTrueTree = dynamic_cast<TTree*>(fTMSRecoFile->Get("Truth_Info"));
+      TMSTrueTree = dynamic_cast<TTree*>(fTMSRecoFile->Get(truthTreeName.c_str()));
       if (!TMSTrueTree) {
-        std::cerr << "Did not find TMS true tree Truth_Info in input file " << tmsRecoFilename << std::endl;
+        std::cerr << "Did not find TMS true tree " << truthTreeName << " in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
       }
@@ -53,6 +58,30 @@ namespace cafmaker
         std::cerr << "Did not find TMS true tree Truth_Spill in input file " << tmsRecoFilename << std::endl;
         std::cerr << "Are you sure this is a TMS reco file?" << std::endl;
         throw;
+      }
+
+      // dune-tms version, if the input records one.
+      // Older files have no Metadata tree, or one without the version branches;
+      // treat both as "version unknown" rather than an error.
+      TTree *metadata = dynamic_cast<TTree*>(fTMSRecoFile->Get("Metadata"));
+      if (metadata && metadata->GetEntries() > 0 &&
+          metadata->GetBranch("DuneTMSVersionMajor") &&
+          metadata->GetBranch("DuneTMSVersionMinor") &&
+          metadata->GetBranch("DuneTMSVersionPatch"))
+      {
+        DuneTMSVersion version{};
+        metadata->SetBranchAddress("DuneTMSVersionMajor", &version.major);
+        metadata->SetBranchAddress("DuneTMSVersionMinor", &version.minor);
+        metadata->SetBranchAddress("DuneTMSVersionPatch", &version.patch);
+        CheckedGetEntry(metadata, 0, "TMS Metadata version read");
+        metadata->ResetBranchAddresses();
+        fTMSVersion = version;
+        LOG.INFO() << "TMS input reports dune-tms version "
+                   << version.major << "." << version.minor << "." << version.patch << "\n";
+      }
+      else
+      {
+        LOG.WARNING() << "TMS input has no readable dune-tms version metadata\n";
       }
 
       TMSRecoTree->SetBranchAddress("EventNo",               &_EventNo);
@@ -95,6 +124,7 @@ namespace cafmaker
       TMSTrueSpill->SetBranchAddress("TrueVtxX",                       _TruthSpillTrueVtxX);
       TMSTrueSpill->SetBranchAddress("TrueVtxY",                       _TruthSpillTrueVtxY);
       TMSTrueSpill->SetBranchAddress("TrueVtxZ",                       _TruthSpillTrueVtxZ);
+      TMSTrueSpill->SetBranchAddress("PDG",                            _TruthSpillPDG);
 
     } else {
       fTMSRecoFile = NULL;
@@ -123,7 +153,7 @@ namespace cafmaker
     {
       for (Long64_t entry = 0; entry < TMSTrueSpill->GetEntries(); ++entry)
       {
-        TMSTrueSpill->GetEntry(entry);
+        CheckedGetEntry(TMSTrueSpill, entry, "TMS Truth_Spill load");
         auto [it, inserted] = fTruthSpillEntryBySpillNo.emplace(_TruthSpillSpillNo, entry);
         if (!inserted && it->second != entry)
         {
@@ -142,7 +172,7 @@ namespace cafmaker
       throw std::runtime_error(ss.str());
     }
 
-    TMSTrueSpill->GetEntry(it->second);
+    CheckedGetEntry(TMSTrueSpill, it->second, "TMS Truth_Spill spill lookup");
   }
 
   unsigned long TMSRecoBranchFiller::ResolveTrueInteractionIDFromVertexIndex(const TruthMatcher * truthMatch, int trueVtxIdx) const
@@ -174,101 +204,36 @@ namespace cafmaker
     return particleIdx;
   }
 
-  int TMSRecoBranchFiller::FindTruthSpillParticleIndex(int vertexId, int trackId) const
+  // The track's particle carries its own vertex ID even when dune-tms pruned its parents, so only vertices
+  // with that ID are candidates; the same EventId can repeat across runs in a spill, so the one whose
+  // edep-sim interaction has the particle's trajectory (same PDG, starting at its birth position) wins.
+  bool TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx, unsigned long & ixnID) const
   {
-    for (int i = 0; i < _TruthSpillNTrueParticles; ++i)
-    {
-      if (_TruthSpillParticleVertexID[i] == vertexId && _TruthSpillTrackID[i] == trackId)
-        return i;
-    }
-    return -1;
-  }
+    const int particleIdx = ResolveRecoTrackTruthParticleIndex(recoTrackIdx);
+    const float * birth = _TruthSpillBirthPosition[particleIdx];
 
-  int TMSRecoBranchFiller::ResolvePrimaryTruthParticleIndex(int particleIdx, int recoTrackIdx) const
-  {
-    std::unordered_set<int> visited;
-    while (_TruthSpillParent[particleIdx] != -1)
-    {
-      if (visited.find(particleIdx) != visited.end())
-      {
-        LOG.WARNING() << "TMS reco track " << recoTrackIdx
-                      << " encountered a loop while resolving Truth_Spill parents;"
-                      << " falling back to particle index " << particleIdx << "\n";
-        return particleIdx;
-      }
-      visited.insert(particleIdx);
-
-      const int parentTrackId = _TruthSpillParent[particleIdx];
-      const int vertexId = _TruthSpillParticleVertexID[particleIdx];
-      const int parentIdx = FindTruthSpillParticleIndex(vertexId, parentTrackId);
-      if (parentIdx < 0)
-      {
-        LOG.WARNING() << "TMS reco track " << recoTrackIdx
-                      << " could not resolve parent track ID " << parentTrackId
-                      << " from Truth_Spill particle index " << particleIdx
-                      << " (vertex ID " << vertexId << ");"
-                      << " falling back to the current particle instead of crashing\n";
-        return particleIdx;
-      }
-      particleIdx = parentIdx;
-    }
-
-    return particleIdx;
-  }
-
-  unsigned long TMSRecoBranchFiller::ResolveRecoTrackInteractionID(const TruthMatcher * truthMatch, int recoTrackIdx) const
-  {
-    const int particleIdx = ResolvePrimaryTruthParticleIndex(ResolveRecoTrackTruthParticleIndex(recoTrackIdx), recoTrackIdx);
-
-    const int trueVtxId = _TruthSpillParticleVertexID[particleIdx];
-    const double birthX = _TruthSpillBirthPosition[particleIdx][0];
-    const double birthY = _TruthSpillBirthPosition[particleIdx][1];
-    const double birthZ = _TruthSpillBirthPosition[particleIdx][2];
-
-    int matchedVtxIdx = -1;
-    int nearestVtxIdx = -1;
-    double nearestDist2 = std::numeric_limits<double>::infinity();
+    bool found = false;
+    double bestDist = fVertexMatchToleranceMm;
     for (int i = 0; i < _TruthSpillTrueVtxN; ++i)
     {
-      const double dx = _TruthSpillTrueVtxX[i] - birthX;
-      const double dy = _TruthSpillTrueVtxY[i] - birthY;
-      const double dz = _TruthSpillTrueVtxZ[i] - birthZ;
-      const double dist2 = dx*dx + dy*dy + dz*dz;
-      if (dist2 < nearestDist2)
-      {
-        nearestDist2 = dist2;
-        nearestVtxIdx = i;
-      }
-
-      if (_TruthSpillTrueVtxID[i] != trueVtxId)
-        continue;
-      if (dist2 > fVertexMatchToleranceMm * fVertexMatchToleranceMm)
+      if (_TruthSpillTrueVtxID[i] != _TruthSpillParticleVertexID[particleIdx])
         continue;
 
-      if (matchedVtxIdx >= 0)
+      const unsigned long candidateID = ResolveTrueInteractionIDFromVertexIndex(truthMatch, i);
+      const double dist = truthMatch->TrajectoryStartDistance(candidateID, _TruthSpillTrackID[particleIdx], _TruthSpillPDG[particleIdx],
+                                                              birth[0], birth[1], birth[2]);
+      if (dist >= 0 && dist <= bestDist)
       {
-        LOG.WARNING() << "Reco track " << recoTrackIdx
-                      << " matched multiple Truth_Spill vertices for vertex ID " << trueVtxId
-                      << "; using the first in-tolerance match instead of crashing\n";
-        continue;
+        bestDist = dist;
+        ixnID = candidateID;
+        found = true;
       }
-      matchedVtxIdx = i;
     }
 
-    if (matchedVtxIdx >= 0)
-      return ResolveTrueInteractionIDFromVertexIndex(truthMatch, matchedVtxIdx);
-
-    if (nearestVtxIdx >= 0)
-    {
-      LOG.WARNING() << "Reco track " << recoTrackIdx
-                    << " could not match primary particle birth position to a Truth_Spill vertex for vertex ID "
-                    << trueVtxId << " within " << fVertexMatchToleranceMm << " mm;"
-                    << " falling back to nearest Truth_Spill vertex index " << nearestVtxIdx
-                    << " at distance " << std::sqrt(nearestDist2) << " mm\n";
-      return ResolveTrueInteractionIDFromVertexIndex(truthMatch, nearestVtxIdx);
-    }
-
-    throw std::runtime_error("Truth_Spill contains no vertices to resolve reco track interaction ID");
+    if (!found)
+      LOG.WARNING() << "Reco track " << recoTrackIdx << ": no interaction with vertex ID " << _TruthSpillParticleVertexID[particleIdx]
+                    << " has its GEANT4 trajectory " << _TruthSpillTrackID[particleIdx] << "; leaving its truth empty\n";
+    return found;
   }
 
   // here we copy all the TMS reco into the SRTMS branch of the StandardRecord object.
@@ -296,7 +261,7 @@ namespace cafmaker
     int i = trigger.evtID; // pseudo-itterator for ixn
 
     int LastSpillNo = std::numeric_limits<int>::lowest(); // Starting value, small number so next spill number is larger
-    TMSRecoTree->GetEntry(i); // Load first entry for now
+    CheckedGetEntry(TMSRecoTree, i, "TMS Reco_Tree initial entry");
     LastSpillNo = _SpillNo;
 
     LoadTruthSpillEntry(LastSpillNo);
@@ -307,9 +272,9 @@ namespace cafmaker
     }
 
     // the i index is incremented at the end of the following while()
-    TMSRecoTree->GetEntry(i); // Load each subsequent entry in the spill, start from original i
-    TMSTrueTree->GetEntry(i); // Keep Truth tree in sync with Reco
-    TMSLCTree->GetEntry(i); 
+    CheckedGetEntry(TMSRecoTree, i, "TMS Reco_Tree spill sync");
+    CheckedGetEntry(TMSTrueTree, i, "TMS Truth_Info spill sync");
+    CheckedGetEntry(TMSLCTree, i, "TMS Line_Candidates spill sync");
     while (_SpillNo == LastSpillNo && i < TMSRecoTree->GetEntries()) // while we're in the spill
     {
       if (_nTracks < 0)
@@ -334,7 +299,12 @@ namespace cafmaker
           track.dir     = caf::SRVector3D(_TrackStartDirection[j][0], _TrackStartDirection[j][1] , _TrackStartDirection[j][2]);
           track.enddir  = caf::SRVector3D(_TrackEndDirection[j][0], _TrackEndDirection[j][1] , _TrackEndDirection[j][2]);
 
-          track.time    = static_cast<double>(_TMSStartTime[j]); //Adds time of interaction // TODO: use _TrackTime after prod n4p1
+          // Legacy: time of interaction from Line_Candidates. TMSStartTime there is a single value per slice
+          // (the first legacy track's time), so it cannot describe the tracks of another reconstruction.
+          // For a suffixed reconstruction (e.g. _C3D) use the track's own start time from its Reco_Tree.
+          // TODO: use _TrackTime after prod n4p1
+          track.time    = fUseSuffixedTrackTime ? static_cast<double>(_TrackStartPos[j][3])
+                                                : static_cast<double>(_TMSStartTime[j]); //Adds time of interaction
 
           // Track info
           track.len_cm    = (_TrackLength[j]>0.0) ? _TrackLength[j]/10. : 0.0; // idk why we have negatives
@@ -349,7 +319,9 @@ namespace cafmaker
           /*  Fill Truth
            *  The run numbers in the GHEP(?) or edep files are of the run number, followed by the event number, so we recreate that.
            * Long cos it's very long innit. Sorry. */
-          const auto genieIxnID = ResolveRecoTrackInteractionID(truthMatcher, j);
+          unsigned long genieIxnID = 0;
+          if (!ResolveRecoTrackInteractionID(truthMatcher, j, genieIxnID))
+            continue;  // no verifiable truth for this track: leave track.truth empty rather than guess
           caf::SRTrueInteraction& srTrueInt = truthMatcher->GetTrueInteraction(sr, genieIxnID);
 
           const int srTrueIntIdx = static_cast<int>(std::distance(sr.mc.nu.begin(),
@@ -357,24 +329,38 @@ namespace cafmaker
                                                                                [&srTrueInt](const caf::SRTrueInteraction& ixn)
                                                                                { return ixn.id == srTrueInt.id; })));
 
-          // TODO: Make TMS care about prim/sec tracks (check _RecoTruePartIdSec for secondaries) and update NDLArTMSUniqueMatchRecoFiller.cxx in turn when you do
+          // the true particle can be a primary or a secondary: FillSpill() has already filled both collections,
+          // so look in both before asking for a new one (which would duplicate a secondary into prim)
           const int recoTruthParticleIdx = ResolveRecoTrackTruthParticleIndex(j);
           const int partG4ID = _TruthSpillTrackID[recoTruthParticleIdx];
-          truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
-          const int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
-                                                                 std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(),
-                                                                              [partG4ID](const caf::SRTrueParticle& part)
-                                                                              { return part.G4ID == partG4ID; })));
+          const auto sameG4ID = [partG4ID](const caf::SRTrueParticle& part) { return part.G4ID == partG4ID; };
 
-          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx,
-                                                    caf::TrueParticleID::PartType::kPrimary,
-                                                    truthVecIdx});
+          caf::TrueParticleID::PartType partType = caf::TrueParticleID::PartType::kPrimary;
+          auto itPart = std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), sameG4ID);
+          int truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(), itPart));
+          if (itPart == srTrueInt.prim.end()) {
+            auto itSec = std::find_if(srTrueInt.sec.begin(), srTrueInt.sec.end(), sameG4ID);
+            if (itSec != srTrueInt.sec.end()) {
+              partType = caf::TrueParticleID::PartType::kSecondary;
+              truthVecIdx = static_cast<int>(std::distance(srTrueInt.sec.begin(), itSec));
+            } else {
+              // in neither collection (no spill truth filled for this entry): create it, as a primary as before
+              truthMatcher->GetTrueParticle(sr, srTrueInt, partG4ID, true);
+              truthVecIdx = static_cast<int>(std::distance(srTrueInt.prim.begin(),
+                                                           std::find_if(srTrueInt.prim.begin(), srTrueInt.prim.end(), sameG4ID)));
+            }
+          }
+
+          track.truth.push_back(caf::TrueParticleID{srTrueIntIdx, partType, truthVecIdx});
         }
       }
 
-      TMSRecoTree->GetEntry(++i); // Load each subsequent entry before loop test condition
-      TMSTrueTree->GetEntry(  i); // Load each subsequent entry before loop test condition, i already incremented
-      TMSLCTree  ->GetEntry(  i);
+      // the last spill in the file ends at the last entry, not at a change of SpillNo
+      if (++i >= TMSRecoTree->GetEntries())
+        break;
+      CheckedGetEntry(TMSRecoTree, i, "TMS Reco_Tree spill iteration");
+      CheckedGetEntry(TMSTrueTree, i, "TMS Truth_Info spill iteration");
+      CheckedGetEntry(TMSLCTree, i, "TMS Line_Candidates spill iteration");
 
     }
   }
@@ -410,7 +396,7 @@ namespace cafmaker
 
       for (int entry = 0; entry < TMSRecoTree->GetEntries(); entry++)
       {
-        TMSRecoTree->GetEntry(entry);
+        CheckedGetEntry(TMSRecoTree, entry, "TMS trigger discovery");
 
         if (_SpillNo == lastSpillNo)
           continue; // Only first 'event' in each spill populates a trigger

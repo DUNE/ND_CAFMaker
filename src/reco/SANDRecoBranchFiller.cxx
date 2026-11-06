@@ -1,214 +1,178 @@
 /// Fill SAND reco branches using SAND reco data
 ///
-/// \author  L. Di Noto, reworked by M. Vicenzi
+/// \author  L. Di Noto, reworked by M. Vicenzi, S. Lanzi
 /// \date    Apr. 2022
 ///
 
-#include <iostream>
-
-#include "TBranch.h"
-#include "TLeaf.h"
 #include "SANDRecoBranchFiller.h"
-#include "truth/FillTruth.h"
-
-#ifdef ENABLE_SAND
-#warning Including SANDRecoBranchFiller in build
 
 #include "duneanaobj/StandardRecord/StandardRecord.h"
 
-#include "TFile.h"
-#include "TSystem.h"
-#include "TTree.h"
-#include "struct.h"
+#include "truth/FillTruth.h"
 
-namespace cafmaker
-{
+#include <TFile.h>
+#include <TTree.h>
 
-  SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &SANDRecoFilename)
-      : IRecoBranchFiller("SAND"),
-        fTriggers(),
-        fLastTriggerReqd(fTriggers.end())
-  {
-  
-    if (SANDRecoFilename.empty()) {
-      std::cerr << "ERROR: SANDRecoBranchFiller: SANDRecoFilename is empty!" << std::endl;
-      SetConfigured(false);
-      return;
-    }
-    fSANDRecoFile = new TFile(SANDRecoFilename.c_str());
-    if (!fSANDRecoFile || fSANDRecoFile->IsZombie()) {
-      std::cerr << "ERROR: SANDRecoBranchFiller: Could not open file " << SANDRecoFilename << std::endl;
-      SetConfigured(false);
-      return;
-    }
-    NDSANDRecoTree = (TTree *)fSANDRecoFile->Get("tReco");
-    if (!NDSANDRecoTree)
-    {
-      std::cerr << "Error: NDSANDRecoTree is null. Tree 'tReco' not found in file." << std::endl;
-      fSANDRecoFile->ls(); 
-      SetConfigured(false);
-      return;
-    }
-   
-    SetConfigured(true);
-  }
+#include <algorithm>
+#include <cmath>
+#include <sstream>
+#include <stdexcept>
 
-  
-  void SANDRecoBranchFiller::_FillRecoBranches(const Trigger &trigger,
-                                               caf::StandardRecord &sr,
-                                               const cafmaker::Params &par, const TruthMatcher *truthMatcher) const
-  {
-  
-    if (!NDSANDRecoTree) {
-      std::cerr << "ERROR: SANDRecoBranchFiller: NDSANDRecoTree is null!" << std::endl;
-      return;
-    }
-   
-    auto it_start = (fLastTriggerReqd == fTriggers.end()) ? fTriggers.cbegin() : fLastTriggerReqd;
-    auto itTrig = std::find(it_start, fTriggers.cend(), trigger);
-    if (itTrig == fTriggers.end())
-    {
-      LOG.FATAL() << "Reco branch filler '" << GetName() << "' could not find trigger with evtID == " << trigger.evtID << "!  Abort.\n";
-      abort();
-    }
-    
-    std::size_t idx = std::distance(fTriggers.cbegin(), itTrig);
-    int event_num = idx;
-    
-    sr.meta.sand.event = event_num;
-    LOG.VERBOSE() << "    Reco branch filler '" << GetName() << "', trigger.evtID == " << trigger.evtID << ", internal evt idx = " << idx << ".\n";
-    std::vector<cluster> cl;
-    std::vector<track> tr;
-    auto pcl = &cl;
-    auto ptr = &tr;
-    NDSANDRecoTree->SetBranchAddress("cluster", &pcl);
-    NDSANDRecoTree->SetBranchAddress("track", &ptr);
-    NDSANDRecoTree->GetEntry(event_num);
+// Consistency check of the mc of the SAND file with sr.mc: interaction IDs and counts, particle PDG and Geant4 IDs
+// in order, parent links, raw momenta and positions.
+namespace {
 
-    FillECalClusters(truthMatcher, sr, cl);
-   
-    FillTracks(truthMatcher, sr, tr);
-   
-  }
-
-  void SANDRecoBranchFiller::FillECalClusters(const TruthMatcher *truthMatch,
-                                              caf::StandardRecord &sr, std::vector<cluster> &cl) const
-  {
-   
-    size_t n_clusters = cl.size();
-
-    sr.nd.sand.ixn.resize(1);
-    sr.nd.sand.ixn[0].nclusters = n_clusters;
-    sr.nd.sand.ixn[0].ECALClusters.resize(n_clusters);
-
-    for (auto i = 0; i < n_clusters; i++)
-    {
-
-      sr.nd.sand.ixn[0].ECALClusters[i].E = cl[i].e;
-      sr.nd.sand.ixn[0].ECALClusters[i].position.SetXYZ(cl[i].x, cl[i].y, cl[i].z);
-      sr.nd.sand.ixn[0].ECALClusters[i].var_position.SetXYZ(cl[i].varx, cl[i].vary, cl[i].varz);
-      sr.nd.sand.ixn[0].ECALClusters[i].time = cl[i].t; 
-      sr.nd.sand.ixn[0].ECALClusters[i].start.SetXYZ(cl[i].ax, cl[i].ay, cl[i].az);
-      sr.nd.sand.ixn[0].ECALClusters[i].direction.SetXYZ(cl[i].sx, cl[i].sy, cl[i].sz);
-      sr.nd.sand.ixn[0].ECALClusters[i].num_cells = cl[i].reco_cells.size();
-      sr.nd.sand.ixn[0].ECALClusters[i].id = cl[i].tid;
-    }
-    
-    cl.clear();
-  }
-
-  void SANDRecoBranchFiller::FillTracks(const TruthMatcher *truthMatch,
-                                        caf::StandardRecord &sr, std::vector<track> &tr) const
-  {
-
-    size_t n_tracks = tr.size();
-
-
-    sr.nd.sand.ixn.resize(1);
-    sr.nd.sand.ixn[0].ntracks = n_tracks;
-    sr.nd.sand.ixn[0].tracks.resize(n_tracks);
-
-    for (int i = 0; i < n_tracks; i++)
-    {
-      sr.nd.sand.ixn[0].tracks[i].start.SetXYZ(tr[i].x0, tr[i].y0, tr[i].z0);
-      sr.nd.sand.ixn[0].tracks[i].qual = tr[i].chi2_cr;
-    }
-    tr.clear();
-  }
-
-  // todo: this is a placeholder
-  std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int triggerType, bool beamOnly) const
-  {
-    std::deque<Trigger> triggers;
-    size_t n_entries = NDSANDRecoTree->GetEntries();
-
-    if (fTriggers.empty())
-    {
-      LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "\n";
-      fTriggers.reserve(n_entries);
-
-      std::cout<<"creating triggers"<<std::endl;
-
-      for (size_t i = 0; i < n_entries; i++)
-      {
-        const int placeholderTriggerType = 0;
-        // fixme: this check needs to be fixed when we have trigger type info
-        
-        if (triggerType >= 0 && triggerType != placeholderTriggerType)
-        {
-          LOG.VERBOSE() << "    skipping this event" << "\n";
-          std::cout << "skipping this event" << std::endl;
-          continue;
-        }
-
-        fTriggers.emplace_back();
-        Trigger &trig = fTriggers.back();
-        trig.evtID = i;
-
-        // todo: these are placeholder values until we can propagate enough info through the reco files
-        trig.triggerType = 0;
-        trig.triggerTime_s = i;
-        trig.triggerTime_ns = 0.;
-
-        triggers.push_back(trig);
-
-        LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
-                      << ", triggerType=" << trig.triggerType
-                      << ", triggerTime_s=" << trig.triggerTime_s
-                      << ", triggerTime_ns=" << trig.triggerTime_ns
-                      << "\n";
-      }
-     
-      fLastTriggerReqd = fTriggers.end(); // since we just modified the list, any iterators have been invalidated
-    }
-    else
-    {
-     
-      for (const Trigger &trigger : fTriggers)
-      {
-        if (triggerType < 0 || triggerType == fTriggers.back().triggerType)
-        {
-          triggers.push_back(trigger);
-        }
-      }
-    }
-    std::cout<<"Trigger completed!"<<std::endl;
-    return triggers;
-  }
+bool Close(float a, float b) {
+  return a == b || (std::isnan(a) && std::isnan(b)) || std::abs(a - b) <= 1e-6 * std::max(std::abs(a), std::abs(b));
 }
 
-#else
-#include "reco/SANDRecoBranchFiller.h"
-#include <deque>
-#include <iostream>
+bool SameVector(const caf::SRVector3D& a, const caf::SRVector3D& b) {
+  return Close(a.x, b.x) && Close(a.y, b.y) && Close(a.z, b.z);
+}
+
+bool SameParticle(const caf::SRTrueParticle& a, const caf::SRTrueParticle& b) {
+  return a.pdg == b.pdg && a.G4ID == b.G4ID && a.parent == b.parent && a.parentID.ixn == b.parentID.ixn
+         && a.parentID.type == b.parentID.type && a.parentID.part == b.parentID.part && Close(a.p.px, b.p.px)
+         && Close(a.p.py, b.p.py) && Close(a.p.pz, b.p.pz) && SameVector(a.start_pos, b.start_pos)
+         && SameVector(a.end_pos, b.end_pos);
+}
+
+bool SameParticles(const std::vector<caf::SRTrueParticle>& a, const std::vector<caf::SRTrueParticle>& b) {
+  return std::equal(a.begin(), a.end(), b.begin(), b.end(), SameParticle);
+}
+
+bool SameInteraction(const caf::SRTrueInteraction& a, const caf::SRTrueInteraction& b) {
+  return a.id == b.id && a.nprim == b.nprim && a.nprefsi == b.nprefsi && a.nsec == b.nsec && SameVector(a.vtx, b.vtx)
+         && SameVector(a.momentum, b.momentum) && SameParticles(a.prim, b.prim) && SameParticles(a.prefsi, b.prefsi)
+         && SameParticles(a.sec, b.sec);
+}
+
+}  // namespace
+
 namespace cafmaker {
-SANDRecoBranchFiller::SANDRecoBranchFiller(const std::string &)
-    : IRecoBranchFiller("SAND")
-{
-    std::cerr << "[WARNING] SANDRecoBranchFiller: SAND code is not enabled in this build.\n"
-                 "To enable SAND support, build with 'make ENABLE_SAND_DICT=1'.\n";
+
+SANDRecoBranchFiller::~SANDRecoBranchFiller() = default;
+
+SANDRecoBranchFiller::SANDRecoBranchFiller(
+    const std::string& cafFilename, std::string treeName)
+    : IRecoBranchFiller("SAND") {
+  if (cafFilename.empty()) {
+    LOG.WARNING() << GetName() << ": filename is empty\n";
+    SetConfigured(false);
+    return;
+  }
+
+  fFile.reset(TFile::Open(cafFilename.c_str()));
+  if (!fFile || fFile->IsZombie()) {
+    LOG.WARNING() << GetName() << ": could not open '" << cafFilename << "'\n";
+    SetConfigured(false);
+    return;
+  }
+
+  fCAFTree = fFile->Get<TTree>(treeName.c_str());
+  if (!fCAFTree) {
+    LOG.WARNING() << GetName() << ": tree '" << treeName << "' not found in '" << cafFilename
+                  << "'\n";
+    SetConfigured(false);
+    return;
+  }
+
+  fCAFTree->SetBranchAddress("rec", &fSR);
+
+  const auto nEntries = fCAFTree->GetEntries();
+  fTriggers.reserve(static_cast<std::size_t>(nEntries));
+
+  SetConfigured(true);
 }
-std::deque<Trigger> SANDRecoBranchFiller::GetTriggers(int, bool) const { return {}; }
-void SANDRecoBranchFiller::_FillRecoBranches(const Trigger &, caf::StandardRecord &, const cafmaker::Params &, const TruthMatcher *) const {}
+
+std::deque<Trigger>
+SANDRecoBranchFiller::GetTriggers(int triggerType,
+                                                                 bool /*beamOnly*/) const {
+
+  // This implementation is copied from the TMS BranchFiller. 
+  // Without this, there was a mismatch between the triggers from different branches.
+  std::deque<Trigger> triggers;
+
+  if (fTriggers.empty())
+  {
+    LOG.DEBUG() << "Loading triggers with type " << triggerType << " within branch filler '" << GetName() << "' from " << fCAFTree->GetEntries() << " SAND Tree:\n";
+  
+    fTriggers.reserve(fCAFTree->GetEntries());
+    for (int entry = 0; entry < fCAFTree->GetEntries(); entry++)
+    {
+      fCAFTree->GetEntry(entry);
+
+      const Trigger * prev_trig = fTriggers.empty() ? nullptr : &fTriggers.back();
+      fTriggers.emplace_back();
+      Trigger & trig = fTriggers.back();
+
+      trig.evtID = entry;
+      trig.triggerType = 1; // TODO real number?
+
+      if (prev_trig)
+      {
+        trig.triggerTime_ns = prev_trig->triggerTime_ns + 2E8 ;
+        trig.triggerTime_s = prev_trig->triggerTime_s + 1; // TODO: Pull the 1.2 from correct place in file
+        if (trig.triggerTime_ns >= 1E9) // If we have 1s worth of ns then add 1s and remove 1s worth of ns
+        {
+          trig.triggerTime_s += 1;
+          trig.triggerTime_ns -= 1E9;
+        }
+      }
+      else
+      {
+        trig.triggerTime_ns = 0;
+        trig.triggerTime_s = 0;
+      }
+
+      LOG.VERBOSE() << "  added trigger:  evtID=" << trig.evtID
+                    << ", triggerType=" << trig.triggerType
+                    << ", triggerTime_s=" << trig.triggerTime_s
+                    << ", triggerTime_ns=" << trig.triggerTime_ns
+                    << "\n";
+    }
+  }
+
+    for (const Trigger & trigger : fTriggers)
+    {
+      if (triggerType < 0 || triggerType == trigger.triggerType)
+      {
+        triggers.push_back(trigger);
+      }
+    }
+
+    return triggers;
 }
-#endif
+
+void SANDRecoBranchFiller::_FillRecoBranches(
+    const Trigger& trigger, caf::StandardRecord& sr, const cafmaker::Params& /*par*/,
+    const TruthMatcher* /*truthMatcher*/) const {
+	
+  auto it = std::find(fTriggers.begin(), fTriggers.end(), trigger);
+  if (it == fTriggers.end()) {
+    LOG.FATAL() << GetName() << ": no trigger with evtID=" << trigger.evtID << "\n";
+    abort();
+  }
+  const long entry = std::distance(fTriggers.begin(), it);
+  CheckedGetEntry(fCAFTree, entry, "SAND reco event lookup");
+
+  // The truth links of the SAND reco objects are indices into the SAND file's own mc and are copied as they are:
+  // they are only valid if that mc is the same as sr.mc.
+  const auto& sandNu = fSR->mc.nu;
+  const auto& cafNu = sr.mc.nu;
+  const auto [itSand, itCaf] = std::mismatch(sandNu.begin(), sandNu.end(), cafNu.begin(), cafNu.end(), SameInteraction);
+  if (fSR->mc.nnu != sr.mc.nnu || itSand != sandNu.end() || itCaf != cafNu.end()) {
+    std::stringstream ss;
+    ss << GetName() << ": the mc of SAND entry " << entry << " differs from sr.mc at nu["
+       << std::distance(sandNu.begin(), itSand) << "]\n";
+    LOG.FATAL() << ss.str();
+    throw std::runtime_error(ss.str());
+  }
+
+  sr.common.ixn.sandreco  = fSR->common.ixn.sandreco;
+  sr.common.ixn.nsandreco = fSR->common.ixn.nsandreco;
+  sr.nd.sand              = fSR->nd.sand;
+
+}
+
+} // namespace cafmaker
