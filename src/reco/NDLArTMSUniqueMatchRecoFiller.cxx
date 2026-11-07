@@ -310,53 +310,43 @@ namespace cafmaker
       float angle_x = angles[0];
       float angle_y = angles[1]; // x and y components of LAr and TMS tracks
       matchScore = pow(delta_x/fSigmaX,2) + pow(delta_y/fSigmaY,2) + pow(angle_x/fSigmaThetaX,2)+ pow(angle_y/fSigmaThetaY,2);
-      bool truthFail = false;
+      // The true particle contributing most to the LAr track, if there is one.
+      const caf::SRTrueParticle * matchedPart = nullptr;
       const std::vector<float> & tOv = trk.truthOverlap;
       const std::vector<caf::TrueParticleID> & truIDs = trk.truth;
-      if (tOv.empty()) {
-        truthFail = true;
-      }
-      if (truIDs.empty()) {
-        truthFail = true;
-      }
-      if (truIDs.size() != tOv.size()) {
-        truthFail = true;
-      }
-      if (!truthFail) {
-        int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
-        const caf::TrueParticleID & partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
-        const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-        if (matchedPart == nullptr) {
-          truthFail = true;
-        }
+      if (!tOv.empty() && tOv.size() == truIDs.size())
+      {
+        const auto idx_max = std::distance(tOv.begin(), std::max_element(tOv.begin(), tOv.end()));
+        matchedPart = FindParticle(sr.mc, truIDs[idx_max]);
       }
 
-      if (fUseTime) {
-        // this handles time-based matching
-        if (!fUseSmearTime) {// this occurs when the LAr time has filled in the file
+      if (fUseTime)
+      {
+        if (fUseSmearTime)
+        {
+          // The cheated LAr time needs the true particle.
+          // Scoring this candidate without a time term would favor it over the time-checked ones,
+          // so skip it instead.
+          if (!matchedPart)
+            continue;
+          lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear;  // true time, smeared by 10 ns
+        }
+        else
+        {
+          lar_time = trk.time;
           if (!std::isfinite(lar_time))
           {
             LOG.FATAL() << "LAr track time is invalid: " << lar_time << "\n"
                         << "  If you're using SPINE files, note that they do not currently set track times, and you must set `UseSmearTime: true` in the FCL.\n";
-            throw std::runtime_error("NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(): Invalide LAr track time");
+            throw std::runtime_error("NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(): invalid LAr track time");
           }
-          lar_time = trk.time;
-          double tms_time = tms_trk.time;
-          delta_t = tms_time - lar_time;
-          matchScore += pow((delta_t-fMeanT)/fSigmaT,2); // adds the time difference term to the matchScore
         }
+        delta_t = tms_trk.time - lar_time;
+        matchScore += pow((delta_t - fMeanT)/fSigmaT, 2);
       }
 
-      if (!truthFail) {
-        int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
-        const caf::TrueParticleID & partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
-        const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-        if (fUseTime && fUseSmearTime) {// this triggers if we're using a file where the LAr time hasn't filled
-          lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
-          double tms_time = tms_trk.time;
-          delta_t = tms_time - lar_time;
-          matchScore += pow((delta_t-fMeanT)/fSigmaT,2); // adds the time difference term to the matchScore
-        }
+      if (matchedPart)
+      {
         // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
         // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
         const std::vector<caf::TrueParticleID> & truIDsTMS = tms_trk.truth;
@@ -385,8 +375,8 @@ namespace cafmaker
                     << "   tms_time = " << tms_trk.time << "; lar_time = " << lar_time << " (trk.time = " << trk.time << "); delta_t = " << delta_t << "\n"
                     << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << "\n"
                     << " TMS ixn " << ixn_tms << " | TMS idx " << itms << "\n"
-                    // << " True particle ID " << matchedPart->G4ID << "\n"
-                    // << " True particle time " << matchedPart->time << "\n"
+                    << " True particle ID " << matchedPart->G4ID << "\n"
+                    << " True particle time " << matchedPart->time << "\n"
                     << " --------------------" << "\n";
         throw std::runtime_error("NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(): NaN match score");
       }
