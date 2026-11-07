@@ -33,15 +33,15 @@ namespace cafmaker
                                                                const bool useSmearTime)
     : IRecoBranchFiller("LArTMSMatcher")
   {
-    sigma_x = sigmaX;
-    sigma_y = sigmaY;
-    sigma_angle_x = sigmaThX;
-    sigma_angle_y = sigmaThY;
-    use_time = useTime;
-    mean_t = meanT;
-    sigma_t = sigmaT;
-    f_cut = fCut;
-    use_smear_time = useSmearTime;
+    fSigmaX = sigmaX;
+    fSigmaY = sigmaY;
+    fSigmaThetaX = sigmaThX;
+    fSigmaThetaY = sigmaThY;
+    fUseTime = useTime;
+    fMeanT = meanT;
+    fSigmaT = sigmaT;
+    fScoreCut = fCut;
+    fUseSmearTime = useSmearTime;
     // nothing to do
     SetConfigured(true);
   }
@@ -65,7 +65,7 @@ namespace cafmaker
        dir_y = track.enddir.y;
        dir_z = track.enddir.z;
 
-       proj_z = tms_z_lim1 - z;
+       proj_z = fTMSZLim1 - z;
        proj_x = dir_x*proj_z/dir_z + x;
        proj_y = dir_y*proj_z/dir_z + y;
     }
@@ -78,7 +78,7 @@ namespace cafmaker
        dir_y = track.dir.y;
        dir_z = track.dir.z;
 
-       proj_z = z - lar_z_lim2;
+       proj_z = z - fLArZLim2;
        proj_x = -dir_x*proj_z/dir_z + x;
        proj_y = -dir_y*proj_z/dir_z + y;
     }
@@ -117,16 +117,16 @@ namespace cafmaker
     float y_start = tms_track.start.y;
     float z_start = tms_track.start.z;
 
-    bool starts_in_FV = (x_start > tms_x_lim1) && (x_start < tms_x_lim2) &&
-                        (y_start > tms_y_lim1) && (y_start < tms_y_lim2) &&
-                        (z_start >= tms_z_lim1) && (z_start < tms_z_lim1 + tms_z_cutoff);
+    bool starts_in_FV = (x_start > fTMSXLim1) && (x_start < fTMSXLim2) &&
+                        (y_start > fTMSYLim1) && (y_start < fTMSYLim2) &&
+                        (z_start >= fTMSZLim1) && (z_start < fTMSZLim1 + tms_z_cutoff);
     if (!starts_in_FV)
       return false;
 
     // checks that direction would have allowed it to originate from LAr
     const auto projection = Project_track(tms_track,false);
-    return    (projection[0] > lar_x_lim1) && (projection[0] < lar_x_lim2)
-           && (projection[1] > lar_y_lim1) && (projection[1] < lar_y_lim2);
+    return    (projection[0] > fLArXLim1) && (projection[0] < fLArXLim2)
+           && (projection[1] > fLArYLim1) && (projection[1] < fLArYLim2);
   }
 
   bool NDLArTMSUniqueMatchRecoFiller::Consider_LAr_track(const caf::SRTrack &lar_track, const double lar_z_cutoff) const
@@ -139,20 +139,20 @@ namespace cafmaker
     float y_end = lar_track.end.y;
     float z_end = lar_track.end.z;
 
-    bool contained_and_reaches_back =    (x_start > lar_x_lim1)&&(x_start < lar_x_lim2)
-                                      && (y_start > lar_y_lim1) && (y_start < lar_y_lim2)
-                                      && (z_start > lar_z_lim1) && (z_start < lar_z_lim2)
+    bool contained_and_reaches_back =    (x_start > fLArXLim1)&&(x_start < fLArXLim2)
+                                      && (y_start > fLArYLim1) && (y_start < fLArYLim2)
+                                      && (z_start > fLArZLim1) && (z_start < fLArZLim2)
                                       // checks track begins within fiducial volume
 
-                                      && (x_end > lar_x_lim1) && (x_end < lar_x_lim2)
-                                      && (y_end > lar_y_lim1) && (y_end < lar_y_lim2)
-                                      && (z_end > lar_z_lim2 - lar_z_cutoff) && (z_end < lar_z_lim2);  // checks track ends close enough to back of LAr
+                                      && (x_end > fLArXLim1) && (x_end < fLArXLim2)
+                                      && (y_end > fLArYLim1) && (y_end < fLArYLim2)
+                                      && (z_end > fLArZLim2 - lar_z_cutoff) && (z_end < fLArZLim2);  // checks track ends close enough to back of LAr
     if (!contained_and_reaches_back)
       return false;
 
     const auto projection = Project_track(lar_track,true);
-    return    (projection[0] > tms_x_lim1)&&(projection[0] < tms_x_lim2)
-           && (projection[1] > tms_y_lim1)&&(projection[1] < tms_y_lim2); // checks that direction would allow it to hit TMS
+    return    (projection[0] > fTMSXLim1)&&(projection[0] < fTMSXLim2)
+           && (projection[1] > fTMSYLim1)&&(projection[1] < fTMSYLim2); // checks that direction would allow it to hit TMS
   }
 
 	constexpr auto range_gramper_cm()
@@ -203,7 +203,7 @@ namespace cafmaker
     for (unsigned int match_idx = 0; match_idx < possibleMatches.size(); match_idx++) {
       caf::SRNDTrackAssn & track_match = possibleMatches[match_idx];
       double score = track_match.matchScore;
-      if (score > f_cut) {
+      if (score > fScoreCut) {
         continue; // this was break before, I think that was wrong
       }
       caf::SRNDLArID larid = track_match.larid;
@@ -252,8 +252,8 @@ namespace cafmaker
 
       // TODO: The following values pertain to the dead region between LAr and TMS. They may not remain accurate as geometry changes. Long-term solution is to directly query the geometry file instead
       float gap_dist = sqrt(pow(tms_track.start.x - lar_track->end.x,2)+pow(tms_track.start.y - lar_track->end.y,2)+pow(tms_track.start.z - lar_track->end.z,2));
-      double LArTMSGap = tms_z_lim1 - lar_z_lim2;
-      double DeadLArDist = DeadLArEnd - lar_z_lim2;
+      double LArTMSGap = fTMSZLim1 - fLArZLim2;
+      double DeadLArDist = fDeadLArEnd - fLArZLim2;
       double DeadLArFrac = DeadLArDist / LArTMSGap; // What fraction of the distance between LAr and TMS is dead LAr?
       joint_track.len_cm = lar_track->len_cm + tms_track.len_gcm2/LArDen + DeadLArFrac*gap_dist; // Divide the TMS areal density by the LAr density and add the dead LAr length
 
@@ -309,7 +309,7 @@ namespace cafmaker
 
       float angle_x = angles[0];
       float angle_y = angles[1]; // x and y components of LAr and TMS tracks
-      matchScore = pow(delta_x/sigma_x,2) + pow(delta_y/sigma_y,2) + pow(angle_x/sigma_angle_x,2)+ pow(angle_y/sigma_angle_y,2);
+      matchScore = pow(delta_x/fSigmaX,2) + pow(delta_y/fSigmaY,2) + pow(angle_x/fSigmaThetaX,2)+ pow(angle_y/fSigmaThetaY,2);
       bool truthFail = false;
       const std::vector<float> & tOv = trk.truthOverlap;
       const std::vector<caf::TrueParticleID> & truIDs = trk.truth;
@@ -331,13 +331,13 @@ namespace cafmaker
         }
       }
 
-      if (use_time) {
+      if (fUseTime) {
         // this handles time-based matching
-        if (!use_smear_time) {// this occurs when the LAr time has filled in the file
+        if (!fUseSmearTime) {// this occurs when the LAr time has filled in the file
           lar_time = trk.time;
           double tms_time = tms_trk.time;
           delta_t = tms_time - lar_time;
-          matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+          matchScore += pow((delta_t-fMeanT)/fSigmaT,2); // adds the time difference term to the matchScore
         }
       }
 
@@ -345,11 +345,11 @@ namespace cafmaker
         int idx_max = std::distance(tOv.begin(),std::max_element(tOv.begin(),tOv.end()));
         const caf::TrueParticleID & partID = truIDs[idx_max]; // ID of true particle that makes up the majority of the track
         const auto& matchedPart = FindParticle(sr.mc,partID); // gets the particle object corresponding to the ID
-        if (use_time && use_smear_time) {// this triggers if we're using a file where the LAr time hasn't filled
+        if (fUseTime && fUseSmearTime) {// this triggers if we're using a file where the LAr time hasn't filled
           lar_time = matchedPart->time - 1e9*trigger.triggerTime_s - trigger.triggerTime_ns + time_smear; // adds gaussian smear to the true time with std 10 ns
           double tms_time = tms_trk.time;
           delta_t = tms_time - lar_time;
-          matchScore += pow((delta_t-mean_t)/sigma_t,2); // adds the time difference term to the matchScore
+          matchScore += pow((delta_t-fMeanT)/fSigmaT,2); // adds the time difference term to the matchScore
         }
         if (std::isnan(matchScore)) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
           LOG.WARNING() << " NAN MATCH SCORE (score = " << matchScore << ")\n";
@@ -391,7 +391,7 @@ namespace cafmaker
       larid.idx = itrk;
 
       caf::SRNDTrackAssn potential_match;
-      if (use_time) {
+      if (fUseTime) {
         potential_match.matchType = caf::NDRecoMatchType::kUniqueWithTime;
       }
       else {
@@ -503,9 +503,9 @@ namespace cafmaker
         if ((ERecoForTrueMatchesOnly)&&(!match_pair.trueMatch)){
           PrintRecoVsTrueE = false; // if you tell the algorithm to only show the energy reco performance for the true matched tracks, and you DO NOT have a true matched pair, then we should not print the following
         }
-        if ((start_x > lar_x_lim1)&&(start_x < lar_x_lim2)
-            &&(start_y > lar_y_lim1)&&(start_y < lar_y_lim2)
-            &&(start_z > lar_z_lim1)&&(start_z < lar_z_lim2)){
+        if ((start_x > fLArXLim1)&&(start_x < fLArXLim2)
+            &&(start_y > fLArYLim1)&&(start_y < fLArYLim2)
+            &&(start_z > fLArZLim1)&&(start_z < fLArZLim2)){
               if (PrintRecoVsTrueE) {
                 float match_true_E = matchedParticle->p.E; // energy of the true particle
                 int match_true_PDG = matchedParticle->pdg; // PDG of the true particle
