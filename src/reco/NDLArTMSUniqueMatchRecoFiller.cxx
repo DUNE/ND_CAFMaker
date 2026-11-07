@@ -105,9 +105,9 @@ namespace cafmaker
         yz_dot_prod = yz_dot_prod/(sqrt(pow(tms_dir_y,2)+pow(tms_dir_z,2))*sqrt(pow(lar_dir_y,2)+pow(lar_dir_z,2)));
       }
       float dot_prod = tms_dir_x*lar_dir_x + tms_dir_y*lar_dir_y + tms_dir_z*lar_dir_z;
-      float angle_x = 180.0/TMath::Pi() * acos(xz_dot_prod);
-      float angle_y = 180.0/TMath::Pi() * acos(yz_dot_prod);
-      float angle_overall = 180.0/TMath::Pi() * acos(dot_prod);
+      float angle_x = 180.0/TMath::Pi() * acos(std::clamp(xz_dot_prod, -1.f, 1.f));  // clamping to avoid edge cases where vectors are essentially parallel and rounding pushs the dot product above |mag| = 1
+      float angle_y = 180.0/TMath::Pi() * acos(std::clamp(yz_dot_prod, -1.f, 1.f));
+      float angle_overall = 180.0/TMath::Pi() * acos(std::clamp(dot_prod, -1.f, 1.f));
       return {angle_x,angle_y,angle_overall};
   }
 
@@ -334,6 +334,12 @@ namespace cafmaker
       if (fUseTime) {
         // this handles time-based matching
         if (!fUseSmearTime) {// this occurs when the LAr time has filled in the file
+          if (!std::isfinite(lar_time))
+          {
+            LOG.FATAL() << "LAr track time is invalid: " << lar_time << "\n"
+                        << "  If you're using SPINE files, note that they do not currently set track times, and you must set `UseSmearTime: true` in the FCL.\n";
+            throw std::runtime_error("NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(): Invalide LAr track time");
+          }
           lar_time = trk.time;
           double tms_time = tms_trk.time;
           delta_t = tms_time - lar_time;
@@ -351,16 +357,6 @@ namespace cafmaker
           delta_t = tms_time - lar_time;
           matchScore += pow((delta_t-fMeanT)/fSigmaT,2); // adds the time difference term to the matchScore
         }
-        if (std::isnan(matchScore)) {// should only be possible if the match score is nan, but this trick may not work with certain compilers?
-          LOG.WARNING() << " NAN MATCH SCORE (score = " << matchScore << ")\n";
-          LOG.WARNING() << "   tms_time = " << tms_trk.time << "; lar_time = " << lar_time << " (trk.time = " << trk.time << "); delta_t = " << delta_t << "\n";
-          LOG.WARNING() << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << "\n";
-          LOG.WARNING() << " TMS ixn " << ixn_tms << " | TMS idx " << itms << "\n";
-          LOG.WARNING() << " True particle ID " << matchedPart->G4ID << "\n";
-          LOG.WARNING() << " True particle time " << matchedPart->time << "\n";
-          LOG.WARNING() << " --------------------" << "\n";
-          continue;
-        }
         // Following code is for checking if the particle IDs for matching tracks themselves match. This allows you to identify true matches
         // TODO: When someone adds secondary info this will need to be used again: std::vector<float> tOvTMS = tms_trk.truthOverlap;
         const std::vector<caf::TrueParticleID> & truIDsTMS = tms_trk.truth;
@@ -377,6 +373,19 @@ namespace cafmaker
           }
         }
       }
+
+      if (std::isnan(matchScore))
+      {
+        LOG.FATAL() << " NAN MATCH SCORE (score = " << matchScore << ")\n"
+                    << "   tms_time = " << tms_trk.time << "; lar_time = " << lar_time << " (trk.time = " << trk.time << "); delta_t = " << delta_t << "\n"
+                    << " LAr ixn " << ixn_lar << " | LAr idx " << itrk << "\n"
+                    << " TMS ixn " << ixn_tms << " | TMS idx " << itms << "\n"
+                    // << " True particle ID " << matchedPart->G4ID << "\n"
+                    // << " True particle time " << matchedPart->time << "\n"
+                    << " --------------------" << "\n";
+        throw std::runtime_error("NDLArTMSUniqueMatchRecoFiller::Compute_match_scores(): NaN match score");
+      }
+
       caf::SRTMSID tmsid;
       tmsid.ixn = ixn_tms;
       tmsid.idx = itms;
