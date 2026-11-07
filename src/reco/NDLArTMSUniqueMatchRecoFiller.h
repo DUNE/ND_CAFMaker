@@ -16,7 +16,8 @@
 #include "duneanaobj/StandardRecord/SRNDTrackAssn.h"
 #include "TMath.h"
 #include "TRandom3.h"
-#include <set>
+
+#include <array>
 
 namespace cafmaker
 {
@@ -27,19 +28,29 @@ namespace cafmaker
     public:
       NDLArTMSUniqueMatchRecoFiller(const double sigmaX, const double sigmaY, const double sigmaThX, const double sigmaThY, const bool useTime, const double meanT, const double sigmaT, const double fCut, const bool useSmearTime);
 
-      std::vector<float> Project_track(const caf::SRTrack track, const bool forward) const;
+      std::array<float, 3> Project_track(const caf::SRTrack &track, const bool forward) const;
 
-      std::vector<float> Angle_between_tracks(const caf::SRTrack tms_track, const caf::SRTrack lar_track) const;
+      std::array<float, 3> Angle_between_tracks(const caf::SRTrack &tms_track, const caf::SRTrack &lar_track) const;
 
-      bool Consider_TMS_track(const caf::SRTrack tms_track, const double tms_z_cutoff) const;
+      bool Consider_TMS_track(const caf::SRTrack &tms_track, const double tms_z_cutoff) const;
 
-      bool Consider_LAr_track(const caf::SRTrack lar_track, const double lar_z_cutoff) const;
+      bool Consider_LAr_track(const caf::SRTrack &lar_track, const double lar_z_cutoff) const;
 
       double Muon_LAr_KE_Reco(const float trk_length) const;
 
       void Create_matches(std::vector<caf::SRNDTrackAssn> possibleMatches, const bool Pandora, caf::StandardRecord &sr) const;
 
-      std::vector<caf::SRNDTrackAssn> Compute_match_scores(const caf::SRNDLArInt ixn, const unsigned int ixn_lar, const unsigned int n_tracks, const unsigned int ixn_tms, const unsigned int itms, const double lar_z_cutoff, const caf::SRTrack tms_trk, caf::StandardRecord &sr, const cafmaker::Trigger &trigger, const float time_smear, std::set<int> matchIDs, const bool Pandora) const;
+      std::vector<caf::SRNDTrackAssn> Compute_match_scores(const caf::SRNDLArInt &ixn,
+                                                           unsigned int ixn_lar,
+                                                           unsigned int n_tracks,
+                                                           unsigned int ixn_tms,
+                                                           unsigned int itms,
+                                                           double lar_z_cutoff,
+                                                           const caf::SRTrack &tms_trk,
+                                                           caf::StandardRecord &sr,
+                                                           const Trigger &trigger,
+                                                           float time_smear,
+                                                           bool Pandora) const;
 
       std::deque<cafmaker::Trigger> GetTriggers(int triggerType, bool beamOnly) const override;
 
