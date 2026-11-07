@@ -365,8 +365,13 @@ namespace cafmaker
           //int idx_max_TMS = std::distance(tOvTMS.begin(),std::max_element(tOvTMS.begin(),tOvTMS.end()));
           const caf::TrueParticleID & partIDTMS = truIDsTMS[0];//idx_max_TMS];
           const auto& TMSPart = FindParticle(sr.mc,partIDTMS);
-          if (TMSPart != nullptr) {
-            if (matchedPart->G4ID==TMSPart->G4ID) {
+          if (TMSPart) {
+            // G4IDs are only unique within one interaction,
+            // and sr.mc holds every interaction in the spill,
+            // so the interaction must match too.
+            if (   matchedPart->interaction_id == TMSPart->interaction_id
+                && matchedPart->G4ID == TMSPart->G4ID)
+            {
               trueMatch = true;
               // matchIDs.insert(matchedPart->G4ID); // adds the ID to the set of matchIDs we're keeping track of. We already know the LAr and TMS track have the same ID due to the check above
             }
