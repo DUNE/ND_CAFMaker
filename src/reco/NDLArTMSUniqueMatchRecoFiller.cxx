@@ -1,24 +1,15 @@
 #include "NDLArTMSUniqueMatchRecoFiller.h"
 #include <cmath>
-#include "TRandom3.h"
 #include <set>
 
 #include "Math/Functor.h"
 #include "Math/GenVector/PositionVector3D.h"
 #include "Minuit2/Minuit2Minimizer.h"
-#include "Rtypes.h"
-#include "TAxis.h"
-#include "TGraphErrors.h"
 #include "TMath.h"
-#include "TMatrixDSymEigen.h"
-#include "TMatrixDSymfwd.h"
-#include "TMatrixDfwd.h"
-#include "TMatrixT.h"
-#include "TMatrixTSym.h"
-#include "TPolyLine3D.h"
+#include "TRandom3.h"
 #include "TSpline.h"
-#include "TVectorDfwd.h"
-#include "TVectorT.h"
+
+#include "duneanaobj/StandardRecord/Navigate.h"
 
 namespace cafmaker
 {
