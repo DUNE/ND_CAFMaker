@@ -9,7 +9,16 @@ Note that tags as a function of changes are now also being tracked via [mileston
 * Use the GitHub "draft a release" page to tag a new version.
 
 ##### current
-* TMS branch is filled from the Cluster3D reconstruction by default (`TMSRecoTreeSuffix`, default `"_C3D"`); set it to `""` for the legacy reconstruction or older TMS reco files; track time then comes from the Cluster3D tree [PR #211](https://github.com/DUNE/ND_CAFMaker/pull/211)
+
+##### [v5.3.0] -- 2026-11-07
+* ROOT file reading robustness improvements ([PR #196](https://github.com/DUNE/ND_CAFMaker/pull/196))
+* Major SAND filler overhaul to use with updated `sandreco` 'experimental' ([#160](https://github.com/DUNE/ND_CAFMaker/pull/160), [#209](https://github.com/DUNE/ND_CAFMaker/pull/209), [#221](https://github.com/DUNE/ND_CAFMaker/pull/221))
+* Fix 2x2-Mx2 time matching bug; count POT from TOR101 as well as TORGTD ([#204](https://github.com/DUNE/ND_CAFMaker/pull/204))
+* Support new Cluster3D TMS reco ([#211](https://github.com/DUNE/ND_CAFMaker/pull/2), [#220](https://github.com/DUNE/ND_CAFMaker/pull/220))
+* Misc. TMS fixes (fill f0, [#215](https://github.com/DUNE/ND_CAFMaker/pull/215); read dune-tms version from metadata, [#217](https://github.com/DUNE/ND_CAFMaker/pull/217))
+* TMS truth matching partial fixes (more to come soon) ([#214](https://github.com/DUNE/ND_CAFMaker/pull/214))
+* Fill all true particles & interactions, not just those connected to reco ([#215](https://github.com/DUNE/ND_CAFMaker/pull/215))
+* Compute and fill projected muon momentum for ND-LAr+TMS matches ([#226](https://github.com/DUNE/ND_CAFMaker/pull/226))
 
 ##### [v5.2.0] -- 2026-09-10
 * Bump to duneanaobj v4_01_01 [66905ce3]
