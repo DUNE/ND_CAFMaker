@@ -55,16 +55,11 @@ namespace cafmaker
 
 
     private:
-      void MatchTracks(caf::StandardRecord &sr) const;
-
       void _FillRecoBranches(const cafmaker::Trigger &trigger,
                              caf::StandardRecord &sr,
                              const cafmaker::Params &par,
                              const TruthMatcher *truthMatcher) const override;
 
-      std::vector<caf::SRNDTrackAssn> matchVectorSPINETMS;
-
-      std::vector<caf::SRNDTrackAssn> matchVectorPandoraTMS;
 
       double sigma_x;
       double sigma_y;
