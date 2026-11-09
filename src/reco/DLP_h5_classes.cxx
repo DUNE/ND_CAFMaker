@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ND_CAFMaker/scripts/h5_to_cpp.py -f ../MiniProdN5p3_NDComplex_FHC.spine.full.sanddrift.0000003.MLRECO_SPINE.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
+//       ND_CAFMaker/scripts/h5_to_cpp.py -f /pscratch/sd/d/dunepro/mkramer/output/Reflow_2x2_v12/run-mlreco/Reflow_2x2_v12.spine/MLRECO_SPINE/beam/july8_2024/nominal_hv/Reflow_2x2_v12.spine.packet-0050017-2024_07_09_00_14_34_CDT.MLRECO_SPINE.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 #include "DLP_h5_classes.h"
@@ -25,17 +25,19 @@ namespace cafmaker::types::dlp
   {
     index.reset(&index_handle);
     orig_index.reset(&orig_index_handle);
-    module_ids.reset(&module_ids_handle);
     match_ids.reset(&match_ids_handle);
     match_overlaps.reset(&match_overlaps_handle);
     particle_ids.reset(&particle_ids_handle);
-    primary_particle_ids.reset(&primary_particle_ids_handle);
     flash_ids.reset(&flash_ids_handle);
     flash_volume_ids.reset(&flash_volume_ids_handle);
     flash_times.reset(&flash_times_handle);
     flash_scores.reset(&flash_scores_handle);
+    flash_hypothesis_ids.reset(&flash_hypothesis_ids_handle);
+    primary_particle_ids.reset(&primary_particle_ids_handle);
     crt_ids.reset(&crt_ids_handle);
     crt_times.reset(&crt_times_handle);
+    crt_scores.reset(&crt_scores_handle);
+    module_ids.reset(&module_ids_handle);
   }
   
   
@@ -43,7 +45,6 @@ namespace cafmaker::types::dlp
   {
     index.reset(&index_handle);
     orig_index.reset(&orig_index_handle);
-    module_ids.reset(&module_ids_handle);
     match_ids.reset(&match_ids_handle);
     match_overlaps.reset(&match_overlaps_handle);
     fragment_ids.reset(&fragment_ids_handle);
@@ -51,38 +52,40 @@ namespace cafmaker::types::dlp
     crt_times.reset(&crt_times_handle);
     crt_scores.reset(&crt_scores_handle);
     ppn_ids.reset(&ppn_ids_handle);
+    module_ids.reset(&module_ids_handle);
   }
   
   
   void TrueInteraction::SyncVectors()
   {
-    index.reset(&index_handle);
-    orig_index.reset(&orig_index_handle);
-    module_ids.reset(&module_ids_handle);
-    match_ids.reset(&match_ids_handle);
-    match_overlaps.reset(&match_overlaps_handle);
     index_adapt.reset(&index_adapt_handle);
     index_g4.reset(&index_g4_handle);
+    index.reset(&index_handle);
+    orig_index.reset(&orig_index_handle);
+    match_ids.reset(&match_ids_handle);
+    match_overlaps.reset(&match_overlaps_handle);
     particle_ids.reset(&particle_ids_handle);
-    primary_particle_ids.reset(&primary_particle_ids_handle);
     flash_ids.reset(&flash_ids_handle);
     flash_volume_ids.reset(&flash_volume_ids_handle);
     flash_times.reset(&flash_times_handle);
     flash_scores.reset(&flash_scores_handle);
+    flash_hypothesis_ids.reset(&flash_hypothesis_ids_handle);
+    primary_particle_ids.reset(&primary_particle_ids_handle);
     crt_ids.reset(&crt_ids_handle);
     crt_times.reset(&crt_times_handle);
+    crt_scores.reset(&crt_scores_handle);
+    module_ids.reset(&module_ids_handle);
   }
   
   
   void TrueParticle::SyncVectors()
   {
-    index.reset(&index_handle);
-    orig_index.reset(&orig_index_handle);
-    module_ids.reset(&module_ids_handle);
-    match_ids.reset(&match_ids_handle);
-    match_overlaps.reset(&match_overlaps_handle);
     index_adapt.reset(&index_adapt_handle);
     index_g4.reset(&index_g4_handle);
+    index.reset(&index_handle);
+    orig_index.reset(&orig_index_handle);
+    match_ids.reset(&match_ids_handle);
+    match_overlaps.reset(&match_overlaps_handle);
     fragment_ids.reset(&fragment_ids_handle);
     crt_ids.reset(&crt_ids_handle);
     crt_times.reset(&crt_times_handle);
@@ -90,6 +93,7 @@ namespace cafmaker::types::dlp
     children_id.reset(&children_id_handle);
     orig_children_id.reset(&orig_children_id_handle);
     children_counts.reset(&children_counts_handle);
+    module_ids.reset(&module_ids_handle);
   }
   
   
@@ -116,19 +120,19 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(Event));
   
-    ctype.insertMember("trigger", HOFFSET(Event, trigger), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("run_info", HOFFSET(Event, run_info), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("points_label", HOFFSET(Event, points_label), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("flashes", HOFFSET(Event, flashes), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("truth_particles", HOFFSET(Event, truth_particles), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("meta", HOFFSET(Event, meta), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("depositions", HOFFSET(Event, depositions), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("reco_interactions", HOFFSET(Event, reco_interactions), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("truth_interactions", HOFFSET(Event, truth_interactions), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("depositions_label", HOFFSET(Event, depositions_label), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("points", HOFFSET(Event, points), H5::PredType::STD_REF_DSETREG);
-    ctype.insertMember("reco_particles", HOFFSET(Event, reco_particles), H5::PredType::STD_REF_DSETREG);
     ctype.insertMember("index", HOFFSET(Event, index), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("reco_interactions", HOFFSET(Event, reco_interactions), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("flashes", HOFFSET(Event, flashes), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("source_file_index", HOFFSET(Event, source_file_index), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("run_info", HOFFSET(Event, run_info), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("reco_particles", HOFFSET(Event, reco_particles), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("depositions", HOFFSET(Event, depositions), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("points", HOFFSET(Event, points), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("source_file_entry_index", HOFFSET(Event, source_file_entry_index), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("meta", HOFFSET(Event, meta), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("truth_interactions", HOFFSET(Event, truth_interactions), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("truth_particles", HOFFSET(Event, truth_particles), H5::PredType::STD_REF_DSETREG);
+    ctype.insertMember("trigger", HOFFSET(Event, trigger), H5::PredType::STD_REF_DSETREG);
   
     return ctype;
   }
@@ -139,48 +143,54 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(Interaction));
   
-    ctype.insertMember("id", HOFFSET(Interaction, id), H5::PredType::STD_I64LE);
-    ctype.insertMember("index", HOFFSET(Interaction, index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("orig_index", HOFFSET(Interaction, orig_index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("size", HOFFSET(Interaction, size), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_sum", HOFFSET(Interaction, depositions_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("module_ids", HOFFSET(Interaction, module_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("is_contained", HOFFSET(Interaction, is_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_time_contained", HOFFSET(Interaction, is_time_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_matched", HOFFSET(Interaction, is_matched), H5::PredType::STD_U8LE);
-    ctype.insertMember("match_ids", HOFFSET(Interaction, match_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("match_overlaps", HOFFSET(Interaction, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("is_cathode_crosser", HOFFSET(Interaction, is_cathode_crosser), H5::PredType::STD_U8LE);
-    ctype.insertMember("cathode_offset", HOFFSET(Interaction, cathode_offset), H5::PredType::IEEE_F64LE);
     ctype.insertMember("is_truth", HOFFSET(Interaction, is_truth), H5::PredType::STD_U8LE);
     
     H5::StrType units_strType(H5::PredType::C_S1, H5T_VARIABLE);
     units_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("units", HOFFSET(Interaction, units), units_strType);
     
-    ctype.insertMember("particle_ids", HOFFSET(Interaction, particle_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("primary_particle_ids", HOFFSET(Interaction, primary_particle_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("num_particles", HOFFSET(Interaction, num_particles), H5::PredType::STD_I64LE);
-    ctype.insertMember("num_primary_particles", HOFFSET(Interaction, num_primary_particles), H5::PredType::STD_I64LE);
-    ctype.insertMember("particle_counts", HOFFSET(Interaction, particle_counts), H5::ArrayType(H5::PredType::STD_I64LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("primary_particle_counts", HOFFSET(Interaction, primary_particle_counts), H5::ArrayType(H5::PredType::STD_I64LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("vertex", HOFFSET(Interaction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("id", HOFFSET(Interaction, id), H5::PredType::STD_I64LE);
+    ctype.insertMember("is_contained", HOFFSET(Interaction, is_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_time_contained", HOFFSET(Interaction, is_time_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_cathode_crosser", HOFFSET(Interaction, is_cathode_crosser), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_matched", HOFFSET(Interaction, is_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("cathode_offset", HOFFSET(Interaction, cathode_offset), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("index", HOFFSET(Interaction, index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("orig_index", HOFFSET(Interaction, orig_index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_ids", HOFFSET(Interaction, match_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_overlaps", HOFFSET(Interaction, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("is_fiducial", HOFFSET(Interaction, is_fiducial), H5::PredType::STD_U8LE);
     ctype.insertMember("is_flash_matched", HOFFSET(Interaction, is_flash_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("flash_total_pe", HOFFSET(Interaction, flash_total_pe), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("flash_hypo_pe", HOFFSET(Interaction, flash_hypo_pe), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("particle_ids", HOFFSET(Interaction, particle_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("vertex", HOFFSET(Interaction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("flash_ids", HOFFSET(Interaction, flash_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("flash_volume_ids", HOFFSET(Interaction, flash_volume_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("flash_times", HOFFSET(Interaction, flash_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("flash_scores", HOFFSET(Interaction, flash_scores_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("flash_total_pe", HOFFSET(Interaction, flash_total_pe), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("flash_hypo_pe", HOFFSET(Interaction, flash_hypo_pe), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("flash_hypothesis_ids", HOFFSET(Interaction, flash_hypothesis_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("dir", HOFFSET(Interaction, dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("primary_particle_ids", HOFFSET(Interaction, primary_particle_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("num_particles", HOFFSET(Interaction, num_particles), H5::PredType::STD_I64LE);
+    ctype.insertMember("num_primary_particles", HOFFSET(Interaction, num_primary_particles), H5::PredType::STD_I64LE);
+    ctype.insertMember("particle_counts", HOFFSET(Interaction, particle_counts), H5::ArrayType(H5::PredType::STD_I32LE, 1, &std::array<hsize_t, 1>{6}[0]));
+    ctype.insertMember("primary_particle_counts", HOFFSET(Interaction, primary_particle_counts), H5::ArrayType(H5::PredType::STD_I32LE, 1, &std::array<hsize_t, 1>{6}[0]));
     ctype.insertMember("is_crt_matched", HOFFSET(Interaction, is_crt_matched), H5::PredType::STD_U8LE);
     ctype.insertMember("crt_ids", HOFFSET(Interaction, crt_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("crt_times", HOFFSET(Interaction, crt_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
+    ctype.insertMember("crt_scores", HOFFSET(Interaction, crt_scores_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     
     H5::StrType topology_strType(H5::PredType::C_S1, H5T_VARIABLE);
     topology_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("topology", HOFFSET(Interaction, topology), topology_strType);
     
+    ctype.insertMember("size", HOFFSET(Interaction, size), H5::PredType::STD_I64LE);
+    ctype.insertMember("depositions_sum", HOFFSET(Interaction, depositions_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_q_sum", HOFFSET(Interaction, depositions_q_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("best_match_id", HOFFSET(Interaction, best_match_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("best_match_overlap", HOFFSET(Interaction, best_match_overlap), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("module_ids", HOFFSET(Interaction, module_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
   
     return ctype;
   }
@@ -191,84 +201,99 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(Particle));
   
-    ctype.insertMember("id", HOFFSET(Particle, id), H5::PredType::STD_I64LE);
-    ctype.insertMember("index", HOFFSET(Particle, index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("orig_index", HOFFSET(Particle, orig_index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("size", HOFFSET(Particle, size), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_sum", HOFFSET(Particle, depositions_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("module_ids", HOFFSET(Particle, module_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("is_contained", HOFFSET(Particle, is_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_time_contained", HOFFSET(Particle, is_time_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_matched", HOFFSET(Particle, is_matched), H5::PredType::STD_U8LE);
-    ctype.insertMember("match_ids", HOFFSET(Particle, match_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("match_overlaps", HOFFSET(Particle, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("is_cathode_crosser", HOFFSET(Particle, is_cathode_crosser), H5::PredType::STD_U8LE);
-    ctype.insertMember("cathode_offset", HOFFSET(Particle, cathode_offset), H5::PredType::IEEE_F64LE);
     ctype.insertMember("is_truth", HOFFSET(Particle, is_truth), H5::PredType::STD_U8LE);
     
     H5::StrType units_strType(H5::PredType::C_S1, H5T_VARIABLE);
     units_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("units", HOFFSET(Particle, units), units_strType);
     
-    ctype.insertMember("fragment_ids", HOFFSET(Particle, fragment_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
-    ctype.insertMember("num_fragments", HOFFSET(Particle, num_fragments), H5::PredType::STD_I64LE);
+    ctype.insertMember("id", HOFFSET(Particle, id), H5::PredType::STD_I64LE);
+    ctype.insertMember("is_contained", HOFFSET(Particle, is_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_time_contained", HOFFSET(Particle, is_time_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_cathode_crosser", HOFFSET(Particle, is_cathode_crosser), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_matched", HOFFSET(Particle, is_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("cathode_offset", HOFFSET(Particle, cathode_offset), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("index", HOFFSET(Particle, index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("orig_index", HOFFSET(Particle, orig_index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_ids", HOFFSET(Particle, match_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_overlaps", HOFFSET(Particle, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("interaction_id", HOFFSET(Particle, interaction_id), H5::PredType::STD_I64LE);
+    
+    H5::EnumType chi2_pid_enumtype(H5::PredType::STD_I64LE);
+    int64_t chi2_pid_enum_val;
+      chi2_pid_enum_val = 1; chi2_pid_enumtype.insert("ELECTRON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 5; chi2_pid_enumtype.insert("KAON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 2; chi2_pid_enumtype.insert("MUON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 0; chi2_pid_enumtype.insert("PHOTON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 3; chi2_pid_enumtype.insert("PION", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 4; chi2_pid_enumtype.insert("PROTON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = -1; chi2_pid_enumtype.insert("UNKNOWN", &chi2_pid_enum_val);
+    ctype.insertMember("chi2_pid", HOFFSET(Particle, chi2_pid), chi2_pid_enumtype);
+    
+    ctype.insertMember("is_primary", HOFFSET(Particle, is_primary), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_crt_matched", HOFFSET(Particle, is_crt_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_valid", HOFFSET(Particle, is_valid), H5::PredType::STD_U8LE);
+    ctype.insertMember("length", HOFFSET(Particle, length), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("calo_ke", HOFFSET(Particle, calo_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("csda_ke", HOFFSET(Particle, csda_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("mcs_ke", HOFFSET(Particle, mcs_ke), H5::PredType::IEEE_F64LE);
     
     H5::EnumType shape_enumtype(H5::PredType::STD_I64LE);
     int64_t shape_enum_val;
-      shape_enum_val = 3; shape_enumtype.insert("Delta", &shape_enum_val);
-      shape_enum_val = 5; shape_enumtype.insert("Ghost", &shape_enum_val);
-      shape_enum_val = 4; shape_enumtype.insert("LE", &shape_enum_val);
-      shape_enum_val = 2; shape_enumtype.insert("Michel", &shape_enum_val);
-      shape_enum_val = 0; shape_enumtype.insert("Shower", &shape_enum_val);
-      shape_enum_val = 1; shape_enumtype.insert("Track", &shape_enum_val);
-      shape_enum_val = 6; shape_enumtype.insert("Unknown", &shape_enum_val);
+      shape_enum_val = 3; shape_enumtype.insert("DELTA", &shape_enum_val);
+      shape_enum_val = 5; shape_enumtype.insert("GHOST", &shape_enum_val);
+      shape_enum_val = 6; shape_enumtype.insert("LARCV_UNKNOWN", &shape_enum_val);
+      shape_enum_val = 4; shape_enumtype.insert("LOWE", &shape_enum_val);
+      shape_enum_val = 2; shape_enumtype.insert("MICHEL", &shape_enum_val);
+      shape_enum_val = 0; shape_enumtype.insert("SHOWER", &shape_enum_val);
+      shape_enum_val = 1; shape_enumtype.insert("TRACK", &shape_enum_val);
+      shape_enum_val = -1; shape_enumtype.insert("UNKNOWN", &shape_enum_val);
     ctype.insertMember("shape", HOFFSET(Particle, shape), shape_enumtype);
     
     
     H5::EnumType pid_enumtype(H5::PredType::STD_I64LE);
     int64_t pid_enum_val;
-      pid_enum_val = 1; pid_enumtype.insert("Electron", &pid_enum_val);
-      pid_enum_val = 5; pid_enumtype.insert("Kaon", &pid_enum_val);
-      pid_enum_val = 2; pid_enumtype.insert("Muon", &pid_enum_val);
-      pid_enum_val = 0; pid_enumtype.insert("Photon", &pid_enum_val);
-      pid_enum_val = 3; pid_enumtype.insert("Pion", &pid_enum_val);
-      pid_enum_val = 4; pid_enumtype.insert("Proton", &pid_enum_val);
-      pid_enum_val = -1; pid_enumtype.insert("Unknown", &pid_enum_val);
+      pid_enum_val = 1; pid_enumtype.insert("ELECTRON", &pid_enum_val);
+      pid_enum_val = 5; pid_enumtype.insert("KAON", &pid_enum_val);
+      pid_enum_val = 2; pid_enumtype.insert("MUON", &pid_enum_val);
+      pid_enum_val = 0; pid_enumtype.insert("PHOTON", &pid_enum_val);
+      pid_enum_val = 3; pid_enumtype.insert("PION", &pid_enum_val);
+      pid_enum_val = 4; pid_enumtype.insert("PROTON", &pid_enum_val);
+      pid_enum_val = -1; pid_enumtype.insert("UNKNOWN", &pid_enum_val);
     ctype.insertMember("pid", HOFFSET(Particle, pid), pid_enumtype);
     
-    ctype.insertMember("chi2_pid", HOFFSET(Particle, chi2_pid), H5::PredType::STD_I64LE);
-    ctype.insertMember("chi2_per_pid", HOFFSET(Particle, chi2_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("pdg_code", HOFFSET(Particle, pdg_code), H5::PredType::STD_I64LE);
-    ctype.insertMember("is_primary", HOFFSET(Particle, is_primary), H5::PredType::STD_U8LE);
-    ctype.insertMember("length", HOFFSET(Particle, length), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("fragment_ids", HOFFSET(Particle, fragment_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("start_point", HOFFSET(Particle, start_point), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_point", HOFFSET(Particle, end_point), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("start_dir", HOFFSET(Particle, start_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("end_dir", HOFFSET(Particle, end_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("mass", HOFFSET(Particle, mass), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("ke", HOFFSET(Particle, ke), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("calo_ke", HOFFSET(Particle, calo_ke), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("csda_ke", HOFFSET(Particle, csda_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("chi2_per_pid", HOFFSET(Particle, chi2_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
     ctype.insertMember("csda_ke_per_pid", HOFFSET(Particle, csda_ke_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("mcs_ke", HOFFSET(Particle, mcs_ke), H5::PredType::IEEE_F64LE);
     ctype.insertMember("mcs_ke_per_pid", HOFFSET(Particle, mcs_ke_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("momentum", HOFFSET(Particle, momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("p", HOFFSET(Particle, p), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("is_crt_matched", HOFFSET(Particle, is_crt_matched), H5::PredType::STD_U8LE);
     ctype.insertMember("crt_ids", HOFFSET(Particle, crt_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("crt_times", HOFFSET(Particle, crt_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("crt_scores", HOFFSET(Particle, crt_scores_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("is_valid", HOFFSET(Particle, is_valid), H5::PredType::STD_U8LE);
-    ctype.insertMember("pid_scores", HOFFSET(Particle, pid_scores), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("primary_scores", HOFFSET(Particle, primary_scores), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{2}[0]));
-    ctype.insertMember("ppn_ids", HOFFSET(Particle, ppn_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
-    ctype.insertMember("vertex_distance", HOFFSET(Particle, vertex_distance), H5::PredType::IEEE_F64LE);
     ctype.insertMember("start_dedx", HOFFSET(Particle, start_dedx), H5::PredType::IEEE_F64LE);
     ctype.insertMember("end_dedx", HOFFSET(Particle, end_dedx), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("vertex_distance", HOFFSET(Particle, vertex_distance), H5::PredType::IEEE_F64LE);
     ctype.insertMember("start_straightness", HOFFSET(Particle, start_straightness), H5::PredType::IEEE_F64LE);
     ctype.insertMember("directional_spread", HOFFSET(Particle, directional_spread), H5::PredType::IEEE_F64LE);
     ctype.insertMember("axial_spread", HOFFSET(Particle, axial_spread), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("start_dir", HOFFSET(Particle, start_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("end_dir", HOFFSET(Particle, end_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("pid_scores", HOFFSET(Particle, pid_scores), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
+    ctype.insertMember("primary_scores", HOFFSET(Particle, primary_scores), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{2}[0]));
+    ctype.insertMember("ppn_ids", HOFFSET(Particle, ppn_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("pdg_code", HOFFSET(Particle, pdg_code), H5::PredType::STD_I64LE);
+    ctype.insertMember("mass", HOFFSET(Particle, mass), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("ke", HOFFSET(Particle, ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("momentum", HOFFSET(Particle, momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("p", HOFFSET(Particle, p), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("num_fragments", HOFFSET(Particle, num_fragments), H5::PredType::STD_I64LE);
+    ctype.insertMember("size", HOFFSET(Particle, size), H5::PredType::STD_I64LE);
+    ctype.insertMember("depositions_sum", HOFFSET(Particle, depositions_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_q_sum", HOFFSET(Particle, depositions_q_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("best_match_id", HOFFSET(Particle, best_match_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("best_match_overlap", HOFFSET(Particle, best_match_overlap), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("module_ids", HOFFSET(Particle, module_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
   
     return ctype;
   }
@@ -279,221 +304,77 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(TrueInteraction));
   
-    ctype.insertMember("id", HOFFSET(TrueInteraction, id), H5::PredType::STD_I64LE);
-    ctype.insertMember("index", HOFFSET(TrueInteraction, index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("orig_index", HOFFSET(TrueInteraction, orig_index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("size", HOFFSET(TrueInteraction, size), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_sum", HOFFSET(TrueInteraction, depositions_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("module_ids", HOFFSET(TrueInteraction, module_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("is_contained", HOFFSET(TrueInteraction, is_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_time_contained", HOFFSET(TrueInteraction, is_time_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_matched", HOFFSET(TrueInteraction, is_matched), H5::PredType::STD_U8LE);
-    ctype.insertMember("match_ids", HOFFSET(TrueInteraction, match_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("match_overlaps", HOFFSET(TrueInteraction, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("is_cathode_crosser", HOFFSET(TrueInteraction, is_cathode_crosser), H5::PredType::STD_U8LE);
-    ctype.insertMember("cathode_offset", HOFFSET(TrueInteraction, cathode_offset), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("orig_id", HOFFSET(TrueInteraction, orig_id), H5::PredType::STD_I64LE);
     ctype.insertMember("is_truth", HOFFSET(TrueInteraction, is_truth), H5::PredType::STD_U8LE);
+    ctype.insertMember("index_adapt", HOFFSET(TrueInteraction, index_adapt_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("index_g4", HOFFSET(TrueInteraction, index_g4_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     
     H5::StrType units_strType(H5::PredType::C_S1, H5T_VARIABLE);
     units_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("units", HOFFSET(TrueInteraction, units), units_strType);
     
-    ctype.insertMember("orig_id", HOFFSET(TrueInteraction, orig_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_q_sum", HOFFSET(TrueInteraction, depositions_q_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("index_adapt", HOFFSET(TrueInteraction, index_adapt_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("size_adapt", HOFFSET(TrueInteraction, size_adapt), H5::PredType::STD_I64LE);
-    ctype.insertMember("size_g4", HOFFSET(TrueInteraction, size_g4), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_adapt_sum", HOFFSET(TrueInteraction, depositions_adapt_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("depositions_adapt_q_sum", HOFFSET(TrueInteraction, depositions_adapt_q_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("index_g4", HOFFSET(TrueInteraction, index_g4_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("depositions_g4_sum", HOFFSET(TrueInteraction, depositions_g4_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("particle_ids", HOFFSET(TrueInteraction, particle_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("primary_particle_ids", HOFFSET(TrueInteraction, primary_particle_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("num_particles", HOFFSET(TrueInteraction, num_particles), H5::PredType::STD_I64LE);
-    ctype.insertMember("num_primary_particles", HOFFSET(TrueInteraction, num_primary_particles), H5::PredType::STD_I64LE);
-    ctype.insertMember("particle_counts", HOFFSET(TrueInteraction, particle_counts), H5::ArrayType(H5::PredType::STD_I64LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("primary_particle_counts", HOFFSET(TrueInteraction, primary_particle_counts), H5::ArrayType(H5::PredType::STD_I64LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("vertex", HOFFSET(TrueInteraction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("id", HOFFSET(TrueInteraction, id), H5::PredType::STD_I64LE);
+    ctype.insertMember("is_contained", HOFFSET(TrueInteraction, is_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_time_contained", HOFFSET(TrueInteraction, is_time_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_cathode_crosser", HOFFSET(TrueInteraction, is_cathode_crosser), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_matched", HOFFSET(TrueInteraction, is_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("cathode_offset", HOFFSET(TrueInteraction, cathode_offset), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("index", HOFFSET(TrueInteraction, index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("orig_index", HOFFSET(TrueInteraction, orig_index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_ids", HOFFSET(TrueInteraction, match_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_overlaps", HOFFSET(TrueInteraction, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("is_fiducial", HOFFSET(TrueInteraction, is_fiducial), H5::PredType::STD_U8LE);
     ctype.insertMember("is_flash_matched", HOFFSET(TrueInteraction, is_flash_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("flash_total_pe", HOFFSET(TrueInteraction, flash_total_pe), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("flash_hypo_pe", HOFFSET(TrueInteraction, flash_hypo_pe), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("particle_ids", HOFFSET(TrueInteraction, particle_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("vertex", HOFFSET(TrueInteraction, vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("flash_ids", HOFFSET(TrueInteraction, flash_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("flash_volume_ids", HOFFSET(TrueInteraction, flash_volume_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("flash_times", HOFFSET(TrueInteraction, flash_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("flash_scores", HOFFSET(TrueInteraction, flash_scores_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("flash_total_pe", HOFFSET(TrueInteraction, flash_total_pe), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("flash_hypo_pe", HOFFSET(TrueInteraction, flash_hypo_pe), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("is_crt_matched", HOFFSET(TrueInteraction, is_crt_matched), H5::PredType::STD_U8LE);
-    ctype.insertMember("crt_ids", HOFFSET(TrueInteraction, crt_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
-    ctype.insertMember("crt_times", HOFFSET(TrueInteraction, crt_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    
-    H5::StrType topology_strType(H5::PredType::C_S1, H5T_VARIABLE);
-    topology_strType.setCset(H5T_CSET_UTF8);
-    ctype.insertMember("topology", HOFFSET(TrueInteraction, topology), topology_strType);
-    
+    ctype.insertMember("flash_hypothesis_ids", HOFFSET(TrueInteraction, flash_hypothesis_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("interaction_id", HOFFSET(TrueInteraction, interaction_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("mct_index", HOFFSET(TrueInteraction, mct_index), H5::PredType::STD_I64LE);
-    ctype.insertMember("track_id", HOFFSET(TrueInteraction, track_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("lepton_track_id", HOFFSET(TrueInteraction, lepton_track_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("pdg_code", HOFFSET(TrueInteraction, pdg_code), H5::PredType::STD_I64LE);
-    ctype.insertMember("lepton_pdg_code", HOFFSET(TrueInteraction, lepton_pdg_code), H5::PredType::STD_I64LE);
     
     H5::EnumType current_type_enumtype(H5::PredType::STD_I64LE);
     int64_t current_type_enum_val;
       current_type_enum_val = 0; current_type_enumtype.insert("CC", &current_type_enum_val);
       current_type_enum_val = 1; current_type_enumtype.insert("NC", &current_type_enum_val);
-      current_type_enum_val = -1; current_type_enumtype.insert("UnknownCurrent", &current_type_enum_val);
+      current_type_enum_val = -1; current_type_enumtype.insert("UNKNOWN", &current_type_enum_val);
     ctype.insertMember("current_type", HOFFSET(TrueInteraction, current_type), current_type_enumtype);
     
     
-    H5::EnumType interaction_mode_enumtype(H5::PredType::STD_I64LE);
-    int64_t interaction_mode_enum_val;
-      interaction_mode_enum_val = 9; interaction_mode_enumtype.insert("AMNuGamma", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1097; interaction_mode_enumtype.insert("CCCOH", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1091; interaction_mode_enumtype.insert("CCDIS", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1001; interaction_mode_enumtype.insert("CCQE", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1095; interaction_mode_enumtype.insert("CCQEHyperon", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 3; interaction_mode_enumtype.insert("Coh", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 4; interaction_mode_enumtype.insert("CohElastic", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 2; interaction_mode_enumtype.insert("DIS", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 11; interaction_mode_enumtype.insert("Diffractive", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 12; interaction_mode_enumtype.insert("EM", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 5; interaction_mode_enumtype.insert("ElectronScattering", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 8; interaction_mode_enumtype.insert("GlashowResonance", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 6; interaction_mode_enumtype.insert("IMDAnnihilation", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 7; interaction_mode_enumtype.insert("InverseBetaDecay", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1099; interaction_mode_enumtype.insert("InverseMuDecay", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 10; interaction_mode_enumtype.insert("MEC", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1100; interaction_mode_enumtype.insert("MEC2p2h", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1096; interaction_mode_enumtype.insert("NCCOH", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1092; interaction_mode_enumtype.insert("NCDIS", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1002; interaction_mode_enumtype.insert("NCQE", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1098; interaction_mode_enumtype.insert("NuElectronElastic", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1000; interaction_mode_enumtype.insert("NuanceOffset", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 0; interaction_mode_enumtype.insert("QE", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1; interaction_mode_enumtype.insert("Res", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1028; interaction_mode_enumtype.insert("ResCCNuBarDelta0PiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1032; interaction_mode_enumtype.insert("ResCCNuBarDeltaMinusPiPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1076; interaction_mode_enumtype.insert("ResCCNuBarKaon0Lambda0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1070; interaction_mode_enumtype.insert("ResCCNuBarNeutronEta", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1086; interaction_mode_enumtype.insert("ResCCNuBarNeutronPi0Pi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1010; interaction_mode_enumtype.insert("ResCCNuBarNeutronPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1085; interaction_mode_enumtype.insert("ResCCNuBarNeutronPiPlusPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1048; interaction_mode_enumtype.insert("ResCCNuBarNeutronRho0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1046; interaction_mode_enumtype.insert("ResCCNuBarNeutronRhoMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1011; interaction_mode_enumtype.insert("ResCCNuBarProtonPi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1090; interaction_mode_enumtype.insert("ResCCNuBarProtonPi0Pi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1012; interaction_mode_enumtype.insert("ResCCNuBarProtonPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1062; interaction_mode_enumtype.insert("ResCCNuBarSigma0Kaon0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1060; interaction_mode_enumtype.insert("ResCCNuBarSigmaMinusKaon0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1021; interaction_mode_enumtype.insert("ResCCNuDelta2PlusPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1017; interaction_mode_enumtype.insert("ResCCNuDeltaPlusPiPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1073; interaction_mode_enumtype.insert("ResCCNuKaonPlusLambda0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1004; interaction_mode_enumtype.insert("ResCCNuNeutronPi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1005; interaction_mode_enumtype.insert("ResCCNuNeutronPiPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1041; interaction_mode_enumtype.insert("ResCCNuNeutronRhoPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1067; interaction_mode_enumtype.insert("ResCCNuProtonEta", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1080; interaction_mode_enumtype.insert("ResCCNuProtonPi0Pi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1003; interaction_mode_enumtype.insert("ResCCNuProtonPiPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1079; interaction_mode_enumtype.insert("ResCCNuProtonPiPlusPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1039; interaction_mode_enumtype.insert("ResCCNuProtonRhoPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1055; interaction_mode_enumtype.insert("ResCCNuSigmaPlusKaon0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1053; interaction_mode_enumtype.insert("ResCCNuSigmaPlusKaonPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1015; interaction_mode_enumtype.insert("ResNCNuBarNeutronPi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1016; interaction_mode_enumtype.insert("ResNCNuBarNeutronPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1013; interaction_mode_enumtype.insert("ResNCNuBarProtonPi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1014; interaction_mode_enumtype.insert("ResNCNuBarProtonPiPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1008; interaction_mode_enumtype.insert("ResNCNuNeutronPi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1009; interaction_mode_enumtype.insert("ResNCNuNeutronPiMinus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1006; interaction_mode_enumtype.insert("ResNCNuProtonPi0", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1007; interaction_mode_enumtype.insert("ResNCNuProtonPiPlus", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1093; interaction_mode_enumtype.insert("UnUsed1", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 1094; interaction_mode_enumtype.insert("UnUsed2", &interaction_mode_enum_val);
-      interaction_mode_enum_val = -1; interaction_mode_enumtype.insert("UnknownInteraction", &interaction_mode_enum_val);
-      interaction_mode_enum_val = 13; interaction_mode_enumtype.insert("WeakMix", &interaction_mode_enum_val);
-    ctype.insertMember("interaction_mode", HOFFSET(TrueInteraction, interaction_mode), interaction_mode_enumtype);
+    H5::EnumType interaction_scheme_enumtype(H5::PredType::STD_I64LE);
+    int64_t interaction_scheme_enum_val;
+      interaction_scheme_enum_val = 1; interaction_scheme_enumtype.insert("GENIE", &interaction_scheme_enum_val);
+      interaction_scheme_enum_val = 2; interaction_scheme_enumtype.insert("GIBUU", &interaction_scheme_enum_val);
+      interaction_scheme_enum_val = 0; interaction_scheme_enumtype.insert("LARSOFT", &interaction_scheme_enum_val);
+      interaction_scheme_enum_val = 4; interaction_scheme_enumtype.insert("NEUT", &interaction_scheme_enum_val);
+      interaction_scheme_enum_val = 3; interaction_scheme_enumtype.insert("NUWRO", &interaction_scheme_enum_val);
+      interaction_scheme_enum_val = -1; interaction_scheme_enumtype.insert("UNKNOWN", &interaction_scheme_enum_val);
+    ctype.insertMember("interaction_scheme", HOFFSET(TrueInteraction, interaction_scheme), interaction_scheme_enumtype);
     
-    
-    H5::EnumType interaction_type_enumtype(H5::PredType::STD_I64LE);
-    int64_t interaction_type_enum_val;
-      interaction_type_enum_val = 9; interaction_type_enumtype.insert("AMNuGamma", &interaction_type_enum_val);
-      interaction_type_enum_val = 1097; interaction_type_enumtype.insert("CCCOH", &interaction_type_enum_val);
-      interaction_type_enum_val = 1091; interaction_type_enumtype.insert("CCDIS", &interaction_type_enum_val);
-      interaction_type_enum_val = 1001; interaction_type_enumtype.insert("CCQE", &interaction_type_enum_val);
-      interaction_type_enum_val = 1095; interaction_type_enumtype.insert("CCQEHyperon", &interaction_type_enum_val);
-      interaction_type_enum_val = 3; interaction_type_enumtype.insert("Coh", &interaction_type_enum_val);
-      interaction_type_enum_val = 4; interaction_type_enumtype.insert("CohElastic", &interaction_type_enum_val);
-      interaction_type_enum_val = 2; interaction_type_enumtype.insert("DIS", &interaction_type_enum_val);
-      interaction_type_enum_val = 11; interaction_type_enumtype.insert("Diffractive", &interaction_type_enum_val);
-      interaction_type_enum_val = 12; interaction_type_enumtype.insert("EM", &interaction_type_enum_val);
-      interaction_type_enum_val = 5; interaction_type_enumtype.insert("ElectronScattering", &interaction_type_enum_val);
-      interaction_type_enum_val = 8; interaction_type_enumtype.insert("GlashowResonance", &interaction_type_enum_val);
-      interaction_type_enum_val = 6; interaction_type_enumtype.insert("IMDAnnihilation", &interaction_type_enum_val);
-      interaction_type_enum_val = 7; interaction_type_enumtype.insert("InverseBetaDecay", &interaction_type_enum_val);
-      interaction_type_enum_val = 1099; interaction_type_enumtype.insert("InverseMuDecay", &interaction_type_enum_val);
-      interaction_type_enum_val = 10; interaction_type_enumtype.insert("MEC", &interaction_type_enum_val);
-      interaction_type_enum_val = 1100; interaction_type_enumtype.insert("MEC2p2h", &interaction_type_enum_val);
-      interaction_type_enum_val = 1096; interaction_type_enumtype.insert("NCCOH", &interaction_type_enum_val);
-      interaction_type_enum_val = 1092; interaction_type_enumtype.insert("NCDIS", &interaction_type_enum_val);
-      interaction_type_enum_val = 1002; interaction_type_enumtype.insert("NCQE", &interaction_type_enum_val);
-      interaction_type_enum_val = 1098; interaction_type_enumtype.insert("NuElectronElastic", &interaction_type_enum_val);
-      interaction_type_enum_val = 1000; interaction_type_enumtype.insert("NuanceOffset", &interaction_type_enum_val);
-      interaction_type_enum_val = 0; interaction_type_enumtype.insert("QE", &interaction_type_enum_val);
-      interaction_type_enum_val = 1; interaction_type_enumtype.insert("Res", &interaction_type_enum_val);
-      interaction_type_enum_val = 1028; interaction_type_enumtype.insert("ResCCNuBarDelta0PiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1032; interaction_type_enumtype.insert("ResCCNuBarDeltaMinusPiPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1076; interaction_type_enumtype.insert("ResCCNuBarKaon0Lambda0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1070; interaction_type_enumtype.insert("ResCCNuBarNeutronEta", &interaction_type_enum_val);
-      interaction_type_enum_val = 1086; interaction_type_enumtype.insert("ResCCNuBarNeutronPi0Pi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1010; interaction_type_enumtype.insert("ResCCNuBarNeutronPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1085; interaction_type_enumtype.insert("ResCCNuBarNeutronPiPlusPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1048; interaction_type_enumtype.insert("ResCCNuBarNeutronRho0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1046; interaction_type_enumtype.insert("ResCCNuBarNeutronRhoMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1011; interaction_type_enumtype.insert("ResCCNuBarProtonPi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1090; interaction_type_enumtype.insert("ResCCNuBarProtonPi0Pi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1012; interaction_type_enumtype.insert("ResCCNuBarProtonPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1062; interaction_type_enumtype.insert("ResCCNuBarSigma0Kaon0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1060; interaction_type_enumtype.insert("ResCCNuBarSigmaMinusKaon0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1021; interaction_type_enumtype.insert("ResCCNuDelta2PlusPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1017; interaction_type_enumtype.insert("ResCCNuDeltaPlusPiPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1073; interaction_type_enumtype.insert("ResCCNuKaonPlusLambda0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1004; interaction_type_enumtype.insert("ResCCNuNeutronPi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1005; interaction_type_enumtype.insert("ResCCNuNeutronPiPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1041; interaction_type_enumtype.insert("ResCCNuNeutronRhoPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1067; interaction_type_enumtype.insert("ResCCNuProtonEta", &interaction_type_enum_val);
-      interaction_type_enum_val = 1080; interaction_type_enumtype.insert("ResCCNuProtonPi0Pi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1003; interaction_type_enumtype.insert("ResCCNuProtonPiPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1079; interaction_type_enumtype.insert("ResCCNuProtonPiPlusPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1039; interaction_type_enumtype.insert("ResCCNuProtonRhoPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1055; interaction_type_enumtype.insert("ResCCNuSigmaPlusKaon0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1053; interaction_type_enumtype.insert("ResCCNuSigmaPlusKaonPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1015; interaction_type_enumtype.insert("ResNCNuBarNeutronPi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1016; interaction_type_enumtype.insert("ResNCNuBarNeutronPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1013; interaction_type_enumtype.insert("ResNCNuBarProtonPi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1014; interaction_type_enumtype.insert("ResNCNuBarProtonPiPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1008; interaction_type_enumtype.insert("ResNCNuNeutronPi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1009; interaction_type_enumtype.insert("ResNCNuNeutronPiMinus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1006; interaction_type_enumtype.insert("ResNCNuProtonPi0", &interaction_type_enum_val);
-      interaction_type_enum_val = 1007; interaction_type_enumtype.insert("ResNCNuProtonPiPlus", &interaction_type_enum_val);
-      interaction_type_enum_val = 1093; interaction_type_enumtype.insert("UnUsed1", &interaction_type_enum_val);
-      interaction_type_enum_val = 1094; interaction_type_enumtype.insert("UnUsed2", &interaction_type_enum_val);
-      interaction_type_enum_val = -1; interaction_type_enumtype.insert("UnknownInteraction", &interaction_type_enum_val);
-      interaction_type_enum_val = 13; interaction_type_enumtype.insert("WeakMix", &interaction_type_enum_val);
-    ctype.insertMember("interaction_type", HOFFSET(TrueInteraction, interaction_type), interaction_type_enumtype);
-    
+    ctype.insertMember("interaction_mode", HOFFSET(TrueInteraction, interaction_mode), H5::PredType::STD_I64LE);
+    ctype.insertMember("interaction_type", HOFFSET(TrueInteraction, interaction_type), H5::PredType::STD_I64LE);
+    ctype.insertMember("mct_index", HOFFSET(TrueInteraction, mct_index), H5::PredType::STD_I64LE);
+    ctype.insertMember("track_id", HOFFSET(TrueInteraction, track_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("lepton_track_id", HOFFSET(TrueInteraction, lepton_track_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("pdg_code", HOFFSET(TrueInteraction, pdg_code), H5::PredType::STD_I64LE);
+    ctype.insertMember("lepton_pdg_code", HOFFSET(TrueInteraction, lepton_pdg_code), H5::PredType::STD_I64LE);
     ctype.insertMember("target", HOFFSET(TrueInteraction, target), H5::PredType::STD_I64LE);
     ctype.insertMember("nucleon", HOFFSET(TrueInteraction, nucleon), H5::PredType::STD_I64LE);
     ctype.insertMember("quark", HOFFSET(TrueInteraction, quark), H5::PredType::STD_I64LE);
     ctype.insertMember("energy_init", HOFFSET(TrueInteraction, energy_init), H5::PredType::IEEE_F64LE);
     ctype.insertMember("hadronic_invariant_mass", HOFFSET(TrueInteraction, hadronic_invariant_mass), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("bjorken_x", HOFFSET(TrueInteraction, bjorken_x), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("inelasticity", HOFFSET(TrueInteraction, inelasticity), H5::PredType::IEEE_F64LE);
     ctype.insertMember("momentum_transfer", HOFFSET(TrueInteraction, momentum_transfer), H5::PredType::IEEE_F64LE);
     ctype.insertMember("momentum_transfer_mag", HOFFSET(TrueInteraction, momentum_transfer_mag), H5::PredType::IEEE_F64LE);
     ctype.insertMember("energy_transfer", HOFFSET(TrueInteraction, energy_transfer), H5::PredType::IEEE_F64LE);
     ctype.insertMember("lepton_p", HOFFSET(TrueInteraction, lepton_p), H5::PredType::IEEE_F64LE);
     ctype.insertMember("distance_travel", HOFFSET(TrueInteraction, distance_travel), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("theta", HOFFSET(TrueInteraction, theta), H5::PredType::IEEE_F64LE);
     ctype.insertMember("t", HOFFSET(TrueInteraction, t), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("theta", HOFFSET(TrueInteraction, theta), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("bjorken_x", HOFFSET(TrueInteraction, bjorken_x), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("inelasticity", HOFFSET(TrueInteraction, inelasticity), H5::PredType::IEEE_F64LE);
     
     H5::StrType creation_process_strType(H5::PredType::C_S1, H5T_VARIABLE);
     creation_process_strType.setCset(H5T_CSET_UTF8);
@@ -503,6 +384,34 @@ namespace cafmaker::types::dlp
     ctype.insertMember("momentum", HOFFSET(TrueInteraction, momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("nu_id", HOFFSET(TrueInteraction, nu_id), H5::PredType::STD_I64LE);
     ctype.insertMember("reco_vertex", HOFFSET(TrueInteraction, reco_vertex), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("reco_dir", HOFFSET(TrueInteraction, reco_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("time", HOFFSET(TrueInteraction, time), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("dir", HOFFSET(TrueInteraction, dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("primary_particle_ids", HOFFSET(TrueInteraction, primary_particle_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("num_particles", HOFFSET(TrueInteraction, num_particles), H5::PredType::STD_I64LE);
+    ctype.insertMember("num_primary_particles", HOFFSET(TrueInteraction, num_primary_particles), H5::PredType::STD_I64LE);
+    ctype.insertMember("particle_counts", HOFFSET(TrueInteraction, particle_counts), H5::ArrayType(H5::PredType::STD_I32LE, 1, &std::array<hsize_t, 1>{6}[0]));
+    ctype.insertMember("primary_particle_counts", HOFFSET(TrueInteraction, primary_particle_counts), H5::ArrayType(H5::PredType::STD_I32LE, 1, &std::array<hsize_t, 1>{6}[0]));
+    ctype.insertMember("is_crt_matched", HOFFSET(TrueInteraction, is_crt_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("crt_ids", HOFFSET(TrueInteraction, crt_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("crt_times", HOFFSET(TrueInteraction, crt_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
+    ctype.insertMember("crt_scores", HOFFSET(TrueInteraction, crt_scores_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
+    
+    H5::StrType topology_strType(H5::PredType::C_S1, H5T_VARIABLE);
+    topology_strType.setCset(H5T_CSET_UTF8);
+    ctype.insertMember("topology", HOFFSET(TrueInteraction, topology), topology_strType);
+    
+    ctype.insertMember("size", HOFFSET(TrueInteraction, size), H5::PredType::STD_I64LE);
+    ctype.insertMember("depositions_sum", HOFFSET(TrueInteraction, depositions_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_q_sum", HOFFSET(TrueInteraction, depositions_q_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("best_match_id", HOFFSET(TrueInteraction, best_match_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("best_match_overlap", HOFFSET(TrueInteraction, best_match_overlap), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("module_ids", HOFFSET(TrueInteraction, module_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("size_adapt", HOFFSET(TrueInteraction, size_adapt), H5::PredType::STD_I64LE);
+    ctype.insertMember("size_g4", HOFFSET(TrueInteraction, size_g4), H5::PredType::STD_I64LE);
+    ctype.insertMember("depositions_adapt_sum", HOFFSET(TrueInteraction, depositions_adapt_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_adapt_q_sum", HOFFSET(TrueInteraction, depositions_adapt_q_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_g4_sum", HOFFSET(TrueInteraction, depositions_g4_sum), H5::PredType::IEEE_F64LE);
   
     return ctype;
   }
@@ -513,98 +422,100 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(TrueParticle));
   
-    ctype.insertMember("id", HOFFSET(TrueParticle, id), H5::PredType::STD_I64LE);
-    ctype.insertMember("index", HOFFSET(TrueParticle, index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("orig_index", HOFFSET(TrueParticle, orig_index_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("size", HOFFSET(TrueParticle, size), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_sum", HOFFSET(TrueParticle, depositions_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("module_ids", HOFFSET(TrueParticle, module_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("is_contained", HOFFSET(TrueParticle, is_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_time_contained", HOFFSET(TrueParticle, is_time_contained), H5::PredType::STD_U8LE);
-    ctype.insertMember("is_matched", HOFFSET(TrueParticle, is_matched), H5::PredType::STD_U8LE);
-    ctype.insertMember("match_ids", HOFFSET(TrueParticle, match_ids_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("match_overlaps", HOFFSET(TrueParticle, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("is_cathode_crosser", HOFFSET(TrueParticle, is_cathode_crosser), H5::PredType::STD_U8LE);
-    ctype.insertMember("cathode_offset", HOFFSET(TrueParticle, cathode_offset), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("orig_id", HOFFSET(TrueParticle, orig_id), H5::PredType::STD_I64LE);
     ctype.insertMember("is_truth", HOFFSET(TrueParticle, is_truth), H5::PredType::STD_U8LE);
+    ctype.insertMember("index_adapt", HOFFSET(TrueParticle, index_adapt_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("index_g4", HOFFSET(TrueParticle, index_g4_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     
     H5::StrType units_strType(H5::PredType::C_S1, H5T_VARIABLE);
     units_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("units", HOFFSET(TrueParticle, units), units_strType);
     
-    ctype.insertMember("orig_id", HOFFSET(TrueParticle, orig_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_q_sum", HOFFSET(TrueParticle, depositions_q_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("index_adapt", HOFFSET(TrueParticle, index_adapt_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("size_adapt", HOFFSET(TrueParticle, size_adapt), H5::PredType::STD_I64LE);
-    ctype.insertMember("size_g4", HOFFSET(TrueParticle, size_g4), H5::PredType::STD_I64LE);
-    ctype.insertMember("depositions_adapt_sum", HOFFSET(TrueParticle, depositions_adapt_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("depositions_adapt_q_sum", HOFFSET(TrueParticle, depositions_adapt_q_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("index_g4", HOFFSET(TrueParticle, index_g4_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("depositions_g4_sum", HOFFSET(TrueParticle, depositions_g4_sum), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("fragment_ids", HOFFSET(TrueParticle, fragment_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
-    ctype.insertMember("num_fragments", HOFFSET(TrueParticle, num_fragments), H5::PredType::STD_I64LE);
+    ctype.insertMember("id", HOFFSET(TrueParticle, id), H5::PredType::STD_I64LE);
+    ctype.insertMember("is_contained", HOFFSET(TrueParticle, is_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_time_contained", HOFFSET(TrueParticle, is_time_contained), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_cathode_crosser", HOFFSET(TrueParticle, is_cathode_crosser), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_matched", HOFFSET(TrueParticle, is_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("cathode_offset", HOFFSET(TrueParticle, cathode_offset), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("index", HOFFSET(TrueParticle, index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("orig_index", HOFFSET(TrueParticle, orig_index_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_ids", HOFFSET(TrueParticle, match_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("match_overlaps", HOFFSET(TrueParticle, match_overlaps_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("interaction_id", HOFFSET(TrueParticle, interaction_id), H5::PredType::STD_I64LE);
+    
+    H5::EnumType chi2_pid_enumtype(H5::PredType::STD_I64LE);
+    int64_t chi2_pid_enum_val;
+      chi2_pid_enum_val = 1; chi2_pid_enumtype.insert("ELECTRON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 5; chi2_pid_enumtype.insert("KAON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 2; chi2_pid_enumtype.insert("MUON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 0; chi2_pid_enumtype.insert("PHOTON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 3; chi2_pid_enumtype.insert("PION", &chi2_pid_enum_val);
+      chi2_pid_enum_val = 4; chi2_pid_enumtype.insert("PROTON", &chi2_pid_enum_val);
+      chi2_pid_enum_val = -1; chi2_pid_enumtype.insert("UNKNOWN", &chi2_pid_enum_val);
+    ctype.insertMember("chi2_pid", HOFFSET(TrueParticle, chi2_pid), chi2_pid_enumtype);
+    
+    ctype.insertMember("is_primary", HOFFSET(TrueParticle, is_primary), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_crt_matched", HOFFSET(TrueParticle, is_crt_matched), H5::PredType::STD_U8LE);
+    ctype.insertMember("is_valid", HOFFSET(TrueParticle, is_valid), H5::PredType::STD_U8LE);
+    ctype.insertMember("length", HOFFSET(TrueParticle, length), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("calo_ke", HOFFSET(TrueParticle, calo_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("csda_ke", HOFFSET(TrueParticle, csda_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("mcs_ke", HOFFSET(TrueParticle, mcs_ke), H5::PredType::IEEE_F64LE);
     
     H5::EnumType shape_enumtype(H5::PredType::STD_I64LE);
     int64_t shape_enum_val;
-      shape_enum_val = 3; shape_enumtype.insert("Delta", &shape_enum_val);
-      shape_enum_val = 5; shape_enumtype.insert("Ghost", &shape_enum_val);
-      shape_enum_val = 4; shape_enumtype.insert("LE", &shape_enum_val);
-      shape_enum_val = 2; shape_enumtype.insert("Michel", &shape_enum_val);
-      shape_enum_val = 0; shape_enumtype.insert("Shower", &shape_enum_val);
-      shape_enum_val = 1; shape_enumtype.insert("Track", &shape_enum_val);
-      shape_enum_val = 6; shape_enumtype.insert("Unknown", &shape_enum_val);
+      shape_enum_val = 3; shape_enumtype.insert("DELTA", &shape_enum_val);
+      shape_enum_val = 5; shape_enumtype.insert("GHOST", &shape_enum_val);
+      shape_enum_val = 6; shape_enumtype.insert("LARCV_UNKNOWN", &shape_enum_val);
+      shape_enum_val = 4; shape_enumtype.insert("LOWE", &shape_enum_val);
+      shape_enum_val = 2; shape_enumtype.insert("MICHEL", &shape_enum_val);
+      shape_enum_val = 0; shape_enumtype.insert("SHOWER", &shape_enum_val);
+      shape_enum_val = 1; shape_enumtype.insert("TRACK", &shape_enum_val);
+      shape_enum_val = -1; shape_enumtype.insert("UNKNOWN", &shape_enum_val);
     ctype.insertMember("shape", HOFFSET(TrueParticle, shape), shape_enumtype);
     
     
     H5::EnumType pid_enumtype(H5::PredType::STD_I64LE);
     int64_t pid_enum_val;
-      pid_enum_val = 1; pid_enumtype.insert("Electron", &pid_enum_val);
-      pid_enum_val = 5; pid_enumtype.insert("Kaon", &pid_enum_val);
-      pid_enum_val = 2; pid_enumtype.insert("Muon", &pid_enum_val);
-      pid_enum_val = 0; pid_enumtype.insert("Photon", &pid_enum_val);
-      pid_enum_val = 3; pid_enumtype.insert("Pion", &pid_enum_val);
-      pid_enum_val = 4; pid_enumtype.insert("Proton", &pid_enum_val);
-      pid_enum_val = -1; pid_enumtype.insert("Unknown", &pid_enum_val);
+      pid_enum_val = 1; pid_enumtype.insert("ELECTRON", &pid_enum_val);
+      pid_enum_val = 5; pid_enumtype.insert("KAON", &pid_enum_val);
+      pid_enum_val = 2; pid_enumtype.insert("MUON", &pid_enum_val);
+      pid_enum_val = 0; pid_enumtype.insert("PHOTON", &pid_enum_val);
+      pid_enum_val = 3; pid_enumtype.insert("PION", &pid_enum_val);
+      pid_enum_val = 4; pid_enumtype.insert("PROTON", &pid_enum_val);
+      pid_enum_val = -1; pid_enumtype.insert("UNKNOWN", &pid_enum_val);
     ctype.insertMember("pid", HOFFSET(TrueParticle, pid), pid_enumtype);
     
-    ctype.insertMember("chi2_pid", HOFFSET(TrueParticle, chi2_pid), H5::PredType::STD_I64LE);
-    ctype.insertMember("chi2_per_pid", HOFFSET(TrueParticle, chi2_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("pdg_code", HOFFSET(TrueParticle, pdg_code), H5::PredType::STD_I64LE);
-    ctype.insertMember("is_primary", HOFFSET(TrueParticle, is_primary), H5::PredType::STD_U8LE);
-    ctype.insertMember("length", HOFFSET(TrueParticle, length), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("fragment_ids", HOFFSET(TrueParticle, fragment_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("start_point", HOFFSET(TrueParticle, start_point), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_point", HOFFSET(TrueParticle, end_point), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("start_dir", HOFFSET(TrueParticle, start_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("end_dir", HOFFSET(TrueParticle, end_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("mass", HOFFSET(TrueParticle, mass), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("ke", HOFFSET(TrueParticle, ke), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("calo_ke", HOFFSET(TrueParticle, calo_ke), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("csda_ke", HOFFSET(TrueParticle, csda_ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("chi2_per_pid", HOFFSET(TrueParticle, chi2_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
     ctype.insertMember("csda_ke_per_pid", HOFFSET(TrueParticle, csda_ke_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("mcs_ke", HOFFSET(TrueParticle, mcs_ke), H5::PredType::IEEE_F64LE);
     ctype.insertMember("mcs_ke_per_pid", HOFFSET(TrueParticle, mcs_ke_per_pid), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{6}[0]));
-    ctype.insertMember("momentum", HOFFSET(TrueParticle, momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("p", HOFFSET(TrueParticle, p), H5::PredType::IEEE_F32LE);
-    ctype.insertMember("is_crt_matched", HOFFSET(TrueParticle, is_crt_matched), H5::PredType::STD_U8LE);
     ctype.insertMember("crt_ids", HOFFSET(TrueParticle, crt_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("crt_times", HOFFSET(TrueParticle, crt_times_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
     ctype.insertMember("crt_scores", HOFFSET(TrueParticle, crt_scores_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("is_valid", HOFFSET(TrueParticle, is_valid), H5::PredType::STD_U8LE);
-    ctype.insertMember("mct_index", HOFFSET(TrueParticle, mct_index), H5::PredType::STD_I64LE);
-    ctype.insertMember("mcst_index", HOFFSET(TrueParticle, mcst_index), H5::PredType::STD_I64LE);
+    ctype.insertMember("parent_id", HOFFSET(TrueParticle, parent_id), H5::PredType::STD_I64LE);
     ctype.insertMember("group_id", HOFFSET(TrueParticle, group_id), H5::PredType::STD_I64LE);
     ctype.insertMember("nu_id", HOFFSET(TrueParticle, nu_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("interaction_primary", HOFFSET(TrueParticle, interaction_primary), H5::PredType::STD_I64LE);
+    ctype.insertMember("children_id", HOFFSET(TrueParticle, children_id_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("mct_index", HOFFSET(TrueParticle, mct_index), H5::PredType::STD_I64LE);
+    ctype.insertMember("mcst_index", HOFFSET(TrueParticle, mcst_index), H5::PredType::STD_I64LE);
     ctype.insertMember("group_primary", HOFFSET(TrueParticle, group_primary), H5::PredType::STD_I64LE);
-    ctype.insertMember("parent_id", HOFFSET(TrueParticle, parent_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("children_id", HOFFSET(TrueParticle, children_id_handle), H5::VarLenType(H5::PredType::STD_I64LE));
+    ctype.insertMember("interaction_primary", HOFFSET(TrueParticle, interaction_primary), H5::PredType::STD_I64LE);
     ctype.insertMember("track_id", HOFFSET(TrueParticle, track_id), H5::PredType::STD_I64LE);
     ctype.insertMember("parent_track_id", HOFFSET(TrueParticle, parent_track_id), H5::PredType::STD_I64LE);
     ctype.insertMember("ancestor_track_id", HOFFSET(TrueParticle, ancestor_track_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("pdg_code", HOFFSET(TrueParticle, pdg_code), H5::PredType::STD_I64LE);
     ctype.insertMember("parent_pdg_code", HOFFSET(TrueParticle, parent_pdg_code), H5::PredType::STD_I64LE);
     ctype.insertMember("ancestor_pdg_code", HOFFSET(TrueParticle, ancestor_pdg_code), H5::PredType::STD_I64LE);
     ctype.insertMember("num_voxels", HOFFSET(TrueParticle, num_voxels), H5::PredType::STD_I64LE);
+    ctype.insertMember("t", HOFFSET(TrueParticle, t), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("end_t", HOFFSET(TrueParticle, end_t), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("first_step_t", HOFFSET(TrueParticle, first_step_t), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("last_step_t", HOFFSET(TrueParticle, last_step_t), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("parent_t", HOFFSET(TrueParticle, parent_t), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("ancestor_t", HOFFSET(TrueParticle, ancestor_t), H5::PredType::IEEE_F64LE);
     ctype.insertMember("energy_init", HOFFSET(TrueParticle, energy_init), H5::PredType::IEEE_F64LE);
     ctype.insertMember("energy_deposit", HOFFSET(TrueParticle, energy_deposit), H5::PredType::IEEE_F64LE);
     ctype.insertMember("distance_travel", HOFFSET(TrueParticle, distance_travel), H5::PredType::IEEE_F64LE);
@@ -623,28 +534,42 @@ namespace cafmaker::types::dlp
     ancestor_creation_process_strType.setCset(H5T_CSET_UTF8);
     ctype.insertMember("ancestor_creation_process", HOFFSET(TrueParticle, ancestor_creation_process), ancestor_creation_process_strType);
     
-    ctype.insertMember("t", HOFFSET(TrueParticle, t), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("end_t", HOFFSET(TrueParticle, end_t), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("parent_t", HOFFSET(TrueParticle, parent_t), H5::PredType::IEEE_F64LE);
-    ctype.insertMember("ancestor_t", HOFFSET(TrueParticle, ancestor_t), H5::PredType::IEEE_F64LE);
     ctype.insertMember("position", HOFFSET(TrueParticle, position), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_position", HOFFSET(TrueParticle, end_position), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("parent_position", HOFFSET(TrueParticle, parent_position), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("ancestor_position", HOFFSET(TrueParticle, ancestor_position), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("first_step", HOFFSET(TrueParticle, first_step), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("last_step", HOFFSET(TrueParticle, last_step), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("momentum", HOFFSET(TrueParticle, momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("end_momentum", HOFFSET(TrueParticle, end_momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("end_p", HOFFSET(TrueParticle, end_p), H5::PredType::IEEE_F32LE);
     ctype.insertMember("orig_interaction_id", HOFFSET(TrueParticle, orig_interaction_id), H5::PredType::STD_I64LE);
     ctype.insertMember("orig_parent_id", HOFFSET(TrueParticle, orig_parent_id), H5::PredType::STD_I64LE);
     ctype.insertMember("orig_group_id", HOFFSET(TrueParticle, orig_group_id), H5::PredType::STD_I64LE);
-    ctype.insertMember("orig_children_id", HOFFSET(TrueParticle, orig_children_id_handle), H5::VarLenType(H5::PredType::STD_I64LE));
-    ctype.insertMember("children_counts", HOFFSET(TrueParticle, children_counts_handle), H5::VarLenType(H5::PredType::STD_I64LE));
     ctype.insertMember("reco_length", HOFFSET(TrueParticle, reco_length), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("orig_children_id", HOFFSET(TrueParticle, orig_children_id_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("children_counts", HOFFSET(TrueParticle, children_counts_handle), H5::VarLenType(H5::PredType::STD_I32LE));
     ctype.insertMember("reco_start_dir", HOFFSET(TrueParticle, reco_start_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
     ctype.insertMember("reco_end_dir", HOFFSET(TrueParticle, reco_end_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("reco_ke", HOFFSET(TrueParticle, reco_ke), H5::PredType::IEEE_F32LE);
+    ctype.insertMember("start_dir", HOFFSET(TrueParticle, start_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("end_dir", HOFFSET(TrueParticle, end_dir), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("ke", HOFFSET(TrueParticle, ke), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("reco_ke", HOFFSET(TrueParticle, reco_ke), H5::PredType::IEEE_F64LE);
     ctype.insertMember("reco_momentum", HOFFSET(TrueParticle, reco_momentum), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("p", HOFFSET(TrueParticle, p), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("end_p", HOFFSET(TrueParticle, end_p), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("mass", HOFFSET(TrueParticle, mass), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("num_fragments", HOFFSET(TrueParticle, num_fragments), H5::PredType::STD_I64LE);
+    ctype.insertMember("size", HOFFSET(TrueParticle, size), H5::PredType::STD_I64LE);
+    ctype.insertMember("depositions_sum", HOFFSET(TrueParticle, depositions_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_q_sum", HOFFSET(TrueParticle, depositions_q_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("best_match_id", HOFFSET(TrueParticle, best_match_id), H5::PredType::STD_I64LE);
+    ctype.insertMember("best_match_overlap", HOFFSET(TrueParticle, best_match_overlap), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("module_ids", HOFFSET(TrueParticle, module_ids_handle), H5::VarLenType(H5::PredType::STD_I32LE));
+    ctype.insertMember("size_adapt", HOFFSET(TrueParticle, size_adapt), H5::PredType::STD_I64LE);
+    ctype.insertMember("size_g4", HOFFSET(TrueParticle, size_g4), H5::PredType::STD_I64LE);
+    ctype.insertMember("depositions_adapt_sum", HOFFSET(TrueParticle, depositions_adapt_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_adapt_q_sum", HOFFSET(TrueParticle, depositions_adapt_q_sum), H5::PredType::IEEE_F64LE);
+    ctype.insertMember("depositions_g4_sum", HOFFSET(TrueParticle, depositions_g4_sum), H5::PredType::IEEE_F64LE);
   
     return ctype;
   }
@@ -655,24 +580,24 @@ namespace cafmaker::types::dlp
   {
     H5::CompType ctype(sizeof(Flash));
   
+    
+    H5::StrType units_strType(H5::PredType::C_S1, H5T_VARIABLE);
+    units_strType.setCset(H5T_CSET_UTF8);
+    ctype.insertMember("units", HOFFSET(Flash, units), units_strType);
+    
     ctype.insertMember("id", HOFFSET(Flash, id), H5::PredType::STD_I64LE);
     ctype.insertMember("volume_id", HOFFSET(Flash, volume_id), H5::PredType::STD_I64LE);
     ctype.insertMember("frame", HOFFSET(Flash, frame), H5::PredType::STD_I64LE);
-    ctype.insertMember("in_beam_frame", HOFFSET(Flash, in_beam_frame), H5::PredType::STD_U8LE);
     ctype.insertMember("on_beam_time", HOFFSET(Flash, on_beam_time), H5::PredType::STD_I64LE);
+    ctype.insertMember("in_beam_frame", HOFFSET(Flash, in_beam_frame), H5::PredType::STD_U8LE);
     ctype.insertMember("time", HOFFSET(Flash, time), H5::PredType::IEEE_F64LE);
     ctype.insertMember("time_width", HOFFSET(Flash, time_width), H5::PredType::IEEE_F64LE);
     ctype.insertMember("time_abs", HOFFSET(Flash, time_abs), H5::PredType::IEEE_F64LE);
     ctype.insertMember("total_pe", HOFFSET(Flash, total_pe), H5::PredType::IEEE_F64LE);
     ctype.insertMember("fast_to_total", HOFFSET(Flash, fast_to_total), H5::PredType::IEEE_F64LE);
     ctype.insertMember("pe_per_ch", HOFFSET(Flash, pe_per_ch_handle), H5::VarLenType(H5::PredType::IEEE_F32LE));
-    ctype.insertMember("center", HOFFSET(Flash, center), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    ctype.insertMember("width", HOFFSET(Flash, width), H5::ArrayType(H5::PredType::IEEE_F64LE, 1, &std::array<hsize_t, 1>{3}[0]));
-    
-    H5::StrType units_strType(H5::PredType::C_S1, H5T_VARIABLE);
-    units_strType.setCset(H5T_CSET_UTF8);
-    ctype.insertMember("units", HOFFSET(Flash, units), units_strType);
-    
+    ctype.insertMember("center", HOFFSET(Flash, center), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
+    ctype.insertMember("width", HOFFSET(Flash, width), H5::ArrayType(H5::PredType::IEEE_F32LE, 1, &std::array<hsize_t, 1>{3}[0]));
   
     return ctype;
   }
@@ -697,11 +622,11 @@ namespace cafmaker::types::dlp
     H5::CompType ctype(sizeof(Trigger));
   
     ctype.insertMember("id", HOFFSET(Trigger, id), H5::PredType::STD_I64LE);
+    ctype.insertMember("type", HOFFSET(Trigger, type), H5::PredType::STD_I64LE);
     ctype.insertMember("time_s", HOFFSET(Trigger, time_s), H5::PredType::STD_I64LE);
     ctype.insertMember("time_ns", HOFFSET(Trigger, time_ns), H5::PredType::STD_I64LE);
     ctype.insertMember("beam_time_s", HOFFSET(Trigger, beam_time_s), H5::PredType::STD_I64LE);
     ctype.insertMember("beam_time_ns", HOFFSET(Trigger, beam_time_ns), H5::PredType::STD_I64LE);
-    ctype.insertMember("type", HOFFSET(Trigger, type), H5::PredType::STD_I64LE);
   
     return ctype;
   }

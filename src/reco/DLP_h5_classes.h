@@ -5,7 +5,7 @@
 //    
 //    The invocation that generated this file was:
 //
-//       ND_CAFMaker/scripts/h5_to_cpp.py -f ../MiniProdN5p3_NDComplex_FHC.spine.full.sanddrift.0000003.MLRECO_SPINE.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
+//       ND_CAFMaker/scripts/h5_to_cpp.py -f /pscratch/sd/d/dunepro/mkramer/output/Reflow_2x2_v12/run-mlreco/Reflow_2x2_v12.spine/MLRECO_SPINE/beam/july8_2024/nominal_hv/Reflow_2x2_v12.spine.packet-0050017-2024_07_09_00_14_34_CDT.MLRECO_SPINE.hdf5 -o DLP_h5_classes -ns cafmaker::types::dlp -d events -cn Event -d reco_interactions -cn Interaction -d reco_particles -cn Particle -d truth_interactions -cn TrueInteraction -d truth_particles -cn TrueParticle -d flashes -cn Flash -d run_info -cn RunInfo -d trigger -cn Trigger
 //
 
 
@@ -26,27 +26,40 @@ namespace cafmaker::types::dlp
   H5::CompType BuildCompType();
 
   
+  enum class Chi2Pid : int64_t
+  {
+    kELECTRON = 1,
+    kKAON = 5,
+    kMUON = 2,
+    kPHOTON = 0,
+    kPION = 3,
+    kPROTON = 4,
+    kUNKNOWN = -1,
+  };
+  
+  
   enum class Shape : int64_t
   {
-    kDelta = 3,
-    kGhost = 5,
-    kLE = 4,
-    kMichel = 2,
-    kShower = 0,
-    kTrack = 1,
-    kUnknown = 6,
+    kDELTA = 3,
+    kGHOST = 5,
+    kLARCV_UNKNOWN = 6,
+    kLOWE = 4,
+    kMICHEL = 2,
+    kSHOWER = 0,
+    kTRACK = 1,
+    kUNKNOWN = -1,
   };
   
   
   enum class Pid : int64_t
   {
-    kElectron = 1,
-    kKaon = 5,
-    kMuon = 2,
-    kPhoton = 0,
-    kPion = 3,
-    kProton = 4,
-    kUnknown = -1,
+    kELECTRON = 1,
+    kKAON = 5,
+    kMUON = 2,
+    kPHOTON = 0,
+    kPION = 3,
+    kPROTON = 4,
+    kUNKNOWN = -1,
   };
   
   
@@ -54,143 +67,18 @@ namespace cafmaker::types::dlp
   {
     kCC = 0,
     kNC = 1,
-    kUnknownCurrent = -1,
+    kUNKNOWN = -1,
   };
   
   
-  enum class InteractionMode : int64_t
+  enum class InteractionScheme : int64_t
   {
-    kAMNuGamma = 9,
-    kCCCOH = 1097,
-    kCCDIS = 1091,
-    kCCQE = 1001,
-    kCCQEHyperon = 1095,
-    kCoh = 3,
-    kCohElastic = 4,
-    kDIS = 2,
-    kDiffractive = 11,
-    kEM = 12,
-    kElectronScattering = 5,
-    kGlashowResonance = 8,
-    kIMDAnnihilation = 6,
-    kInverseBetaDecay = 7,
-    kInverseMuDecay = 1099,
-    kMEC = 10,
-    kMEC2p2h = 1100,
-    kNCCOH = 1096,
-    kNCDIS = 1092,
-    kNCQE = 1002,
-    kNuElectronElastic = 1098,
-    kNuanceOffset = 1000,
-    kQE = 0,
-    kRes = 1,
-    kResCCNuBarDelta0PiMinus = 1028,
-    kResCCNuBarDeltaMinusPiPlus = 1032,
-    kResCCNuBarKaon0Lambda0 = 1076,
-    kResCCNuBarNeutronEta = 1070,
-    kResCCNuBarNeutronPi0Pi0 = 1086,
-    kResCCNuBarNeutronPiMinus = 1010,
-    kResCCNuBarNeutronPiPlusPiMinus = 1085,
-    kResCCNuBarNeutronRho0 = 1048,
-    kResCCNuBarNeutronRhoMinus = 1046,
-    kResCCNuBarProtonPi0 = 1011,
-    kResCCNuBarProtonPi0Pi0 = 1090,
-    kResCCNuBarProtonPiMinus = 1012,
-    kResCCNuBarSigma0Kaon0 = 1062,
-    kResCCNuBarSigmaMinusKaon0 = 1060,
-    kResCCNuDelta2PlusPiMinus = 1021,
-    kResCCNuDeltaPlusPiPlus = 1017,
-    kResCCNuKaonPlusLambda0 = 1073,
-    kResCCNuNeutronPi0 = 1004,
-    kResCCNuNeutronPiPlus = 1005,
-    kResCCNuNeutronRhoPlus = 1041,
-    kResCCNuProtonEta = 1067,
-    kResCCNuProtonPi0Pi0 = 1080,
-    kResCCNuProtonPiPlus = 1003,
-    kResCCNuProtonPiPlusPiMinus = 1079,
-    kResCCNuProtonRhoPlus = 1039,
-    kResCCNuSigmaPlusKaon0 = 1055,
-    kResCCNuSigmaPlusKaonPlus = 1053,
-    kResNCNuBarNeutronPi0 = 1015,
-    kResNCNuBarNeutronPiMinus = 1016,
-    kResNCNuBarProtonPi0 = 1013,
-    kResNCNuBarProtonPiPlus = 1014,
-    kResNCNuNeutronPi0 = 1008,
-    kResNCNuNeutronPiMinus = 1009,
-    kResNCNuProtonPi0 = 1006,
-    kResNCNuProtonPiPlus = 1007,
-    kUnUsed1 = 1093,
-    kUnUsed2 = 1094,
-    kUnknownInteraction = -1,
-    kWeakMix = 13,
-  };
-  
-  
-  enum class InteractionType : int64_t
-  {
-    kAMNuGamma = 9,
-    kCCCOH = 1097,
-    kCCDIS = 1091,
-    kCCQE = 1001,
-    kCCQEHyperon = 1095,
-    kCoh = 3,
-    kCohElastic = 4,
-    kDIS = 2,
-    kDiffractive = 11,
-    kEM = 12,
-    kElectronScattering = 5,
-    kGlashowResonance = 8,
-    kIMDAnnihilation = 6,
-    kInverseBetaDecay = 7,
-    kInverseMuDecay = 1099,
-    kMEC = 10,
-    kMEC2p2h = 1100,
-    kNCCOH = 1096,
-    kNCDIS = 1092,
-    kNCQE = 1002,
-    kNuElectronElastic = 1098,
-    kNuanceOffset = 1000,
-    kQE = 0,
-    kRes = 1,
-    kResCCNuBarDelta0PiMinus = 1028,
-    kResCCNuBarDeltaMinusPiPlus = 1032,
-    kResCCNuBarKaon0Lambda0 = 1076,
-    kResCCNuBarNeutronEta = 1070,
-    kResCCNuBarNeutronPi0Pi0 = 1086,
-    kResCCNuBarNeutronPiMinus = 1010,
-    kResCCNuBarNeutronPiPlusPiMinus = 1085,
-    kResCCNuBarNeutronRho0 = 1048,
-    kResCCNuBarNeutronRhoMinus = 1046,
-    kResCCNuBarProtonPi0 = 1011,
-    kResCCNuBarProtonPi0Pi0 = 1090,
-    kResCCNuBarProtonPiMinus = 1012,
-    kResCCNuBarSigma0Kaon0 = 1062,
-    kResCCNuBarSigmaMinusKaon0 = 1060,
-    kResCCNuDelta2PlusPiMinus = 1021,
-    kResCCNuDeltaPlusPiPlus = 1017,
-    kResCCNuKaonPlusLambda0 = 1073,
-    kResCCNuNeutronPi0 = 1004,
-    kResCCNuNeutronPiPlus = 1005,
-    kResCCNuNeutronRhoPlus = 1041,
-    kResCCNuProtonEta = 1067,
-    kResCCNuProtonPi0Pi0 = 1080,
-    kResCCNuProtonPiPlus = 1003,
-    kResCCNuProtonPiPlusPiMinus = 1079,
-    kResCCNuProtonRhoPlus = 1039,
-    kResCCNuSigmaPlusKaon0 = 1055,
-    kResCCNuSigmaPlusKaonPlus = 1053,
-    kResNCNuBarNeutronPi0 = 1015,
-    kResNCNuBarNeutronPiMinus = 1016,
-    kResNCNuBarProtonPi0 = 1013,
-    kResNCNuBarProtonPiPlus = 1014,
-    kResNCNuNeutronPi0 = 1008,
-    kResNCNuNeutronPiMinus = 1009,
-    kResNCNuProtonPi0 = 1006,
-    kResNCNuProtonPiPlus = 1007,
-    kUnUsed1 = 1093,
-    kUnUsed2 = 1094,
-    kUnknownInteraction = -1,
-    kWeakMix = 13,
+    kGENIE = 1,
+    kGIBUU = 2,
+    kLARSOFT = 0,
+    kNEUT = 4,
+    kNUWRO = 3,
+    kUNKNOWN = -1,
   };
   
   struct Event;
@@ -204,32 +92,32 @@ namespace cafmaker::types::dlp
   
   struct Event
   {
-    hdset_reg_ref_t trigger;
-    hdset_reg_ref_t run_info;
-    hdset_reg_ref_t points_label;
-    hdset_reg_ref_t flashes;
-    hdset_reg_ref_t truth_particles;
-    hdset_reg_ref_t meta;
-    hdset_reg_ref_t depositions;
-    hdset_reg_ref_t reco_interactions;
-    hdset_reg_ref_t truth_interactions;
-    hdset_reg_ref_t depositions_label;
-    hdset_reg_ref_t points;
-    hdset_reg_ref_t reco_particles;
     hdset_reg_ref_t index;
+    hdset_reg_ref_t reco_interactions;
+    hdset_reg_ref_t flashes;
+    hdset_reg_ref_t source_file_index;
+    hdset_reg_ref_t run_info;
+    hdset_reg_ref_t reco_particles;
+    hdset_reg_ref_t depositions;
+    hdset_reg_ref_t points;
+    hdset_reg_ref_t source_file_entry_index;
+    hdset_reg_ref_t meta;
+    hdset_reg_ref_t truth_interactions;
+    hdset_reg_ref_t truth_particles;
+    hdset_reg_ref_t trigger;
     
     void SyncVectors();
     
     template <typename T>
     const hdset_reg_ref_t& GetRef() const
     {
-      if constexpr(std::is_same_v<T, Trigger>) return trigger;
-      else if(std::is_same_v<T, RunInfo>) return run_info;
+      if constexpr(std::is_same_v<T, Interaction>) return reco_interactions;
       else if(std::is_same_v<T, Flash>) return flashes;
-      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
-      else if(std::is_same_v<T, Interaction>) return reco_interactions;
-      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
+      else if(std::is_same_v<T, RunInfo>) return run_info;
       else if(std::is_same_v<T, Particle>) return reco_particles;
+      else if(std::is_same_v<T, TrueInteraction>) return truth_interactions;
+      else if(std::is_same_v<T, TrueParticle>) return truth_particles;
+      else if(std::is_same_v<T, Trigger>) return trigger;
     }
     
   };
@@ -237,40 +125,46 @@ namespace cafmaker::types::dlp
   
   struct Interaction
   {
-    int64_t id;
-    BufferView<int64_t> index;
-    BufferView<int64_t> orig_index;
-    int64_t size;
-    float depositions_sum;
-    BufferView<int64_t> module_ids;
-    bool is_contained;
-    bool is_time_contained;
-    bool is_matched;
-    BufferView<int64_t> match_ids;
-    BufferView<float> match_overlaps;
-    bool is_cathode_crosser;
-    double cathode_offset;
     bool is_truth;
     char * units;
-    BufferView<int64_t> particle_ids;
-    BufferView<int64_t> primary_particle_ids;
-    int64_t num_particles;
-    int64_t num_primary_particles;
-    std::array<int64_t, 6> particle_counts;
-    std::array<int64_t, 6> primary_particle_counts;
-    std::array<float, 3> vertex;
+    int64_t id;
+    bool is_contained;
+    bool is_time_contained;
+    bool is_cathode_crosser;
+    bool is_matched;
+    double cathode_offset;
+    BufferView<int32_t> index;
+    BufferView<int32_t> orig_index;
+    BufferView<int32_t> match_ids;
+    BufferView<float> match_overlaps;
     bool is_fiducial;
     bool is_flash_matched;
+    double flash_total_pe;
+    double flash_hypo_pe;
+    BufferView<int32_t> particle_ids;
+    std::array<float, 3> vertex;
     BufferView<int32_t> flash_ids;
     BufferView<int32_t> flash_volume_ids;
     BufferView<float> flash_times;
     BufferView<float> flash_scores;
-    double flash_total_pe;
-    double flash_hypo_pe;
+    BufferView<int32_t> flash_hypothesis_ids;
+    std::array<float, 3> dir;
+    BufferView<int32_t> primary_particle_ids;
+    int64_t num_particles;
+    int64_t num_primary_particles;
+    std::array<int32_t, 6> particle_counts;
+    std::array<int32_t, 6> primary_particle_counts;
     bool is_crt_matched;
     BufferView<int32_t> crt_ids;
     BufferView<float> crt_times;
+    BufferView<float> crt_scores;
     char * topology;
+    int64_t size;
+    double depositions_sum;
+    double depositions_q_sum;
+    int64_t best_match_id;
+    double best_match_overlap;
+    BufferView<int32_t> module_ids;
     
     void SyncVectors();
     
@@ -284,74 +178,79 @@ namespace cafmaker::types::dlp
     
     hvl_t index_handle;
     hvl_t orig_index_handle;
-    hvl_t module_ids_handle;
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t particle_ids_handle;
-    hvl_t primary_particle_ids_handle;
     hvl_t flash_ids_handle;
     hvl_t flash_volume_ids_handle;
     hvl_t flash_times_handle;
     hvl_t flash_scores_handle;
+    hvl_t flash_hypothesis_ids_handle;
+    hvl_t primary_particle_ids_handle;
     hvl_t crt_ids_handle;
     hvl_t crt_times_handle;
+    hvl_t crt_scores_handle;
+    hvl_t module_ids_handle;
   };
   
   
   struct Particle
   {
-    int64_t id;
-    BufferView<int64_t> index;
-    BufferView<int64_t> orig_index;
-    int64_t size;
-    float depositions_sum;
-    BufferView<int64_t> module_ids;
-    bool is_contained;
-    bool is_time_contained;
-    bool is_matched;
-    BufferView<int64_t> match_ids;
-    BufferView<float> match_overlaps;
-    bool is_cathode_crosser;
-    double cathode_offset;
     bool is_truth;
     char * units;
-    BufferView<int32_t> fragment_ids;
-    int64_t num_fragments;
+    int64_t id;
+    bool is_contained;
+    bool is_time_contained;
+    bool is_cathode_crosser;
+    bool is_matched;
+    double cathode_offset;
+    BufferView<int32_t> index;
+    BufferView<int32_t> orig_index;
+    BufferView<int32_t> match_ids;
+    BufferView<float> match_overlaps;
     int64_t interaction_id;
+    Chi2Pid chi2_pid;
+    bool is_primary;
+    bool is_crt_matched;
+    bool is_valid;
+    double length;
+    double calo_ke;
+    double csda_ke;
+    double mcs_ke;
     Shape shape;
     Pid pid;
-    int64_t chi2_pid;
-    std::array<float, 6> chi2_per_pid;
-    int64_t pdg_code;
-    bool is_primary;
-    double length;
+    BufferView<int32_t> fragment_ids;
     std::array<float, 3> start_point;
     std::array<float, 3> end_point;
-    std::array<float, 3> start_dir;
-    std::array<float, 3> end_dir;
-    double mass;
-    float ke;
-    float calo_ke;
-    double csda_ke;
+    std::array<float, 6> chi2_per_pid;
     std::array<float, 6> csda_ke_per_pid;
-    double mcs_ke;
     std::array<float, 6> mcs_ke_per_pid;
-    std::array<float, 3> momentum;
-    float p;
-    bool is_crt_matched;
     BufferView<int32_t> crt_ids;
     BufferView<float> crt_times;
     BufferView<float> crt_scores;
-    bool is_valid;
-    std::array<float, 6> pid_scores;
-    std::array<float, 2> primary_scores;
-    BufferView<int32_t> ppn_ids;
-    double vertex_distance;
     double start_dedx;
     double end_dedx;
+    double vertex_distance;
     double start_straightness;
     double directional_spread;
     double axial_spread;
+    std::array<float, 3> start_dir;
+    std::array<float, 3> end_dir;
+    std::array<float, 6> pid_scores;
+    std::array<float, 2> primary_scores;
+    BufferView<int32_t> ppn_ids;
+    int64_t pdg_code;
+    double mass;
+    double ke;
+    std::array<float, 3> momentum;
+    double p;
+    int64_t num_fragments;
+    int64_t size;
+    double depositions_sum;
+    double depositions_q_sum;
+    int64_t best_match_id;
+    double best_match_overlap;
+    BufferView<int32_t> module_ids;
     
     void SyncVectors();
     
@@ -365,7 +264,6 @@ namespace cafmaker::types::dlp
     
     hvl_t index_handle;
     hvl_t orig_index_handle;
-    hvl_t module_ids_handle;
     hvl_t match_ids_handle;
     hvl_t match_overlaps_handle;
     hvl_t fragment_ids_handle;
@@ -373,82 +271,91 @@ namespace cafmaker::types::dlp
     hvl_t crt_times_handle;
     hvl_t crt_scores_handle;
     hvl_t ppn_ids_handle;
+    hvl_t module_ids_handle;
   };
   
   
   struct TrueInteraction
   {
+    int64_t orig_id;
+    bool is_truth;
+    BufferView<int32_t> index_adapt;
+    BufferView<int32_t> index_g4;
+    char * units;
     int64_t id;
-    BufferView<int64_t> index;
-    BufferView<int64_t> orig_index;
-    int64_t size;
-    float depositions_sum;
-    BufferView<int64_t> module_ids;
     bool is_contained;
     bool is_time_contained;
-    bool is_matched;
-    BufferView<int64_t> match_ids;
-    BufferView<float> match_overlaps;
     bool is_cathode_crosser;
+    bool is_matched;
     double cathode_offset;
-    bool is_truth;
-    char * units;
-    int64_t orig_id;
-    float depositions_q_sum;
-    BufferView<int64_t> index_adapt;
-    int64_t size_adapt;
-    int64_t size_g4;
-    float depositions_adapt_sum;
-    float depositions_adapt_q_sum;
-    BufferView<int64_t> index_g4;
-    float depositions_g4_sum;
-    BufferView<int64_t> particle_ids;
-    BufferView<int64_t> primary_particle_ids;
-    int64_t num_particles;
-    int64_t num_primary_particles;
-    std::array<int64_t, 6> particle_counts;
-    std::array<int64_t, 6> primary_particle_counts;
-    std::array<float, 3> vertex;
+    BufferView<int32_t> index;
+    BufferView<int32_t> orig_index;
+    BufferView<int32_t> match_ids;
+    BufferView<float> match_overlaps;
     bool is_fiducial;
     bool is_flash_matched;
+    double flash_total_pe;
+    double flash_hypo_pe;
+    BufferView<int32_t> particle_ids;
+    std::array<float, 3> vertex;
     BufferView<int32_t> flash_ids;
     BufferView<int32_t> flash_volume_ids;
     BufferView<float> flash_times;
     BufferView<float> flash_scores;
-    double flash_total_pe;
-    double flash_hypo_pe;
-    bool is_crt_matched;
-    BufferView<int32_t> crt_ids;
-    BufferView<float> crt_times;
-    char * topology;
+    BufferView<int32_t> flash_hypothesis_ids;
     int64_t interaction_id;
+    CurrentType current_type;
+    InteractionScheme interaction_scheme;
+    int64_t interaction_mode;
+    int64_t interaction_type;
     int64_t mct_index;
     int64_t track_id;
     int64_t lepton_track_id;
     int64_t pdg_code;
     int64_t lepton_pdg_code;
-    CurrentType current_type;
-    InteractionMode interaction_mode;
-    InteractionType interaction_type;
     int64_t target;
     int64_t nucleon;
     int64_t quark;
     double energy_init;
     double hadronic_invariant_mass;
-    double bjorken_x;
-    double inelasticity;
     double momentum_transfer;
     double momentum_transfer_mag;
     double energy_transfer;
     double lepton_p;
     double distance_travel;
-    double theta;
     double t;
+    double theta;
+    double bjorken_x;
+    double inelasticity;
     char * creation_process;
     std::array<float, 3> position;
     std::array<float, 3> momentum;
     int64_t nu_id;
     std::array<float, 3> reco_vertex;
+    std::array<float, 3> reco_dir;
+    double time;
+    std::array<float, 3> dir;
+    BufferView<int32_t> primary_particle_ids;
+    int64_t num_particles;
+    int64_t num_primary_particles;
+    std::array<int32_t, 6> particle_counts;
+    std::array<int32_t, 6> primary_particle_counts;
+    bool is_crt_matched;
+    BufferView<int32_t> crt_ids;
+    BufferView<float> crt_times;
+    BufferView<float> crt_scores;
+    char * topology;
+    int64_t size;
+    double depositions_sum;
+    double depositions_q_sum;
+    int64_t best_match_id;
+    double best_match_overlap;
+    BufferView<int32_t> module_ids;
+    int64_t size_adapt;
+    int64_t size_g4;
+    double depositions_adapt_sum;
+    double depositions_adapt_q_sum;
+    double depositions_g4_sum;
     
     void SyncVectors();
     
@@ -460,120 +367,126 @@ namespace cafmaker::types::dlp
     // to fill the corresponding BufferView<>s above,
     // and then use those for access to the data.
     
-    hvl_t index_handle;
-    hvl_t orig_index_handle;
-    hvl_t module_ids_handle;
-    hvl_t match_ids_handle;
-    hvl_t match_overlaps_handle;
     hvl_t index_adapt_handle;
     hvl_t index_g4_handle;
+    hvl_t index_handle;
+    hvl_t orig_index_handle;
+    hvl_t match_ids_handle;
+    hvl_t match_overlaps_handle;
     hvl_t particle_ids_handle;
-    hvl_t primary_particle_ids_handle;
     hvl_t flash_ids_handle;
     hvl_t flash_volume_ids_handle;
     hvl_t flash_times_handle;
     hvl_t flash_scores_handle;
+    hvl_t flash_hypothesis_ids_handle;
+    hvl_t primary_particle_ids_handle;
     hvl_t crt_ids_handle;
     hvl_t crt_times_handle;
+    hvl_t crt_scores_handle;
+    hvl_t module_ids_handle;
   };
   
   
   struct TrueParticle
   {
+    int64_t orig_id;
+    bool is_truth;
+    BufferView<int32_t> index_adapt;
+    BufferView<int32_t> index_g4;
+    char * units;
     int64_t id;
-    BufferView<int64_t> index;
-    BufferView<int64_t> orig_index;
-    int64_t size;
-    float depositions_sum;
-    BufferView<int64_t> module_ids;
     bool is_contained;
     bool is_time_contained;
-    bool is_matched;
-    BufferView<int64_t> match_ids;
-    BufferView<float> match_overlaps;
     bool is_cathode_crosser;
+    bool is_matched;
     double cathode_offset;
-    bool is_truth;
-    char * units;
-    int64_t orig_id;
-    float depositions_q_sum;
-    BufferView<int64_t> index_adapt;
-    int64_t size_adapt;
-    int64_t size_g4;
-    float depositions_adapt_sum;
-    float depositions_adapt_q_sum;
-    BufferView<int64_t> index_g4;
-    float depositions_g4_sum;
-    BufferView<int32_t> fragment_ids;
-    int64_t num_fragments;
+    BufferView<int32_t> index;
+    BufferView<int32_t> orig_index;
+    BufferView<int32_t> match_ids;
+    BufferView<float> match_overlaps;
     int64_t interaction_id;
+    Chi2Pid chi2_pid;
+    bool is_primary;
+    bool is_crt_matched;
+    bool is_valid;
+    double length;
+    double calo_ke;
+    double csda_ke;
+    double mcs_ke;
     Shape shape;
     Pid pid;
-    int64_t chi2_pid;
-    std::array<float, 6> chi2_per_pid;
-    int64_t pdg_code;
-    bool is_primary;
-    double length;
+    BufferView<int32_t> fragment_ids;
     std::array<float, 3> start_point;
     std::array<float, 3> end_point;
-    std::array<float, 3> start_dir;
-    std::array<float, 3> end_dir;
-    float mass;
-    float ke;
-    float calo_ke;
-    double csda_ke;
+    std::array<float, 6> chi2_per_pid;
     std::array<float, 6> csda_ke_per_pid;
-    double mcs_ke;
     std::array<float, 6> mcs_ke_per_pid;
-    std::array<float, 3> momentum;
-    float p;
-    bool is_crt_matched;
     BufferView<int32_t> crt_ids;
     BufferView<float> crt_times;
     BufferView<float> crt_scores;
-    bool is_valid;
-    int64_t mct_index;
-    int64_t mcst_index;
+    int64_t parent_id;
     int64_t group_id;
     int64_t nu_id;
-    int64_t interaction_primary;
+    BufferView<int32_t> children_id;
+    int64_t mct_index;
+    int64_t mcst_index;
     int64_t group_primary;
-    int64_t parent_id;
-    BufferView<int64_t> children_id;
+    int64_t interaction_primary;
     int64_t track_id;
     int64_t parent_track_id;
     int64_t ancestor_track_id;
+    int64_t pdg_code;
     int64_t parent_pdg_code;
     int64_t ancestor_pdg_code;
     int64_t num_voxels;
+    double t;
+    double end_t;
+    double first_step_t;
+    double last_step_t;
+    double parent_t;
+    double ancestor_t;
     double energy_init;
     double energy_deposit;
     double distance_travel;
     char * creation_process;
     char * parent_creation_process;
     char * ancestor_creation_process;
-    double t;
-    double end_t;
-    double parent_t;
-    double ancestor_t;
     std::array<float, 3> position;
     std::array<float, 3> end_position;
     std::array<float, 3> parent_position;
     std::array<float, 3> ancestor_position;
     std::array<float, 3> first_step;
     std::array<float, 3> last_step;
+    std::array<float, 3> momentum;
     std::array<float, 3> end_momentum;
-    float end_p;
     int64_t orig_interaction_id;
     int64_t orig_parent_id;
     int64_t orig_group_id;
-    BufferView<int64_t> orig_children_id;
-    BufferView<int64_t> children_counts;
     double reco_length;
+    BufferView<int32_t> orig_children_id;
+    BufferView<int32_t> children_counts;
     std::array<float, 3> reco_start_dir;
     std::array<float, 3> reco_end_dir;
-    float reco_ke;
+    std::array<float, 3> start_dir;
+    std::array<float, 3> end_dir;
+    double ke;
+    double reco_ke;
     std::array<float, 3> reco_momentum;
+    double p;
+    double end_p;
+    double mass;
+    int64_t num_fragments;
+    int64_t size;
+    double depositions_sum;
+    double depositions_q_sum;
+    int64_t best_match_id;
+    double best_match_overlap;
+    BufferView<int32_t> module_ids;
+    int64_t size_adapt;
+    int64_t size_g4;
+    double depositions_adapt_sum;
+    double depositions_adapt_q_sum;
+    double depositions_g4_sum;
     
     void SyncVectors();
     
@@ -585,13 +498,12 @@ namespace cafmaker::types::dlp
     // to fill the corresponding BufferView<>s above,
     // and then use those for access to the data.
     
-    hvl_t index_handle;
-    hvl_t orig_index_handle;
-    hvl_t module_ids_handle;
-    hvl_t match_ids_handle;
-    hvl_t match_overlaps_handle;
     hvl_t index_adapt_handle;
     hvl_t index_g4_handle;
+    hvl_t index_handle;
+    hvl_t orig_index_handle;
+    hvl_t match_ids_handle;
+    hvl_t match_overlaps_handle;
     hvl_t fragment_ids_handle;
     hvl_t crt_ids_handle;
     hvl_t crt_times_handle;
@@ -599,25 +511,26 @@ namespace cafmaker::types::dlp
     hvl_t children_id_handle;
     hvl_t orig_children_id_handle;
     hvl_t children_counts_handle;
+    hvl_t module_ids_handle;
   };
   
   
   struct Flash
   {
+    char * units;
     int64_t id;
     int64_t volume_id;
     int64_t frame;
-    uint8_t in_beam_frame;
     int64_t on_beam_time;
+    bool in_beam_frame;
     double time;
     double time_width;
     double time_abs;
     double total_pe;
     double fast_to_total;
     BufferView<float> pe_per_ch;
-    std::array<double, 3> center;
-    std::array<double, 3> width;
-    char * units;
+    std::array<float, 3> center;
+    std::array<float, 3> width;
     
     void SyncVectors();
     
@@ -646,11 +559,11 @@ namespace cafmaker::types::dlp
   struct Trigger
   {
     int64_t id;
+    int64_t type;
     int64_t time_s;
     int64_t time_ns;
     int64_t beam_time_s;
     int64_t beam_time_ns;
-    int64_t type;
     
     void SyncVectors();
   };
