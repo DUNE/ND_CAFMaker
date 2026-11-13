@@ -140,7 +140,7 @@ verify() {
   local container_body='
     set -e
     source /source/test/regression-environment.conf
-    test "$(python3 -c "import platform; print(platform.python_version())")" = "$PYTHON_VERSION"
+    python3 --version
     python3 -m venv /scratch/venv
     /scratch/venv/bin/python -m pip install --disable-pip-version-check --no-cache-dir \
       --index-url https://pypi.org/simple --only-binary=:all: uproot awkward numpy

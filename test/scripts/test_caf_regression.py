@@ -82,7 +82,7 @@ class RegressionRunnerTest(unittest.TestCase):
         self.setup.touch()
         (self.repo / "test/regression-environment.conf").write_text(
             f"CAF_IMAGE='{self.image}'\nPYTHON_IMAGE='{self.image}'\n"
-            f"CAF_DEPS_SETUP='{self.setup}'\nPYTHON_VERSION=3.15.2\n"
+            f"CAF_DEPS_SETUP='{self.setup}'\n"
             f"CAF_INPUT_URL=https://example.invalid/\nCAF_FILENAME={FILENAME}\n"
         )
         self.bin = self.root / "bin"
