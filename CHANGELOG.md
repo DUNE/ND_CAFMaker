@@ -10,6 +10,9 @@ Note that tags as a function of changes are now also being tracked via [mileston
 
 ##### current
 
+##### [v5.3.1] -- 2026-11-18
+* Bump to `duneanaobj` v4_03_00
+
 ##### [v5.3.0] -- 2026-11-07
 * ROOT file reading robustness improvements ([PR #196](https://github.com/DUNE/ND_CAFMaker/pull/196))
 * Major SAND filler overhaul to use with updated `sandreco` 'experimental' ([#160](https://github.com/DUNE/ND_CAFMaker/pull/160), [#209](https://github.com/DUNE/ND_CAFMaker/pull/209), [#221](https://github.com/DUNE/ND_CAFMaker/pull/221))
