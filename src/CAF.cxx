@@ -9,7 +9,7 @@
 // fixme: once DIRT-II is done with its work, this will be re-enabled
 //#include "nusystematics/artless/response_helper.hh"
 
-CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE)
+CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool makeRNTuple, bool storeGENIE)
   : rh(rw_fhicl_filename)
 {
   cafFile = new TFile( filename.c_str(), "RECREATE" );
@@ -34,6 +34,16 @@ CAF::CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool
 
     flatCAFRecord = new flat::Flat<caf::StandardRecord>(flatCAFTree, "rec", "", 0);
   }
+
+  if (makeRNTuple)
+  {
+    rntupleFile = new TFile( (filename+".rntuple.root").c_str(), "RECREATE" );
+
+    rntupleModel = ROOT::RNTupleModel::Create();
+    rntupleRecord = rntupleModel->MakeField<caf::StandardRecord>("rec");
+    rntupleWriter = ROOT::RNTupleWriter::Append(std::move(rntupleModel), "cafTree", *rntupleFile);
+  }
+
   // initialize standard record bits
   if(cafSR) cafSR->Branch("rec", "caf::StandardRecord", &sr);      
 
@@ -77,6 +87,11 @@ void CAF::fill()
     flatCAFRecord->Clear();
     flatCAFRecord->Fill(sr);
     flatCAFTree->Fill();
+  }
+
+  if (makeRNTuple){
+    *rntupleRecord = sr;
+    rntupleWriter->Fill();
   }
 }
 
@@ -124,6 +139,20 @@ void CAF::write()
       tree->SetDirectory(nullptr);
     }
     cafFile->Close();
+  }
+
+  if(rntupleFile){
+    rntupleFile->cd();
+
+    for (auto tree : {cafSRGlobal, cafMVA, cafMeta, genie })
+    {
+      if (!tree)
+        continue;
+      tree->Write();
+      tree->LoadBaskets();
+      tree->SetDirectory(nullptr);
+    }
+    rntupleFile->Close();
   }
 
 }
