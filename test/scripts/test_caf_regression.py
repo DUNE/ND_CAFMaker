@@ -1,3 +1,16 @@
+"""
+Python unitt test to test the CI
+Used in the CI to make sure things like putting the CI summary, dealing with caches of the download,
+failed stages and so on are tested.
+Runs in the CI before everything else is run. _Technically_ we dont need this but its good to have
+
+Full list of checks:
+Coverage includes cache reuse, failed downloads, paths with spaces, untouched
+repository products, failed stages, atomic replacement, preserved permissions,
+interruptions, retained stage artifacts and explicit comparison outputs. It also
+checks the ANSI summary banner's placement and successful-run silence.
+"""
+
 import os
 from pathlib import Path
 import shutil

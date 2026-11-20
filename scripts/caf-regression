@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# Bash script used to run the caf CI 
+# Can run this locally and is also directly used in the CI to make local + CI runs the same
+# Uses apptainer so it becomes not environment dependent
+# TODO: clean up this, make it more readable, perhaps move to python?
+
 set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)

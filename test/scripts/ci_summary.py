@@ -1,3 +1,10 @@
+"""
+Generates the CI summary to inform users if the CI has passed or not, and if it doesn't
+then it explains what references has changed and how to fix it.
+
+Visible when looking at the GitHub Actions jobs, at the summary page.
+"""
+
 import argparse
 import html
 import json

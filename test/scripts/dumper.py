@@ -1,3 +1,13 @@
+"""
+Quick and #hacky code that dumps a CAF file into a single json file
+
+Uses heirarchical cafs to put the json file out. Many issues with it but for a first 
+working CI this is good enough.
+
+Goal is to retire this when we eventually get RNTuple out and instead to use those 
+to check for regressions. 
+"""
+
 import argparse
 import hashlib
 import json
