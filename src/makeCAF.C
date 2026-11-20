@@ -702,7 +702,7 @@ if (!vars.count("fcl")) {
   par().cafmaker().GHEPFiles(GHEPFiles);  // fills the vector in if the key is found
   par().cafmaker().edepsimFile(edepsimFile);  // fills the vector in if the key is found
 
-  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), !GHEPFiles.empty());
+  CAF caf(par().cafmaker().outputFile(), par().cafmaker().nusystsFcl(), par().cafmaker().makeFlatCAF(), par().cafmaker().makeRNTuple(), !GHEPFiles.empty());
 
   loop(caf, par, GHEPFiles, edepsimFile, getRecoFillers(par, logThresh));
 

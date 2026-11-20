@@ -18,7 +18,7 @@ namespace nusyst
 class CAF {
 
 public:
-  CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool storeGENIE);
+  CAF(const std::string &filename, const std::string &rw_fhicl_filename, bool makeFlatCAF, bool makeRNTuple, bool storeGENIE);
   ~CAF() = default;
   void fill();
   void fillMeta();
@@ -59,6 +59,13 @@ public:
   flat::Flat<caf::StandardRecord>* flatCAFRecord  = nullptr;
 
   nusyst::response_helper rh;
+
+  // RNTuple
+  TFile * rntupleFile;
+
+  std::unique_ptr<ROOT::RNTupleModel> rntupleModel;
+  std::shared_ptr<caf::StandardRecord> rntupleRecord;
+  std::unique_ptr<ROOT::RNTupleWriter> rntupleWriter;
 };
 
 #endif
